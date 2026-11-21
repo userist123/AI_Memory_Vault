@@ -111,3 +111,24 @@ export function duplicateGroup(snap: Snapshot, cat: Catalog, ids: readonly strin
     if (!r.issues.length) return r; fallback ||= r; }
   return fallback ?? { ok: false, key: 'edit.noFreeSpot' };
 }
+
+/** Limitele repetării în rând: câte copii și cât de departe (cm) între două copii succesive. */
+export const ARRAY_LIMITS = { countMin: 1, countMax: 30, stepMaxCm: 2000 } as const;
+/**
+ * Repetare în rând (matrice liniară): `count` copii ale întregului grup, copia k decalată cu k × (stepX, stepZ) cm față de
+ * original — spoturi, scaune, rafturi la distanțe egale. Totul se validează într-un singur pas: o copie cu ERROR (în afara
+ * camerei, peste altă piesă) refuză toată repetarea, cu motivul ei. `newId(i)` dă id-ul copiei i (în ordinea copiilor,
+ * piesă cu piesă). Aspectul fiecărei piese se copiază. Pasul zero sau un număr în afara limitelor e refuzat (`edit.arrayBad`).
+ */
+export function arrayGroup(snap: Snapshot, cat: Catalog, ids: readonly string[], count: number, stepXCm: number, stepZCm: number, newId: (i: number) => string): GroupResult {
+  const src = ids.flatMap(id => snap.placements.filter(p => p.id === id)); if (!src.length) return { ok: false, key: 'edit.noPiece' };
+  const okNum = (v: number) => Number.isFinite(v) && Math.abs(v) <= ARRAY_LIMITS.stepMaxCm;
+  if (!Number.isInteger(count) || count < ARRAY_LIMITS.countMin || count > ARRAY_LIMITS.countMax || !okNum(stepXCm) || !okNum(stepZCm) || (stepXCm === 0 && stepZCm === 0)) return { ok: false, key: 'edit.arrayBad' };
+  const n = structuredClone(snap), copyIds: string[] = []; let i = 0;
+  for (let k = 1; k <= count; k++) for (const s of src){ const id = newId(i++); copyIds.push(id);
+    n.placements.push({ ...structuredClone(s), id, x: r3(s.x + k * stepXCm / 100), z: r3(s.z + k * stepZCm / 100), source: 'manual' });
+    const look = n.appearance?.items?.[s.id]; if (look) n.appearance!.items![id] = { ...look }; }
+  return checked(n, cat, copyIds, true);
+}
+/** Pasul care umple exact o distanță: `count` copii după original, ultima la `totalCm` de el (ex. 4 spoturi pe 3 m). */
+export const stepToFill = (totalCm: number, count: number) => count >= 1 && Number.isFinite(totalCm) ? Math.round(totalCm / count * 10) / 10 : 0;

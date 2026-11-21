@@ -66,7 +66,7 @@ import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
-import { groupIds, arrangeItems, alignPieces, distributePieces, applyMoves, nudgeGroup, rotateGroup, duplicateGroup, type AlignMode, type GroupResult } from '@/core/arrange';
+import { arrayGroup, groupIds, arrangeItems, alignPieces, distributePieces, applyMoves, nudgeGroup, rotateGroup, duplicateGroup, type AlignMode, type GroupResult } from '@/core/arrange';
 import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel, type TextExtra } from './PlanView';
 import { singleFlight } from '@/lib/single-flight';
@@ -84,6 +84,7 @@ import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShar
 import CommandPalette, { type Command } from './CommandPalette';
 import MenuBar, { buildMenus } from './MenuBar';
 import NorthPanel from './NorthPanel';
+import ArrayDialog from './ArrayDialog';
 import './theme-pro.gen.css';
 import './theme-pro.css';
 import { isPaletteShortcut } from '@/lib/fuzzy';
@@ -99,14 +100,14 @@ import Outliner from './Outliner';
 import PanelSplitter from './PanelSplitter';
 import { buildOutliner } from '@/core/outliner';
 import { DEFAULT_WS, MODE_KEY, WS_KEY, fitToViewport, parseWorkspace, resolveMode, serializeWorkspace, type LayoutMode, type WorkspaceState } from '@/lib/workspace-layout';
-import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core/plan-limits';
+import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText, cleanCloudLabel, cutChars } from '@/core/plan-limits';
 import ToolRail from './ToolRail';
 import DxfImportPanel from './DxfImportPanel';
 import MepPanel from './MepPanel';
 import { MEP_SYSTEMS } from '@/core/mep';
 import CoordinationPanel from './CoordinationPanel';
 import { elementIndex } from '@/core/elements';
-import { dimGeometry, moveAnnotation } from '@/core/annotations';
+import { dimGeometry, moveAnnotation, angleGeometry, formatAngle } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -138,6 +139,8 @@ const ICON: Record<Tool, string> = {
   text: 'M5 5h14M12 5v14M9 19h6',
   leader: 'M15 9L4 20M4 14v6h6M13 5h8M17 9h4',
   level_mark: 'M3 7h8l-4 7zM11 7h10M3 18h18',
+  angle_dim: 'M4 20h16M4 20L14 5M12 20a8 8 0 0 0-3.6-6.7',
+  rev_cloud: 'M7 18a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 8.6 4.7 4.7 0 0 1 17 18z',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
   beam: 'M3 7h18v4H3zm0 6h18v1H3zm0 3h18v1H3z',
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
@@ -169,6 +172,8 @@ const TOOL_LABEL: Record<Tool, string> = {
   text: 'tool.text',
   leader: 'tool.leader',
   level_mark: 'tool.level_mark',
+  angle_dim: 'tool.angle_dim',
+  rev_cloud: 'tool.rev_cloud',
   column: 'tool.column',
   beam: 'tool.beam',
   glass_wall: 'tool.glass_wall',
@@ -183,12 +188,12 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'pan', 'zoom_area', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split', 'stair', 'measure', 'dim', 'text', 'leader', 'level_mark'] },
+  { id: 'survey', view: '2d', tools: ['select', 'pan', 'zoom_area', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split', 'stair', 'measure', 'dim', 'text', 'leader', 'level_mark', 'angle_dim', 'rev_cloud'] },
   { id: 'concept', view: 'split', tools: ['select', 'pan', 'zoom_area', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'pan', 'zoom_area', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure'] },
   { id: 'mep', view: '2d', tools: ['select', 'pan', 'zoom_area', 'tech', 'shaft', 'measure'] },
-  { id: 'docs', view: '2d', tools: ['select', 'pan', 'zoom_area', 'measure', 'dim', 'text', 'leader', 'level_mark'] },
+  { id: 'docs', view: '2d', tools: ['select', 'pan', 'zoom_area', 'measure', 'dim', 'text', 'leader', 'level_mark', 'angle_dim', 'rev_cloud'] },
   { id: 'quote', view: '2d', tools: ['select', 'pan', 'zoom_area'] },
   { id: 'present', view: '3d', tools: ['select', 'pan', 'zoom_area'] },
   { id: 'orders', view: '2d', tools: [], page: true },
@@ -409,6 +414,11 @@ export default function Editor({ id }: { id: string }){
     if (!r.changed) return false; commit(r.snapshot); if (warn && r.issues.length) setPending({ before: house!, issues: r.issues, discard: () => hist.current.discardLast() }); return true; };
   const groupNudge = (dxCm: number, dzCm: number) => { if (snap && catalog) groupDone(nudgeGroup(snap, catalog, group, dxCm, dzCm), 'editor.positionRefused', false); };   // ca la o singură piesă: săgețile nu deschid avertismente
   const groupRotate = () => { if (snap && catalog) groupDone(rotateGroup(snap, catalog, group), 'editor.rotateNoFit'); };
+  // „Repetă în rând”: copii ale grupului (sau ale piesei) la pas egal, într-un singur pas de anulare; copiile devin noul grup
+  const [arrayOpen, setArrayOpen] = useState(false);
+  const groupArray = (count: number, sx: number, sz: number) => { setArrayOpen(false); if (!snap || !catalog || !group.length) return;
+    const r = arrayGroup(snap, catalog, group, count, sx, sz, () => uid()); if (!r.ok && r.key === 'edit.arrayBad'){ say(t('array.bad')); return; }
+    if (groupDone(r, 'editor.positionRefused')){ setGroup(r.ids); say(t('array.done', { n: r.ids.length })); } };
   const groupDuplicate = () => { if (!snap || !catalog) return; const r = duplicateGroup(snap, catalog, group, () => uid()); if (groupDone(r, 'editor.positionRefused')) setGroup(r.ids); };
   /** comenzile `arrange.*`: aliniere (de la 2 piese) și distribuire (de la 3), după cutia fiecărei piese */
   const arrange = (cid: string) => { if (!snap || !catalog || !arrangeCommands(group.length).some(x => x === cid)) return; const items = arrangeItems(snap, catalog, group), k = cid.slice('arrange.'.length);
@@ -579,6 +589,11 @@ export default function Editor({ id }: { id: string }){
   // `extra`: vârful săgeții („Săgeată cu notă”) sau simbolul cotei de nivel, pe aceeași adnotare de tip text
   const onAddText = (at: [number, number], text: string, extra?: TextExtra) => { const v = cleanPlanText(text); if (!v || full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `text-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'text', at, text: v, ...(extra?.leader ? { leader: [r3(extra.leader[0]), r3(extra.leader[1])] as [number, number] } : {}), ...(extra?.symbol === 'level' ? { symbol: 'level' as const } : {}) }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
+  // cota unghiulară și norul de revizie: tipuri proprii de adnotare (kind 'angle' / 'cloud'), selectate după plasare ca restul
+  const onAddAngle = (v: [number, number], a: [number, number], b: [number, number], r: number) => { if (full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `unghi-${uid().slice(0, 8)}`, q = (p: [number, number]): [number, number] => [r3(p[0]), r3(p[1])];
+    mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'angle', v: q(v), a: q(a), b: q(b), r: r3(Math.min(PLAN_LIMITS.annotation.angleRadiusMaxM, Math.max(PLAN_LIMITS.annotation.angleRadiusMinM, r))) }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
+  const onAddCloud = (rect: { x0: number; z0: number; x1: number; z1: number }, label?: string) => { if (full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `nor-${uid().slice(0, 8)}`, lb = cleanCloudLabel(label);
+    mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'cloud', rect: { x0: r3(rect.x0), z0: r3(rect.z0), x1: r3(rect.x1), z1: r3(rect.z1) }, ...(lb ? { label: lb } : {}) }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
   const patchAnn = (aid: string, fn: (a: Annotation) => void) => mutate(s => { const a = s.floor.annotations?.find(x => x.id === aid); if (a) fn(a); });
   const patchNiche = (nid: string, fn: (n: Niche) => void) => mutate(s => { const n = s.floor.niches?.find(x => x.id === nid); if (n) fn(n); });
   // obiect pe perete nou (unealta „Pe perete”): mărimea și cota implicite ale tipului; tabloul deasupra canapelei, a patului sau a
@@ -687,7 +702,7 @@ export default function Editor({ id }: { id: string }){
   const selZone = sel?.kind === 'floor_zone' ? snap.floor.zones?.find(z => z.id === sel.id) : undefined;
   const selCeilingZone = sel?.kind === 'ceiling_zone' ? snap.floor.ceilingZones?.find(z => z.id === sel.id) : undefined;
   const selRailing = sel?.kind === 'railing' ? snap.floor.railings?.find(r => r.id === sel.id) : undefined;
-  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selCeilingZone ? t('tool.ceiling_zone') : selRailing ? t('tool.railing') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text') : '';
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selCeilingZone ? t('tool.ceiling_zone') : selRailing ? t('tool.railing') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.kind === 'angle' ? 'tool.angle_dim' : selAnn.kind === 'cloud' ? 'tool.rev_cloud' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text') : '';
   // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
   const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
     return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
@@ -736,6 +751,7 @@ export default function Editor({ id }: { id: string }){
         hint: room, run: () => { setTool('select'); setSel({ kind: 'placement', id: pl.id }); } }; })),
     ...(sel?.kind === 'placement' ? [{ id: 'frame-other', group: t('cmdk.group.actions'), label: t('cmdk.frameOther'), keywords: ['3d', 'plan', 'frame', t('hud.frame3d'), t('viewer.showInPlan')], run: () => (view === '3d' ? frameInPlan(sel.id) : frameIn3d(sel.id)) }] : []),
     // așezarea pieselor selectate: alinierea de la 2 piese, distribuirea de la 3 (lib/commands.ts arrangeCommands); apar și în meniul Editare
+    ...(stageDef.page || !group.length ? [] : [{ id: 'array', group: t('cmdk.group.actions'), label: t('array.cmd'), keywords: ['array', 'matrice', 'repeta', 'rand', 'row'], run: () => setArrayOpen(true) }]),
     ...(stageDef.page ? [] : arrangeCommands(group.length).map(cid => ({ id: cid, group: t('cmdk.group.actions'), label: t(cid), keywords: [t('cmdk.kw.arrange')], run: () => arrange(cid) }))),
     { id: 'health', group: t('cmdk.group.actions'), label: t('cmdk.health'), keywords: [t('cmdk.kw.health')], run: () => setShowHealth(true) },
     { id: 'lang', group: t('cmdk.group.settings'), label: LANGS.find(l => l.code !== lang)!.name, keywords: [t('cmdk.kw.lang'), 'language', 'limba'], run: () => setLang(lang === 'ro' ? 'en' : 'ro') },
@@ -749,6 +765,7 @@ export default function Editor({ id }: { id: string }){
   const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
   return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''} ${theme === 'pro' ? 'theme-pro' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
+    {arrayOpen && group.length > 0 && <ArrayDialog pieces={group.length} onApply={groupArray} onClose={() => setArrayOpen(false)} />}
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
     {!compact && <MenuBar menus={buildMenus(commands, k => t(k))} ariaLabel={t('menu.aria')} />}
     <header className="topbar studio-topbar">
@@ -851,7 +868,7 @@ export default function Editor({ id }: { id: string }){
           onAddClad={preview ? undefined : onAddClad}
           onAddWallItem={preview ? undefined : onAddWallItem} showWallItems={stage !== 'survey'}
           showFinishes={!preview && (stage === 'finishes' || stage === 'docs')} mc={mc}
-          onAddDim={preview ? undefined : onAddDim}
+          onAddDim={preview ? undefined : onAddDim} onAddAngle={preview ? undefined : onAddAngle} onAddCloud={preview ? undefined : onAddCloud}
           onAddText={preview ? undefined : onAddText}
           onToggleDemolish={preview ? undefined : onToggleDemolish}
           onAddZone={preview ? undefined : onAddZone}
@@ -887,7 +904,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -1050,7 +1067,7 @@ export default function Editor({ id }: { id: string }){
           )}
           {/* inspector:annotation */}
           {selAnn && (stage === 'survey' || stage === 'docs') && (<div style={{ display: 'grid', gap: 8 }}>
-            <h3>{t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text')}</h3>
+            <h3>{t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.kind === 'angle' ? 'tool.angle_dim' : selAnn.kind === 'cloud' ? 'tool.rev_cloud' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text')}</h3>
             {selAnn.kind === 'dim' ? <>
               <div className="prov">{formatLength(dimGeometry(selAnn).value, units, lang)}</div>
               <div className="grid2">
@@ -1059,6 +1076,11 @@ export default function Editor({ id }: { id: string }){
                   <option value="aligned">{t('dim.aligned')}</option><option value="ortho">{t('dim.ortho')}</option></select></label>
               </div>
               <button className="btn" onClick={() => patchAnn(selAnn.id, a => { if (a.kind === 'dim') a.offset = -a.offset; })}>{t('dim.flip')}</button></>
+            : selAnn.kind === 'angle' ? <>
+              <div className="prov">{formatAngle(angleGeometry(selAnn).deg, lang === 'en' ? '.' : ',')}</div>
+              <label className="f"><span>{t('angle.radius', { u })}</span><input type="number" value={inField(selAnn.r)} onChange={e => num(e.target.value, x => patchAnn(selAnn.id, a => { if (a.kind === 'angle') a.r = r3(Math.min(PLAN_LIMITS.annotation.angleRadiusMaxM, Math.max(PLAN_LIMITS.annotation.angleRadiusMinM, x / 100))); }))} /></label></>
+            : selAnn.kind === 'cloud' ? <>
+              <label className="f"><span>{t('cloud.label')}</span><input value={selAnn.label ?? ''} maxLength={PLAN_LIMITS.annotation.cloudLabelMax} onChange={e => { const v = cutChars(stripPlanText(e.target.value), PLAN_LIMITS.annotation.cloudLabelMax); patchAnn(selAnn.id, a => { if (a.kind !== 'cloud') return; if (v.trim()) a.label = v.trim(); else delete a.label; }); }} /></label></>
             : <>
               <label className="f"><span>{t('text.content')}</span><input value={selAnn.text} maxLength={PLAN_LIMITS.annotation.textMax} onChange={e => { const v = stripPlanText(e.target.value); patchAnn(selAnn.id, a => { if (a.kind === 'text') a.text = v; }); }} onBlur={() => { if (!cleanPlanText(selAnn.text)) del(); }} /></label>
               <div className="grid2">

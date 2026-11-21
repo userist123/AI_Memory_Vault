@@ -33,6 +33,8 @@ describe('ordinea câmpurilor din inspector', () => {
       {
         "annotation": [
           "tool.dim",
+          "tool.angle_dim",
+          "tool.rev_cloud",
           "tool.level_mark",
           "tool.leader",
           "tool.text",
@@ -41,6 +43,8 @@ describe('ordinea câmpurilor din inspector', () => {
           "dim.aligned",
           "dim.ortho",
           "dim.flip",
+          "angle.radius",
+          "cloud.label",
           "text.content",
           "text.size",
           "text.sizeS",

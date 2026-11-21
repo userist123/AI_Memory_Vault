@@ -21,9 +21,9 @@ import { doorSwing } from '@/core/doors';
 import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
 import { wallItemGeometry, wallItemDepth } from '@/core/wall-items';
-import { formatLevelValue, dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, moveAnnotation } from '@/core/annotations';
-import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
-import type { DimAnnotation } from '@/core/types';
+import { formatLevelValue, dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, moveAnnotation, angleGeometry, angleArcPath, angleLabelAt, angleOk, angleRadiusAt, formatAngle, cloudPath, cloudLabelAt, cloudOk, CLOUD_LABEL_M } from '@/core/annotations';
+import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText, cleanCloudLabel, stripPlanText } from '@/core/plan-limits';
+import type { AngleAnnotation, DimAnnotation } from '@/core/types';
 import { allFixturePoints } from '@/core/fixtures';
 import { MEP_SYSTEMS } from '@/core/mep';
 import { finishesOf } from '@/core/boq';
@@ -41,7 +41,7 @@ import { PLAN_LIMITS as LIM } from '@/core/plan-limits';
 import { railingHeight, railingKind } from '@/core/railings';
 import { roomRugs, rugSize, rugRectAt } from '@/core/textiles';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split' | 'leader' | 'level_mark';
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split' | 'leader' | 'level_mark' | 'angle_dim' | 'rev_cloud';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 export type TextExtra = { leader?: [number, number]; symbol?: 'level' };
@@ -62,6 +62,10 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** unealta „Pe perete”: clic lângă perete, pe fața pe care stă obiectul; `showWallItems` = false le ascunde (Releveu) */
   onAddWallItem?(wallId: string, offset: number, side: 1 | -1): void; showWallItems?: boolean;
   onAddDim?(a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho'): void;
+  /** cota unghiulară: vârful, câte un punct pe fiecare braț, raza arcului (m) */
+  onAddAngle?(v: [number, number], a: [number, number], b: [number, number], r: number): void;
+  /** norul de revizie: dreptunghiul tras și eticheta scurtă (lipsă = fără etichetă) */
+  onAddCloud?(rect: { x0: number; z0: number; x1: number; z1: number }, label?: string): void;
   /** `extra`: vârful săgeții („Săgeată cu notă”) sau simbolul cotei de nivel; lipsă = text simplu */
   onAddText?(at: [number, number], text: string, extra?: TextExtra): void;
   /** unealta „Demolare”: clic pe perete comută starea lui (existent ↔ de demolat) */
@@ -142,7 +146,12 @@ export default function PlanView(p: Props){
   useEffect(() => { if (textDraft) textInput.current?.focus(); }, [textDraft]);
   // „Săgeată cu notă”: primul clic = vârful săgeții (pe obiectul adnotat); al doilea deschide câmpul de text în locul notei
   const [leaderTip, setLeaderTip] = useState<[number, number] | null>(null);
-  useEffect(() => { setLeaderTip(null); }, [p.tool]);
+  // „Cotă unghiulară”: clic pe vârf, pe primul braț, pe al doilea; al patrulea clic (sau Enter) fixează raza arcului
+  const [angleDraft, setAngleDraft] = useState<{ v: [number, number]; a?: [number, number]; b?: [number, number] } | null>(null);
+  // „Nor de revizie”: după dreptunghi se deschide câmpul etichetei (gol; Enter fără text = nor fără etichetă, Esc renunță)
+  const [cloudDraft, setCloudDraft] = useState<{ rect: { x0: number; z0: number; x1: number; z1: number }; left: number; top: number } | null>(null), [cloudVal, setCloudVal] = useState(''), cloudInput = useRef<HTMLInputElement>(null), cloudClosed = useRef(false);
+  useEffect(() => { if (cloudDraft) cloudInput.current?.focus(); }, [cloudDraft]);
+  useEffect(() => { setLeaderTip(null); setAngleDraft(null); setCloudDraft(null); }, [p.tool]);
   // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
   useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setMenu(null); setDim(null); }, [p.tool]);
@@ -235,7 +244,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setTyped(''); setZoomDraft(null); setMarquee(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setAngleDraft(null); setCloudDraft(null); setTyped(''); setZoomDraft(null); setMarquee(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -260,6 +269,14 @@ export default function PlanView(p: Props){
       if (!dimDraft){ setDimDraft({ a: s, mode: 'aligned' }); setTyped(''); }
       else if (!dimDraft.b){ if (dimOk(dimDraft.a, s, dimDraft.mode)){ setDimDraft({ ...dimDraft, b: s }); setTyped(''); } }
       else finishDim(dimOffsetAt(dimDraft.a, dimDraft.b, dimDraft.mode, pt)); return; }
+    // cota unghiulară: vârful, primul braț, al doilea braț (fiecare de cel puțin 1 cm), apoi raza arcului prin punctul clicului
+    if (p.tool === 'angle_dim'){ const s = snapPoint(pt, floor); svg.current!.focus({ preventScroll: true });
+      if (!angleDraft) setAngleDraft({ v: s });
+      else if (!angleDraft.a){ if (angleOk(angleDraft.v, s, s)) setAngleDraft({ ...angleDraft, a: s }); }
+      else if (!angleDraft.b){ if (angleOk(angleDraft.v, angleDraft.a, s)) setAngleDraft({ ...angleDraft, b: s }); }
+      else finishAngle(angleRadiusAt(angleDraft.v, pt)); return; }
+    // norul de revizie cu câmpul etichetei deschis: clicul pe plan l-a închis deja (blur = confirmă), nu pornește alt nor
+    if (p.tool === 'rev_cloud' && cloudDraft) return;
     // preventDefault oprește blur-ul inputului: un text deja tastat se plasează aici (clicul nu-l pierde), apoi unealta revine la selecție
     if (TEXT_TOOLS.includes(p.tool) && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; addNote(textDraft.at, cleanPlanText(textVal), textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); return; }
     // săgeata cu notă: primul clic e vârful; fără text tastat, un clic nou mută doar locul notei (vârful rămâne)
@@ -274,7 +291,7 @@ export default function PlanView(p: Props){
     if (p.tool === 'rug'){ p.onAddRugAt?.(roomAt(pt)?.id ?? null, Math.round(pt[0] * 100) / 100, Math.round(pt[1] * 100) / 100); return; }
     if (p.tool === 'style_copy'){ p.onStylePick?.(roomAt(pt)?.id ?? null); return; }
     if (p.tool === 'split'){ const h = splitAt(pt, e.shiftKey); if (h) p.onSplitRoomAt?.(h.room.id, h.axis, h.at); return; }
-    if (p.tool === 'room' || p.tool === 'floor_zone' || p.tool === 'ceiling_zone'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
+    if (p.tool === 'room' || p.tool === 'floor_zone' || p.tool === 'ceiling_zone' || p.tool === 'rev_cloud'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
     // placare: clic pe fața peretelui, apoi clic unde se termină; al doilea clic în același loc (dublu-clic) = toată latura
@@ -386,12 +403,20 @@ export default function PlanView(p: Props){
   function finishRoom(a: [number, number], b: [number, number]){ setRoomDraft(null); setTyped('');
     const r = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) };
     if (p.tool === 'floor_zone'){ if (r.x1 - r.x0 >= LIM.zone.minM && r.z1 - r.z0 >= LIM.zone.minM) p.onAddZone?.(r); return; }
+    if (p.tool === 'rev_cloud'){ openCloud(r); return; }
     if (p.tool === 'ceiling_zone'){ if (r.x1 - r.x0 >= LIM.ceilingZone.minM && r.z1 - r.z0 >= LIM.ceilingZone.minM) p.onAddCeilingZone?.(r); return; }
     if (r.x1 - r.x0 >= .6 && r.z1 - r.z0 >= .6) p.onAddRoom(r); }
   // cota tastată: valabilă doar cât se desenează un segment (perete, grindă, sticlă) sau o cameră; tastele prinse aici
   // (cifre, unitățile după o cifră, Backspace, Escape, Enter) nu ajung la scurtăturile editorului
+  const finishAngle = (r: number) => { if (angleDraft?.a && angleDraft.b) p.onAddAngle?.(angleDraft.v, angleDraft.a, angleDraft.b, r); setAngleDraft(null); };
+  // norul: dreptunghiul e gata, se cere eticheta (câmp gol, nimic precompletat) lângă colțul din stânga-sus
+  const openCloud = (r: { x0: number; z0: number; x1: number; z1: number }) => { if (!cloudOk(r)) return; const el = svg.current; if (!el) return;
+    const par = el.parentElement!.getBoundingClientRect(), s = toScreen([r.x0, r.z0]); cloudClosed.current = false; setCloudVal('');
+    setCloudDraft({ rect: { x0: r3(r.x0), z0: r3(r.z0), x1: r3(r.x1), z1: r3(r.z1) }, left: Math.max(0, s.x - par.left), top: Math.max(20, s.y - par.top - 24) }); };
+  const closeCloud = (add: boolean) => { if (cloudClosed.current) return; cloudClosed.current = true; const d = cloudDraft; setCloudDraft(null);
+    if (add && d){ const label = cleanCloudLabel(cloudVal); p.onAddCloud?.(d.rect, label || undefined); } };
   const finishDim = (off: number) => { if (dimDraft?.b) p.onAddDim?.(dimDraft.a, dimDraft.b, Math.max(-PLAN_LIMITS.annotation.offsetMaxM, Math.min(PLAN_LIMITS.annotation.offsetMaxM, off)), dimDraft.mode); setDimDraft(null); setTyped(''); };
-  const rectTool = p.tool === 'room' || p.tool === 'floor_zone' || p.tool === 'ceiling_zone';
+  const rectTool = p.tool === 'room' || p.tool === 'floor_zone' || p.tool === 'ceiling_zone' || p.tool === 'rev_cloud';
   const segment = SEGMENT_TOOLS.includes(p.tool), dimming = p.tool === 'dim' && !!dimDraft, typing = (segment && !!preview) || (rectTool && !!roomDraft) || dimming;
   const typedValue = !typed ? null : segment || dimming ? parseTypedLength(typed, units) : parseTypedSize(typed, units);
   function typedKey(e: React.KeyboardEvent<SVGSVGElement>): boolean {
@@ -410,7 +435,7 @@ export default function PlanView(p: Props){
       if (segment && preview && typeof typedValue === 'number'){ const a = preview.a, free = !!raw.current?.free;
         const toward: [number, number] = wallLength(a, preview.b) > 1e-3 ? preview.b : raw.current && wallLength(a, raw.current.pt) > 1e-3 ? raw.current.pt : [a[0] + 1, a[1]];
         addSegment(a, pointAtLength(a, toward, typedValue, 15, free)); }
-      else if (rectTool && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); if (p.tool === 'floor_zone') p.onAddZone?.(r); else if (p.tool === 'ceiling_zone') p.onAddCeilingZone?.(r); else p.onAddRoom(r); }
+      else if (rectTool && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); if (p.tool === 'floor_zone') p.onAddZone?.(r); else if (p.tool === 'rev_cloud') openCloud(r); else if (p.tool === 'ceiling_zone') p.onAddCeilingZone?.(r); else p.onAddRoom(r); }
       return true; }
     if (e.key === 'Backspace' && typed){ setTyped(x => x.slice(0, -1)); return true; }
     // cât timp se desenează, Delete și Backspace nu ajung la „șterge selecția” din editor
@@ -421,6 +446,12 @@ export default function PlanView(p: Props){
   }
   function keyDown(e: React.KeyboardEvent<SVGSVGElement>){
     if (typedKey(e)){ e.preventDefault(); e.stopPropagation(); return; }
+    // cota unghiulară în lucru: Enter (după al doilea braț) = raza implicită; Esc anulează desenul (ascultătorul de pe window),
+    // fără să deselecteze; Delete / Backspace nu ajung la „șterge selecția”
+    if (p.tool === 'angle_dim' && angleDraft && !e.ctrlKey && !e.metaKey && !e.altKey){
+      if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); if (angleDraft.b) finishAngle(PLAN_DEFAULTS.angleRadius); return; }
+      if (e.key === 'Escape') return;
+      if (e.key === 'Backspace' || e.key === 'Delete'){ e.preventDefault(); e.stopPropagation(); return; } }
     // Esc în timpul desenării anulează desenul (ascultătorii de pe window), chiar dacă e ceva selectat: nu deselectează întâi
     if (e.key === 'Escape' && typing) return;
     // uneltele noi (pipetă, covor, împărțire, navigare): Esc ajunge la editor și revine la Selecție, nu doar deselectează
@@ -601,7 +632,24 @@ export default function PlanView(p: Props){
           <text x={ta[0]} y={ta[1]} fontSize={h} transform={rot} textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} fontFamily="Instrument Sans, Segoe UI, sans-serif"
             fill={col} stroke={HALO} strokeWidth={h * .18} paintOrder="stroke" textDecoration={on ? 'underline' : undefined}>{an.text}</text>
           {on && an.leader && <circle data-k="leadertip" data-id={an.id} cx={an.leader[0]} cy={an.leader[1]} r={fs * .45} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }}><title>{t('leader.tipHint')}</title></circle>}</g>); }
+      if (an.kind === 'angle') return <AngleMark key={an.id} d={an} fs={fs} ink={ink} label={formatAngle(angleGeometry(an).deg, lang === 'en' ? '.' : ',')} hit={{ 'data-k': 'annotation', 'data-id': an.id }} />;
+      // norul de revizie: conturul cu arce (prins pe linie, nu pe interior, ca planul de sub el să rămână accesibil) și eticheta
+      if (an.kind === 'cloud'){ const d = cloudPath(an.rect), lb = cloudLabelAt(an.rect);
+        return (<g key={an.id} data-k="annotation" data-id={an.id} style={{ cursor: 'move' }}><title>{t('tool.rev_cloud')}{an.label ? ` · ${an.label}` : ''}</title>
+          <path d={d} fill="none" stroke="transparent" strokeWidth={fs * .8} /><path d={d} fill="none" stroke={ink} strokeWidth={fs * .07} strokeLinejoin="round" pointerEvents="none" />
+          {an.label && <text x={lb[0]} y={lb[1]} fontSize={CLOUD_LABEL_M} fontWeight={600} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={ink} stroke={HALO} strokeWidth={CLOUD_LABEL_M * .18} paintOrder="stroke">{an.label}</text>}</g>); }
       return <DimMark key={an.id} d={an} fs={fs} ink={ink} label={wl(dimGeometry(an).value)} hit={{ 'data-k': 'annotation', 'data-id': an.id }} />; })}
+    {/* cota unghiulară în lucru: brațele până la cursor, apoi arcul cu raza de la cursor */}
+    {angleDraft && (() => { const c = cursor ?? angleDraft.v, { v, a, b } = angleDraft, dash = { stroke: DIM, strokeWidth: fs * .07, strokeDasharray: '.08 .05' };
+      const dec = lang === 'en' ? '.' : ',', dot = <circle cx={v[0]} cy={v[1]} r={fs * .25} fill={DIM} />;
+      if (!a) return <g pointerEvents="none"><line x1={v[0]} y1={v[1]} x2={c[0]} y2={c[1]} {...dash} />{dot}</g>;
+      if (!b){ const d = { v, a, b: c, r: Math.max(LIM.annotation.angleRadiusMinM, Math.min(PLAN_DEFAULTS.angleRadius, wallLength(v, a), wallLength(v, c))) }, ok = angleOk(v, a, c);
+        return <g pointerEvents="none"><line x1={v[0]} y1={v[1]} x2={a[0]} y2={a[1]} {...dash} /><line x1={v[0]} y1={v[1]} x2={c[0]} y2={c[1]} {...dash} />{dot}
+          {ok && <g opacity={.75}><AngleMark d={d} fs={fs} ink={DIM} label={formatAngle(angleGeometry(d).deg, dec)} /></g>}</g>; }
+      const d = { v, a, b, r: cursor ? angleRadiusAt(v, cursor) : PLAN_DEFAULTS.angleRadius };
+      return <g pointerEvents="none" opacity={.75}><AngleMark d={d} fs={fs} ink={DIM} label={formatAngle(angleGeometry(d).deg, dec)} />{dot}</g>; })()}
+    {/* norul de revizie care își așteaptă eticheta */}
+    {cloudDraft && <path d={cloudPath(cloudDraft.rect)} fill="none" stroke={DIM} strokeWidth={fs * .07} strokeLinejoin="round" opacity={.75} pointerEvents="none" />}
     {/* săgeata cu notă în lucru: de la vârful ales până la cursor, apoi până la locul notei */}
     {(() => { const d = textDraft?.extra?.leader ? { at: textDraft.at, leader: textDraft.extra.leader } : p.tool === 'leader' && leaderTip ? { at: cursor ?? leaderTip, leader: leaderTip } : null, lg = d && leaderGeometry(d);
       return d && (<g pointerEvents="none">{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke={DIM} strokeWidth={fs * .07} strokeDasharray=".08 .05" /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill={DIM} /></>}
@@ -822,6 +870,11 @@ export default function PlanView(p: Props){
       onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) addNote(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); }}
       onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); textClosed.current = true;
         const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) addNote(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); }} />}
+    {cloudDraft && <input ref={cloudInput} className="plan-text-input" style={{ position: 'absolute', left: cloudDraft.left, top: cloudDraft.top, zIndex: 3 }} aria-label={t('cloud.inputAria')} placeholder={t('cloud.placeholder')}
+      maxLength={PLAN_LIMITS.annotation.cloudLabelMax} value={cloudVal} onChange={e => setCloudVal(stripPlanText(e.target.value))}
+      // Enter sau clic în afară = norul se adaugă (cu eticheta tastată sau fără); Esc renunță la nor; focusul revine pe plan
+      onFocus={() => { cloudClosed.current = false; }} onBlur={() => closeCloud(true)}
+      onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); closeCloud(e.key === 'Enter'); svg.current?.focus(); }} />}
     {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
@@ -840,6 +893,17 @@ function dimLabelAt(w: Wall, fs: number): [number, number] {
   return [(w.a[0] + w.b[0]) / 2 + nx * off, (w.a[1] + w.b[1]) / 2 + nz * off];
 }
 const DIM = '#B8432C', HALO = '#FFFDF8';
+/** Cota unghiulară: cele două brațe scurte din vârf, arcul dintre ele și valoarea pe bisectoare, în afara arcului. */
+function AngleMark({ d, fs, ink, label, hit }: { d: Pick<AngleAnnotation, 'v' | 'a' | 'b' | 'r'>; fs: number; ink: string; label: string; hit?: Record<string, string> }){
+  const g = angleGeometry(d), sw = fs * .06, arc = angleArcPath(d), lb = angleLabelAt(d, fs * .9);
+  const arms = g.arms.map(([p, q]) => `M${p[0]} ${p[1]}L${q[0]} ${q[1]}`).join('');
+  return (<g {...hit} style={hit ? { cursor: 'move' } : undefined}>
+    {hit && <path d={`${arc}${arms}`} fill="none" stroke="transparent" strokeWidth={fs * .8} />}
+    <path d={arms} fill="none" stroke={ink} strokeWidth={sw * .7} pointerEvents="none" />
+    <path d={arc} fill="none" stroke={ink} strokeWidth={sw} pointerEvents="none" />
+    <text x={lb[0]} y={lb[1]} textAnchor="middle" dominantBaseline="central" fontSize={fs * .85} fontFamily="Instrument Sans, Segoe UI, sans-serif" fontWeight={600}
+      fill={ink} stroke={HALO} strokeWidth={fs * .2} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{label}</text></g>);
+}
 /** Cota persistentă: linii de extensie de la punctele măsurate, linia de cotă cu tick-uri la 45° și valoarea pe linie. */
 function DimMark({ d, fs, ink, label, hit }: { d: Pick<DimAnnotation, 'a' | 'b' | 'offset' | 'mode'>; fs: number; ink: string; label: string; hit?: Record<string, string> }){
   const g = dimGeometry(d), [ux, uz] = g.u, [nx, nz] = g.n, tk = fs * .3, sw = fs * .06, s = Math.sign(d.offset) || 1;

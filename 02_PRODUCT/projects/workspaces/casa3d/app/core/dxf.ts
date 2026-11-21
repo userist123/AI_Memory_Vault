@@ -10,7 +10,7 @@ import { doorSymbol } from './door-symbols';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
 import { nicheGeometry } from './niches';
-import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, rotateAbout, textAnchor, textAnchorAt } from './annotations';
+import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, rotateAbout, textAnchor, textAnchorAt, angleGeometry, angleLabelAt, formatAngle, cloudOutline, cloudLabelAt, ANGLE_TEXT_M, CLOUD_LABEL_M } from './annotations';
 
 export const DXF_LAYERS = [
   { name: 'WALLS', color: 7 }, { name: 'DOORS', color: 1 }, { name: 'WINDOWS', color: 5 }, { name: 'ROOMS', color: 3 },
@@ -165,6 +165,14 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
         line('DIMENSIONS', A, B); line('DIMENSIONS', P(...an.a), A); line('DIMENSIONS', P(...an.b), B);
         for (const pt of [A, B]) line('DIMENSIONS', [pt[0] - (dx - dy) * t, pt[1] - (dy + dx) * t], [pt[0] + (dx - dy) * t, pt[1] + (dy + dx) * t]);
         const m = P(g.mid[0] + g.n[0] * .12, g.mid[1] + g.n[1] * .12); text('DIMENSIONS', m, 120, String(Math.round(g.value * 1000)), { rot: ((-g.rot) % 360 + 360) % 360, center: true }); }
+      // cota unghiulară = cele două brațe (LINE) + arcul (ARC, mereu în sens trigonometric în DXF) + valoarea (TEXT), pe NOTES
+      else if (an.kind === 'angle'){ const g = angleGeometry(an), deg = (t: number) => ((-t * 180 / Math.PI) % 360 + 360) % 360, t0 = g.start, t1 = g.start + g.sweep;
+        line('NOTES', P(...g.arms[0][0]), P(...g.arms[0][1])); line('NOTES', P(...g.arms[1][0]), P(...g.arms[1][1]));
+        arc('NOTES', P(...an.v), an.r * 1000, deg(g.sweep > 0 ? t1 : t0), deg(g.sweep > 0 ? t0 : t1));
+        text('NOTES', P(...angleLabelAt(an, ANGLE_TEXT_M)), ANGLE_TEXT_M * 1000, formatAngle(g.deg, opts.lang === 'en' ? '.' : ','), { center: true }); }
+      // norul de revizie = un contur închis (arcele aproximate cu segmente) + eticheta, dacă are, pe NOTES
+      else if (an.kind === 'cloud'){ poly('NOTES', cloudOutline(an.rect).map(q => P(...q)));
+        if (an.label) text('NOTES', P(...cloudLabelAt(an.rect)), CLOUD_LABEL_M * 1000, an.label); }
       else { // text liber; săgeata cu notă = linia + cele două laturi ale vârfului, cota de nivel = triunghiul, toate pe NOTES
         const lg = leaderGeometry(an), rot = an.rotation ?? 0, R = (q: [number, number]) => P(...rotateAbout(q, an.at, rot));
         if (lg){ line('NOTES', P(...lg.from), P(...lg.tip)); line('NOTES', P(...lg.tip), P(...lg.head[1])); line('NOTES', P(...lg.tip), P(...lg.head[2])); }

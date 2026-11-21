@@ -133,7 +133,8 @@ describe('uneltele în bară și scurtăturile lor', () => {
     for (const lang of ['ro', 'en'] as const) assert.ok(!/\d/.test(DICTS[lang]['level.placeholder']!));
   });
   test('stau în grupa „Cote și texte”: Releveul nu primește un loc nou, iar în Planșe adnotările rămân butoane separate', () => {
-    assert.deepEqual(TOOL_GROUPS.find(g => g.id === 'notes')!.tools, ['measure', 'dim', 'text', 'leader', 'level_mark']);
+    // Schimbat conștient (lotul 3): grupa a primit la coadă cota unghiulară și norul de revizie; primele cinci rămân în aceeași ordine
+    assert.deepEqual(TOOL_GROUPS.find(g => g.id === 'notes')!.tools.slice(0, 5), ['measure', 'dim', 'text', 'leader', 'level_mark']);
     const names = (tools: Tool[]) => railSlots(tools, true).map(s => 'tool' in s ? s.tool : s.group);
     const before: Tool[] = ['select', 'pan', 'zoom_area', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split', 'stair', 'measure', 'dim', 'text'];
     assert.deepEqual(names([...before, 'leader', 'level_mark']), names(before));

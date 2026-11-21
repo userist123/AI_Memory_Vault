@@ -26,7 +26,7 @@ import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
 import { nicheGeometry } from '@/core/niches';
-import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt } from '@/core/annotations';
+import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, angleGeometry, angleArcPath, angleLabelAt, formatAngle, cloudPath, cloudLabelAt, CLOUD_LABEL_M } from '@/core/annotations';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { localizeSnapshotRoomNames } from '@/core/templates';
@@ -64,6 +64,13 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
         return <g key={an.id}>{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="#222" strokeWidth={fs(0.15)} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill="#222" /></>}
           {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).outline.map(q => q.join(' ')).join('L')}Z`} fill="none" stroke="#222" strokeWidth={fs(0.15)} transform={rot} />}
           <text x={ta[0]} y={ta[1]} fontSize={textHeight(an)} fill="#222" textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} transform={rot}>{an.text}</text></g>; }
+      // cota unghiulară (brațe, arc, valoarea pe bisectoare) și norul de revizie (contur cu arce, eticheta deasupra)
+      if (an.kind === 'angle'){ const g = angleGeometry(an), lb = angleLabelAt(an, fs(2.6));
+        return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)} fill="none">{g.arms.map(([q, e], k) => <line key={k} x1={q[0]} y1={q[1]} x2={e[0]} y2={e[1]} />)}<path d={angleArcPath(an)} />
+          <text x={lb[0]} y={lb[1]} fontSize={fs(2.4)} fill="#333" stroke="none" textAnchor="middle" dominantBaseline="central">{formatAngle(g.deg, locale === 'en' ? '.' : ',')}</text></g>; }
+      if (an.kind === 'cloud'){ const lb = cloudLabelAt(an.rect);
+        return <g key={an.id}><path d={cloudPath(an.rect)} fill="none" stroke="#666" strokeWidth={fs(0.2)} strokeLinejoin="round" />
+          {an.label && <text x={lb[0]} y={lb[1]} fontSize={CLOUD_LABEL_M} fontWeight={600} fill="#222">{an.label}</text>}</g>; }
       const g = dimGeometry(an), [nx, nz] = g.n, s = Math.sign(an.offset) || 1, tk = fs(1.2), m = [g.mid[0] + nx * s * fs(2), g.mid[1] + nz * s * fs(2)];
       return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)}><line x1={an.a[0]} y1={an.a[1]} x2={g.p1[0]} y2={g.p1[1]} /><line x1={an.b[0]} y1={an.b[1]} x2={g.p2[0]} y2={g.p2[1]} /><line x1={g.p1[0]} y1={g.p1[1]} x2={g.p2[0]} y2={g.p2[1]} />
         {[g.p1, g.p2].map((q, k) => <line key={k} x1={q[0] - (g.u[0] + nx) * tk / 2} y1={q[1] - (g.u[1] + nz) * tk / 2} x2={q[0] + (g.u[0] + nx) * tk / 2} y2={q[1] + (g.u[1] + nz) * tk / 2} />)}

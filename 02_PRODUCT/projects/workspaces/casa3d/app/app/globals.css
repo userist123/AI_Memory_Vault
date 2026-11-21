@@ -1556,3 +1556,6 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .north-panel{display:grid;gap:6px} .north-panel h3{margin:0;font-size:var(--fs-sm)} .north-row{display:flex;gap:12px;align-items:flex-start}
 .north-dial{flex:none;cursor:crosshair;touch-action:none;border-radius:50%} .north-fields{display:grid;gap:6px;min-width:0} .north-fields label{display:grid;gap:3px;font-size:12px;color:var(--ink-3)}
 .north-fields input{width:110px} .north-arrow{flex:none}
+
+/* repetarea în rând (components/ArrayDialog.tsx) */
+.array-dlg{min-width:min(420px,92vw)} .array-grid{display:grid;gap:10px} .array-grid label{display:grid;gap:3px} .array-grid fieldset{border:0;padding:0;margin:0;display:grid;gap:4px} .array-dirs{display:flex;gap:6px} .array-dirs .btn[aria-pressed=true]{outline:2px solid var(--accent)} .array-radio{display:flex!important;align-items:center;gap:6px}

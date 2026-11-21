@@ -34,7 +34,9 @@ const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', roo
   // navigarea și uneltele de decor / împărțire: Shift + litera uneltei înrudite (V selecție, M măsoară, X pe perete, K placare, C cameră)
   pan: { key: 'v', shift: true }, zoom_area: { key: 'm', shift: true }, rug: { key: 'x', shift: true }, style_copy: { key: 'k', shift: true }, split: { key: 'c', shift: true },
   // adnotările noi: Shift + litera uneltei înrudite (B text, Q cotă)
-  leader: { key: 'b', shift: true }, level_mark: { key: 'q', shift: true } };
+  leader: { key: 'b', shift: true }, level_mark: { key: 'q', shift: true },
+  // lotul 3 de adnotări: cota unghiulară pe Shift+U (de la „unghi”) și norul de revizie pe Shift+N (de la „nor”); ambele erau libere
+  angle_dim: { key: 'u', shift: true }, rev_cloud: { key: 'n', shift: true } };
 const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 

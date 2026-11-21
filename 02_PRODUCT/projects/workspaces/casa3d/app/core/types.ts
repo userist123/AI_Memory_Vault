@@ -41,7 +41,12 @@ export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b
 /** Text liber pe plan. `leader` = vârful săgeții (m), pentru „Săgeată cu notă”: linia pleacă din `at`. `symbol: 'level'` = cotă de
  *  nivel: triunghiul are vârful în `at`, iar `text` este valoarea tastată (ex. „+0,00”). Ambele sunt opționale. */
 export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number; leader?: [number, number]; symbol?: 'level' }
-export type Annotation = DimAnnotation | TextAnnotation;
+/** Cotă unghiulară: vârful `v`, câte un punct pe fiecare braț (`a`, `b`) și raza arcului `r` (m). Se măsoară unghiul dintre
+ *  brațe (0–180°), de la brațul `a` spre brațul `b` pe drumul scurt. */
+export interface AngleAnnotation { id: string; kind: 'angle'; v: [number, number]; a: [number, number]; b: [number, number]; r: number }
+/** Nor de revizie: conturul cu arce al dreptunghiului `rect` (m); `label` = eticheta scurtă a reviziei (ex. „R2”), opțională. */
+export interface CloudAnnotation { id: string; kind: 'cloud'; rect: { x0: number; z0: number; x1: number; z1: number }; label?: string }
+export type Annotation = DimAnnotation | TextAnnotation | AngleAnnotation | CloudAnnotation;
 /** Obiect pe perete (tablou, oglindă, raft, TV): pe fața `side` a peretelui `wallId` (ca nișa); `offset` = centrul, de la capătul `a`
  *  al peretelui; `elevation` = centrul, de la pardoseală; dimensiuni în m (`depth` lipsă = implicitul tipului). `product` = id din
  *  catalogul de materiale (wall_art / mirror / wall_shelf), opțional: fără produs e obiectul clientului, fără linie în deviz. */

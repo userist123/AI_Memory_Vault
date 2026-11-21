@@ -11,7 +11,8 @@ export const TOOL_GROUPS: { id: 'view' | 'openings' | 'structure' | 'notes' | 'd
   { id: 'structure', tools: ['column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split'] },
   // săgeata cu notă și cota de nivel sunt tot adnotări: intră la coadă, fără un loc nou în bară
   // onlyCrowded: adnotările se strâng doar în etapele aglomerate (Releveu); în Planșe, unde sunt uneltele principale, rămân butoane separate
-  { id: 'notes', tools: ['measure', 'dim', 'text', 'leader', 'level_mark'], onlyCrowded: true },
+  // cota unghiulară și norul de revizie (lotul 3) intră tot la coada grupei
+  { id: 'notes', tools: ['measure', 'dim', 'text', 'leader', 'level_mark', 'angle_dim', 'rev_cloud'], onlyCrowded: true },
   // decorul (Finisaje, Concept, Mobilier): placarea pe porțiune, obiectele de pe perete și zona de pardoseală
   // tavanul fals pe zonă (lotul 4) intră în aceeași grupă: Finisaje rămâne cu 3 locuri
   { id: 'decor', tools: ['clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy'] },
@@ -33,7 +34,9 @@ export function railSlots(tools: Tool[], grouped: boolean): Slot[] {
   const flat = tools.filter(tk => TOOL_GROUPS.find(x => x.tools.includes(tk))?.minFold === undefined).length <= FLAT_MAX;
   const many = tools.length > GROUP_OVER, out: Slot[] = [], seen = new Set<string>();
   for (const tk of tools){ const g = TOOL_GROUPS.find(x => x.tools.includes(tk)), members = g ? g.tools.filter(x => tools.includes(x)) : [];
-    if (!g || (g.onlyCrowded && !many) || members.length < (g.minFold !== undefined ? (many ? Math.min(2, g.minFold) : g.minFold) : flat ? Infinity : many ? 2 : GROUP_MIN_FOLD)){ out.push({ tool: tk }); continue; }
+    // onlyCrowded: grupa se strânge doar în etapele aglomerate, și nici acolo când ea însăși e majoritatea uneltelor etapei.
+    // Planșe are 10 unelte (lotul 3), dar 7 sunt chiar adnotările: rămân butoane separate; în Releveu (7 din 24) se strâng
+    if (!g || (g.onlyCrowded && (!many || members.length * 2 > tools.length)) || members.length < (g.minFold !== undefined ? (many ? Math.min(2, g.minFold) : g.minFold) : flat ? Infinity : many ? 2 : GROUP_MIN_FOLD)){ out.push({ tool: tk }); continue; }
     if (!seen.has(g.id)){ seen.add(g.id); out.push({ group: g.id, tools: members }); } }
   return out;
 }
