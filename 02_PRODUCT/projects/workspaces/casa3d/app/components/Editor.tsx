@@ -97,6 +97,7 @@ import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core
 import ToolRail from './ToolRail';
 import DxfImportPanel from './DxfImportPanel';
 import MepPanel from './MepPanel';
+import { MEP_SYSTEMS } from '@/core/mep';
 import CoordinationPanel from './CoordinationPanel';
 import { elementIndex } from '@/core/elements';
 import { dimGeometry } from '@/core/annotations';
@@ -799,6 +800,12 @@ export default function Editor({ id }: { id: string }){
             {WALL_ITEM_KINDS.map(k => <option key={k} value={k}>{t(`wallItem.kind.${k}`)}</option>)}</select></label></div>}
           {!preview && tool === 'clad' && <div className="toolopts" role="group" aria-label={t('tool.clad')}><label>{t('fin.kind')} <select value={cladKind} onChange={e => setCladKind(e.target.value as WallFeatureKind)}>
             {CLAD_KINDS.filter(k => mc?.materials.some(m => m.category === FEATURE_CATEGORY[k])).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label></div>}
+          {/* legenda pistei BIM în plan (etapa Instalații): culoarea fiecărui sistem prezent, linia punctată = diametru nedeclarat */}
+          {!preview && stage === 'mep' && (() => { const runs = snap.floor.mepRuns ?? [], systems = [...new Set(runs.map(r => r.system))], hasStruct = snap.floor.walls.some(w => w.structural), hasFd = (snap.floor.footings ?? []).length > 0; if (!systems.length && !hasStruct && !hasFd) return null;
+            return (<details className="plan-legend" open><summary>{t('bim.legend')}</summary><ul>{systems.map(s => <li key={s}><i className="bim-swatch" style={{ background: MEP_SYSTEMS[s].color, display: 'inline-block', marginRight: 6, verticalAlign: '-1px' }} aria-hidden />{MEP_SYSTEMS[s].label[lang === 'en' ? 'en' : 'ro']}</li>)}
+              {runs.some(r => !r.diameterMm) && <li><i aria-hidden style={{ display: 'inline-block', width: 18, borderTop: '2px dashed #777', marginRight: 6, verticalAlign: '3px' }} />{t('bim.diameterUnknown')}</li>}
+              {hasStruct && <li><i aria-hidden style={{ display: 'inline-block', width: 18, borderTop: '2px dashed #c2410c', marginRight: 6, verticalAlign: '3px' }} />{t('bim.structuralWall')}</li>}
+              {hasFd && <li><i aria-hidden style={{ display: 'inline-block', width: 12, height: 10, border: '1px dashed #4A5568', marginRight: 6, verticalAlign: '-1px' }} />{t('bim.footing')}</li>}</ul></details>); })()}
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}

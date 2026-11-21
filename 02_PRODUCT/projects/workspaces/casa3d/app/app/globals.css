@@ -792,6 +792,8 @@ select,textarea{font-size:var(--fs-sm)}
 @container (max-width:460px){ .v3bar{flex-wrap:wrap} .v3bar select.btn{min-width:0;max-width:none;flex:1 1 96px} .view3d .hintbar{display:none} }
 .view3d .hintbar{max-width:calc(100% - 170px)}
 .planwrap{container-type:inline-size}
+/* indiciul de tastatură al planului rămâne pe un rând (legendele stau la 44 px deasupra marginii); ce nu încape se termină în „…” */
+.planwrap .hintbar{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 20px)}
 @container (max-width:520px){ .planwrap .hintbar{display:none} .planwrap .plan-legend{bottom:10px} }
 /* câmpurile din panou și din sarcini: aceeași înălțime ca restul controalelor (36 px, 44 px pe ecran tactil) */
 .side input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=hidden]):not([type=button]):not([type=submit]),
