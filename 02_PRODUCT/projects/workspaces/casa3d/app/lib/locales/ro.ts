@@ -95,7 +95,7 @@ export const ro: Dict = {
   // ---- comparare revizii ----
   "diff.title": "Compară", "diff.from": "De la", "diff.fromPh": "De la…", "diff.to": "Până la", "diff.current": "proiectul curent", "diff.revision": "Revizia", "diff.revisionLc": "revizia", "diff.run": "Compară",
   "diff.pickFrom": "Alege revizia de pornire.", "diff.failed": "Compararea a eșuat.", "diff.noDiff": "Nicio diferență între", "diff.and": "și",
-  "diff.rooms": "Camere", "diff.walls": "pereți", "diff.furniture": "mobilier", "diff.moved": "mutate", "diff.swapped": "schimbate", "diff.more": "altele", "diff.unpriced": "fără preț",
+  "diff.rooms": "Camere", "diff.walls": "pereți", "diff.furniture": "mobilier", "diff.moved": "mutate", "diff.swapped": "schimbate", "diff.more": "altele", "diff.unpriced": "fără preț", "diff.structure": "Structură (stâlpi, ghene, grinzi)", "diff.tech": "Instalații (strat tehnic)",
   "diff.roomsAdded": "Camere adăugate", "diff.roomsRemoved": "Camere eliminate", "diff.roomsChanged": "Camere modificate", "diff.furAdded": "Mobilier adăugat", "diff.furRemoved": "Mobilier eliminat", "diff.furMoved": "Mobilier mutat",
   "diff.furSwapped": "Variante schimbate", "diff.furResized": "Dimensiuni schimbate", "diff.looks": "elemente cu culoare sau material schimbat", "diff.cost": "Mobilier",
   // ---- design (brief) și Digital Twin ----

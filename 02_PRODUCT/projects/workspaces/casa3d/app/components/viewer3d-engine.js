@@ -22,6 +22,7 @@ const LI = Math.PI;
 // randării e ±4), căldura culorilor (R − B) în ±3 față de r128.
 const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
+import { elementIdOf } from '../core/scene-ids';
 import { isNavKey, pressKey, releaseKey, stillMoving, settled, wakeDt } from '../core/render-demand';
 import { TIER_PARAMS, adaptTier, gpuKind, ADAPT_SAMPLES } from '../core/viewport-tiers';
 import { batchStatic, HIDDEN_LAYER } from './static-batch.js';
@@ -881,10 +882,10 @@ function model(it){
         const m = new THREE.Mesh(geo, wallMat);
         m.position.set(col.x, ch / 2, col.z);
         m.castShadow = m.receiveShadow = true;
-        m.userData.wall = true;
+        m.userData.wall = true; m.userData.eid = col.id;
         walls.add(m);
       } else {
-        box(w, ch, d, wallMat, col.x, ch / 2, col.z, 0, walls).userData.wall = true;
+        const bx = box(w, ch, d, wallMat, col.x, ch / 2, col.z, 0, walls); bx.userData.wall = true; bx.userData.eid = col.id;
       }
       structBlockers.push({ x0: col.x - w / 2, z0: col.z - d / 2, x1: col.x + w / 2, z1: col.z + d / 2 });
     });
@@ -923,7 +924,7 @@ function model(it){
       const mx = (bm.a[0] + bm.b[0]) / 2, mz = (bm.a[1] + bm.b[1]) / 2;
       const rot = Math.atan2(bm.b[0] - bm.a[0], bm.b[1] - bm.a[1]);
       const bMesh = box(bw, bd, L, wallMat, mx, H - bd / 2, mz, rot, ceilings);
-      bMesh.userData.beam = true;
+      bMesh.userData.beam = true; bMesh.userData.eid = bm.id;
     });
     // pereți vitrați / compartimentări din sticlă
     // (balustrada de sticlă refolosește aceeași construcție, cu înălțimea ei `h` și fără să se scurteze în vederea tăiată: grupul casei)
@@ -1416,10 +1417,12 @@ function model(it){
         default: { // forme libere (plăci decupate, ExtrudeGeometry): triunghiurile, cu transformările deja aplicate geometriei
           const pos = g.attributes && g.attributes.position; if (!pos || pos.count > 30000) return null;
           return { t: 'mesh', p: [], v: Array.from(pos.array, r4), i: g.index ? Array.from(g.index.array) : null }; } } };
+    // id-ul elementului din proiect (stâlp, grindă, punct tehnic, obiect pe perete, piesă de mobilier), ca obiectul din Blender să poată fi legat
+    // înapoi de element (docs/bim/FAZA0_INVENTAR.md); urcă pe părinți, fiindcă piesele de mobilier sunt grupuri
     for (const root of [house, furniture]) root.traverse(o => { if (!o.isMesh || !o.visible) return; for (let a = o.parent; a; a = a.parent) if (!a.visible) return;
       const g = geoOf(o.geometry); if (!g) return; o.matrixWorld.decompose(P, Q, Sc);
-      const m = Array.isArray(o.material) ? o.material.map(matOf) : matOf(o.material);
-      meshes.push({ g, m, p: [P.x, P.y, P.z].map(r4), q: [Q.x, Q.y, Q.z, Q.w].map(r4), s: [Sc.x, Sc.y, Sc.z].map(r4) }); });
+      const m = Array.isArray(o.material) ? o.material.map(matOf) : matOf(o.material), id = elementIdOf(o);
+      meshes.push({ g, m, p: [P.x, P.y, P.z].map(r4), q: [Q.x, Q.y, Q.z, Q.w].map(r4), s: [Sc.x, Sc.y, Sc.z].map(r4), ...(id ? { id } : {}) }); });
     const rooms = plan.camere.map(r => ({ id: r.id, name: r.nume, type: r.tip, rect: [r.x0, r.z0, r.x1, r.z1] }));
     // golurile (uși și ferestre): mijlocul, capetele pe axa peretelui, lățimea, înălțimea, parapetul, normala peretelui și
     // deschiderea ușii (balamaua și partea) — camera foto din Blender nu stă în ele și nu le are în prim-plan

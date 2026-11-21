@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
-import type { Underlay } from '@/core/types';
-import { fitWithin, UNDERLAY_LIMITS } from '@/core/underlay';
+import type { Underlay, UnderlaySource } from '@/core/types';
+import { fitWithin, sourceOfFile, UNDERLAY_LIMITS } from '@/core/underlay';
 import { usePrefs } from '@/lib/prefs';
 import { formatLength, inputToCm, lengthInputUnit } from '@/core/format';
 
@@ -26,7 +26,7 @@ async function downscale(file: File): Promise<string> {
 
 export interface Calib { stage: 'pick' | 'enter'; a?: [number, number]; b?: [number, number] }
 interface Props { underlay: Underlay | undefined; calib: Calib | null; say(t: string): void;
-  onAdd(dataUrl: string): void; onPatch(patch: Partial<Underlay>, record: boolean): void; onRemove(): void;
+  onAdd(dataUrl: string, source?: UnderlaySource): void; onPatch(patch: Partial<Underlay>, record: boolean): void; onRemove(): void;
   onCalibStart(): void; onCalibCancel(): void; onCalibApply(realCm: number): boolean; }
 
 export default function UnderlayPanel({ underlay, calib, say, onAdd, onPatch, onRemove, onCalibStart, onCalibCancel, onCalibApply }: Props){
@@ -34,7 +34,7 @@ export default function UnderlayPanel({ underlay, calib, say, onAdd, onPatch, on
   const file = useRef<HTMLInputElement>(null), [cm, setCm] = useState(''), [busy, setBusy] = useState(false);
   async function pick(f: File | undefined){
     if (!f) return; if (!/^image\/(png|jpeg)$/.test(f.type)){ say(t('underlay.badType')); return; }
-    setBusy(true); try { onAdd(await downscale(f)); say(t('underlay.added')); } catch (e: any){ say(e?.message === 'tooBig' ? t('underlay.tooBig') : t('underlay.readFail')); } finally { setBusy(false); if (file.current) file.current.value = ''; }
+    setBusy(true); try { const source = await sourceOfFile(f).catch(() => undefined); onAdd(await downscale(f), source); say(t('underlay.added')); } catch (e: any){ say(e?.message === 'tooBig' ? t('underlay.tooBig') : t('underlay.readFail')); } finally { setBusy(false); if (file.current) file.current.value = ''; }
   }
   return (<>
     <h4>{t('underlay.title')}</h4>

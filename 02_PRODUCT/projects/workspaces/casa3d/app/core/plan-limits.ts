@@ -118,6 +118,15 @@ export function sanitizeWallStatus(w: any): void {
   if (w.status == null || w.status === 'existing'){ delete w.status; return; }
   if (!(WALL_STATUSES as readonly string[]).includes(w.status)) bad('Starea peretelui este invalidă (existent, nou sau de demolat).');
 }
+/** Proveniența peretelui importat (ghidul BIM §3.2): doar câmpurile modelului; o metodă sau o amprentă invalidă se respinge. */
+export function sanitizeWallOrigin(w: any): void {
+  if (w.origin == null){ delete w.origin; return; }
+  const o = w.origin;
+  const ok = o && typeof o === 'object' && o.method === 'dxf' && typeof o.sha256 === 'string' && /^[0-9a-f]{64}$/.test(o.sha256)
+    && typeof o.layer === 'string' && (o.thickness === 'source' || o.thickness === 'manual');
+  if (!ok) bad('Proveniența peretelui este invalidă.');
+  w.origin = { method: 'dxf', sha256: o.sha256, layer: o.layer.slice(0, 100), thickness: o.thickness };
+}
 /** Un număr nou din model: NaN, Infinity și șirurile se resping; o valoare finită în afara intervalului se aduce la interval. */
 export const clampNum = (v: unknown, lo: number, hi: number, what: string): number => num(v) ? Math.min(hi, Math.max(lo, v)) : bad(what);
 function sanitizeLayout(l: any): FloorLayout {
@@ -207,7 +216,7 @@ export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   set('railings', rl && rl.map(sanitizeRailing).filter(x => { if (rseen.has(x.id)) bad('Două balustrade au același id.'); rseen.add(x.id); return true; }));
   // tipul spațiului (balcon, terasă): o valoare necunoscută se elimină (camera rămâne interior), nu blochează salvarea
   for (const r of f.rooms || []) if ((r as any).spaceKind != null && !(SPACE_KINDS as readonly unknown[]).includes((r as any).spaceKind)) delete (r as any).spaceKind;
-  for (const w of f.walls || []) sanitizeWallStatus(w);
+  for (const w of f.walls || []){ sanitizeWallStatus(w); sanitizeWallOrigin(w); }
   for (const w of f.walls || []) for (const o of w.openings || []){
     if (o.passage == null) delete o.passage;
     else { if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');

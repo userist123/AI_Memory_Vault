@@ -95,7 +95,7 @@ export const en: Dict = {
   // ---- revision comparison ----
   "diff.title": "Compare", "diff.from": "From", "diff.fromPh": "From…", "diff.to": "To", "diff.current": "current project", "diff.revision": "Revision", "diff.revisionLc": "revision", "diff.run": "Compare",
   "diff.pickFrom": "Choose the starting revision.", "diff.failed": "Comparison failed.", "diff.noDiff": "No difference between", "diff.and": "and",
-  "diff.rooms": "Rooms", "diff.walls": "walls", "diff.furniture": "furniture", "diff.moved": "moved", "diff.swapped": "swapped", "diff.more": "more", "diff.unpriced": "unpriced",
+  "diff.rooms": "Rooms", "diff.walls": "walls", "diff.furniture": "furniture", "diff.moved": "moved", "diff.swapped": "swapped", "diff.more": "more", "diff.unpriced": "unpriced", "diff.structure": "Structure (columns, shafts, beams)", "diff.tech": "Services (technical layer)",
   "diff.roomsAdded": "Rooms added", "diff.roomsRemoved": "Rooms removed", "diff.roomsChanged": "Rooms changed", "diff.furAdded": "Furniture added", "diff.furRemoved": "Furniture removed", "diff.furMoved": "Furniture moved",
   "diff.furSwapped": "Variants swapped", "diff.furResized": "Sizes changed", "diff.looks": "items with a changed color or material", "diff.cost": "Furniture",
   // ---- design (brief) and Digital Twin ----

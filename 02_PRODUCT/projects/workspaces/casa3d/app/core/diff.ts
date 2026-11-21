@@ -1,14 +1,19 @@
-// Compararea a două instantanee (revizii sau draft): camere, pereți, mobilier, cost. Pur, fără I/O.
+// Compararea a două instantanee (revizii sau draft): camere, pereți, structură, instalații, mobilier, cost. Pur, fără I/O.
 import type { Catalog, Snapshot, Room, Wall, FurniturePlacement } from './types';
 import { resolve, pricedOffer } from './catalog';
 import { floors } from './levels';
 
 export interface RoomRef { id: string; name: string }
 export interface FurnitureChange { id: string; roomName: string; name: string; detail?: string }
+export interface Counts { added: number; removed: number; changed: number }
 export interface CurrencyCost { before: number; after: number; delta: number; unknownBefore: number; unknownAfter: number }
 export interface SnapshotDiff {
   rooms: { added: RoomRef[]; removed: RoomRef[]; changed: (RoomRef & { changes: string[] })[] };
   walls: { added: number; removed: number; changed: number };
+  /** stâlpi (inclusiv ghene și casetări) și grinzi, pe toate nivelurile; orice câmp schimbat contează */
+  structure: Counts;
+  /** punctele stratului tehnic (prize, apă, scurgeri, calorifere, aer condiționat) */
+  tech: Counts;
   furniture: { added: FurnitureChange[]; removed: FurnitureChange[]; moved: FurnitureChange[]; swapped: FurnitureChange[]; resized: FurnitureChange[] };
   /** câte elemente și-au schimbat culoarea sau materialul (pereți, accente, podele, tavane, goluri, piese) */
   looks: number;
@@ -22,6 +27,18 @@ const cm = (m: number) => Math.round(m * 100);
 const size = (r: Room) => ({ w: cm(r.rect.x1 - r.rect.x0), d: cm(r.rect.z1 - r.rect.z0) });
 const sameRot = (a: number, b: number) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d) < 1e-6; };
 const wallKey = (w: Wall) => JSON.stringify([w.a, w.b, w.thickness, w.openings, w.status ?? 'existing']);
+
+/** Elemente cu id: adăugate, șterse și schimbate (orice câmp, comparat ca JSON). */
+function countById(a: { id: string }[], b: { id: string }[]): Counts {
+  // un id repetat (element copiat fără id nou) se compară ca grup, nu se pierde în Map
+  const group = (xs: { id: string }[]) => { const m = new Map<string, string[]>(); for (const x of xs) { const l = m.get(x.id) ?? []; l.push(JSON.stringify(x)); m.set(x.id, l); }
+    return new Map([...m].map(([k, l]) => [k, l.sort().join('\u0000')])); };
+  const ma = group(a), mb = group(b);
+  const out = { added: 0, removed: 0, changed: 0 };
+  for (const id of mb.keys()) if (!ma.has(id)) out.added++;
+  for (const [id, v] of ma){ const n = mb.get(id); if (n === undefined) out.removed++; else if (n !== v) out.changed++; }
+  return out;
+}
 
 function roomChanges(a: Room, b: Room): string[] {
   const out: string[] = [];
@@ -45,6 +62,9 @@ export function diffSnapshots(before: Snapshot, after: Snapshot, cat: Catalog): 
   const walls = { added: 0, removed: 0, changed: 0 };
   for (const id of wb.keys()) if (!wa.has(id)) walls.added++;
   for (const [id, w] of wa){ const n = wb.get(id); if (!n) walls.removed++; else if (wallKey(w) !== wallKey(n)) walls.changed++; }
+
+  const structOf = (s: Snapshot) => floors(s).flatMap(f => [...(f.columns ?? []), ...(f.beams ?? [])]);
+  const structure = countById(structOf(before), structOf(after)), tech = countById(before.tech ?? [], after.tech ?? []);
 
   const roomName = (id: string) => rb.get(id)?.name ?? ra.get(id)?.name ?? id;
   const prodName = (p: FurniturePlacement) => resolve(cat, p.variantId)?.product.name ?? p.group;
@@ -77,6 +97,7 @@ export function diffSnapshots(before: Snapshot, after: Snapshot, cat: Catalog): 
   const flat = (a: Snapshot['appearance']) => { const m = new Map<string, string>(); for (const [k, v] of Object.entries(a || {})) for (const [id, f] of Object.entries(v || {})) m.set(`${k}:${id}`, JSON.stringify(f)); return m; };
   const la = flat(before.appearance), lb = flat(after.appearance); let looks = 0; for (const k of new Set([...la.keys(), ...lb.keys()])) if (la.get(k) !== lb.get(k)) looks++;
   const isEmpty = !rooms.added.length && !rooms.removed.length && !rooms.changed.length && !walls.added && !walls.removed && !walls.changed
+    && !structure.added && !structure.removed && !structure.changed && !tech.added && !tech.removed && !tech.changed
     && !furniture.added.length && !furniture.removed.length && !furniture.moved.length && !furniture.swapped.length && !furniture.resized.length && costSame && !looks;
-  return { rooms, walls, furniture, looks, cost, isEmpty };
+  return { rooms, walls, structure, tech, furniture, looks, cost, isEmpty };
 }

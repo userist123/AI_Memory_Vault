@@ -777,6 +777,8 @@ def build(scene_data, assets=''):
         ob = bpy.data.objects.new(f'c3d_{i}', me)
         if isinstance(e['m'], list):  # cutiile de perete au câte un material pe față
             ob['c3d_wall'] = 1
+        if isinstance(e.get('id'), str) and e['id']:  # id-ul elementului din proiect (stâlp, grindă, punct tehnic, piesă)
+            ob['c3d_id'] = e['id'][:64]
         q = e['q']
         local = Matrix.Translation(Vector(e['p'])) @ Quaternion((q[3], q[0], q[1], q[2])).to_matrix().to_4x4() @ Matrix.Diagonal((*e['s'], 1.0))
         ob.matrix_world = Y_UP_TO_Z_UP @ local

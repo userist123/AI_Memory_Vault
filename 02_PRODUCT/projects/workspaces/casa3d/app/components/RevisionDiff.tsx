@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { formatMoney, formatMoneyDelta, type Units } from '@/core/format';
 import { translator, type Lang } from '@/lib/i18n';
-import type { SnapshotDiff, FurnitureChange } from '@/core/diff';
+import type { SnapshotDiff, FurnitureChange, Counts } from '@/core/diff';
 
 type Result = SnapshotDiff & { from: number; to: number | 'draft' };
 const MAX = 8;
@@ -34,6 +34,7 @@ export default function RevisionDiff({ id, revs, lang = 'ro' }: { id: string; re
     {err && <p role="alert" className="muted">{err}</p>}
     {res && (res.isEmpty ? <p className="muted">{t('diff.noDiff')} {label(res.from)} {t('diff.and')} {label(res.to)}.</p> : <div>
       <p className="prov">{t('diff.rooms')}: +{res.rooms.added.length} −{res.rooms.removed.length} ~{res.rooms.changed.length} · {t('diff.walls')}: +{res.walls.added} −{res.walls.removed} ~{res.walls.changed} · {t('diff.furniture')}: +{res.furniture.added.length} −{res.furniture.removed.length} {t('diff.moved')} {res.furniture.moved.length} {t('diff.swapped')} {res.furniture.swapped.length}</p>
+      {([['diff.structure', res.structure], ['diff.tech', res.tech]] as [string, Counts | undefined][]).map(([k, n]) => n && (n.added || n.removed || n.changed) ? <p key={k} className="prov">{t(k)}: +{n.added} −{n.removed} ~{n.changed}</p> : null)}
       <Lines title={t('diff.roomsAdded')} lines={res.rooms.added.map(r => r.name)} more={t('diff.more')} />
       <Lines title={t('diff.roomsRemoved')} lines={res.rooms.removed.map(r => r.name)} more={t('diff.more')} />
       <Lines title={t('diff.roomsChanged')} lines={res.rooms.changed.map(r => `${r.name}: ${r.changes.join('; ')}`)} more={t('diff.more')} />

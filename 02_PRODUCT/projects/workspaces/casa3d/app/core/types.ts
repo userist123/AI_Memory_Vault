@@ -16,7 +16,10 @@ export interface Opening { id: string; kind: 'door' | 'window'; offset: number; 
 /** `status`: starea peretelui în proiectul de renovare (lipsă = existent): `new` = de construit, `demolish` = de demolat
  *  (nu se randează în 3D, golurile lui nu mai contează în calcule; în plan apare punctat, peretele nou hașurat). */
 export type WallStatus = 'existing' | 'new' | 'demolish';
-export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[]; status?: WallStatus }
+/** Proveniența unui perete importat (docs/bim/GHID_BIM.md §3.2–3.3): metoda, amprenta fișierului sursă, stratul din desen și dacă
+ *  grosimea a fost măsurată în desen (`source`) sau introdusă de utilizator (`manual`). Lipsă = desenat în aplicație. */
+export interface WallOrigin { method: 'dxf'; sha256: string; layer: string; thickness: 'source' | 'manual' }
+export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[]; status?: WallStatus; origin?: WallOrigin }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
 /** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m).
@@ -60,7 +63,10 @@ export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
 export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: Finish; ceiling?: Finish }>; wallFaces?: Record<string, Finish>; openings?: Record<string, Finish>; items?: Record<string, Finish> }
 /** Imagine de calc sub plan (scară din `widthM`, înălțimea vine din raportul imaginii). Nu intră în calcule, doar în desenul 2D. */
-export interface Underlay { dataUrl: string; x: number; z: number; widthM: number; opacity: number; locked: boolean; confirmed?: boolean }
+/** Fișierul original al planului importat (ghidul BIM §3.1): hash SHA-256, nume, mărime și tip, calculate în browser înainte de
+ *  reducerea imaginii. dataUrl e doar copia de lucru redusă; hash-ul identifică originalul păstrat de utilizator. */
+export interface UnderlaySource { sha256: string; name: string; bytes: number; type: 'image/png' | 'image/jpeg'; importedAt: string }
+export interface Underlay { dataUrl: string; x: number; z: number; widthM: number; opacity: number; locked: boolean; confirmed?: boolean; source?: UnderlaySource }
 /** `floor` = parterul (nivelul 0); `levels` = nivelurile de deasupra, în ordine (core/levels.ts). */
 export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; underlay?: Underlay; tech?: import('./technical').TechPoint[]; doors?: Record<string, DoorChoice>; budget?: BudgetSettings; brief?: import('./brief').DesignBrief;
   /** dulapuri pe comandă din PAL, pe piesă (id-ul piesei din plan) */

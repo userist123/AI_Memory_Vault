@@ -60,7 +60,14 @@ export function checkUnderlay(u: any): Underlay {
   if (!fin(u.widthM) || u.widthM < 1 || u.widthM > 100) throw bad('Lățimea imaginii de calc trebuie să fie între 1 și 100 m.');
   if (!fin(u.opacity) || u.opacity < 0.1 || u.opacity > 1) throw bad('Opacitatea imaginii de calc trebuie să fie între 0,1 și 1.');
   if (typeof u.locked !== 'boolean') throw bad('Starea de blocare a imaginii de calc este invalidă.');
-  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}) };
+  let source: Underlay['source'];
+  if (u.source != null){ const s = u.source;
+    const ok = s && typeof s === 'object' && typeof s.sha256 === 'string' && /^[0-9a-f]{64}$/.test(s.sha256) && typeof s.name === 'string'
+      && Number.isInteger(s.bytes) && s.bytes >= 0 && s.bytes <= 1e9 && (s.type === 'image/png' || s.type === 'image/jpeg')
+      && typeof s.importedAt === 'string' && !Number.isNaN(Date.parse(s.importedAt));
+    if (!ok) throw bad('Sursa imaginii de calc este invalidă.');
+    source = { sha256: s.sha256, name: s.name.slice(0, 200), bytes: s.bytes, type: s.type, importedAt: new Date(s.importedAt).toISOString() }; }
+  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}), ...(source ? { source } : {}) };
 }
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
