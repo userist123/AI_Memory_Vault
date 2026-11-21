@@ -98,3 +98,84 @@ def test_downgrade_then_rewrite_leaves_no_verified_stamp_on_agent_text():
     c.update(Principal.AI_AGENT, nid, {"content": "REWRITTEN BY AGENT"})
     stored = c.storage.get(nid)
     assert stored["content"] == "REWRITTEN BY AGENT" and stored["verification"] == "unverified"
+
+
+# --- security review round 1: bind the attestation to the attested content ----------------------
+
+import hashlib  # noqa: E402
+
+
+def _sha(text: str) -> str:
+    return hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+
+
+def test_attest_records_the_content_hash():
+    c = _controller()
+    nid = _raw_note(c)
+    c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test")
+    assert c.storage.get(nid)["attested_content_sha256"] == _sha(ORIGINAL)
+
+
+def test_attest_refuses_when_the_content_changed_since_the_owner_read_it():
+    """Pre-existing race: the agent rewrites an unattested RAW note while the owner reads it."""
+    c = _controller()
+    nid = _raw_note(c)
+    read_hash = _sha(ORIGINAL)
+    c.update(Principal.AI_AGENT, nid, {"content": "SWAPPED WHILE THE OWNER READ"})
+    with pytest.raises(ValueError, match="changed"):
+        c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test",
+                 expected_content_sha256=read_hash)
+    assert c.storage.get(nid)["verification"] == "unverified"
+
+
+def test_attest_accepts_the_hash_the_owner_read():
+    c = _controller()
+    nid = _raw_note(c)
+    c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test",
+             expected_content_sha256=_sha(ORIGINAL))
+    assert c.storage.get(nid)["verification"] == "verified"
+
+
+def test_partially_verified_cannot_be_laundered_into_active():
+    """Downgrade, rewrite, re-stamp: the owner's stamp is cleared and promote refuses the text."""
+    c = _controller()
+    nid = _raw_note(c)
+    c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test",
+             verification_state="partially_verified")
+    c.update(Principal.AI_AGENT, nid, {"verification": "unverified"})
+    stored = c.storage.get(nid)
+    assert "verification_source" not in stored and "last_verified" not in stored
+    assert "attested_content_sha256" not in stored
+    c.update(Principal.AI_AGENT, nid, {"content": "AGENT TEXT"})
+    c.update(Principal.AI_AGENT, nid, {"verification": "partially_verified"})
+    c.review(Principal.HUMAN, nid, "approve")
+    c.promote(Principal.HUMAN, nid)  # no owner stamp left: promoted as an agent-labelled note
+    stored = c.storage.get(nid)
+    assert stored.get("verification_source") is None
+    assert stored.get("attested_content_sha256") is None
+
+
+def test_promote_refuses_an_owner_attested_note_whose_content_changed():
+    """Defence in depth: whatever path changes the body, promote checks the attested hash."""
+    c = _controller()
+    nid = _raw_note(c)
+    c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test")
+    c.review(Principal.HUMAN, nid, "approve")
+    note = c.storage.get(nid)
+    note["content"] = "CHANGED BEHIND THE CONTROLLER"
+    c.storage.set(nid, note)
+    with pytest.raises(ValueError, match="re-attest"):
+        c.promote(Principal.HUMAN, nid)
+
+
+def test_promote_refuses_an_owner_attested_note_without_a_hash():
+    """Attestations made before the hash existed are re-attested before promotion (fail closed)."""
+    c = _controller()
+    nid = _raw_note(c)
+    c.attest(Principal.HUMAN, nid, verification_reason="read it", evidence_reference="test")
+    c.review(Principal.HUMAN, nid, "approve")
+    note = c.storage.get(nid)
+    note.pop("attested_content_sha256")
+    c.storage.set(nid, note)
+    with pytest.raises(ValueError, match="re-attest"):
+        c.promote(Principal.HUMAN, nid)
