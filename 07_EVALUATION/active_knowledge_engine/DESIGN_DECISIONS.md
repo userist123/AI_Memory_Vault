@@ -62,7 +62,8 @@ Decisions taken under the same standing instruction:
 |---|---:|---|
 | `GOLD_NOT_AGENT_ELIGIBLE` | 13 | never a candidate because policy excludes the gold for an agent: 11 notes carry **no `lifecycle` at all** (type `core`), 2 carry `lifecycle: raw` |
 | `PAGINATION_CUT` | 10 | candidate, fused rank > 5 |
-| `CANDIDATE_LIMIT_CUT` | 3 | scored, cut by the 200-candidate limit |
+| `CANDIDATE_LIMIT_CUT` | 2 | past the 200-candidate limit with some signal (cut ranks 263-326) |
+| `NO_LEXICAL_SIGNAL` | 1 | past the limit with zero BM25 and entity score: a larger limit would not recover it |
 | `NEVER_CANDIDATE` | 1 | eligible, never a candidate |
 | `ABSTAIN_UNMEASURABLE` | 3 | no abstention signal exists |
 
@@ -76,7 +77,7 @@ What this says, and what it does not:
 - At the agent operating point the dominant loss on held-out v2 is policy, not ranking: 13/29 gold notes
   are notes an agent is never allowed to see (no lifecycle, or raw). Whether those notes should get a
   lifecycle, or whether the benchmark should not use them as gold, is an owner decision.
-- Among eligible gold, the loss is ranking (10 `PAGINATION_CUT` + 3 `CANDIDATE_LIMIT_CUT`). The loss
+- Among eligible gold, the loss is mostly ranking (10 `PAGINATION_CUT` + 2 `CANDIDATE_LIMIT_CUT`); 1 has no lexical signal at all. The loss
   funnel's 71.6% `PAGINATION_CUT` was measured on benchmark v3 (130 cases), another population.
 - R016 reports the same count (2/29 graph-off context recall) but on **different cases** (exact 1/5 +
   one-hop 1/12 there; exact H01 + synonym H13 here) and at **another operating point**: HUMAN, whose
@@ -93,3 +94,16 @@ What this says, and what it does not:
 - 2 LOW: the fused-order miss classes, and `k` not clamped. Fixed with `REORDERED_OUT` / `CANDIDATE_LIMIT_CUT` / `GOLD_NOT_AGENT_ELIGIBLE`, and `k` capped at 20 like `memory_access`.
 
 All fixes were written test-first.
+
+### Review round 2 (Milestone 2)
+
+`vault-reviewer` confirmed the round-1 fixes and checked the documented numbers against the baseline JSON.
+It raised one MEDIUM and two LOW findings. This was the last review round, so the main session decided and fixed all three, test-first:
+
+- **MEDIUM:** the hand-picked fingerprint missed `security/verified_reduction.py`, `sanitize_query` and storage/authorizer/policy.
+  - Fix: the fingerprint now hashes whole read-path packages (`memory`, `retrieval`, `security`, `lifecycle`, `graph`, `observability`, this package) plus the controller source, 137 files.
+  - A missing listed source now raises instead of being skipped.
+- **LOW:** a gold past the candidate limit could have no signal at all.
+  - Fix: new class `NO_LEXICAL_SIGNAL` (both raw scores zero), and `cut_rank` is recorded.
+- **LOW:** quarantine was in the eligibility predicate, but `search()` does not filter on it.
+  - Fix: the predicate is now the lifecycle floor only; quarantine stays a `memory_get` rule.

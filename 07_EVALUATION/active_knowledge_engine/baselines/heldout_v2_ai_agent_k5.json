@@ -2,8 +2,8 @@
   "as_of_utc_date": "2026-11-21",
   "code_fingerprint": {
     "controller_class": "cognitive_core.controller.MemoryController",
-    "files": 21,
-    "sha256": "2fae2bd5a8edb43d4b0244dafdcd16909d89f29749b88923dd85fe6cb1c2ea12"
+    "files": 137,
+    "sha256": "168f7e7555764d011ab09714e8effc9c1a3717087122dcea5e19a29310d476ee"
   },
   "context": "R016 (07_EVALUATION/heldout_retrieval_benchmark_v2/r016_production_arms_report.json) reports the same count, 2/29 graph-off context recall, but on different cases (exact 1/5 + one-hop 1/12 there; H01 exact + H13 synonym here) and at a different operating point (HUMAN owner view over the whole non-RAW corpus, page 10, RANKING_ARM_BASELINE). It is not a corroboration of this baseline.",
   "controller": {
@@ -16,7 +16,7 @@
   },
   "purpose": "AKE Loop B baseline: held-out v2 through MemoryController.search as AI_AGENT, k=5. Compare a later job with: python -m active_knowledge_engine compare <this file> <job record>",
   "repository_head": "aa42387f2 + AKE branch",
-  "source_job_id": "ake-0e88101fc619da3a1f1945ab",
+  "source_job_id": "ake-6815a303cd5e3e45892d24b6",
   "source_snapshot_sha256": "0cc9f57f1683ec232b46cc4637976485b89b9cf1edf84e967c4753103d7ebf2b",
   "stages": [
     {
@@ -31,6 +31,7 @@
         "cases": [
           {
             "class": "exact_identifier_lookup",
+            "cut_rank": null,
             "fused_rank": 4,
             "gold_readable": true,
             "hit": 1,
@@ -40,6 +41,7 @@
           },
           {
             "class": "exact_identifier_lookup",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -49,6 +51,7 @@
           },
           {
             "class": "exact_identifier_lookup",
+            "cut_rank": null,
             "fused_rank": 8,
             "gold_readable": false,
             "hit": 0,
@@ -58,6 +61,7 @@
           },
           {
             "class": "exact_identifier_lookup",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -67,6 +71,7 @@
           },
           {
             "class": "exact_identifier_lookup",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -76,6 +81,7 @@
           },
           {
             "class": "paraphrase",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -85,6 +91,7 @@
           },
           {
             "class": "paraphrase",
+            "cut_rank": null,
             "fused_rank": 10,
             "gold_readable": true,
             "hit": 0,
@@ -94,6 +101,7 @@
           },
           {
             "class": "paraphrase",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -103,6 +111,7 @@
           },
           {
             "class": "paraphrase",
+            "cut_rank": null,
             "fused_rank": 111,
             "gold_readable": false,
             "hit": 0,
@@ -112,6 +121,7 @@
           },
           {
             "class": "synonym_substitution",
+            "cut_rank": null,
             "fused_rank": 8,
             "gold_readable": true,
             "hit": 0,
@@ -121,6 +131,7 @@
           },
           {
             "class": "synonym_substitution",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -130,6 +141,7 @@
           },
           {
             "class": "synonym_substitution",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -139,6 +151,7 @@
           },
           {
             "class": "synonym_substitution",
+            "cut_rank": null,
             "fused_rank": 2,
             "gold_readable": true,
             "hit": 1,
@@ -148,6 +161,7 @@
           },
           {
             "class": "lexical_trap",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -157,6 +171,7 @@
           },
           {
             "class": "lexical_trap",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -166,6 +181,7 @@
           },
           {
             "class": "lexical_trap",
+            "cut_rank": 326,
             "fused_rank": null,
             "gold_readable": true,
             "hit": 0,
@@ -175,6 +191,7 @@
           },
           {
             "class": "lexical_trap",
+            "cut_rank": null,
             "fused_rank": 31,
             "gold_readable": true,
             "hit": 0,
@@ -184,6 +201,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -193,6 +211,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -202,6 +221,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": 263,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -211,6 +231,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": 15,
             "gold_readable": true,
             "hit": 0,
@@ -220,6 +241,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -229,6 +251,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": 14,
             "gold_readable": true,
             "hit": 0,
@@ -238,6 +261,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -247,6 +271,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": 9,
             "gold_readable": false,
             "hit": 0,
@@ -256,6 +281,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": 22,
             "gold_readable": true,
             "hit": 0,
@@ -265,6 +291,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": 7,
             "gold_readable": false,
             "hit": 0,
@@ -298,6 +325,7 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": null,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
@@ -307,11 +335,12 @@
           },
           {
             "class": "one_hop_graph_expansion",
+            "cut_rank": 320,
             "fused_rank": null,
             "gold_readable": false,
             "hit": 0,
             "id": "H32",
-            "miss_class": "CANDIDATE_LIMIT_CUT",
+            "miss_class": "NO_LEXICAL_SIGNAL",
             "rank_in_page": null
           }
         ],
@@ -349,9 +378,10 @@
           "k": 5,
           "miss_classes": {
             "ABSTAIN_UNMEASURABLE": 3,
-            "CANDIDATE_LIMIT_CUT": 3,
+            "CANDIDATE_LIMIT_CUT": 2,
             "GOLD_NOT_AGENT_ELIGIBLE": 13,
             "NEVER_CANDIDATE": 1,
+            "NO_LEXICAL_SIGNAL": 1,
             "PAGINATION_CUT": 10
           },
           "mrr_at_k": 0.02586206896551724,

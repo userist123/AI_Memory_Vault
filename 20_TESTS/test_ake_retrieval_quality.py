@@ -361,3 +361,58 @@ def test_a_ranked_gold_is_classed_by_rank_even_if_memory_get_refuses_it(monkeypa
     row = result["cases"][0]
     assert row["miss_class"] == "PAGINATION_CUT" and row["gold_readable"] is False
     assert result["summary"]["gold_unreadable_by_memory_get"] == 1
+
+
+# --- review round 2 (Milestone 2) -------------------------------------------------------------
+
+def test_fingerprint_covers_the_read_path_and_fails_on_a_missing_source(monkeypatch):
+    import active_knowledge_engine.runner as runner_mod
+
+    rel = {p.relative_to(runner_mod.PACKAGES_ROOT).as_posix() for p in runner_mod.fingerprinted_files()}
+    for needed in ("security/verified_reduction.py", "security/__init__.py", "memory/storage/file_engine.py",
+                   "memory/controller.py", "lifecycle/policy.py", "retrieval/context/candidate_generation.py",
+                   "interfaces/memory_access.py", "interfaces/vault_cli.py", "learning/sleep_consolidation.py"):
+        assert needed in rel, needed
+    monkeypatch.setattr(runner_mod, "FINGERPRINTED_SOURCES", ("does/not/exist.py",))
+    with pytest.raises(FileNotFoundError):
+        runner_mod.fingerprinted_files()
+
+
+def test_quarantine_does_not_make_a_note_policy_ineligible():
+    """search() applies the lifecycle floor only; quarantine is a disclosure (memory_get) rule."""
+    import active_knowledge_engine.retrieval_quality as rq
+
+    note = {"id": "q", "lifecycle": "ACTIVE", "quarantined": True}
+    ctl = type("C", (), {"storage": type("S", (), {"get": staticmethod(lambda nid: note)})()})()
+    assert rq.agent_policy_eligible(ctl, "q") is True
+    note["lifecycle"] = "raw"
+    assert rq.agent_policy_eligible(ctl, "q") is False
+
+
+def _cut_controller(raw_scores):
+    ctl = _ScriptedController(served=["a"], fused=["a"], known={"a", "cut"})
+    original = ctl.search
+
+    def search(principal, query, page_size=10, **kw):
+        pack = original(principal, query, page_size=page_size)
+        pack["candidate_trace"]["cut_candidates"] = [{"rank": 201, "id": "cut", "fused_score": 0.001}]
+        pack["candidate_trace"]["raw_scores_by_signal"] = {"cut": raw_scores}
+        return pack
+
+    ctl.search = search
+    return ctl
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ({"bm25": 0.0, "entity": 0.0}, "NO_LEXICAL_SIGNAL"),
+    ({"bm25": 1.2, "entity": 0.0}, "CANDIDATE_LIMIT_CUT"),
+    (None, "CANDIDATE_LIMIT_CUT"),
+])
+def test_a_cut_gold_with_no_signal_is_not_blamed_on_the_limit(monkeypatch, raw, expected):
+    import active_knowledge_engine.retrieval_quality as rq
+
+    monkeypatch.setattr(rq, "agent_readable", lambda controller, nid: True)
+    case = {"id": "cut", "class": "c", "query": "q", "gold_relevant_notes": ["cut"], "abstain": False}
+    row = evaluate(_cut_controller(raw), [case], k=5)["cases"][0]
+    assert row["miss_class"] == expected
+    assert row["cut_rank"] == 201

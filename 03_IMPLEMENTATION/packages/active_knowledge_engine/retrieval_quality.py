@@ -6,10 +6,12 @@ A miss is classified in this order (the first that applies):
 
 - ``GOLD_NOT_IN_STORAGE``     the storage engine cannot see the gold note at all: a structural zero
   (VaultIndex and FileStorageEngine scan different populations, VAULT_STATE.md section 4);
-- ``CANDIDATE_LIMIT_CUT``     scored, but cut by the candidate limit (``candidate_trace.cut_candidates``);
-- ``GOLD_NOT_AGENT_ELIGIBLE`` never a candidate because the agent policy excludes it: lifecycle outside
-  the controller's ``AGENT_LIFECYCLE_FLOOR`` (ACTIVE, REVIEW) or flagged quarantined. A policy
-  exclusion, not a retrieval failure;
+- ``NO_LEXICAL_SIGNAL``       past the candidate limit with zero BM25 and zero entity score: raising the
+  limit would not recover it (``_rank_all`` keeps zero-score notes, so they all land in the cut);
+- ``CANDIDATE_LIMIT_CUT``     past the candidate limit with some signal (``cut_rank`` recorded);
+- ``GOLD_NOT_AGENT_ELIGIBLE`` never a candidate because the lifecycle is outside the controller's
+  ``AGENT_LIFECYCLE_FLOOR`` (ACTIVE, REVIEW). Quarantine is not part of it: search does not filter on
+  it, only disclosure (``memory_get``) does. A policy exclusion, not a retrieval failure;
 - ``NEVER_CANDIDATE``         policy-eligible, never among the candidates;
 - ``PAGINATION_CUT``          a candidate with **fused** rank > k;
 - ``REORDERED_OUT``           fused rank <= k, but the served page (reordered after fusion by the
@@ -41,8 +43,7 @@ MAX_K = 20  # interfaces/memory_access.MAX_LIMIT: an agent cannot ask for a larg
 
 
 def agent_policy_eligible(controller, note_id: str) -> bool:
-    """Whether search may consider the note for an agent: lifecycle floor and quarantine only."""
-    from interfaces.memory_access import _is_quarantined
+    """Whether search may consider the note for an agent: the controller's lifecycle floor only."""
     from memory_controller.controller import AGENT_LIFECYCLE_FLOOR
 
     try:
@@ -50,7 +51,7 @@ def agent_policy_eligible(controller, note_id: str) -> bool:
     except Exception:  # noqa: BLE001 - unreadable from storage: not eligible (fail closed)
         return False
     floor = {lc.value.upper() for lc in AGENT_LIFECYCLE_FLOOR}
-    return str(note.get("lifecycle") or "").upper() in floor and not _is_quarantined(note)
+    return str(note.get("lifecycle") or "").upper() in floor
 
 
 def agent_readable(controller, note_id: str) -> bool:
@@ -110,6 +111,13 @@ def _in_storage(controller, note_id: str) -> bool:
         return False
 
 
+def _no_signal(scores) -> bool:
+    """True only when both raw signals are known and zero; unknown is not 'no signal'."""
+    if not isinstance(scores, dict) or "bm25" not in scores or "entity" not in scores:
+        return False
+    return float(scores["bm25"] or 0) == 0.0 and float(scores["entity"] or 0) == 0.0
+
+
 def _run_case(controller, case: Dict[str, Any], k: int) -> Dict[str, Any]:
     row: Dict[str, Any] = {"id": str(case.get("id")), "class": str(case.get("class"))}
     if case.get("abstain"):
@@ -119,7 +127,8 @@ def _run_case(controller, case: Dict[str, Any], k: int) -> Dict[str, Any]:
     served = [r.get("id") for r in (pack.get("results") or [])[:k] if isinstance(r, dict)]
     trace = pack.get("candidate_trace") or {}
     fused = trace.get("fused_ranking") or []
-    cut = {str(c.get("id")) for c in trace.get("cut_candidates") or [] if isinstance(c, dict)}
+    cut = {str(c.get("id")): c.get("rank") for c in trace.get("cut_candidates") or [] if isinstance(c, dict)}
+    raw_scores = trace.get("raw_scores_by_signal") or {}
     fused_rank = {}
     for pos, entry in enumerate(fused, start=1):
         if isinstance(entry, dict) and entry.get("id") is not None:
@@ -128,13 +137,15 @@ def _run_case(controller, case: Dict[str, Any], k: int) -> Dict[str, Any]:
     gold_ranks = [fused_rank[g] for g in gold if g in fused_rank]
     best_fused = min(gold_ranks) if gold_ranks else None
     stored = [g for g in gold if _in_storage(controller, g)]
+    cut_ranks = [cut[g] for g in stored if g in cut and cut[g] is not None]
+    row["cut_rank"] = min(cut_ranks) if cut_ranks else None
     row["gold_readable"] = any(agent_readable(controller, g) for g in stored)
     if page_ranks:
         return {**row, "hit": 1, "rank_in_page": min(page_ranks), "fused_rank": best_fused, "miss_class": None}
     if not stored:
         miss = "GOLD_NOT_IN_STORAGE"
     elif best_fused is None and any(g in cut for g in stored):
-        miss = "CANDIDATE_LIMIT_CUT"
+        miss = "NO_LEXICAL_SIGNAL" if all(_no_signal(raw_scores.get(g)) for g in stored if g in cut) else "CANDIDATE_LIMIT_CUT"
     elif best_fused is None and not any(agent_policy_eligible(controller, g) for g in stored):
         miss = "GOLD_NOT_AGENT_ELIGIBLE"
     elif best_fused is None:

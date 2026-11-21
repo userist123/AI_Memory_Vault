@@ -92,14 +92,20 @@ def snapshot_of(notes: List[Dict[str, Any]], skips: Optional[Dict[str, Any]] = N
 
 
 PACKAGES_ROOT = Path(__file__).resolve().parents[1]
-#: Source that decides what a stage measures; any change makes a different job.
+#: Source that decides what a stage measures; any change makes a different job. Whole packages on
+#: the read path (search, storage, authorization, disclosure, lifecycle, graph, trace) are hashed,
+#: not hand-picked modules: a hand-picked list missed `security/verified_reduction.py` and
+#: `sanitize_query` (review round 2). A listed source that is missing fails the job (no silent skip).
 FINGERPRINTED_SOURCES = (
-    "active_knowledge_engine",              # this package (all *.py)
-    "retrieval/context",                    # candidate generation, fusion, retrieval engine (all *.py)
+    "active_knowledge_engine",
+    "memory",
+    "retrieval",
+    "security",
+    "lifecycle",
+    "graph",
+    "observability",
     "learning/sleep_consolidation.py",
-    "security/conflict_detector.py",
-    "lifecycle/conflict_review.py",
-    "interfaces/vault_cli.py",              # eligible_for_agent
+    "interfaces/vault_cli.py",
     "interfaces/memory_access.py",
 )
 #: Controller settings that change ranking or the candidate pool.
@@ -107,27 +113,35 @@ CONTROLLER_SETTINGS = ("ranking_arm", "classifier_filter_arm", "enable_graph_exp
                        "strict_graph_expansion", "graph_expansion_budget", "enable_cognitive_core")
 
 
-def code_fingerprint(controller) -> Dict[str, Any]:
-    """SHA-256 over the source files that decide the measurement, plus the controller's own source."""
+def fingerprinted_files() -> List[Path]:
     files: List[Path] = []
     for rel in FINGERPRINTED_SOURCES:
         path = PACKAGES_ROOT / rel
-        files.extend(sorted(path.glob("*.py")) if path.is_dir() else [path])
+        if path.is_dir():
+            files.extend(p for p in sorted(path.rglob("*.py"))
+                         if "__pycache__" not in p.parts and "tests" not in p.parts)
+        elif path.is_file():
+            files.append(path)
+        else:
+            raise FileNotFoundError(f"fingerprinted source missing: {rel}")
+    return files
+
+
+def code_fingerprint(controller) -> Dict[str, Any]:
+    """SHA-256 over the read-path packages plus the controller's own source file."""
+    files = fingerprinted_files()
     try:
         controller_src = inspect.getsourcefile(type(controller))
     except TypeError:
         controller_src = None
-    if controller_src:
+    if controller_src and Path(controller_src).is_file():
         files.append(Path(controller_src))
     digest = hashlib.sha256()
-    count = 0
     for path in files:
-        if not path.is_file():
-            continue
-        digest.update(path.name.encode("utf-8") + bytes([0]))
+        rel = path.relative_to(PACKAGES_ROOT).as_posix() if PACKAGES_ROOT in path.parents else path.name
+        digest.update(rel.encode("utf-8") + bytes([0]))
         digest.update(path.read_bytes().replace(bytes([13, 10]), bytes([10])))
-        count += 1
-    return {"sha256": digest.hexdigest(), "files": count,
+    return {"sha256": digest.hexdigest(), "files": len(files),
             "controller_class": f"{type(controller).__module__}.{type(controller).__qualname__}"}
 
 
