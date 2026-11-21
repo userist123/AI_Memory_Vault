@@ -14,6 +14,16 @@ import { formatNumber as fmtNum, qtyDecimals } from '@/core/format';
 import { commercialSources, profitReport, projectChain, type CustomSource, type Terms } from '@/core/commercial';
 import { ChainTable, FEE_EVENT } from './ChainTable';
 import { excludedGroups } from '@/core/budget-excluded';
+import ExpensesPanel from './ExpensesPanel';
+import type { ExpenseCategory } from '@/core/expenses';
+
+/** Devizul pe categoriile cheltuielilor: materialele și mobilierul pe categoria lor, manopera scenariului ales, iar produsele
+ *  adăugate manual și extrasele (transport, montaj) la „altele”. Rezerva pentru neprevăzute nu intră (nu e o cheltuială plănuită). */
+export function estimateOf(b: ReturnType<typeof computeBudget>): Record<ExpenseCategory, number> {
+  const c = b.categories as Record<string, number>, r2 = (v: number) => Math.round(v * 100) / 100;
+  return { furniture: c.furniture ?? 0, finishes: c.finishes ?? 0, lighting: c.lighting ?? 0, appliances: c.appliances ?? 0, sanitary: c.sanitary ?? 0, textiles: c.textiles ?? 0,
+    labor: b.chosen.labor, other: r2((c.custom ?? 0) + b.extras.reduce((a, e) => a + (e.amount ?? 0), 0)) };
+}
 
 /** Ce vine de pe server pentru lanțul totalului: termenii comerciali (adaos, discount) și onorariul contractului (sursa unică). */
 export type CommercialInputs = { data: { defaults: Terms; suppliers: Record<string, Terms> }; fee: { kind: string | null; net: number | null; vat: number; gross: number | null; vatPayer: boolean; reason: string | null } };
@@ -83,6 +93,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : t('common.unknown')}</b><small>{roomName(i.roomId)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="btn" onClick={csv}>{t('budget.downloadCsv')}</button>
     <button className="btn" onClick={() => downloadSchedule(finishSchedule(snap, catalog, mc), t, cur, snap.name, i => i === 0 ? t('level.ground') : t('level.n', { n: i }))}>{t('sched.download')}</button>
+    {projectId && <ExpensesPanel id={projectId} cur={cur} estimate={estimateOf(b)} />}
     <p className="prov">{t('budget.linksNote')} <a href="/despre-linkuri" target="_blank">{t('budget.howItWorks')}</a>.</p>
     <p className="prov">{t('budget.assumptions', { parquet: pc(WASTE.parquet), tile: pc(WASTE.floor_tile), baseboard: pc(WASTE.baseboard), paint: pc(WASTE.paint), coats: PAINT_COATS, bath: formatLength(BATH_TILE_HEIGHT, units, lang), splash: formatLength(BACKSPLASH_HEIGHT, units, lang), per: formatArea(LIGHTS_EXTRA_PER_M2, units, lang) })}</p>
   </div>);

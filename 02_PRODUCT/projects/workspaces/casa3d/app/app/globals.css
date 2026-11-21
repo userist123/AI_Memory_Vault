@@ -1147,6 +1147,16 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .coord-rule{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
 .coord-item-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:4px;margin-top:4px}
 .coord-item-head{overflow-wrap:anywhere}
+/* cheltuieli reale față de deviz (components/ExpensesPanel.tsx), în stilul pontajului */
+.expp{display:grid;gap:8px;margin:14px 0;border-top:1px solid var(--rule);padding-top:12px} .expp h3{display:flex;gap:8px;align-items:center;margin:0} .expp .prov{margin:0}
+.expp .pill{font:500 var(--fs-xs) var(--sans);background:var(--surface);border:1px solid var(--line);padding:1px 8px;border-radius:10px} .expp .pill.warn{background:#FBE3DE;border-color:#C63C29;color:#8A2416}
+.expp-total{margin:0;font-size:var(--fs-sm)}
+.expp-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)} .expp-table th,.expp-table td{text-align:left;padding:4px 4px;border-top:1px solid var(--rule);vertical-align:top} .expp-table td:not(:first-child),.expp-table th:not(:first-child){text-align:right;white-space:nowrap}
+.expp-table tr.over td{color:#8A2416;font-weight:600}
+.expp-add{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px} .expp-add .btn{grid-column:1/-1} .expp-add .bad{border-color:var(--err)} .expp-add input,.expp-add select{min-width:0;min-height:max(var(--h-md),var(--hit))}
+.expp-list{list-style:none;margin:0;padding:0;font-size:var(--fs-xs)} .expp-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--rule);padding:4px 0} .expp-list li span{min-width:0;overflow-wrap:anywhere}
+.expp .btn-x{border:0;background:none;font-size:var(--fs-lg);line-height:1;cursor:pointer;color:var(--lead);min-width:44px;min-height:44px} .expp .btn.link{border:0;background:none;padding:0;text-decoration:underline;justify-self:start}
+.fold > .expp{margin:6px 0 0;border-top:0;padding-top:0}
 .ws .side .btn.danger{border-color:#D9B3AD;background:#FFF7F4;color:#9A2C22}
 .ws .side .var,.ws .side .docrow,.ws .side .roomrow,.ws .side .vcard,.ws .side .r,.ws .side .trow{border-color:#E0D4CA;background:#FFFCF6;color:#2A202A;border-radius:18px 18px 18px 5px}
 .ws .side .var:hover,.ws .side .docrow:hover,.ws .side .roomrow:hover{border-color:#D99B8F;background:#FFF7F1}
