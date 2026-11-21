@@ -58,3 +58,11 @@ test('raportul: revizia, regulile rulate și nerulate, fiecare constatare cu id,
   assert.match(md, new RegExp(`${hard.id}.*c1.*m1.*accepted.*aprobat de structurist`));
   assert.equal(coordinationReport(run, issues, { project: 'Test', generatedAt: AT }), md);
 });
+
+import { cell } from '../core/issues';
+test('raport: celula escapează backslash-ul înaintea barei, ca tabelul Markdown să nu se rupă', () => {
+  assert.equal(cell('a|b'), 'a\\|b');
+  assert.equal(cell('cale\\'), 'cale\\\\');
+  assert.equal(cell('x\\|y'), 'x\\\\\\|y');
+  assert.equal(cell('r1\r\nr2'), 'r1 r2');
+});

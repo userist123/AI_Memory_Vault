@@ -41,7 +41,8 @@ export function compareRuns(before: CoordinationFinding[], after: CoordinationFi
   return { added: after.filter(f => !b.has(f.id)), gone: before.filter(f => !a.has(f.id)), kept: after.filter(f => b.has(f.id)) };
 }
 
-const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+/** Celulă de tabel Markdown: backslash-ul întâi (altfel un \ final ar anula escaparea lui |), apoi |, apoi rândurile noi. */
+export const cell = (s: string) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
 /** Raport Markdown reproductibil: aceleași intrări → același text (data vine din parametri, nu din ceas). */
 export function coordinationReport(run: CoordinationRun, issues: Record<string, IssueRecord> | undefined, meta: { project: string; generatedAt: string }): string {
   const rows = withStatus(run.findings, issues);
