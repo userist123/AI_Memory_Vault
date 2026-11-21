@@ -178,7 +178,8 @@ public sealed class LocalAccountsParser : EvidenceParserBase
                 if (name.Length == 0) { result.MalformedRecords++; continue; }
                 string enabled = Bool(a, "enabled"), rid = a.TryGetProperty("rid", out var r) && r.ValueKind == JsonValueKind.Number ? r.GetInt32().ToString(CultureInfo.InvariantCulture) : "";
                 Row($"LocalAccounts[{name}]", $"Cont local {name} (RID {rid}): activat = {enabled}", a,
-                    new() { ["Name"] = name, ["Sid"] = Str(a, "sid"), ["Rid"] = rid, ["Enabled"] = enabled, ["LastLogonUtc"] = Str(a, "lastLogonUtc") });
+                    new() { ["Name"] = name, ["Sid"] = Str(a, "sid"), ["Rid"] = rid, ["Enabled"] = enabled, ["LastLogonUtc"] = Str(a, "lastLogonUtc"),
+                      ["PasswordRequired"] = Bool(a, "passwordRequired"), ["PasswordExpires"] = Bool(a, "passwordExpires"), ["PasswordChangeable"] = Bool(a, "passwordChangeable"), ["Lockout"] = Bool(a, "lockout") });
             }
         else result.Gaps.Add(new EvidenceGap("Conturi locale", EvidenceStatus.Failed, NotRead(Str(root, "accountsError")),
             "CFG-GUEST-ENABLED nu poate fi evaluat", "net user (sau Get-LocalUser)", "Da, pe stație"));

@@ -45,6 +45,7 @@ public sealed class HostsFileParser : EvidenceParserBase
     {
         var file = Path.GetFileName(fullPath);
         int lineNo = 0, longLines = 0;
+        var section = "";
         using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         using var sr = RemoteToolLogText.OpenReader(fs);
         string? line;
@@ -67,7 +68,14 @@ public sealed class HostsFileParser : EvidenceParserBase
             int hash = raw.IndexOf('#');
             var body = hash >= 0 ? raw[..hash] : raw;
             var tokens = body.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-            if (tokens.Length == 0) continue;
+            if (tokens.Length == 0)
+            {
+                // a comment line "# Added by X" opens a named section that "# End of section" closes (Docker Desktop and others write such blocks)
+                var comment = hash >= 0 ? raw[(hash + 1)..].Trim() : "";
+                if (comment.StartsWith("Added by ", StringComparison.OrdinalIgnoreCase)) section = RemoteToolLogText.Sane(comment, 120);
+                else if (comment.StartsWith("End of section", StringComparison.OrdinalIgnoreCase)) section = "";
+                continue;
+            }
             var ipText = tokens[0];
             var names = tokens.Skip(1).Select(t => RemoteToolLogText.Sane(t, 255)).ToList();
             var addr = ipText.Length <= 64 && IPAddress.TryParse(ipText.Split('%')[0], out var ip) ? ip : null;
@@ -88,7 +96,7 @@ public sealed class HostsFileParser : EvidenceParserBase
                 {
                     ["Artifact"] = "hosts file", ["IpAddress"] = ipShown, ["Hostnames"] = string.Join(" ", names), ["AddressKind"] = kind,
                     ["Valid"] = valid ? "da" : "nu (Windows ignoră rândul)", ["RawLine"] = raw,
-                    ["Line"] = lineNo.ToString(CultureInfo.InvariantCulture), ["Source File"] = RemoteToolLogText.Sane(file, 128),
+                    ["Line"] = lineNo.ToString(CultureInfo.InvariantCulture), ["Source File"] = RemoteToolLogText.Sane(file, 128), ["Section"] = section,
                 },
             });
             result.Records++;

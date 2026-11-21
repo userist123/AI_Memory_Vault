@@ -11,7 +11,8 @@ using LogAnalyzer.Dfir.Windows.Audit;
 namespace LogAnalyzer.Dfir.Windows.Acquisition;
 
 /// <summary>One local account as the snapshot stores it (one JSON object, one line of the file; the parser quotes that line).</summary>
-public sealed record LocalAccountEntry(string Name, string Sid, int? Rid, bool Enabled, DateTimeOffset? LastLogonUtc, string Description);
+public sealed record LocalAccountEntry(string Name, string Sid, int? Rid, bool Enabled, DateTimeOffset? LastLogonUtc, string Description,
+                                    bool? PasswordRequired = null, bool? PasswordExpires = null, bool? PasswordChangeable = null, bool? Lockout = null);
 
 /// <summary>One member of the local Administrators group (well-known SID S-1-5-32-544): name, domain part, SID, kind (user / group / system) and scope (local / domain / builtin).</summary>
 public sealed record AdminMemberEntry(string Name, string Domain, string Sid, string Kind, string Scope);
@@ -134,6 +135,7 @@ public sealed class LocalSecurityStateCollector : ICollector
         {
             name = a.Name, sid = a.Sid, rid = a.Rid, enabled = a.Enabled,
             lastLogonUtc = a.LastLogonUtc?.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture), description = a.Description,
+            passwordRequired = a.PasswordRequired, passwordExpires = a.PasswordExpires, passwordChangeable = a.PasswordChangeable, lockout = a.Lockout,
         })), true);
         WriteArray(sb, "administrators", s.Administrators?.Select(m => J(new { name = m.Name, domain = m.Domain, sid = m.Sid, kind = m.Kind, scope = m.Scope })), false);
         return sb.Append("}\n").ToString();
@@ -178,7 +180,8 @@ public sealed class LocalSecurityStateCollector : ICollector
         List<LocalAccountEntry>? accounts = null; string accountsError = "";
         try
         {
-            accounts = StationFactCollector.ReadAccounts().Select(a => new LocalAccountEntry(a.Name, a.Sid, RidOf(a.Sid), !a.Disabled, a.LastLogonUtc, a.Description)).ToList();
+            accounts = StationFactCollector.ReadAccounts().Select(a => new LocalAccountEntry(a.Name, a.Sid, RidOf(a.Sid), !a.Disabled, a.LastLogonUtc, a.Description,
+                a.PasswordRequired, a.PasswordExpires, a.PasswordChangeable, a.LockedOut)).ToList();
         }
         catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException or InvalidOperationException) { accountsError = ex.Message; }
 

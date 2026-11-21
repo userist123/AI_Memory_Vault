@@ -373,4 +373,91 @@ public sealed class LocalSecurityStateTests : IDisposable
         Assert.Contains(asteps, s => s.Action == "net localgroup Administrators");
         Assert.All(new[] { steps, gs, asteps }, list => Assert.Contains(list, s => s.Action.StartsWith("Get-FileHash")));
     }
+
+    // ---- Planner #14 E5: account flags ----
+
+    private List<Finding> Flags(params LocalAccountEntry[] accounts) => Flags(accounts, [BuiltIn, AnaMember]);
+
+    private List<Finding> Flags(IReadOnlyList<LocalAccountEntry> accounts, IReadOnlyList<AdminMemberEntry> admins)
+    {
+        var (rows, _, _) = Pipeline(Csv("Success", "Success and Failure", "Success and Failure"), Snap(accounts, admins));
+        return Judge(rows).Findings.Where(f => f.RuleId is "CFG-ACCOUNT-NOPASSWORD-REQUIRED" or "CFG-PASSWORD-NEVER-EXPIRES" or "CFG-BUILTIN-ADMIN-ENABLED").ToList();
+    }
+
+    [Fact]
+    public void Unsafe_account_flags_give_the_three_findings_with_the_json_line_as_quote_and_the_snapshot_time_source()
+    {
+        var admin = new LocalAccountEntry("Administrator", "S-1-5-21-1-2-3-500", 500, true, null, "", PasswordRequired: true, PasswordExpires: true, PasswordChangeable: true, Lockout: false);
+        var ana = new LocalAccountEntry("Ana", "S-1-5-21-1-2-3-1001", 1001, true, null, "", PasswordRequired: false, PasswordExpires: false, PasswordChangeable: true, Lockout: false);
+        var found = Flags(admin, ana).OrderBy(f => f.RuleId).ToList();
+        Assert.Equal(["CFG-ACCOUNT-NOPASSWORD-REQUIRED", "CFG-BUILTIN-ADMIN-ENABLED", "CFG-PASSWORD-NEVER-EXPIRES"], found.Select(f => f.RuleId));
+        Assert.Equal([Severity.Medium, Severity.Medium, Severity.Low], found.Select(f => f.Severity));
+        Assert.All(found, f =>
+        {
+            var e = Assert.Single(f.SupportingEvidence);
+            Assert.Equal("Instantaneu la colectare", e.TimeSource);
+            Assert.StartsWith("{\"name\":", e.Quote);
+            Assert.Contains("\"passwordRequired\":", e.Quote);
+            Assert.Contains("Password required", f.Description);
+            Assert.Contains("localizate", f.Description);
+        });
+        Assert.Contains("Microsoft nu mai recomandă expirarea periodică", found.Single(f => f.RuleId == "CFG-PASSWORD-NEVER-EXPIRES").Description);
+        Assert.Contains("\"Ana\"", found.Single(f => f.RuleId == "CFG-ACCOUNT-NOPASSWORD-REQUIRED").Description);
+    }
+
+    [Fact]
+    public void Safe_flags_give_no_finding_and_a_password_that_never_expires_matters_only_for_an_administrator()
+    {
+        var ana = new LocalAccountEntry("Ana", "S-1-5-21-1-2-3-1001", 1001, true, null, "", PasswordRequired: true, PasswordExpires: true, PasswordChangeable: true, Lockout: false);
+        var admin = new LocalAccountEntry("Administrator", "S-1-5-21-1-2-3-500", 500, false, null, "", PasswordRequired: true, PasswordExpires: true);
+        Assert.Empty(Flags(ana, admin));
+        // never expires, but not in Administrators: no finding
+        var bob = new LocalAccountEntry("Bob", "S-1-5-21-1-2-3-1002", 1002, true, null, "", PasswordRequired: true, PasswordExpires: false);
+        Assert.Empty(Flags(ana, bob));
+    }
+
+    [Fact]
+    public void Disabled_accounts_are_ignored_for_every_flag_rule()
+    {
+        var off = new LocalAccountEntry("Administrator", "S-1-5-21-1-2-3-500", 500, false, null, "", PasswordRequired: false, PasswordExpires: false);
+        var offAna = new LocalAccountEntry("Ana", "S-1-5-21-1-2-3-1001", 1001, false, null, "", PasswordRequired: false, PasswordExpires: false);
+        Assert.Empty(Flags(off, offAna));
+    }
+
+    [Fact]
+    public void An_older_snapshot_without_the_new_fields_parses_gives_unknown_and_no_flag_finding()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "ladfir_e5_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var path = Path.Combine(dir, "accounts.json");
+            File.WriteAllText(path, """
+                {
+                "schema":"la.local_accounts/1",
+                "collectedUtc":"2026-11-01T10:00:00Z",
+                "machine":"WS-ALFA-07",
+                "partOfDomain":false,
+                "interactiveUser":"Ana",
+                "accountsError":"",
+                "administratorsError":"",
+                "accounts":[
+                {"name":"Ana","sid":"S-1-5-21-1-2-3-1001","rid":1001,"enabled":true,"lastLogonUtc":null,"description":""},
+                {"name":"Gast","sid":"S-1-5-21-1-2-3-1002","rid":1002,"enabled":true,"lastLogonUtc":null,"description":""}
+                ],
+                "administrators":[
+                {"name":"Ana","domain":"WS-ALFA-07","sid":"S-1-5-21-1-2-3-1001","kind":"user","scope":"local"}
+                ]}
+                """);
+            var sink = new ListSink();
+            var item = new EvidenceItem { EvidenceId = "EV-1", CaseId = "C", Source = "t", SourceType = "local_accounts_json", StoredPath = path };
+            var r = new LocalAccountsParser().Parse(item, path, sink, default);
+            Assert.NotEqual(EvidenceStatus.Failed, r.Status);
+            var ana = sink.Events.Single(e => e.Locator == "LocalAccounts[Ana]");
+            Assert.Equal("necunoscut", ana.Fields["PasswordRequired"]);
+            Assert.Equal("necunoscut", ana.Fields["PasswordExpires"]);
+            Assert.Empty(Judge(sink.Events).Findings.Where(f => f.RuleId is "CFG-ACCOUNT-NOPASSWORD-REQUIRED" or "CFG-PASSWORD-NEVER-EXPIRES" or "CFG-BUILTIN-ADMIN-ENABLED"));
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
 }

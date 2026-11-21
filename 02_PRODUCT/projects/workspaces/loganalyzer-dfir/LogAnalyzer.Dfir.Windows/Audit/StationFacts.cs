@@ -10,7 +10,8 @@ using Microsoft.Win32;
 namespace LogAnalyzer.Dfir.Windows.Audit;
 
 public sealed record LocalAccount(string Name, string Sid, bool Disabled, bool PasswordRequired, bool PasswordExpires, bool LockedOut,
-                                  DateTimeOffset? LastLogonUtc, bool IsAdministrator, bool IsRemoteDesktopUser, string Description);
+                                  DateTimeOffset? LastLogonUtc, bool IsAdministrator, bool IsRemoteDesktopUser, string Description,
+                                  bool? PasswordChangeable = null);
 
 /// <summary>One log record reduced to what the evaluation needs. Data holds EventData/UserData by name.</summary>
 public sealed record LogFact(string Channel, int Id, DateTimeOffset TimeUtc, long RecordId, string UserSid, IReadOnlyDictionary<string, string> Data);
@@ -381,13 +382,13 @@ public static class StationFactCollector
                 if (mo["Name"] is string n && mo["LastLogon"] is string ll && ll.Length >= 14)
                     try { lastLogon[n.Split('\\').Last()] = ManagementDateTimeConverter.ToDateTime(ll).ToUniversalTime(); } catch (ArgumentOutOfRangeException) { }
 
-        using var searcher = new ManagementObjectSearcher($"SELECT Name, SID, Disabled, PasswordRequired, PasswordExpires, Lockout, Description FROM Win32_UserAccount WHERE LocalAccount = TRUE");
+        using var searcher = new ManagementObjectSearcher($"SELECT Name, SID, Disabled, PasswordRequired, PasswordExpires, PasswordChangeable, Lockout, Description FROM Win32_UserAccount WHERE LocalAccount = TRUE");
         foreach (ManagementObject mo in searcher.Get())
         {
             var name = mo["Name"] as string ?? "";
             yield return new LocalAccount(name, mo["SID"] as string ?? "", mo["Disabled"] is true, mo["PasswordRequired"] is true,
                 mo["PasswordExpires"] is true, mo["Lockout"] is true, lastLogon.TryGetValue(name, out var l) ? l : null,
-                admins.Contains(name), rdp.Contains(name), mo["Description"] as string ?? "");
+                admins.Contains(name), rdp.Contains(name), mo["Description"] as string ?? "", mo["PasswordChangeable"] as bool?);
         }
     }
 

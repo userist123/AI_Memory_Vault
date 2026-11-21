@@ -15,6 +15,7 @@ public sealed class OwnerActionsTests
         ConfigurationAudit.RuleFirewallOff, ConfigurationAudit.RuleRemoteRegistry, ConfigurationAudit.RuleAutologon, ConfigurationAudit.RuleTokenFilter, ConfigurationAudit.RuleAlwaysInstall,
         ConfigurationAudit.RuleSmbSigning, "SVC-UNQUOTED-PATH",
         LocalSecurityAudit.RuleProcess, LocalSecurityAudit.RuleLogon, LocalSecurityAudit.RuleCredVal, LocalSecurityAudit.RuleGuest, LocalSecurityAudit.RuleExtraAdmins,
+        LocalSecurityAudit.RuleNoPasswordRequired, LocalSecurityAudit.RulePasswordNeverExpires, LocalSecurityAudit.RuleBuiltinAdminEnabled,
         "PS-HISTORY-SUSPICIOUS", "HOSTS-REDIRECT", "HOSTS-SECURITY-DOMAIN", "LIVE-WMI-SUBSCRIPTION", "LIVE-STARTUP-FILE", "LIVE-STARTUP-LNK",
         "LIVE-UNSIGNED-USERPATH", "LIVE-UNSIGNED-USERPATH-NET", "LIVE-TASK-USERPATH", "LIVE-AUTORUN-USERPATH", "LIVE-SERVICE-USERPATH",
         "PERSIST-IFEO-DEBUGGER", "PERSIST-RUNKEY-USERPATH", "PERSIST-SERVICE-CONFIG", "PERSIST-SERVICE-USERPATH", "PERSIST-STARTUP-FOLDER", "PERSIST-TASK",

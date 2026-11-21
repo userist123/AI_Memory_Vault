@@ -1840,3 +1840,12 @@
   RuleContracts + ItemMeaning T1574.009. Tests Dfir ConfigurationHardeningTests (22), UnquotedServicePathTests (7), App + collector tests; red 3 + 1.
   Suites App 1511, UI 370 (1 skipped), Edition 45, Dfir 4108 / 36 / 0. RESIDUAL: Standard/Full save the full SOFTWARE hive, which contains DefaultPassword
   (pre-existing; not read by the app) - owner should know the case file holds it if autologon is configured.
+- 2026-11-21 (claude, hg585) PLANNER #14 E3 + E5 DONE (vault-worker, low/medium). E3 noise: Analysis/Data/benign_hosts.json (Docker Desktop names + "# Added
+  by Docker Desktop" section; HostsFileParser records Section) -> BenignKnown/Info, not in Greșeli găsite; Quick Assist presence -> Info (run from its own
+  place stays Medium); EXEC-USERPATH bulk -> Info; DefenderExclusionHistoryMerger (after LiveFindingMerger): a literal Add-MpPreference -ExclusionPath
+  matching a listed CFG-DEFENDER-EXCL path is attached to it as evidence ("comandă din istoricul PowerShell care poate fi sursa excluderii; PSReadLine nu
+  are ore") and its PS-HISTORY finding dropped; variable/unlisted paths stay. E5: accounts snapshot + PasswordRequired/PasswordExpires/
+  PasswordChangeable/Lockout (optional; old JSON -> necunoscut); rules CFG-ACCOUNT-NOPASSWORD-REQUIRED (Medium), CFG-PASSWORD-NEVER-EXPIRES (Low, enabled
+  admins, Microsoft no-forced-expiry note), CFG-BUILTIN-ADMIN-ENABLED (Medium, RID 500); net user step with localized-labels note. Tests Dfir
+  E3NoiseTests (6), App LocalSecurityStateTests (+4); RemoteToolUpgradeTests Low -> Info for Quick Assist. Suites App 1515, UI 370 (1 skipped), Edition
+  45, Dfir 4114 / 36 / 0. RESIDUALS: merge matches only the first 20 listed exclusions and a 300-char description; PasswordChangeable/Lockout unused.

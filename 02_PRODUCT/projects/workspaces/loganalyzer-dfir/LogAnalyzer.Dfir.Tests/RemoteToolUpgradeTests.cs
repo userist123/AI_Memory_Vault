@@ -157,7 +157,7 @@ public class RemoteToolUpgradeTests
         Assert.Equal(Severity.Medium, qa.Severity);
         Assert.Equal(Severity.Low, Of(found, "AnyDesk").Severity);
         Assert.Equal(Severity.Medium, Assert.Single(Rt(Start(0, @"C:\Program Files\WindowsApps\MicrosoftCorporationII.QuickAssist_2.0.0.0_x64__8wekyb3d8bbwe\Microsoft.RemoteAssistance.QuickAssist\QuickAssist.exe"))).Severity);
-        Assert.Equal(Severity.Low, Assert.Single(Rt(Row("Amcache", 0, "quickassist.exe", @"C:\Windows\System32\quickassist.exe", ""))).Severity);
+        Assert.Equal(Severity.Info, Assert.Single(Rt(Row("Amcache", 0, "quickassist.exe", @"C:\Windows\System32\quickassist.exe", ""))).Severity);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using LogAnalyzer.Dfir.Model;
+using System.Text.Json;
 using LogAnalyzer.Dfir.Network;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -31,6 +32,35 @@ public static class HostsFileRules
         var h = host.Trim().TrimEnd('.').ToLowerInvariant();
         foreach (var d in SecurityDomains)
             if (h == d || h.EndsWith("." + d, StringComparison.Ordinal)) return d;
+        return null;
+    }
+
+    /// <summary>One row of Data/benign_hosts.json: an entry software adds on purpose (Docker Desktop).</summary>
+    public sealed class BenignHostsRow
+    {
+        public string Id { get; set; } = "";
+        public string Reason { get; set; } = "";
+        public List<string> Hostnames { get; set; } = [];
+        public List<string> SectionContains { get; set; } = [];
+    }
+
+    private sealed class BenignHostsFile { public List<BenignHostsRow> Entries { get; set; } = []; }
+
+    private static readonly Lazy<List<BenignHostsRow>> Benign = new(() =>
+    {
+        try { return JsonSerializer.Deserialize<BenignHostsFile>(ShippedData.Read("benign_hosts.json"), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })?.Entries ?? []; }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or IOException) { return []; }
+    });
+
+    /// <summary>The known-benign row an entry belongs to (all its names listed, or it sits in a section the row names), or null.</summary>
+    public static BenignHostsRow? BenignRowOf(string[] names, string section)
+    {
+        if (names.Length == 0) return null;
+        foreach (var r in Benign.Value)
+        {
+            if (r.Hostnames.Count > 0 && names.All(n => r.Hostnames.Contains(n.TrimEnd('.'), StringComparer.OrdinalIgnoreCase))) return r;
+            if (section.Length > 0 && r.SectionContains.Any(x => x.Length > 0 && section.Contains(x, StringComparison.OrdinalIgnoreCase))) return r;
+        }
         return null;
     }
 
@@ -72,17 +102,19 @@ public static class HostsFileRules
             else if (!loop && !unspec)
             {
                 var shown = string.Join(", ", names.Take(5));
-                found.Add((2, () => new Finding
+                var benign = BenignRowOf(names, e.Fields.GetValueOrDefault("Section", ""));
+                found.Add((benign is null ? 2 : 3, () => new Finding
                 {
                     FindingId = nextId(), RuleId = "HOSTS-REDIRECT",
                     Title = $"Fișierul hosts mapează un nume la o adresă de rețea: {shown}",
-                    Severity = Severity.Low, Category = "Defense Evasion",
-                    Classification = Classification.Direct, Confidence = e.Confidence, MitreTechniqueId = "T1565.001",
+                    Severity = benign is null ? Severity.Low : Severity.Info, Category = "Defense Evasion",
+                    Classification = benign is null ? Classification.Direct : Classification.BenignKnown, Confidence = e.Confidence, MitreTechniqueId = "T1565.001",
                     Host = e.Host,
                     PlainWhat = $"fișierul hosts mapează {shown} la adresa {ipText}",
                     Description = $"Ce s-a întâmplat: în fișierul hosts, rândul {line}, este scris „{Visible(raw)}”. Rândul mapează {Visible(shown)} la {ipText}, o adresă care nu este de loopback. " +
                                   "De ce contează: o mapare manuală poate muta un serviciu către alt server; este și o practică obișnuită pentru servere interne, VPN sau unelte pentru containere. Ce verificați: dacă maparea este cunoscută și aprobată (fișierul nu are ore).",
-                    ClassificationReason = "Rândul este în copia fișierului hosts din caz (Direct); nu este dovedit că numele a fost rezolvat așa și nici scopul rândului.",
+                    ClassificationReason = benign is null ? "Rândul este în copia fișierului hosts din caz (Direct); nu este dovedit că numele a fost rezolvat așa și nici scopul rândului."
+                        : $"{char.ToUpperInvariant(benign.Reason[0]) + benign.Reason[1..]} (nume sau bloc din lista de intrări cunoscute); rândul este în copia fișierului hosts din caz.",
                     SupportingEvidence = [new EvidenceRef(e.EvidenceId, e.Locator, rd, e.SourceSha256)],
                     AlternativeExplanations = ["Server intern, VPN sau unealtă pentru containere/virtualizare care scrie în hosts."],
                     RecommendedNextSteps = ["Verificați dacă maparea este cunoscută și aprobată."],

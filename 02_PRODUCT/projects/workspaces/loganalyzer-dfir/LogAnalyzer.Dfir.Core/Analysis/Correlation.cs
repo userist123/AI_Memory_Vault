@@ -1182,7 +1182,7 @@ public static class Correlation
                 Title = rest.All(Ran) ? $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} au rulat din locații în care utilizatorii pot scrie (fără alte semnale)"
                       : rest.Any(Ran) ? $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} au rulat sau sunt doar prezente în locații în care utilizatorii pot scrie (fără alte semnale)"
                       : $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} prezente în locații în care utilizatorii pot scrie, fără dovadă de execuție (fără alte semnale)",
-                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
+                Severity = Severity.Info, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
                 FirstSeenUtc = rest.Min(T), LastSeenUtc = rest.Max(T),
                 PlainWhat = (rest.Count == 1 ? "A fost găsit un program " : $"Au fost găsite {LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} ") +
                             (rest.Count == 1 ? (Ran(rest[0]) ? "care a rulat" : "care este doar prezent, fără dovadă că a rulat,")

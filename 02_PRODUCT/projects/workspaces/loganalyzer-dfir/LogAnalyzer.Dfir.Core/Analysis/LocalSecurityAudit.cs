@@ -16,7 +16,8 @@ public static class LocalSecurityAudit
     public const string Category = "Configurație";
     public const int ListCap = 20;
 
-    public const string RuleProcess = "CFG-AUDIT-PROCESS", RuleLogon = "CFG-AUDIT-LOGON", RuleCredVal = "CFG-AUDIT-CREDVAL", RuleGuest = "CFG-GUEST-ENABLED", RuleExtraAdmins = "CFG-EXTRA-ADMINS";
+    public const string RuleProcess = "CFG-AUDIT-PROCESS", RuleLogon = "CFG-AUDIT-LOGON", RuleCredVal = "CFG-AUDIT-CREDVAL", RuleGuest = "CFG-GUEST-ENABLED", RuleExtraAdmins = "CFG-EXTRA-ADMINS",
+        RuleNoPasswordRequired = "CFG-ACCOUNT-NOPASSWORD-REQUIRED", RulePasswordNeverExpires = "CFG-PASSWORD-NEVER-EXPIRES", RuleBuiltinAdminEnabled = "CFG-BUILTIN-ADMIN-ENABLED";
 
     public const string GuidProcessCreation = "0CCE922B-69AE-11D9-BED3-505054503030", GuidLogon = "0CCE9215-69AE-11D9-BED3-505054503030", GuidCredentialValidation = "0CCE923F-69AE-11D9-BED3-505054503030";
 
@@ -119,6 +120,8 @@ public static class LocalSecurityAudit
                 ["Poate fi activat deliberat pentru o partajare sau o demonstrație.", "O politică de securitate locală poate cere starea, iar un produs de administrare o poate reseta."],
                 ["Se arată starea de la colectare; nu arată de când este activat și nici dacă a fost folosit (Security 4624 pentru contul respectiv).", "Faptul că un cont este activat nu arată ce drepturi i s-au dat (apartenența la grupuri nu este citită aici)."]));
 
+        AccountFlagRules(rows, host, nextId, res);
+
         // Administrators other than the built-in RID-500 account and (on a domain PC) Domain Admins
         var members = rows.Where(r => r.Locator.StartsWith("LocalAdministrators[", StringComparison.Ordinal)).ToList();
         if (members.Count == 0) return;
@@ -155,6 +158,47 @@ public static class LocalSecurityAudit
                 .. domainPc ? ["Pe un PC din domeniu, membrii grupurilor de domeniu nu sunt enumerați."] : Array.Empty<string>(),
             ],
         });
+    }
+
+    /// <summary>
+    /// Planner #14 E5: account flags of Win32_UserAccount stored in the snapshot. A flag the file does not carry (older snapshots) is "necunoscut" and judges nothing; a disabled account is
+    /// ignored. The quote is the JSON line of the account. The labels of "net user" are localized, which the verification text says.
+    /// </summary>
+    private static void AccountFlagRules(List<TimelineEvent> rows, string host, Func<string> nextId, ConfigAuditResult res)
+    {
+        var accounts = rows.Where(r => r.Locator.StartsWith("LocalAccounts[", StringComparison.Ordinal) && F(r, "Enabled") == "da").ToList();
+        var adminRows = rows.Where(r => r.Locator.StartsWith("LocalAdministrators[", StringComparison.Ordinal)).ToList();
+        bool IsLocalAdmin(TimelineEvent a) => adminRows.Any(m => F(m, "Kind") == "user" && F(m, "Scope") == "local" &&
+            (F(a, "Sid").Length > 0 && F(m, "Sid").Equals(F(a, "Sid"), StringComparison.OrdinalIgnoreCase) || F(m, "Sid").Length == 0 && F(m, "Name").Equals(F(a, "Name"), StringComparison.OrdinalIgnoreCase)));
+        string Verify(string n) => $"net user \"{n}\" (liniile „Password required”, „Password expires”, „Account active”; etichetele sunt localizate: în Windows în limba română apar în română)";
+
+        foreach (var a in accounts.Where(a => F(a, "PasswordRequired") == "nu"))
+            res.Findings.Add(Make(a, host, nextId, RuleNoPasswordRequired, Severity.Medium, Confidence.High,
+                $"Contul activat {F(a, "Name")} nu cere parolă (PasswordRequired = false)",
+                $"Contul local {F(a, "Name")} (SID {F(a, "Sid")}) este activat, iar indicatorul PasswordRequired din Win32_UserAccount este false: Windows permite contului să aibă parola goală. Verificare manuală: {Verify(F(a, "Name"))}.",
+                "Windows are un cont activat care nu este obligat să aibă parolă",
+                "gravitate medie: un cont activat fără parolă obligatorie poate fi folosit fără a ști o parolă",
+                ["Un cont creat pentru o demonstrație sau pentru conectare automată poate fi făcut fără parolă deliberat.", "Indicatorul spune că parola nu este obligatorie, nu că parola este goală; contul poate avea totuși o parolă."],
+                ["Se arată indicatorul de la colectare; nu arată dacă parola este efectiv goală.", "Politica locală de securitate poate interzice conectările din rețea cu parolă goală, chiar dacă indicatorul este false."]));
+
+        foreach (var a in accounts.Where(a => F(a, "PasswordExpires") == "nu" && IsLocalAdmin(a)))
+            res.Findings.Add(Make(a, host, nextId, RulePasswordNeverExpires, Severity.Low, Confidence.High,
+                $"Parola contului de administrator {F(a, "Name")} nu expiră (PasswordExpires = false)",
+                $"Contul local {F(a, "Name")} (SID {F(a, "Sid")}) este activat și membru al grupului Administrators, iar indicatorul PasswordExpires din Win32_UserAccount este false: parola lui nu expiră niciodată. " +
+                $"Microsoft nu mai recomandă expirarea periodică forțată a parolelor; scopul constatării este să se știe care parole de administrator nu se schimbă niciodată. Verificare manuală: {Verify(F(a, "Name"))}.",
+                "Windows are un cont de administrator a cărui parolă nu expiră",
+                "gravitate mică: este o alegere frecventă și nu este o problemă prin ea însăși",
+                ["Microsoft nu mai recomandă expirarea periodică forțată a parolelor; o parolă lungă și unică, fără expirare, este acceptabilă.", "Setarea poate veni dintr-o politică a organizației sau din crearea contului."],
+                ["Se arată indicatorul de la colectare; nu arată când a fost schimbată parola ultima oară.", "Apartenența la Administrators este cea directă, grupurile imbricate nu sunt desfăcute."]));
+
+        foreach (var a in accounts.Where(a => F(a, "Rid") == "500"))
+            res.Findings.Add(Make(a, host, nextId, RuleBuiltinAdminEnabled, Severity.Medium, Confidence.High,
+                $"Contul Administrator încorporat este activat: {F(a, "Name")} (RID 500)",
+                $"Contul local {F(a, "Name")} (SID {F(a, "Sid")}, RID 500, administratorul încorporat) este activat în acest PC. Numele poate fi schimbat sau tradus, RID-ul rămâne 500. Verificare manuală: {Verify(F(a, "Name"))}.",
+                "Windows are activat contul Administrator încorporat, un nume cunoscut de oricine",
+                "gravitate medie: un cont cu nume și RID cunoscute, cu drepturi complete, este o țintă obișnuită pentru ghicirea parolei",
+                ["Poate fi activat deliberat pentru depanare sau ca administrator local de rezervă.", "Pe unele PC-uri configurate de un furnizor sau de o organizație contul este activat intenționat."],
+                ["Se arată starea de la colectare; nu arată de când este activat și nici dacă a fost folosit (Security 4624 pentru contul respectiv).", "Faptul că un cont este activat nu arată ce parolă are."]));
     }
 
     private const string AdminSid = "S-1-5-32-544";

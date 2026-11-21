@@ -364,7 +364,7 @@ public static partial class Wp11Rules
     /// (Data/remote_access_tools.json). All tools are collected first, because two distinct tools on one station within 24 h raise each other.
     /// PRESENT becomes Medium when the tool runs or is a service from a folder a user can write to, or when two or more distinct tools have evidence on one
     /// station within 24 h (Quick Assist, approved tools, DNS-only hits and unnamed evidence in a multi-station case do not count); EXECUTED is already High.
-    /// Quick Assist (common) is Low when present and Medium when run from its own place. An approval by name covers only runs and services in Program Files /
+    /// Quick Assist (common) is Info when present and Medium when run from its own place. An approval by name covers only runs and services in Program Files /
     /// Windows on the system drive outside their user-writable sub-folders: any other copy is Medium.
     /// </summary>
     private static void Tools(Ctx c, List<Finding> o)
@@ -489,8 +489,8 @@ public static partial class Wp11Rules
             var severity = executed ? Severity.High : Severity.Low;
             string why = "";
             if (!executed && (writable.Count > 0 || others.Count > 0)) severity = Severity.Medium;
-            // Quick Assist is part of Windows: run from its own place it is Medium (help-desk scams use exactly that copy), present it is Low
-            if (tool.Common && writable.Count == 0) { severity = executed ? Severity.Medium : Severity.Low; why = $" {tool.Name} face parte din Windows; rulat din locul lui normal, severitatea este cel mult Medium (escrocheriile de tip „suport tehnic” folosesc exact această copie)."; }
+            // Quick Assist is part of Windows: run from its own place it is Medium (help-desk scams use exactly that copy), present it is Info (E3, 2026-11-21: built into Windows, presence alone is not a mistake)
+            if (tool.Common && writable.Count == 0) { severity = executed ? Severity.Medium : Severity.Info; why = $" {tool.Name} face parte din Windows; rulat din locul lui normal, severitatea este cel mult Medium; doar prezent, este informativ (escrocheriile de tip „suport tehnic” folosesc exact această copie)."; }
             if (approved is not null) severity = Severity.Info;
             if (approvedOutside) { severity = Severity.Medium; why += $" Unealta figurează în profil doar după nume, iar aprobarea pe nume acoperă numai Program Files și Windows, nu și: {Join(a.ApprovedOutside.Select(ToolSafe), 3)}."; }
             // the profile approves the software, not the person who connects: a stranger's accepted incoming session is treated as an unapproved tool that ran

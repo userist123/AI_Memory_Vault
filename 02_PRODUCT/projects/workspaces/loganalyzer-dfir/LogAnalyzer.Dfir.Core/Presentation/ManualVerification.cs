@@ -149,7 +149,7 @@ public static class ManualVerification
         if (LocalAccount.Match(loc) is { Success: true } la)
         {
             string name = la.Groups["x"].Value;
-            steps.Add(new("PowerShell", $"net user {Dq(name)}", $"linia „Account active” (în Windows în limba română „Cont activ”) cu starea „Enabled” din citat: Yes = activ, No = dezactivat{QuoteHint(reference)}", true));
+            steps.Add(new("PowerShell", $"net user {Dq(name)}", $"linia „Account active” (în Windows în limba română „Cont activ”) cu starea „Enabled” din citat: Yes = activ, No = dezactivat; indicatorii parolei: liniile „Password required” și „Password expires” cu valorile passwordRequired / passwordExpires din citat (Yes = true, No = false). Etichetele sunt localizate: în Windows în limba română apar în română{QuoteHint(reference)}", true));
             steps.Add(new("PowerShell", "Get-LocalUser | Where-Object { $_.SID.Value -like '*-501' } | Format-List Name,Enabled,SID",
                 "contul Guest se găsește după SID-ul care se termină în -501, deci și când numele este tradus sau schimbat; câmpul Enabled cu starea din citat", true));
             steps.Add(Snapshot("conturile locale"));

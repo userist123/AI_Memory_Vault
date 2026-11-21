@@ -705,6 +705,9 @@ public sealed class InvestigationPipeline
         // Planner #12 B2: one finding per task / Run value / Startup entry seen both live and in a stored copy (before sequences and the rest point at finding ids)
         var merged = LiveFindingMerger.Merge(found);
         if (merged.Merged > 0) { found = merged.Findings; ws.Audit("finding.live_merged", $"{merged.Merged} constatări din starea live unite cu copia stocată a aceluiași obiect"); }
+        // Planner #14 E3: an Add-MpPreference -ExclusionPath line of the PowerShell history that matches a listed Defender exclusion becomes evidence of CFG-DEFENDER-EXCL
+        var exclMerged = DefenderExclusionHistoryMerger.Merge(found);
+        if (exclMerged.Merged > 0) { found = exclMerged.Findings; ws.Audit("finding.exclusion_history_merged", $"{exclMerged.Merged} comenzi din istoricul PowerShell unite cu constatarea excluderilor Defender"); }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
         var expectedIssues = new List<string>();
