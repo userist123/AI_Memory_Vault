@@ -78,7 +78,7 @@ def test_job_record_is_complete_and_hashes_its_artifact(out_dir):
     assert record["mode"] == "SHADOW_READ_ONLY"
     assert record["canonical_writes"] == 0 and record["proposals_created"] == 0
     stages = {s["name"]: s for s in record["stages"]}
-    assert set(stages) == {"integrity", "conflict_review"}
+    assert set(stages) == {"integrity", "conflict_review", "agent_readability"}
     assert all(s["status"] == "COMPLETED" for s in stages.values())
     path = out_dir / f"{record['job_id']}.json"
     assert path.is_file()

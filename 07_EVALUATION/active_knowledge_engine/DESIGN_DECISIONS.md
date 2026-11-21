@@ -107,3 +107,48 @@ It raised one MEDIUM and two LOW findings. This was the last review round, so th
   - Fix: new class `NO_LEXICAL_SIGNAL` (both raw scores zero), and `cut_rank` is recorded.
 - **LOW:** quarantine was in the eligibility predicate, but `search()` does not filter on it.
   - Fix: the predicate is now the lifecycle floor only; quarantine stays a `memory_get` rule.
+
+## Loop A stage `agent_readability` (2026-11-21)
+
+### Why the reranker experiment was not run
+
+The obvious next Loop B step was a reranker or ranking-arm experiment for the 10 `PAGINATION_CUT` cases. It was not run.
+
+- The controller's ranking arms (A1-A4) were already compared and validated on this same held-out v2 set (`07_EVALUATION/r024_wp1_ranking/`, `07_EVALUATION/r025_wp8_a1_heldout/`).
+- Re-selecting among them on held-out v2 would turn the held-out set into a tuning set.
+- A new reranker needs the dev set (12 cases) for development and a preregistration before one held-out run.
+
+### What was found instead: the read-path defect behind Milestone 2
+
+Root cause, with a reproduction:
+- `ContextBudget.apply_degradation` (`retrieval/context/budget.py`) never truncates "protected" content (lines matching MUST/NEVER/SHALL/REQUIRED/FORBIDDEN).
+- So a protected note larger than the 32,768-byte hard limit always raises `BudgetExceededError` inside `cognitive_read`.
+- `memory_get` then refuses it (fail closed).
+- The held-out gold of H03 and H27 is `Master_Skills_Catalog_251.md`, 919,796 characters.
+
+The new stage `active_knowledge_engine/readability.py` checks every ACTIVE/REVIEW note.
+- The verdict comes from the production predicate `vault_cli.eligible_for_agent`.
+- The reason comes from the exception `cognitive_read` raises.
+- It records ids, paths, sizes and verification labels, never content.
+
+### Real vault result (498 notes in scope): 49 notes an agent can never read
+
+| Group | Notes | Cause |
+|---|---:|---|
+| REVIEW, `verification: verified_source` | 26 | `verified_source` is **not in the schema enum** (`lifecycle/validation/schema.py`: verified, partially_verified, unverified, inferred). All are legal sources and indexes with no provenance; the route withholds their body and `memory_access` hands over only `unverified` REVIEW notes |
+| REVIEW, `verification: inferred` | 19 | a valid label, but `memory_access._review_candidate` hands over only `unverified` REVIEW notes, so an `inferred` candidate is withheld while an `unverified` one is served |
+| ACTIVE, `verified`, `BudgetExceededError` | 3 | protected content over the hard limit (catalogue 925 KB, `10 Imports and Sources Map.md` 28 KB, `Continuity_Handoff.md` 22 KB) |
+| ACTIVE, no verification, withheld | 1 | withheld by the route |
+
+### Decisions left to the owner; nothing changed here
+
+1. Is `verified_source` a label the schema should accept, or should the 26 legal notes be relabelled?
+   Relabelling edits canonical notes.
+2. Should `memory_access` hand over `inferred` REVIEW notes the way it hands over `unverified` ones, flagged as unverified?
+   This changes the agent read contract.
+3. How should a protected note over the hard limit be served?
+   - Option a: split it at ingestion.
+   - Option b: allow a bounded, explicitly `[PARTIAL]` excerpt of protected content.
+   - Option c: keep refusing.
+
+   Options a and b change a security boundary or canonical content.

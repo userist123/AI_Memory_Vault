@@ -28,12 +28,13 @@ from typing import Any, Dict, List, Optional
 from cognitive_core.conflict_review import ConflictReviewWorkflow
 from cognitive_core.sleep_consolidation import SleepConsolidator, collect_notes
 
+from .readability import agent_readability
 from .retrieval_quality import AGENT_PAGE_SIZE, canonical_digest, evaluate, load_frozen_benchmark
 
 SCHEMA_VERSION = "ake.job/1"
 ELIGIBLE_LIFECYCLES = frozenset({"ACTIVE", "VERIFIED", "REVIEW"})
 TRIGGERS = frozenset({"manual", "scheduled", "ci"})
-STAGES = ("integrity", "conflict_review")
+STAGES = ("integrity", "conflict_review", "agent_readability")
 OBSERVABILITY_DIR = "08_OBSERVABILITY"
 LIMITATIONS = (
     "shadow run: no proposal, promotion, attestation or note write is made",
@@ -330,6 +331,13 @@ class AKEShadowRunner:
             except Exception as exc:
                 review.update(status="FAILED", error=_error(exc))
         stages.append(review)
+
+        readability: Dict[str, Any] = {"name": "agent_readability", "component": "interfaces/vault_cli.py::eligible_for_agent"}
+        try:
+            readability.update(status="COMPLETED", output=agent_readability(self.controller))
+        except Exception as exc:
+            readability.update(status="FAILED", error=_error(exc))
+        stages.append(readability)
 
         if self.benchmark_path:
             quality: Dict[str, Any] = {"name": "retrieval_quality", "component": "memory/controller.py::search (AI_AGENT)"}
