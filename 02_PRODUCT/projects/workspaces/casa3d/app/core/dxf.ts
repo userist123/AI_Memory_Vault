@@ -168,7 +168,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
       else { // text liber; săgeata cu notă = linia + cele două laturi ale vârfului, cota de nivel = triunghiul, toate pe NOTES
         const lg = leaderGeometry(an), rot = an.rotation ?? 0, R = (q: [number, number]) => P(...rotateAbout(q, an.at, rot));
         if (lg){ line('NOTES', P(...lg.from), P(...lg.tip)); line('NOTES', P(...lg.tip), P(...lg.head[1])); line('NOTES', P(...lg.tip), P(...lg.head[2])); }
-        if (an.symbol === 'level') poly('NOTES', levelMarkGeometry(an).tri.map(R));
+        if (an.symbol === 'level') poly('NOTES', levelMarkGeometry(an).outline.map(R));
         text('NOTES', R(textAnchorAt(an)), textHeight(an) * 1000, an.text, { rot: rot ? (360 - rot) % 360 : 0, right: textAnchor(an) === 'end' }); } }
 
     // ---- mobilier ----

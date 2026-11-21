@@ -5,6 +5,7 @@ import Icon from './Icon';
 import { usePrefs } from '@/lib/prefs';
 import PanoramaView from './PanoramaView';
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
+import { planAzimuth } from '@/core/north';
 import { viewerInput, type PlateVoid } from '@/lib/viewer-input';
 const NO_VOIDS: PlateVoid[] = [];
 import { toEngineCatalog } from '@/core/catalog';
@@ -65,8 +66,9 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     if (bimView === 'federated') { v.current.setElementView(null); return; }
     if (bimView === 'clash') { v.current.setElementView({ highlight: detectClashes(snap, catalog).filter(c => c.type !== 'penetration').flatMap(c => c.refs) }); return; }
     v.current.setElementView({ hidden: elementIndex(snap).filter(e => e.discipline !== bimView).map(e => e.elementId) }); }, [bimView, snap, catalog]);
-  function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
-  useEffect(applyLight, [time, azimuth]); // eslint-disable-line
+  // soarele pe nordul real, dacă orientarea casei e declarată (core/north.ts)
+  function applyLight(){ const p = lighting(time, planAzimuth(azimuth, snap.site)); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
+  useEffect(applyLight, [time, azimuth, snap.site?.northDeg]); // eslint-disable-line
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
   function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
@@ -78,7 +80,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
   // scena pentru randarea fotorealistă în Blender (tools/blender/casa3d_render.py): aceleași forme, materiale și lumină
-  async function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang, elements: Object.fromEntries(elementIndex(snap).map(e => [e.elementId, e.discipline])) }); if (!sc) return;
+  async function exportBlender(){ const p = lighting(time, planAzimuth(azimuth, snap.site)), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang, elements: Object.fromEntries(elementIndex(snap).map(e => [e.elementId, e.discipline])) }); if (!sc) return;
     // pe calculatorul cu Blender: randarea pornește direct, imaginile apar în etapa Prezentare; altfel se descarcă scena
     if (projectId){ try { const r = await fetch(`/api/projects/${projectId}/renders`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sc) });
         if (r.status === 202){ setPanoMsg(t('render.started')); return; } if (r.status !== 501){ const j = await r.json().catch(() => ({})); setPanoMsg(j.error || t('render.failed')); return; } } catch { /* fără server: descărcăm */ } }

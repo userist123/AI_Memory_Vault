@@ -38,6 +38,14 @@ const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', roo
 const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
+/** Alinierea și distribuirea pieselor selectate (core/arrange.ts): id-ul comenzii e și cheia i18n a etichetei. */
+export const ARRANGE_IDS = ['arrange.left', 'arrange.centerX', 'arrange.right', 'arrange.top', 'arrange.centerZ', 'arrange.bottom', 'arrange.distributeX', 'arrange.distributeZ'] as const;
+export type ArrangeId = typeof ARRANGE_IDS[number];
+/** Ce comenzi de așezare se aplică unui grup de `n` piese: alinierea de la 2, distribuirea de la 3. */
+export const arrangeCommands = (n: number): ArrangeId[] => n < 2 ? [] : ARRANGE_IDS.filter(id => n >= 3 || !id.startsWith('arrange.distribute'));
+/** Meniul contextual al unei piese dintr-un grup de `n`: comenzile piesei, apoi așezarea, cu „șterge” tot ultima. */
+export const groupContextCommands = (n: number): string[] => { const base = contextCommands('placement'); return [...base.slice(0, -1), ...arrangeCommands(n), ...base.slice(-1)]; };
+
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;
 const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
 export const COMMANDS: CommandDef[] = [
@@ -63,6 +71,9 @@ export const COMMANDS: CommandDef[] = [
   { id: 'room.furnish', label: 'hud.autoFurnish', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'room.split', label: 'hud.splitRoom', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'column.shape', label: 'ctx.columnShape', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  // selecția multiplă de piese: Ctrl/⌘A e prinsă de plan (PlanView keyDown), ca F; alinierea și distribuirea n-au taste
+  { id: 'select.all', label: 'help.selectAll', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'a', ctrlOrMeta: true }] },
+  ...ARRANGE_IDS.map((id): CommandDef => ({ id, label: id, group: 'context', domain: 'editor', dispatch: false, shortcuts: [] })),
   ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [toolKey(tk)] }))
 ];
 
@@ -111,7 +122,7 @@ export interface HelpRow { keys: string; keysKey?: string; label: string; sectio
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('help'), by('palette'), by('ws.focus'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('select.all'), by('help'), by('palette'), by('ws.focus'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

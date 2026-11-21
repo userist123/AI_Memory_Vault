@@ -36,7 +36,7 @@ export function annotationBox(an: Annotation): { x0: number; z0: number; x1: num
   // textul (cu simbolul de nivel și cu vârful săgeții, dacă are): lățimea e estimată, ca înainte
   const h = textHeight(an), w = h * .6 * an.text.length, ta = textAnchorAt(an), end = textAnchor(an) === 'end';
   const xs = [end ? ta[0] - w : ta[0], end ? ta[0] : ta[0] + w, an.at[0]], zs = [ta[1] - h, ta[1], an.at[1]];
-  if (an.symbol === 'level'){ const g = levelMarkGeometry(an); for (const q of g.tri){ xs.push(q[0]); zs.push(q[1]); } }
+  if (an.symbol === 'level'){ const g = levelMarkGeometry(an); for (const q of g.outline){ xs.push(q[0]); zs.push(q[1]); } }
   if (an.leader){ xs.push(an.leader[0]); zs.push(an.leader[1]); }
   return { x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) };
 }
@@ -56,11 +56,22 @@ export function textAnchor(an: Note): 'start' | 'end' {
   if (!an.leader || an.symbol === 'level') return 'start'; const r = (an.rotation ?? 0) * Math.PI / 180;
   return (an.leader[0] - an.at[0]) * Math.cos(r) + (an.leader[1] - an.at[1]) * Math.sin(r) > 0 ? 'end' : 'start';
 }
-/** Simbolul cotei de nivel, nerotit: triunghi cu vârful în jos, în `at` (punctul cotat), baza la 90 % din înălțimea textului
- *  deasupra; valoarea se scrie în dreapta lui, cu baza textului la nivelul vârfului (`textAt`). Rotația adnotării se aplică
- *  în jurul lui `at`, pe simbol și pe text împreună. */
-export function levelMarkGeometry(an: Pick<TextAnnotation, 'at' | 'size'>): { tri: [P, P, P]; textAt: P } {
-  const h = textHeight(an), [x, z] = an.at; return { tri: [[x, z], [x - h * .5, z - h * .9], [x + h * .5, z - h * .9]], textAt: [x + h * .75, z] };
+/** Simbolul cotei de nivel pe PLAN, nerotit: valoarea într-un dreptunghi (practica românească de desen tehnic, STAS 1434-83 —
+ *  triunghiul e convenția secțiunilor și fațadelor; confirmat independent de două cercetări, 2026-11-21). `at` e colțul de jos
+ *  al textului (linia de bază), cu o margine de 30 % din înălțime; lățimea textului e estimată ca la conturul adnotării.
+ *  Rotația adnotării se aplică în jurul lui `at`, pe chenar și pe text împreună. */
+export function levelMarkGeometry(an: Pick<TextAnnotation, 'at' | 'size'> & { text?: string }): { outline: [P, P, P, P]; textAt: P } {
+  const h = textHeight(an), [x, z] = an.at, pad = h * .3, w = h * .6 * Math.max(1, (an.text ?? '').length);
+  const x0 = x - pad, x1 = x + w + pad, z0 = z - h - pad, z1 = z + pad;
+  return { outline: [[x0, z0], [x1, z0], [x1, z1], [x0, z1]], textAt: [x, z] };
+}
+/** Valoarea cotei de nivel în forma de planșă: metri cu două zecimale și semn (`+2,80`, `-0,15`, `±0,00`). Un text care nu
+ *  e număr rămâne cum l-a scris omul; nimic nu se completează în locul lui. */
+export function formatLevelValue(raw: string, decimal: ',' | '.' = ','): string {
+  const t = raw.trim().replace(/^±/, '').replace(/\s+/g, ''), m = /^([+-]?)(\d+)(?:[.,](\d+))?$/.exec(t); if (!m) return raw.trim();
+  const v = Number(`${m[1] === '-' ? '-' : ''}${m[2]}.${m[3] ?? '0'}`); if (!Number.isFinite(v) || Math.abs(v) >= 1000) return raw.trim();
+  const r = Math.round(v * 100) / 100; if (r === 0) return `±0${decimal}00`;
+  return `${r > 0 ? '+' : '-'}${Math.abs(r).toFixed(2).replace('.', decimal)}`;
 }
 /** Punctul de la care se scrie textul (înainte de rotația în jurul lui `at`): `at`, sau în dreapta simbolului de nivel. */
 export const textAnchorAt = (an: Pick<TextAnnotation, 'at' | 'size' | 'symbol'>): P => an.symbol === 'level' ? levelMarkGeometry(an).textAt : [an.at[0], an.at[1]];

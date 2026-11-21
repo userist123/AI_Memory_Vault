@@ -6,7 +6,7 @@ import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
 import { checkSnapshot } from '../lib/repo';
 import { sanitizeAnnotation } from '../core/plan-limits';
-import { annotationBox, annotationCenter, leaderGeometry, levelMarkGeometry, moveAnnotation, rotateAbout, textAnchor, textAnchorAt, textHeight, LEADER_MIN_M } from '../core/annotations';
+import { annotationBox, annotationCenter, leaderGeometry, levelMarkGeometry, moveAnnotation, rotateAbout, textAnchor, textAnchorAt, textHeight, LEADER_MIN_M, formatLevelValue } from '../core/annotations';
 import { describePlan } from '../core/plan-describe';
 import { selectionBox } from '../core/frame';
 import { planToDxf } from '../core/dxf';
@@ -40,11 +40,17 @@ describe('geometria săgeții cu notă și a cotei de nivel', () => {
     assert.equal(textAnchor(note({ rotation: 90, leader: [2, 4] })), 'end'); assert.equal(textAnchor(note({ rotation: 90, leader: [2, 0] })), 'start');
     assert.equal(textAnchor(note({ symbol: 'level', leader: [3, 1] })), 'start');
   });
-  test('cota de nivel: triunghi cu vârful în punctul cotat, baza deasupra; valoarea în dreapta, pe aceeași linie de bază', () => {
-    const g = levelMarkGeometry(note({ size: 'l' })), h = textHeight({ size: 'l' });
-    assert.deepEqual(g.tri[0], [2, 2]); near(g.tri[1][1], 2 - h * .9); near(g.tri[2][1], 2 - h * .9); near(g.tri[2][0] - g.tri[1][0], h); near((g.tri[1][0] + g.tri[2][0]) / 2, 2);
-    assert.ok(g.textAt[0] > g.tri[2][0]); assert.equal(g.textAt[1], 2);
-    assert.deepEqual(textAnchorAt(note({ symbol: 'level', size: 'l' })), g.textAt); assert.deepEqual(textAnchorAt(note()), [2, 2]);
+  test('cota de nivel pe plan: valoarea într-un dreptunghi (practica românească; triunghiul e pentru secțiuni), cu margine în jurul textului', () => {
+    const an = note({ size: 'l', text: '+2,80' }), g = levelMarkGeometry(an), h = textHeight({ size: 'l' }), pad = h * .3, w = h * .6 * 5;
+    assert.equal(g.outline.length, 4); assert.deepEqual(g.textAt, [2, 2]);
+    near(g.outline[0][0], 2 - pad); near(g.outline[0][1], 2 - h - pad); near(g.outline[2][0], 2 + w + pad); near(g.outline[2][1], 2 + pad);
+    // chenarul cuprinde textul (linia de bază în at, înălțimea h deasupra)
+    assert.ok(g.outline[0][1] < 2 - h && g.outline[2][1] > 2 && g.outline[2][0] > 2 + w);
+    assert.deepEqual(textAnchorAt(note({ symbol: 'level', size: 'l' })), [2, 2]); assert.deepEqual(textAnchorAt(note()), [2, 2]);
+  });
+  test('valoarea cotei de nivel în forma de planșă: metri, două zecimale, semn; textul nenumeric rămâne neatins', () => {
+    for (const [inp, out] of [['2.8', '+2,80'], ['+2,8', '+2,80'], ['-0.15', '-0,15'], ['0', '±0,00'], ['±0,00', '±0,00'], ['-0', '±0,00'], ['  3 ', '+3,00'], ['12,345', '+12,35']] as const) assert.equal(formatLevelValue(inp), out, inp);
+    assert.equal(formatLevelValue('2.8', '.'), '+2.80'); assert.equal(formatLevelValue('cota terasă'), 'cota terasă'); assert.equal(formatLevelValue('+2,80 PFF'), '+2,80 PFF'); assert.equal(formatLevelValue('5000'), '5000');
   });
   test('rotirea în jurul unui punct urmează rotate() din SVG (z în jos): 90° duce +x în +z', () => {
     const q = rotateAbout([3, 2], [2, 2], 90); near(q[0], 2); near(q[1], 3); assert.deepEqual(rotateAbout([3, 2], [2, 2], 0), [3, 2]);
@@ -55,7 +61,7 @@ describe('geometria săgeții cu notă și a cotei de nivel', () => {
     const left = annotationBox(note({ leader: [-1, 5] })); near(left.x0, -1); near(left.z1, 5); near(left.x1, 2 + w); near(left.z0, 2 - h);
     // vârful în dreapta: textul se termină în `at`, deci conturul pornește cu o lățime de text mai la stânga
     const right = annotationBox(note({ leader: [6, 1] })); near(right.x0, 2 - w); near(right.x1, 6); near(right.z0, 1); near(right.z1, 2);
-    const lv = annotationBox(note({ symbol: 'level', text: '+0,00' })); near(lv.x0, 2 - h * .5); near(lv.z0, 2 - h); near(lv.z1, 2); near(lv.x1, 2 + h * .75 + h * .6 * 5);
+    const lv = annotationBox(note({ symbol: 'level', text: '+0,00' })); near(lv.x0, 2 - h * .3); near(lv.z0, 2 - h - h * .3); near(lv.z1, 2 + h * .3); near(lv.x1, 2 + h * .6 * 5 + h * .3);
     const c = annotationCenter(note({ leader: [-1, 5] })); near(c[0], (-1 + 2 + w) / 2);
   });
   test('mutarea: textul își ia vârful cu el (drag din poziția de la început și săgețile de la tastatură); cota își mută capetele', () => {

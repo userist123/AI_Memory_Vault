@@ -8,7 +8,8 @@ import { roomArea, roomBoundaryPath, roomCentroid, transformBoundary, pointInRoo
 import { measure } from '@/core/edit-ops';
 import { formatArea, formatLength } from '@/core/format';
 import { snapDraw, pointAtLength, SEGMENT_THICKNESS, type SnapResult } from '@/core/snap';
-import { contextCommands, commandById, commandHint, type ContextKind } from '@/lib/commands';
+import { contextCommands, groupContextCommands, commandById, commandHint, type ContextKind } from '@/lib/commands';
+import { groupIds, toggleMulti, addToGroup, piecesInRect } from '@/core/arrange';
 import PlanContextMenu from './PlanContextMenu';
 import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
@@ -20,7 +21,7 @@ import { doorSwing } from '@/core/doors';
 import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
 import { wallItemGeometry, wallItemDepth } from '@/core/wall-items';
-import { dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, moveAnnotation } from '@/core/annotations';
+import { formatLevelValue, dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, moveAnnotation } from '@/core/annotations';
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
 import type { DimAnnotation } from '@/core/types';
 import { allFixturePoints } from '@/core/fixtures';
@@ -93,7 +94,12 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
   voids?: { x0: number; z0: number; x1: number; z1: number }[];
   /** tastatura cu planul în focus: mută / rotește / șterge / renunță (Tab alege direct, prin onSelect) */
-  onKey?(a: PlanKeyAction): void; }
+  onKey?(a: PlanKeyAction): void;
+  // selecția multiplă de piese: multi = piesele alese pe lângă cea principală (sel); onGroup primește grupul nou,
+  // cu principala pe primul loc (gol = nimic selectat); onArrange = comanda arrange.* aleasă din meniul contextual
+  multi?: string[]; onGroup?(ids: string[]): void; onArrange?(id: string): void; }
+/** peste ce se poate porni dreptunghiul de selecție cu Shift: locul gol și suprafețele (camera, zonele, planul de fundal) */
+const MARQUEE_OVER = new Set(['room', 'floor_zone', 'ceiling_zone', 'underlay']);
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const SEV: Record<Severity, string> = { PASS: '#8B6A45', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
@@ -103,6 +109,8 @@ const snapG = (v: number) => r3(Math.round(v / G) * G);
 
 export default function PlanView(p: Props){
   const { t, lang, units } = usePrefs();
+  // cota de nivel se scrie în forma de planșă (+2,80, -0,15, ±0,00) dacă omul a tastat un număr; altfel rămâne textul lui
+  const addNote = (at: [number, number], v: string, extra?: TextExtra) => p.onAddText?.(at, extra?.symbol === 'level' ? formatLevelValue(v, lang === 'en' ? '.' : ',') : v, extra);
   // etichete de lungime: metric = cm fără unitate pe plan (aglomerat), imperial = picioare și inci
   const wl = (m: number) => units === 'imperial' ? formatLength(m, 'imperial', lang) : String(Math.round(m * 100));
   const svg = useRef<SVGSVGElement>(null);
@@ -201,6 +209,10 @@ export default function PlanView(p: Props){
     return null;
   }, [p.tool, p.sel, p.snap, p.catalog, floor, units, lang]);
   const drag = useRef<any>(null), pan = useRef<any>(null);
+  // selecția multiplă: grupul (piesa principală + `multi`) și dreptunghiul de selecție tras cu Shift, în coordonatele planului
+  const group = useMemo(() => groupIds(p.sel, p.multi ?? []), [p.sel, p.multi]), inMulti = (id: string) => group.length > 1 && group.includes(id);
+  const [marquee, setMarquee] = useState<{ a: [number, number]; b: [number, number] } | null>(null);
+  useEffect(() => { setMarquee(null); }, [p.tool]);
   // uneltele de navigare: Mâna (cursor grab / grabbing cât se trage) și Zoom pe zonă (dreptunghiul tras, în coordonatele planului)
   const [panning, setPanning] = useState(false), [zoomDraft, setZoomDraft] = useState<{ a: [number, number]; b: [number, number] } | null>(null);
   // „Împarte camera”: Shift ținut la ultima mișcare schimbă axa peretelui nou
@@ -223,7 +235,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setTyped(''); setZoomDraft(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setTyped(''); setZoomDraft(null); setMarquee(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -249,7 +261,7 @@ export default function PlanView(p: Props){
       else if (!dimDraft.b){ if (dimOk(dimDraft.a, s, dimDraft.mode)){ setDimDraft({ ...dimDraft, b: s }); setTyped(''); } }
       else finishDim(dimOffsetAt(dimDraft.a, dimDraft.b, dimDraft.mode, pt)); return; }
     // preventDefault oprește blur-ul inputului: un text deja tastat se plasează aici (clicul nu-l pierde), apoi unealta revine la selecție
-    if (TEXT_TOOLS.includes(p.tool) && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; p.onAddText?.(textDraft.at, cleanPlanText(textVal), textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); return; }
+    if (TEXT_TOOLS.includes(p.tool) && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; addNote(textDraft.at, cleanPlanText(textVal), textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); return; }
     // săgeata cu notă: primul clic e vârful; fără text tastat, un clic nou mută doar locul notei (vârful rămâne)
     if (p.tool === 'leader' && !leaderTip){ e.preventDefault(); setTextDraft(null); setLeaderTip([r3(pt[0]), r3(pt[1])]); svg.current!.focus({ preventScroll: true }); return; }
     // câmpul pornește gol și la cota de nivel: valoarea o tastează omul (nimic precompletat)
@@ -276,6 +288,11 @@ export default function PlanView(p: Props){
     let t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
     // ușile și ferestrele au prioritate față de mânerul laturii (zona lui de 44 px poate atinge un gol pe un plan mic), cu excepția cazului când golul acoperă tot peretele și mânerul e decalat în afară
     if (t?.dataset.k === 'redge' && !t.dataset.offset){ const op = document.elementsFromPoint?.(e.clientX, e.clientY).find(x => (x as HTMLElement).dataset?.k === 'opening') as HTMLElement | undefined; if (op) t = op; }
+    // selecția multiplă (doar mouse / creion): Shift+clic pe o piesă o adaugă în grup sau o scoate; Shift+tragere pe gol
+    // (sau peste o cameră / zonă) = dreptunghi de selecție. Mânerele, pereții și golurile își păstrează gestul cu Shift.
+    if (e.shiftKey && p.onGroup && e.pointerType !== 'touch'){
+      if (t?.dataset.k === 'placement'){ p.onGroup(toggleMulti(group, t.dataset.id!)); return; }
+      if (!t || MARQUEE_OVER.has(t.dataset.k!)){ setMarquee({ a: pt, b: pt }); svg.current!.setPointerCapture(e.pointerId); return; } }
     if (!t){ p.onSelect(null); if (e.pointerType === 'touch') pan.current = { x: e.clientX, y: e.clientY, vb }; return; }
     const kind = t.dataset.k!, id = t.dataset.id!;
     // dublu clic pe cota peretelui: câmpul de lungime. Numărat aici (pointerdown.detail e 0 în Chrome, iar captura pointerului
@@ -288,6 +305,8 @@ export default function PlanView(p: Props){
     else if (kind === 'leadertip'){ drag.current = { kind, id, start: pt, moved: false, orig: null }; }
     else if (kind === 'redge'){ drag.current = { kind, id, edge: t.dataset.edge, start: pt, moved: false, orig: null }; }
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
+    // o piesă din grup: selecția rămâne, tragerea mută tot grupul; un clic fără tragere o alege doar pe ea (în up)
+    else if (kind === 'placement' && inMulti(id)){ drag.current = { kind, id, start: pt, moved: false, orig: null, group }; }
     else { p.onSelect({ kind: kind as any, id }); drag.current = { kind, id, start: pt, moved: false, orig: null }; }
     svg.current!.setPointerCapture(e.pointerId);
   }
@@ -297,6 +316,7 @@ export default function PlanView(p: Props){
     const pt = toWorld(e); setCursor(pt);
     if (p.tool === 'split' && splitFlip !== e.shiftKey) setSplitFlip(e.shiftKey);
     if (zoomDraft){ setZoomDraft({ a: zoomDraft.a, b: pt }); return; }
+    if (marquee){ setMarquee({ a: marquee.a, b: pt }); return; }
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
     if (SEGMENT_TOOLS.includes(p.tool)){ raw.current = { pt, free: e.shiftKey }; const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); setHit(r); if (preview){ setPreview({ a: preview.a, b: r.p }); return; } }
@@ -308,6 +328,10 @@ export default function PlanView(p: Props){
     const o = d.orig as Snapshot;
     p.onEdit(s => {
       if (d.kind === 'underlay'){ const a = o.underlay, b = s.underlay; if (a && b && !a.locked){ b.x = r3(a.x + dx); b.z = r3(a.z + dz); } }
+      // grupul se mută întreg cu deplasarea (prinsă la grilă) a piesei trase: distanțele dintre piese rămân
+      else if (d.kind === 'placement' && d.group){ const a0 = o.placements.find(x => x.id === d.id); if (!a0) return; const ddx = snapG(a0.x + dx) - a0.x, ddz = snapG(a0.z + dz) - a0.z;
+        for (const gid of d.group as string[]){ const a = o.placements.find(x => x.id === gid), b = s.placements.find(x => x.id === gid); if (!a || !b) continue; b.x = r3(a.x + ddx); b.z = r3(a.z + ddz);
+          const room = s.floor.rooms.find(r => b.x >= r.rect.x0 && b.x <= r.rect.x1 && b.z >= r.rect.z0 && b.z <= r.rect.z1); if (room) b.roomId = room.id; b.source = 'manual'; } }
       else if (d.kind === 'placement'){ const a = o.placements.find(x => x.id === d.id)!, b = s.placements.find(x => x.id === d.id)!; b.x = snapG(a.x + dx); b.z = snapG(a.z + dz);
         const room = s.floor.rooms.find(r => b.x >= r.rect.x0 && b.x <= r.rect.x1 && b.z >= r.rect.z0 && b.z <= r.rect.z1); if (room) b.roomId = room.id; b.source = 'manual'; }
       else if (d.kind === 'stair'){ const a = o.floor.stairs?.find(x => x.id === d.id), b = s.floor.stairs?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
@@ -347,7 +371,12 @@ export default function PlanView(p: Props){
     if (roomDraft && !roomDraft.pending){ const { a, b } = roomDraft;
       if (Math.abs(b[0] - a[0]) < .6 && Math.abs(b[1] - a[1]) < .6){ setRoomDraft({ a, b, pending: true }); return; }   // clic fără tragere: așteaptă al doilea clic
       finishRoom(a, b); return; }
+    // dreptunghiul de selecție: piesele cu centrul în el intră în grup (cele deja alese rămân); sub 5 cm e un clic, nu o zonă
+    if (marquee){ const { a, b } = marquee; setMarquee(null);
+      if (e.type !== 'pointercancel' && (Math.abs(b[0] - a[0]) >= .05 || Math.abs(b[1] - a[1]) >= .05)){ const ids = piecesInRect(p.snap.placements, a, b); if (ids.length) p.onGroup?.(addToGroup(group, ids)); }
+      return; }
     const d = drag.current; drag.current = null; if (d?.moved) p.onEdit(() => {}, 'end');
+    else if (d?.group && e.type !== 'pointercancel') p.onSelect({ kind: 'placement', id: d.id });
   }
   // un segment terminat (perete, grindă, perete de sticlă) pornește următorul din capătul lui; sub 20 cm nu se adaugă
   const addSegment = (a: [number, number], b: [number, number]) => { if (wallLength(a, b) >= .2){ if (p.tool === 'wall') p.onAddWall(a, b); else if (p.tool === 'beam') p.onAddBeam?.(a, b); else if (p.tool === 'railing') p.onAddRailing?.(a, b); else p.onAddGlassWall?.(a, b); }
@@ -401,6 +430,9 @@ export default function PlanView(p: Props){
       const box = selectionBox(p.snap, p.catalog, p.sel), at = box ? toScreen([(box.x0 + box.x1) / 2, (box.z0 + box.z1) / 2]) : null;
       const r = svg.current!.getBoundingClientRect(), q = at ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       menuByKey.current = Date.now(); setMenu({ ...q, kind: p.sel.kind }); return; }
+    // Ctrl/⌘+A: toate piesele nivelului intră în grup (piesa principală rămâne cea aleasă, dacă e una)
+    if ((e.key === 'a' || e.key === 'A') && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && !typing && p.tool === 'select' && p.onGroup){ e.preventDefault(); e.stopPropagation();
+      const ids = planItems(p.snap).filter(x => x.kind === 'placement').map(x => x.id); if (ids.length) p.onGroup(addToGroup(group, ids)); return; }
     // placarea începută: Enter = toată latura
     if (p.tool === 'clad' && cladDraft && e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); const d = cladDraft; setCladDraft(null); p.onAddClad?.(d.roomId, d.side); return; }
     // F: încadrează selecția (ca în Figma / Archicad); fără selecție, tot planul
@@ -433,6 +465,7 @@ export default function PlanView(p: Props){
   const runCommand = (id: string) => { const s = p.sel; setMenu(null); svg.current?.focus({ preventScroll: true }); if (!s) return;
     if (id === 'rotate') p.onRotateSelected?.(); else if (id === 'duplicate') p.onDuplicateSelected?.(); else if (id === 'delete') p.onDeleteSelected?.();
     else if (id === 'frame'){ if (!frameSel(s)) fitAll(); } else if (id === 'view3d') p.onFrameOther?.(s.id); else if (id === 'column.shape') p.onToggleColumnShape?.();
+    else if (id.startsWith('arrange.')) p.onArrange?.(id);
     else if (id === 'room.furnish') p.onAutoFurnishRoom?.(s.id); else if (id === 'room.split') p.onSplitRoom?.(s.id, 'x'); else if (id === 'wall.length') openDim(s.id); };
   // ce oferă meniul acum: comenzile fără acțiune legată (ex. 3D în vederea doar-plan) nu apar
   const available = (id: string) => ({ view3d: !!p.onFrameOther, 'wall.length': !!p.onSetWallLength, 'room.furnish': !!p.onAutoFurnishRoom, 'room.split': !!p.onSplitRoom,
@@ -444,7 +477,8 @@ export default function PlanView(p: Props){
     const t0 = (e.target as Element).closest('[data-k]') as HTMLElement | null, k = t0?.dataset.k;
     if (!t0 || !k || !['wall', 'room', 'placement', 'stair', 'column', 'beam', 'glass_wall', 'opening', 'niche', 'wall_item', 'annotation', 'floor_zone', 'ceiling_zone', 'railing'].includes(k)){ setMenu(null); return; }
     const s: Sel = k === 'opening' ? { kind: 'opening', id: t0.dataset.id!, wallId: t0.dataset.w! } : { kind: k as Exclude<ContextKind, 'opening'>, id: t0.dataset.id! };
-    p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
+    // clic dreapta pe o piesă din grup: grupul rămâne (meniul oferă și alinierea / distribuirea)
+    if (!(s.kind === 'placement' && inMulti(s.id))) p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={contextMenu}
     style={{ cursor: p.tool === 'select' ? 'default' : p.tool === 'pan' ? (panning ? 'grabbing' : 'grab') : p.tool === 'zoom_area' ? 'zoom-in' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
@@ -479,15 +513,15 @@ export default function PlanView(p: Props){
       return (<g key={st.id}><rect data-k="stair" data-id={st.id} x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#e9e2d5" stroke={s ? '#8B6A45' : '#5E636B'} strokeWidth={s ? .035 : .018} style={{ cursor: 'move' }} />
         <path d={treads} stroke="#8A8F96" strokeWidth={.01} pointerEvents="none" /><path d={arrow} fill="none" stroke="#23262B" strokeWidth={.02} pointerEvents="none" />
         <text x={g.bottom[0] - dx * fs * .5} y={g.bottom[1] - dz * fs * .5 + fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#23262B" pointerEvents="none">{t('stair.up')}</text></g>); })}
-    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId), on = isSel('placement', pl.id), hov = p.hoverId === pl.id;
+    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId), on = isSel('placement', pl.id), also = !on && inMulti(pl.id), hov = p.hoverId === pl.id;
       // simbolul de arhitectură al piesei, la dimensiunile ei reale, rotit spre fața ei; dreptunghiul transparent rămâne pentru selecție și tragere
       const w = pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, d = pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, sym = planSymbol(pl.group, w, d, rv?.variant.chairs ?? 4);
-      const ink = sv === 'PASS' ? (on ? '#8B6A45' : '#3a352f') : SEV[sv], sw = on ? .03 : .015;
+      const ink = sv === 'PASS' ? (on || also ? '#8B6A45' : '#3a352f') : SEV[sv], sw = on ? .03 : also ? .022 : .015;
       return (<g key={pl.id}><title>{rv ? `${rv.product.name} — ${rv.variant.name}` : pl.group}</title>
         <g transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} pointerEvents="none" fill="none" stroke={ink} strokeLinejoin="round">
           {sym.outline && <path d={sym.outline} fill={sym.fill === 'soft' ? '#fffdf8' : '#fffdfa'} fillOpacity={.92} strokeWidth={sw * 1.4} />}
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
-        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={hov && !on ? .7 : 1} strokeWidth={.02} strokeDasharray={on || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
+        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on || also ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : also ? .07 : sv === 'PASS' ? 0 : .12} stroke={on || also ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={also ? .75 : hov && !on ? .7 : 1} strokeWidth={also ? .014 : .02} strokeDasharray={on || also || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
           onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
     {/* covoarele camerelor (stratul de finisaje): dreptunghi textil punctat sub piese, cu numărul covorului când sunt mai multe */}
     {p.showFinishes && p.mc && floor.rooms.flatMap(r => { const rugs = roomRugs(finishesOf(p.snap, r));
@@ -563,7 +597,7 @@ export default function PlanView(p: Props){
         return (<g key={an.id} data-k="annotation" data-id={an.id} style={{ cursor: 'move' }}>
           {lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="transparent" strokeWidth={Math.max(h * .6, fs * .5)} />
             <line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke={col} strokeWidth={h * .08} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill={col} /></>}
-          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).tri.map(q => q.join(' ')).join('L')}Z`} fill={HALO} stroke={col} strokeWidth={h * .08} strokeLinejoin="round" transform={rot} />}
+          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).outline.map(q => q.join(' ')).join('L')}Z`} fill={HALO} stroke={col} strokeWidth={h * .08} strokeLinejoin="round" transform={rot} />}
           <text x={ta[0]} y={ta[1]} fontSize={h} transform={rot} textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} fontFamily="Instrument Sans, Segoe UI, sans-serif"
             fill={col} stroke={HALO} strokeWidth={h * .18} paintOrder="stroke" textDecoration={on ? 'underline' : undefined}>{an.text}</text>
           {on && an.leader && <circle data-k="leadertip" data-id={an.id} cx={an.leader[0]} cy={an.leader[1]} r={fs * .45} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }}><title>{t('leader.tipHint')}</title></circle>}</g>); }
@@ -664,6 +698,7 @@ export default function PlanView(p: Props){
         <rect width={w} height={fs * 1.9} rx={fs * .45} fill={bad ? '#FCEBEA' : '#fff'} stroke={bad ? '#B3261E' : '#7A5A36'} strokeWidth={fs * .08} />
         <text x={fs * .6} y={fs * 1.3} fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={typed ? (bad ? '#B3261E' : '#1A141C') : '#7A6F66'}>{typed || t('plan.typeHint')}</text></g>; })()}
     {/* Zoom pe zonă: dreptunghiul tras; Împarte camera: peretele nou, punctat, la cursor (camerele cu contur propriu nu se pot împărți) */}
+    {marquee && <rect data-marquee="" x={Math.min(marquee.a[0], marquee.b[0])} y={Math.min(marquee.a[1], marquee.b[1])} width={Math.abs(marquee.b[0] - marquee.a[0])} height={Math.abs(marquee.b[1] - marquee.a[1])} fill="#8B6A45" fillOpacity={.08} stroke="#8B6A45" strokeWidth={vb.w / 500} strokeDasharray={`${vb.w / 120} ${vb.w / 200}`} pointerEvents="none" />}
     {zoomDraft && <rect data-zoom-area="" x={Math.min(zoomDraft.a[0], zoomDraft.b[0])} y={Math.min(zoomDraft.a[1], zoomDraft.b[1])} width={Math.abs(zoomDraft.b[0] - zoomDraft.a[0])} height={Math.abs(zoomDraft.b[1] - zoomDraft.a[1])} fill="#6E8798" fillOpacity={.1} stroke="#6E8798" strokeWidth={vb.w / 500} strokeDasharray={`${vb.w / 120} ${vb.w / 200}`} pointerEvents="none" />}
     {p.tool === 'split' && cursor && (() => { const h = splitAt(cursor, splitFlip); if (!h || !canSplitRoom(h.room)) return null; const r = h.room.rect;
       return <line data-split-preview={h.axis} x1={h.axis === 'x' ? h.at : r.x0} y1={h.axis === 'x' ? r.z0 : h.at} x2={h.axis === 'x' ? h.at : r.x1} y2={h.axis === 'x' ? r.z1 : h.at} stroke="#8B6A45" strokeWidth={.03} strokeDasharray=".1 .07" pointerEvents="none" />; })()}
@@ -784,15 +819,15 @@ export default function PlanView(p: Props){
       // clic în afară păstrează textul tastat (ca Enter); după Enter / Escape focusul revine pe plan, nu pe <body>
       // (textClosed: focus() pe plan declanșează sincron blur-ul inputului, care altfel ar adăuga textul a doua oară)
       onFocus={() => { textClosed.current = false; }}
-      onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); }}
+      onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) addNote(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); }}
       onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); textClosed.current = true;
-        const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) p.onAddText?.(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); }} />}
+        const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) addNote(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); }} />}
     {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
     </div>}
     {menu && p.sel && <PlanContextMenu x={menu.x} y={menu.y} label={t('ctx.aria')} onClose={() => { setMenu(null); svg.current?.focus({ preventScroll: true }); }} onPick={runCommand}
-      items={contextCommands(menu.kind).filter(available).map(id => { const c = commandById(id)!; return { id, label: t(c.menuLabel ?? c.label), hint: commandHint(id, { mac }), danger: id === 'delete' }; })} />}
+      items={(menu.kind === 'placement' && group.length > 1 && p.onArrange ? groupContextCommands(group.length) : contextCommands(menu.kind)).filter(available).map(id => { const c = commandById(id)!; return { id, label: t(c.menuLabel ?? c.label), hint: commandHint(id, { mac }), danger: id === 'delete' }; })} />}
     {dim && <input className="plan-dim-input" autoFocus aria-label={t('plan.dimEdit')} aria-invalid={dim.bad} value={dim.text} style={{ left: dim.x, top: dim.y }}
       onFocus={e => e.currentTarget.select()} onChange={e => setDim({ ...dim, text: e.target.value, bad: false })} onBlur={() => setDim(null)}
       onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter'){ e.preventDefault(); applyDim(); } else if (e.key === 'Escape'){ e.preventDefault(); setDim(null); svg.current?.focus({ preventScroll: true }); } }} />}</>);

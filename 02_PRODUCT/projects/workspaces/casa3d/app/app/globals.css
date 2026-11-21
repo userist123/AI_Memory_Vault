@@ -1552,3 +1552,7 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .side.pane-structure > :not(.sidetabs):not(.sheet-pane):not(.outliner){display:none}
 .side.pane-structure .outliner{margin:0 -14px}
 @media (prefers-reduced-motion:reduce){ .splitter::after{transition:none} }
+/* orientarea casei (components/NorthPanel.tsx) și săgeata de nord de pe planșe */
+.north-panel{display:grid;gap:6px} .north-panel h3{margin:0;font-size:var(--fs-sm)} .north-row{display:flex;gap:12px;align-items:flex-start}
+.north-dial{flex:none;cursor:crosshair;touch-action:none;border-radius:50%} .north-fields{display:grid;gap:6px;min-width:0} .north-fields label{display:grid;gap:3px;font-size:12px;color:var(--ink-3)}
+.north-fields input{width:110px} .north-arrow{flex:none}

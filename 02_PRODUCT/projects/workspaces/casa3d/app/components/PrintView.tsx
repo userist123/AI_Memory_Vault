@@ -37,6 +37,14 @@ const MARGIN = 0.5;   // m în jurul planului pentru cote
 
 type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[] };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
+/** Săgeata de nord pe planșă: apare doar când orientarea e declarată (core/north.ts); rotită cu unghiul nordului față de sus. */
+export function NorthArrow({ deg, label }: { deg: number; label: string }){
+  return (<svg role="img" aria-label={label} width="15mm" height="15mm" viewBox="-8 -8 16 16" overflow="visible" className="north-arrow">
+    <circle r={5.4} fill="none" stroke="#333" strokeWidth={0.25} />
+    <g transform={`rotate(${deg})`}><path d="M0 -4.6 L2 2.6 L0 1.4 Z" fill="#333" /><path d="M0 -4.6 L-2 2.6 L0 1.4 Z" fill="#fff" stroke="#333" strokeWidth={0.25} />
+      <text y={-5.9} fontSize={2.6} textAnchor="middle" fontWeight={700} transform={`rotate(${-deg} 0 -5.9)`}>N</text></g>
+  </svg>);
+}
 export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
@@ -52,9 +60,9 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
       {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
     {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
     {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text'){ const ta = textAnchorAt(an), lg = leaderGeometry(an), rot = an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined;
-        // săgeata cu notă (linie + vârf plin) și simbolul cotei de nivel (triunghi), apoi textul
+        // săgeata cu notă (linie + vârf plin) și cota de nivel (valoarea în dreptunghi), apoi textul
         return <g key={an.id}>{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="#222" strokeWidth={fs(0.15)} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill="#222" /></>}
-          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).tri.map(q => q.join(' ')).join('L')}Z`} fill="none" stroke="#222" strokeWidth={fs(0.15)} transform={rot} />}
+          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).outline.map(q => q.join(' ')).join('L')}Z`} fill="none" stroke="#222" strokeWidth={fs(0.15)} transform={rot} />}
           <text x={ta[0]} y={ta[1]} fontSize={textHeight(an)} fill="#222" textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} transform={rot}>{an.text}</text></g>; }
       const g = dimGeometry(an), [nx, nz] = g.n, s = Math.sign(an.offset) || 1, tk = fs(1.2), m = [g.mid[0] + nx * s * fs(2), g.mid[1] + nz * s * fs(2)];
       return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)}><line x1={an.a[0]} y1={an.a[1]} x2={g.p1[0]} y2={g.p1[1]} /><line x1={an.b[0]} y1={an.b[1]} x2={g.p2[0]} y2={g.p2[1]} /><line x1={g.p1[0]} y1={g.p1[1]} x2={g.p2[0]} y2={g.p2[1]} />
@@ -195,7 +203,8 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
         <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
-          <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
+          <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg>
+        {snap.site && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}</div>
     {renderTitleBlock(multi ? t('print.levelPlan', { name: levelName(i) }) : t('tb.plan'), `1:${sc.denominator}`)}</section>); })}
     {/* planșele pentru echipe: tavan și iluminat, pardoseli — la aceeași scară ca planul */}
     {views.map((v, i) => { const { box, sc, mm } = plans[i]!, lv = multi ? ` · ${levelName(i)}` : ''; return (<div key={'dr' + v.floor.id}>

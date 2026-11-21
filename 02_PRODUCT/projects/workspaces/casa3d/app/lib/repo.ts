@@ -1,4 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
+import { parseNorth } from '../core/north';
 import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
 import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
@@ -74,7 +75,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues', 'site'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -147,6 +148,8 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   if (s.joinery != null){ const out: Record<string, unknown> = {}, ids = new Set((s.placements as any[]).map(p => p?.id));
     if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
+  // orientarea casei (core/north.ts): declarată de utilizator; o valoare greșită dispare (nedeclarat), nu oprește salvarea
+  if (s.site != null){ const n = parseNorth(s.site); if (n) s.site = n; else delete s.site; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   if (mc) pruneProducts(s as Snapshot, mc);

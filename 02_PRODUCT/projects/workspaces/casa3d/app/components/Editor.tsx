@@ -66,6 +66,7 @@ import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
+import { groupIds, arrangeItems, alignPieces, distributePieces, applyMoves, nudgeGroup, rotateGroup, duplicateGroup, type AlignMode, type GroupResult } from '@/core/arrange';
 import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel, type TextExtra } from './PlanView';
 import { singleFlight } from '@/lib/single-flight';
@@ -82,13 +83,14 @@ import { isLocalHostname } from '@/lib/public-gate';
 import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShares } from '@/core/stage-progress';
 import CommandPalette, { type Command } from './CommandPalette';
 import MenuBar, { buildMenus } from './MenuBar';
+import NorthPanel from './NorthPanel';
 import './theme-pro.gen.css';
 import './theme-pro.css';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
 import { setWallLength, WallEditError } from '@/core/wall-edit';
 import { SEGMENT_THICKNESS } from '@/core/snap';
-import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, toolShortcut } from '@/lib/commands';
+import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, toolShortcut, arrangeCommands } from '@/lib/commands';
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
@@ -208,6 +210,15 @@ export default function Editor({ id }: { id: string }){
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
   const snap = useMemo(() => house ? levelView(house, L) : null, [house, L]);
+  // selecția multiplă de piese (doar în plan): `multi` = piesele alese pe lângă cea principală (`sel`, cea arătată în inspector,
+  // în 3D și în Structură). Lista ține de piesa principală de la momentul alegerii: orice altă selecție (clic simplu, alt
+  // nivel, ștergere, paletă) o golește fără cod în plus; piesele dispărute între timp (anulare, alt nivel) ies singure.
+  const [multiRaw, setMultiRaw] = useState<{ anchor: string; ids: string[] }>({ anchor: '', ids: [] });
+  const multi = useMemo(() => sel?.kind === 'placement' && multiRaw.anchor === sel.id && snap ? multiRaw.ids.filter(x => x !== sel.id && snap.placements.some(q => q.id === x)) : [], [sel, multiRaw, snap]);
+  const group = useMemo(() => groupIds(sel, multi), [sel, multi]);
+  /** grupul nou, cu piesa principală pe primul loc; gol = nimic selectat */
+  const setGroup = (ids: string[]) => { const [first, ...rest] = ids; if (!first){ setSel(null); setMultiRaw({ anchor: '', ids: [] }); return; }
+    setSel(s => s?.kind === 'placement' && s.id === first ? s : { kind: 'placement', id: first }); setMultiRaw({ anchor: first, ids: rest }); };
   // id-urile tuturor elementelor casei (core/elements.ts): pentru id-urile noi din importul DXF și din panoul de instalații
   const elementIds = useMemo(() => house ? elementIndex(house).map(e => e.elementId) : [], [house]);
   const health = useMemo(() => snap && catalog && mc ? evaluateProjectHealth(snap, catalog, mc) : null, [snap, catalog, mc]);
@@ -304,7 +315,7 @@ export default function Editor({ id }: { id: string }){
       // o tragere care se termină cu planul neschimbat (clamp, înapoi la locul inițial) nu lasă pas de anulare
       if (sameState(before, latest.current)){ discard(); force(x => x + 1); return; }
       const cur = levelView(latest.current!, L);
-      if (sel?.kind === 'placement'){ const p = cur.placements.find(x => x.id === sel.id); const iss = p ? validatePlacement(cur, catalog, p) : [];
+      if (sel?.kind === 'placement'){ const iss = group.flatMap(gid => { const p = cur.placements.find(x => x.id === gid); return p ? validatePlacement(cur, catalog, p) : []; });   // grupul tras: fiecare piesă
         if (severityOf(iss) === 'ERROR'){ discard(); setHouse(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss, discard }); } }
       else {
@@ -355,7 +366,7 @@ export default function Editor({ id }: { id: string }){
   const undo = () => { if (!house || dragStart.current) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; mutate(s => {
-    if (sel.kind === 'placement') s.placements = s.placements.filter(p => p.id !== sel.id);
+    if (sel.kind === 'placement') s.placements = s.placements.filter(p => !group.includes(p.id));   // cu selecție multiplă: toate piesele grupului
     // peretele șters își ia și nișele
     if (sel.kind === 'wall'){ s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id); if (s.floor.niches){ s.floor.niches = s.floor.niches.filter(n => n.wallId !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; }
       if (s.floor.wallItems){ s.floor.wallItems = s.floor.wallItems.filter(n => n.wallId !== sel.id); if (!s.floor.wallItems.length) delete s.floor.wallItems; } }
@@ -393,14 +404,27 @@ export default function Editor({ id }: { id: string }){
     if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); setSel({ kind: 'placement', id: r.id }); if (r.issues.length) setPending({ before: house!, issues: r.issues }); };
   const nudge = (pid: string, dx: number, dz: number) => { if (!snap || !catalog) return; const r = nudgePlacement(snap, catalog, pid, dx, dz);
     if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); };
+  // ---- operații pe grupul de piese (selecția multiplă): un singur pas de anulare, validate pe tot grupul (core/arrange.ts) ----
+  const groupDone = (r: GroupResult, refused: string, warn = true): r is Extract<GroupResult, { ok: true }> => { if (!r.ok){ say(r.cause ? t(refused, { msg: iT(r.cause) }) : iT({ message: '', key: r.key })); return false; }
+    if (!r.changed) return false; commit(r.snapshot); if (warn && r.issues.length) setPending({ before: house!, issues: r.issues, discard: () => hist.current.discardLast() }); return true; };
+  const groupNudge = (dxCm: number, dzCm: number) => { if (snap && catalog) groupDone(nudgeGroup(snap, catalog, group, dxCm, dzCm), 'editor.positionRefused', false); };   // ca la o singură piesă: săgețile nu deschid avertismente
+  const groupRotate = () => { if (snap && catalog) groupDone(rotateGroup(snap, catalog, group), 'editor.rotateNoFit'); };
+  const groupDuplicate = () => { if (!snap || !catalog) return; const r = duplicateGroup(snap, catalog, group, () => uid()); if (groupDone(r, 'editor.positionRefused')) setGroup(r.ids); };
+  /** comenzile `arrange.*`: aliniere (de la 2 piese) și distribuire (de la 3), după cutia fiecărei piese */
+  const arrange = (cid: string) => { if (!snap || !catalog || !arrangeCommands(group.length).some(x => x === cid)) return; const items = arrangeItems(snap, catalog, group), k = cid.slice('arrange.'.length);
+    groupDone(applyMoves(snap, catalog, k === 'distributeX' ? distributePieces(items, 'x') : k === 'distributeZ' ? distributePieces(items, 'z') : alignPieces(items, k as AlignMode)), 'editor.positionRefused'); };
+  const rotateSel = () => { if (!sel) return; if (group.length > 1) groupRotate(); else if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); };
+  const duplicateSel = () => { if (group.length > 1) groupDuplicate(); else if (sel?.kind === 'placement') duplicate(sel.id); };
   // tastatura din plan (core/plan-keys.ts): săgețile mută piesa, scara sau camera aleasă, R rotește, Delete șterge
   const onPlanKey = (a: PlanKeyAction) => { if (!a || !sel || preview) return;
-    if (a.type === 'deselect') setSel(null);
+    if (a.type === 'deselect'){ if (multi.length) setMultiRaw({ anchor: '', ids: [] }); else setSel(null); }   // Esc: întâi grupul, apoi selecția
     else if (a.type === 'delete') del();
+    else if (a.type === 'duplicate') duplicateSel();
     else if (a.type === 'lift' && sel.kind === 'wall_item') patchWallItem(sel.id, q => { q.elevation = r3(Math.max(q.height / 2, Math.min((snap?.floor.ceilingHeight ?? 2.6) - q.height / 2, q.elevation + a.dyCm / 100))); });
-    else if (a.type === 'rotate'){ if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); }
+    else if (a.type === 'rotate') rotateSel();
     else if (a.type === 'move'){ const dx = a.dxCm / 100, dz = a.dzCm / 100;
-      if (sel.kind === 'placement') nudge(sel.id, a.dxCm, a.dzCm);
+      if (group.length > 1) groupNudge(a.dxCm, a.dzCm);
+      else if (sel.kind === 'placement') nudge(sel.id, a.dxCm, a.dzCm);
       else if (sel.kind === 'stair'){ const st = snap?.floor.stairs?.find(x => x.id === sel.id); if (st) patchStair(sel.id, { x: r3(st.x + dx), z: r3(st.z + dz) }); }
       else if (sel.kind === 'column'){ const c = snap?.floor.columns?.find(x => x.id === sel.id); if (c) mutate(s => { const col = s.floor.columns?.find(x => x.id === sel.id); if (col) { col.x = r3(col.x + dx); col.z = r3(col.z + dz); } }); }
       else if (sel.kind === 'annotation') patchAnn(sel.id, an => moveAnnotation(an, an, dx, dz));   // textul își ia cu el și vârful săgeții
@@ -421,14 +445,14 @@ export default function Editor({ id }: { id: string }){
     switch (cid){
       case 'undo': e.preventDefault(); undo(); break;
       case 'redo': e.preventDefault(); redo(); break;
-      case 'duplicate': e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); break;
+      case 'duplicate': e.preventDefault(); duplicateSel(); break;
       case 'help': setHelp(h => !h); break;
       case 'ws.focus': if (!compact && mode === 'studio' && !stageDef.page){ e.preventDefault(); toggleFocus(); } break;
       case 'nudge': case 'nudge.big': if (sel?.kind !== 'placement') break; { e.preventDefault(); const st = cid === 'nudge.big' ? NUDGE_BIG_CM : NUDGE_CM;
-        nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); } break;
+        const ndx = e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, ndz = e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0; if (group.length > 1) groupNudge(ndx, ndz); else nudge(sel.id, ndx, ndz); } break;
       case 'delete': del(); break;
-      case 'rotate': if (sel?.kind === 'placement') rotate(sel.id); else if (sel?.kind === 'stair') rotateStair(sel.id); else if (sel?.kind === 'column') rotateColumn(sel.id); break;
-      case 'escape': setTool('select'); setHelp(false); setCalib(null); setShowHealth(false); setShowLab(false); setActiveImpact(null); break;
+      case 'rotate': rotateSel(); break;
+      case 'escape': setMultiRaw({ anchor: '', ids: [] }); setTool('select'); setHelp(false); setCalib(null); setShowHealth(false); setShowLab(false); setActiveImpact(null); break;
       default: { const tk = commandById(cid)?.tool; if (tk && STAGES.find(x => x.id === stage)?.tools.includes(tk)) setTool(tk); } } };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
 
@@ -711,6 +735,8 @@ export default function Editor({ id }: { id: string }){
       return { id: `pl-${pl.id}`, group: t('cmdk.group.objects'), label: rv ? rv.product.name : pl.group, keywords: [rv?.variant.name ?? '', room ?? '', pl.group],
         hint: room, run: () => { setTool('select'); setSel({ kind: 'placement', id: pl.id }); } }; })),
     ...(sel?.kind === 'placement' ? [{ id: 'frame-other', group: t('cmdk.group.actions'), label: t('cmdk.frameOther'), keywords: ['3d', 'plan', 'frame', t('hud.frame3d'), t('viewer.showInPlan')], run: () => (view === '3d' ? frameInPlan(sel.id) : frameIn3d(sel.id)) }] : []),
+    // așezarea pieselor selectate: alinierea de la 2 piese, distribuirea de la 3 (lib/commands.ts arrangeCommands); apar și în meniul Editare
+    ...(stageDef.page ? [] : arrangeCommands(group.length).map(cid => ({ id: cid, group: t('cmdk.group.actions'), label: t(cid), keywords: [t('cmdk.kw.arrange')], run: () => arrange(cid) }))),
     { id: 'health', group: t('cmdk.group.actions'), label: t('cmdk.health'), keywords: [t('cmdk.kw.health')], run: () => setShowHealth(true) },
     { id: 'lang', group: t('cmdk.group.settings'), label: LANGS.find(l => l.code !== lang)!.name, keywords: [t('cmdk.kw.lang'), 'language', 'limba'], run: () => setLang(lang === 'ro' ? 'en' : 'ro') },
     { id: 'units', group: t('cmdk.group.settings'), label: units === 'metric' ? t('cmdk.unitsImperial') : t('cmdk.unitsMetric'), keywords: [t('cmdk.kw.units')], run: () => setUnits(units === 'metric' ? 'imperial' : 'metric') },
@@ -810,11 +836,12 @@ export default function Editor({ id }: { id: string }){
           snap={preview ? shown(preview.v.candidate) : snap}
           catalog={catalog}
           sel={preview ? null : sel}
+          multi={preview ? undefined : multi} onGroup={preview ? undefined : setGroup} onArrange={preview ? undefined : arrange}
           frame={preview ? undefined : frame ?? undefined}
           hoverId={preview ? null : hoverPid} onHover={setHoverPid} onFrameOther={preview ? undefined : frameIn3d}
           tool={preview ? 'select' : tool}
           severities={preview ? {} : sev}
-          onSelect={preview ? () => {} : (s: Sel) => { setSel(s); if (s && compact && sheet === 'peek') setSheet('half'); }}
+          onSelect={preview ? () => {} : (s: Sel) => { setSel(s); setMultiRaw({ anchor: '', ids: [] }); if (s && compact && sheet === 'peek') setSheet('half'); }}
           onEdit={preview ? () => {} : onEdit}
           onAddWall={preview ? () => {} : onAddWall}
           onAddRoom={preview ? () => {} : onAddRoom}
@@ -836,8 +863,8 @@ export default function Editor({ id }: { id: string }){
           onAddBeam={preview ? undefined : onAddBeam}
           onAddGlassWall={preview ? undefined : onAddGlassWall}
           onAddStairAt={preview ? undefined : onAddStairAt}
-          onRotateSelected={() => { if (!sel) return; if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); }}
-          onDuplicateSelected={() => { if (sel?.kind === 'placement') duplicate(sel.id); }}
+          onRotateSelected={rotateSel}
+          onDuplicateSelected={duplicateSel}
           onDeleteSelected={del}
           onSetWallLength={preview ? undefined : onSetWallLength}
           onToggleColumnShape={() => { if (sel?.kind === 'column') mutate(s => { const c = s.floor.columns?.find(x => x.id === sel.id); if (c) c.shape = c.shape === 'round' ? 'rect' : 'round'; }); }}
@@ -860,7 +887,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -884,6 +911,7 @@ export default function Editor({ id }: { id: string }){
         <StageMeta stage={stage} done={done} />
         {(showSel || stage === 'survey') && <>
           {stage === 'survey' && floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); return <div key={k} className={`issue ${i.severity}`} role={tgt ? 'button' : undefined} tabIndex={tgt ? 0 : undefined} style={tgt ? { cursor: 'pointer' } : undefined} onClick={tgt ? () => focusIssue(i) : undefined} onKeyDown={tgt ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusIssue(i); } } : undefined}>{iT(i)}</div>; })}
+          {!showSel && stage === 'survey' && <NorthPanel site={snap.site} onChange={n => mutate(s => { if (n) s.site = n; else delete s.site; })} />}
           {!showSel && <>
             <h3>{snap.name}{nLevels > 1 ? ` · ${levelName(L)}` : ''}</h3>
             {meta && <ProjectCard id={id} initial={meta} onSaved={setMeta} areaM2={floors(house!).flatMap(f => f.rooms).reduce((a, r) => a + area(r.rect), 0)} cur={cur} say={say} />}
