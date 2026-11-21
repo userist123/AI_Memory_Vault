@@ -50,7 +50,7 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
             var scope = new CaseScope
             {
                 Purpose = "real-machine smoke test", PeriodFromUtc = DateTimeOffset.UtcNow.AddYears(-1), PeriodToUtc = DateTimeOffset.UtcNow.AddYears(1),
-                SystemsInScope = [Environment.MachineName], Approver = v.Approver, LegalBasis = v.LegalBasis, Network = v.Network, Classification = v.Classification,
+                SystemsInScope = [Environment.MachineName], Approver = v.Approver, LegalBasis = v.LegalBasis, Network = NetworkCategory.Connected /* the owner PC is Internet-connected: air-gap posture rules must not fire (planner #15 F1) */, Classification = v.Classification,
             };
             var ws = InvestigationPipeline.NewCase(caseRoot, "real-machine-smoke", scope);
             Line($"LogAnalyzer real-machine audit smoke, {DateTimeOffset.Now:O}; host {Environment.MachineName}; elevated={elevated}");

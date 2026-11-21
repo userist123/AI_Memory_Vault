@@ -363,7 +363,7 @@ public static partial class Wp14Rules
                     User = string.Join(", ", activity.Select(a => F(a.Event, "SubjectUserName")).Where(u => u.Length > 0 && u != "-" && !PlainPhrases.IsStationAccount(u, hostName)).Distinct(StringComparer.OrdinalIgnoreCase)) is { Length: > 0 } fileUsers ? fileUsers : users,
                     PlainWhat = FilesStory(Kind(m), m.Letter, activity, c.Events) is { Length: > 0 } fs ? fs : $"a lucrat cu fișiere pe stick-ul „{PlainName(Kind(m))}”",
                     Title = $"Urme de activitate pe unitatea {m.Letter}: a mediului {(m.Serial.Length > 0 ? m.Serial : Kind(m))}",
-                    Severity = strong ? Severity.High : write ? Severity.Medium : Severity.Low,
+                    Severity = strong ? Severity.High : write && (c.AirGapScope || c.Classified || c.Input.Media is { IsDefined: true }) ? Severity.Medium : Severity.Low, // Planner #15 F1: on an Internet station with no media register, a write to a stick is ordinary use
                     Category = c.FindingCategory, Classification = Classification.Correlated, Confidence = Confidence.Medium, MitreTechniqueId = "T1052.001",
                     FirstSeenUtc = actTimes.Count > 0 ? actTimes[0] : null, LastSeenUtc = actTimes.Count > 0 ? actTimes[^1] : null,
                     Description = $"{activity.Count} urme pe unitatea {m.Letter}: legată de mediul {m.Serial} prin litera de unitate din MountedDevices (ultima asociere): " +

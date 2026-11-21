@@ -302,21 +302,40 @@ public static class Correlation
             e.Source.Equals("EventLog:" + channel, StringComparison.OrdinalIgnoreCase) && int.TryParse(e.EventId, out var id) && ids.Contains(id);
 
         // 1. Defender detections and tampering with Defender.
-        foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 1116, 1117, 1006, 1007, 1015))
+        // Planner #15 F1: one finding per detected item (the container path; every threat found in it is listed), with the count and first/last time;
+        // all detection events stay as evidence (capped at 50 references, the rest named as "și încă N"). Severity stays High unless the latest Defender
+        // outcome of every threat of the item is "quarantined / removed / allowed by the user" (1117 / 1007, Action ID 2 / 3 / 6): then Medium.
+        // A path in a build folder or in a Defender exclusion path gets an honest alternative explanation, never a lower severity by itself.
+        var excludedPaths = events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 5007)).Select(e => ExcludedPathOf(F(e, "New Value", "NewValue")))
+            .Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 1116, 1117, 1006, 1007, 1015, 1118, 1119))
                                 .GroupBy(e => DefenderContainer(F(e, "Path")), StringComparer.OrdinalIgnoreCase))
         {
-            var first = g.OrderBy(e => e.Time.Utc).First();
-            var threats = g.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct().ToList();
+            var ordered = g.OrderBy(e => e.Time.Utc).ThenBy(e => e.EventId, StringComparer.Ordinal).ToList();
+            var first = ordered[0];
+            var threats = ordered.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var detections = ordered.Where(e => DefenderDetectionIds.Contains(e.EventId)).ToList();
+            int detCount = detections.Count > 0 ? detections.Count : ordered.Count;
+            var outcome = DefenderOutcome(ordered, threats);
+            bool buildPath = IsBuildPath(g.Key) || excludedPaths.Any(x => g.Key.StartsWith(x, StringComparison.OrdinalIgnoreCase));
+            var span = detCount > 1 ? $" ({detCount} detecții, prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {ordered.Max(e => e.Time.Utc):yyyy-MM-dd HH:mm} UTC)" : "";
+            var alt = new List<string>();
+            if (buildPath) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
+            var moreEv = ordered.Count - 50;
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "DEF-DETECTION",
-                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}",
-                Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
+                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}{span}",
+                Severity = outcome.Resolved ? Severity.Medium : Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
-                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {(threats.Count == 1 ? PlainPhrases.Q(threats[0]) : threats.Count == 0 ? "ceva periculos" : $"{threats.Count} amenințări")} în {PlainPhrases.Q(PlainPhrases.Leaf(g.Key.TrimEnd('\\')))}",
-                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}.",
-                ClassificationReason = "Înregistrare directă în jurnalul Defender.",
-                SupportingEvidence = g.Take(20).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
+                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {(threats.Count == 1 ? PlainPhrases.Q(threats[0]) : threats.Count == 0 ? "ceva periculos" : $"{threats.Count} amenințări")} în {PlainPhrases.Q(PlainPhrases.Leaf(g.Key.TrimEnd('\\')))}" +
+                            (detCount > 1 ? $"; detecția s-a repetat de {detCount} ori" : "") + (outcome.Resolved ? $"; ultima acțiune a Defender: {outcome.Text}" : ""),
+                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}." +
+                              (outcome.Text.Length > 0 ? $" Ultima stare cunoscută: {outcome.Text}." : "") +
+                              (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
+                ClassificationReason = "Înregistrare directă în jurnalul Defender." + (outcome.Resolved ? " Severitatea este Medium pentru că ultima acțiune a Defender pentru fiecare amenințare a fost carantină, ștergere sau permitere de către utilizator; arată că fișierul a fost tratat, nu că detecția a fost falsă." : ""),
+                SupportingEvidence = ordered.Take(50).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
+                AlternativeExplanations = alt,
                 RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
             });
         }
@@ -633,22 +652,35 @@ public static class Correlation
 
         // Firewall rules that allow a program from a user-writable folder (Firewall.evtx 2004/2005 older, 2097/2099 Windows 11).
         // Codes checked on real events: Action 3 = Allow, 2 = Block; Direction 1 = Inbound, 2 = Outbound.
-        foreach (var e in events.Where(e => Ev(e, "Microsoft-Windows-Windows Firewall With Advanced Security/Firewall", 2004, 2005, 2097, 2099)
-                                            && F(e, "Action") == "3" && IsUserWritable(F(e, "ApplicationPath"))))
+        // Planner #15 F1: one finding per program path (a program usually gets several rules: TCP, UDP, per profile, re-added). The firewall events carry no
+        // signature, so severity stays by direction only: inbound Allow = High, outbound Allow = Medium; the group takes the highest of its rules.
+        foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Firewall With Advanced Security/Firewall", 2004, 2005, 2097, 2099)
+                                            && F(e, "Action") == "3" && IsUserWritable(F(e, "ApplicationPath")))
+                                .GroupBy(e => F(e, "ApplicationPath").Replace('/', '\\').Trim(), StringComparer.OrdinalIgnoreCase))
         {
-            bool inbound = F(e, "Direction") == "1";
+            var rules = g.OrderBy(e => e.Time.Utc).ToList();
+            var e = rules[0];
+            bool inbound = rules.Any(r => F(r, "Direction") == "1");
+            bool outbound = rules.Any(r => F(r, "Direction") != "1");
+            var names = rules.Select(r => F(r, "RuleName")).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var actors = rules.Select(r => F(r, "ModifyingUser")).Where(u => u.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var moreEv = rules.Count - 50;
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "FIREWALL-RULE-USERPATH",
-                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program dintr-o locație în care utilizatorii pot scrie: {WinPath.GetFileName(F(e, "ApplicationPath"))}",
+                Title = $"Regulă de firewall care permite {(inbound && outbound ? "intrarea și ieșirea" : inbound ? "intrarea" : "ieșirea")} pentru un program dintr-o locație în care utilizatorii pot scrie: {WinPath.GetFileName(g.Key)}" +
+                        (rules.Count > 1 ? $" ({rules.Count} reguli)" : ""),
                 Severity = inbound ? Severity.High : Severity.Medium, Category = "DefenseEvasion", Classification = Classification.Direct, Confidence = Confidence.High,
-                MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, File = F(e, "ApplicationPath"), User = F(e, "ModifyingUser"),
+                MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, LastSeenUtc = rules[^1].Time.Utc, File = g.Key, User = string.Join(", ", actors),
                 PlainWhat = (PlainPhrases.KnownActor(F(e, "ModifyingUser")) ? "a adăugat sau a modificat" : "S-a adăugat sau s-a modificat") +
-                            $" o regulă a firewall-ului care lasă programul {PlainPhrases.Q(PlainPhrases.Leaf(F(e, "ApplicationPath")))} să {(inbound ? "primească conexiuni din rețea" : "se conecteze la rețea")}, deși se află într-un folder în care orice utilizator poate scrie",
-                Description = $"Regula „{F(e, "RuleName")}” ({(inbound ? "Inbound" : "Outbound")}, Allow) pentru {F(e, "ApplicationPath")}, adăugată/modificată de {F(e, "ModifyingApplication")}.",
-                ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale în care utilizatorii pot scrie.",
-                SupportingEvidence = [Ref(e, "regulă firewall")],
+                            $" {(rules.Count > 1 ? $"{rules.Count} reguli ale" : "o regulă a")} firewall-ului care lasă programul {PlainPhrases.Q(PlainPhrases.Leaf(g.Key))} să {(inbound && outbound ? "primească conexiuni din rețea și să se conecteze la rețea" : inbound ? "primească conexiuni din rețea" : "se conecteze la rețea")}, deși se află într-un folder în care orice utilizator poate scrie",
+                Description = $"{(rules.Count > 1 ? $"{rules.Count} reguli" : "Regula")} „{string.Join("”, „", names.Take(8))}”{(names.Count > 8 ? $" și încă {names.Count - 8}" : "")} ({(inbound && outbound ? "Inbound și Outbound" : inbound ? "Inbound" : "Outbound")}, Allow) pentru {g.Key}, adăugate/modificate de {string.Join(", ", rules.Select(r => F(r, "ModifyingApplication")).Where(a => a.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(5))}; " +
+                              $"prima {e.Time.Utc:yyyy-MM-dd HH:mm}, ultima {rules[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC." +
+                              (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
+                ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale în care utilizatorii pot scrie. Evenimentul nu conține semnătura programului, deci severitatea urmează doar direcția (intrare = High, ieșire = Medium).",
+                SupportingEvidence = rules.Take(50).Select(r => Ref(r, "regulă firewall")).ToList(),
                 AlternativeExplanations = ["Aplicații per utilizator (de ex. jocuri, clienți de chat) își adaugă reguli la instalare."],
+                MissingEvidence = ["Semnătura digitală a programului (nu este în evenimentul de firewall)."],
             });
         }
 
@@ -927,13 +959,24 @@ public static class Correlation
         }
         // The same script text run again by the same account on the same host (a helper every remote copy loads, a scheduled script) is one finding
         // with the count, not one per run; another account or host is its own finding (review round 1).
-        foreach (var same in psSuspect.GroupBy(b => (b.Text, b.Parts[0].User.ToLowerInvariant(), b.Parts[0].Host.ToLowerInvariant())))
+        // Planner #15 F1: a script that has a Path in 4104 is one script by its file name and matched keywords (a copy of the same collect.ps1 in many
+        // temp folders is one finding); without a Path the script is identified by its text. Every run stays as evidence; the number of distinct texts is told.
+        foreach (var same in psSuspect.GroupBy(b => (PsScriptKey(b.Parts, b.Text, b.HitKw), b.Cim, b.Parts[0].User.ToLowerInvariant(), b.Parts[0].Host.ToLowerInvariant())))
         {
-            var (parts, text, hitKw, score, cim) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
+            var (parts, text, hitKw, score, cim) = same.OrderByDescending(b => b.Score).ThenBy(b => b.Parts[0].Time.Utc).First();
             int runs = same.Count();
+            int variants = same.Select(b => b.Text).Distinct().Count();
+            var paths = same.Select(b => F(b.Parts[0], "Path")).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var psAlt = new List<string>(["Scripturi de administrare sau de instalare legitime."]);
+            if (paths.Any(IsDevOrBuildScriptPath)) psAlt.Add("script de dezvoltare/compilare rulat local");
+            if (paths.Any(p => p.Contains(@"\ladfir_remote_", StringComparison.OrdinalIgnoreCase))) psAlt.Add("script de colectare la distanță pornit de LogAnalyzer însuși (folder ladfir_remote_*)");
+            var matchedLine = hitKw.Count == 0 ? "" : text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => hitKw.Any(k => l.Contains(k.Text, StringComparison.OrdinalIgnoreCase))) ?? "";
+            var variantNote = (variants > 1 ? $" Același nume de script și aceleași cuvinte-cheie, dar {variants} texte diferite{(paths.Count > 0 ? $" din {LogAnalyzer.Dfir.Language.RoText.Count(paths.Count, "cale", "căi")}" : "")}; toate rulările sunt atașate ca probă (primele 50)." : "") +
+                              (paths.Count > 0 ? $" Cale: {paths[0]}{(paths.Count > 1 ? $" și încă {paths.Count - 1}" : "")}." : "") +
+                              (matchedLine.Length > 0 ? $" Linia potrivită: „{Trunc(matchedLine, 200)}”." : "");
             var runStarts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();
             // the first record of every run, always including the last run (LastSeen points at it)
-            var allParts = runStarts.Count <= 11 ? runStarts : [.. runStarts.Take(10), runStarts[^1]];
+            var allParts = runStarts.Count <= 50 ? runStarts : [.. runStarts.Take(49), runStarts[^1]];
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
             var last = runStarts[^1].Time.Utc;
@@ -950,13 +993,13 @@ public static class Correlation
                         $" (cuvinte găsite în script: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(3).Select(k => k.Text.Trim()))})" + (runs > 1 ? $"; același script a rulat {PlainPhrases.Times(runs)}" : "")
                     : "a rulat un script PowerShell pe care Windows însuși l-a marcat ca suspect" + (runs > 1 ? $"; același script a rulat {PlainPhrases.Times(runs)}" : ""),
                 Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}" +
-                              (runs > 1 ? $"; același text a rulat {PlainPhrases.Times(runs)} (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + ". " +
+                              (runs > 1 ? $"; același script a rulat {PlainPhrases.Times(runs)} (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + "." + variantNote + (runs > 50 ? $" Primele 50 de rulări sunt atașate; și încă {runs - 50} sunt în cronologie." : "") + " " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",
                 ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției."
                     : cim ? "Doar nivelul Warning al Windows, pe un text care începe ca modulele CDXML generate pentru comenzile CIM (Get-Disk, Get-NetAdapter...): de obicei administrare, de aceea Low; prologul poate fi copiat, deci textul se citește."
                     : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
                 SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1)).Distinct().Select(e => Ref(e, "4104")).ToList(),
-                AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
+                AlternativeExplanations = psAlt,
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
         }
@@ -1396,6 +1439,78 @@ public static class Correlation
             : $"{Accounts(p.Who)} {(p.Who.Count == 1 ? "a" : "au")} {p.Active}").ToList();
         var text = string.Join("; ", told.Select((t, i) => i == 0 ? char.ToUpperInvariant(t[0]) + t[1..] : t));
         return text;
+    }
+
+    /// <summary>Identity of a script block for grouping: the file name (from the 4104 Path field) with the matched keywords, or the script text when there is no Path.</summary>
+    private static string PsScriptKey(List<TimelineEvent> parts, string text, List<PowerShellKeyword> hitKw)
+    {
+        var path = Wp11Rules.F(parts[0], "Path");
+        var kw = string.Join("|", hitKw.Select(k => k.Text.Trim().ToLowerInvariant()).OrderBy(k => k, StringComparer.Ordinal));
+        return path.Length > 0 ? "p:" + WinPath.GetFileName(path).ToLowerInvariant() + "#" + kw : "t:" + text;
+    }
+
+    private static readonly string[] DevScriptPathMarkers = [@"\bin\debug\", @"\bin\release\", @"\obj\", @"\.claude\worktrees\", @"\worktrees\", @"\source\repos\", @"\repos\", @"\workspaces\"];
+
+    /// <summary>A script whose path is in a development or build folder (bin\Debug, bin\Release, obj, a git worktree, source\repos).</summary>
+    internal static bool IsDevOrBuildScriptPath(string path)
+    {
+        var p = (path ?? "").Replace('/', '\\');
+        return DevScriptPathMarkers.Any(m => p.Contains(m, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The folder a Defender exclusion event (5007, "...\Exclusions\Paths\path" or TemporaryPaths) names, normalised; empty when it is not a path exclusion.</summary>
+    private static readonly HashSet<string> DefenderDetectionIds = ["1116", "1006", "1015"];
+    private static readonly HashSet<string> DefenderActionIds = ["1117", "1007"];
+
+    internal static string ExcludedPathOf(string newValue)
+    {
+        foreach (var marker in new[] { @"\Exclusions\TemporaryPaths\", @"\Exclusions\Paths\" })
+        {
+            int i = (newValue ?? "").IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (i < 0) continue;
+            var p = newValue![(i + marker.Length)..];
+            int eq = p.IndexOf(" = ", StringComparison.Ordinal);
+            if (eq >= 0) p = p[..eq];
+            p = p.Trim();
+            while (p.StartsWith('\\') || p.StartsWith('?')) p = p[1..];
+            return p.TrimEnd('\\');
+        }
+        return "";
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex BuildPathRx = new(@"\\(?:bin\\(?:debug|release)|obj)(?:\\|$)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>An obvious compiler output path: ...\bin\Debug\..., ...\bin\Release\... or ...\obj\...</summary>
+    internal static bool IsBuildPath(string path) => BuildPathRx.IsMatch(path ?? "");
+
+    /// <summary>
+    /// The latest Defender outcome per threat of one detected item. Resolved only when every named threat's latest event is an action taken
+    /// (1117 / 1007) with Action ID 2 (quarantine), 3 (remove) or 6 (allowed by the user), or the same words in Action Name; a later detection
+    /// or a failed action (1118 / 1119) keeps it open.
+    /// </summary>
+    internal static (bool Resolved, string Text) DefenderOutcome(IReadOnlyList<TimelineEvent> ordered, IReadOnlyList<string> threats)
+    {
+        static string Act(TimelineEvent e)
+        {
+            var id = Wp11Rules.F(e, "Action ID");
+            var name = Wp11Rules.F(e, "Action Name");
+            if (id == "2" || name.Contains("quarantin", StringComparison.OrdinalIgnoreCase)) return "pus în carantină";
+            if (id == "3" || name.Contains("remov", StringComparison.OrdinalIgnoreCase)) return "șters";
+            if (id == "6" || name.Equals("allow", StringComparison.OrdinalIgnoreCase)) return "permis de utilizator";
+            return "";
+        }
+        if (threats.Count == 0) return (false, "");
+        var parts = new List<string>();
+        bool all = true;
+        foreach (var t in threats)
+        {
+            var last = ordered.LastOrDefault(e => Wp11Rules.F(e, "Threat Name").Equals(t, StringComparison.OrdinalIgnoreCase));
+            var act = last is not null && DefenderActionIds.Contains(last.EventId) ? Act(last) : "";
+            if (act.Length == 0) { all = false; continue; }
+            parts.Add($"{t}: {act}");
+        }
+        return (all, string.Join("; ", parts));
     }
 
     /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>

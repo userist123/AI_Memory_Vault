@@ -1864,3 +1864,11 @@
   NOISE on real event logs -> planner #15 F1: DEF-DETECTION 49 High (repeats; includes the 2026-11-18 false positive on our own Dfir test DLL), PS-SUSPICIOUS
   100 Medium (4104 script blocks of our own build/test scripts), FIREWALL-RULE-USERPATH 12 High, AIRGAP-* ~52 (air-gap posture rules on an Internet PC),
   MEDIA-*. Results stay local (%TEMP%\la-real-audit-summary.txt).
+- 2026-11-21 (claude, hg585) PLANNER #15 F1 DONE (vault-worker, low-medium): DEF-DETECTION per container path with all threats, "(N detecții, prima…,
+  ultima…)", 1118/1119 included, Medium only when every threat's latest action is quarantine/remove/user-allowed, build-path / 5007-exclusion alternative
+  text (severity not lowered), cap 50; PS-SUSPICIOUS grouped by 4104 Path file name + keywords (text when no path), dev/build and ladfir_remote_*
+  alternatives; FIREWALL-RULE-USERPATH one finding per program (inbound High, outbound-only Medium; no signature data); MEDIA-FILE-ACTIVITY write ->
+  Low when not air-gap/classified/no register. AIRGAP-* noise came from the smoke harness scope (TestScopes Standalone) -> smoke scope set to Connected;
+  the app already silences AIRGAP-* on Connected. Tests F1NoiseReductionTests (8; red 8/8). Suites Dfir 4135 / 36 / 0, App 1524, UI 370 (1 skipped),
+  Edition 45. REAL RUN: 267 -> 105 findings (PS 100 -> 3, firewall 12 -> 2, AIRGAP 0); DEF-DETECTION still 49 (High 15, Medium 34) = distinct build
+  folders -> next: group by (threat, file name) across folders.
