@@ -83,6 +83,8 @@ create index if not exists time_entries_project on time_entries(project_id, date
 create table if not exists expenses(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
   date date not null, category text not null, amount numeric(12,2) not null, supplier text not null default '', doc text not null default '', note text not null default '', created_at timestamptz not null default now());
 create index if not exists expenses_project on expenses(project_id, date desc);
+-- graficul de execuție (core/schedule.ts): etapele cu meseria, datele și dependența
+create table if not exists project_schedule(project_id uuid primary key references projects(id) on delete cascade, data jsonb not null, updated_at timestamptz not null default now());
 alter table projects add column if not exists deleted_at timestamptz;
 create index if not exists projects_trash on projects(owner, deleted_at) where deleted_at is not null;
 create table if not exists studio_profile(owner text primary key, data jsonb not null, updated_at timestamptz not null default now());

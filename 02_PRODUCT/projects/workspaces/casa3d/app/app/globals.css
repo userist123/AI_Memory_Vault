@@ -1159,6 +1159,22 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .expp-list{list-style:none;margin:0;padding:0;font-size:var(--fs-xs)} .expp-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--rule);padding:4px 0} .expp-list li span{min-width:0;overflow-wrap:anywhere}
 .expp .btn-x{border:0;background:none;font-size:var(--fs-lg);line-height:1;cursor:pointer;color:var(--lead);min-width:44px;min-height:44px} .expp .btn.link{border:0;background:none;padding:0;text-decoration:underline;justify-self:start}
 .fold > .expp{margin:6px 0 0;border-top:0;padding-top:0}
+/* graficul de execuție pe pagina Șantier (components/SchedulePanel.tsx) */
+.sched{display:grid;gap:10px;margin:18px 0;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fffcf6)}
+.sched > header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px} .sched > header h2{margin:0;font-size:var(--fs-lg)}
+.sched-gantt{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--rule);border-radius:8px}
+.sched-issues{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.sched-table{display:grid;gap:6px}
+.sched-row{display:grid;grid-template-columns:12px minmax(140px,2fr) minmax(110px,1fr) 140px 140px minmax(130px,1.2fr) auto 44px;gap:6px;align-items:center}
+.sched-row.done input:not([type=checkbox]){opacity:.6} .sched-row input,.sched-row select{min-width:0;min-height:max(var(--h-md),var(--hit))}
+.sched-dot{width:12px;height:12px;border-radius:3px}
+.sched-done{display:flex;gap:4px;align-items:center;font-size:var(--fs-xs);white-space:nowrap}
+.sched .btn-x{border:0;background:none;font-size:var(--fs-lg);line-height:1;cursor:pointer;color:var(--lead);min-width:44px;min-height:44px}
+.sched-act{display:flex;flex-wrap:wrap;gap:8px}
+.sched-gantt-wrap{overflow-x:auto;border-radius:8px} .sched-gantt-wrap .sched-gantt{min-width:640px}
+/* pe ecrane înguste: nume, meserie, început/sfârșit pe același rând, dependență, bifă — zone denumite, nu plasare automată */
+@media (max-width:900px){ .sched-row{grid-template-columns:12px 1fr 1fr 44px;grid-template-areas:'dot title title x' '. trade trade .' '. start end .' '. after after .' '. done done .';padding:8px 0;border-top:1px solid var(--rule)}
+  .sched-dot{grid-area:dot} .sr-title{grid-area:title} .sr-trade{grid-area:trade} .sr-start{grid-area:start} .sr-end{grid-area:end} .sr-after{grid-area:after} .sched-done{grid-area:done} .sr-x{grid-area:x} }
 .ws .side .btn.danger{border-color:#D9B3AD;background:#FFF7F4;color:#9A2C22}
 .ws .side .var,.ws .side .docrow,.ws .side .roomrow,.ws .side .vcard,.ws .side .r,.ws .side .trow{border-color:#E0D4CA;background:#FFFCF6;color:#2A202A;border-radius:18px 18px 18px 5px}
 .ws .side .var:hover,.ws .side .docrow:hover,.ws .side .roomrow:hover{border-color:#D99B8F;background:#FFF7F1}

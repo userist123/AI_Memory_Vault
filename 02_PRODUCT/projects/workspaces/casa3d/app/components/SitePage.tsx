@@ -10,6 +10,7 @@ import { usePrefs } from '@/lib/prefs';
 import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import EmptyState from './EmptyState';
+import SchedulePanel from './SchedulePanel';
 
 export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]; say(s: string): void }){
   const { t, tp, lang } = usePrefs(), [items, setItems] = useState<Snag[] | null>(null), [adding, setAdding] = useState(false), [filter, setFilter] = useState<'open' | 'all'>('open'), [edit, setEdit] = useState<string | null>(null);
@@ -26,6 +27,7 @@ export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]
       <dl className="orders-sum"><div className={sum.open ? 'late' : ''}><dt>{t('site.sum.open')}</dt><dd>{sum.open}</dd></div><div><dt>{t('site.sum.fixed')}</dt><dd>{sum.fixed}</dd></div><div><dt>{t('site.sum.verified')}</dt><dd>{sum.verified}</dd></div></dl></header>
     <div className="site-act"><button className="btn primary big" onClick={() => setAdding(true)}>{t('site.add')}</button><a className="btn" href={`/p/${id}/site-report`} target="_blank" rel="noopener">{t('site.report')}</a><a className="btn" href={`/p/${id}/handover`} target="_blank" rel="noopener">{t('ho.kicker')}</a>
       <div className="filters" role="tablist">{(['open', 'all'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`site.filter.${f}`)}</button>)}</div></div>
+    <SchedulePanel id={id} say={say} />
     {adding && <SnagForm id={id} rooms={rooms} say={say} onDone={s => { setAdding(false); if (s) setItems(xs => [...(xs ?? []), s]); }} />}
     {items === null ? <ListSkeleton label={t('site.loading')} rows={3} /> : groups.length === 0 ? (filter === 'open' && items.length ? <EmptyState title={t('site.allDone')} /> : <EmptyState title={t('empty.site.title')} text={t('site.none')} action={{ label: t('site.add'), onClick: () => setAdding(true) }} />) :
       groups.map(([rid, list]) => <section key={rid} className="supplier"><header><h2>{roomName(rid || null)}</h2><span className="muted">{tp('site.count', list.length)}</span></header>
