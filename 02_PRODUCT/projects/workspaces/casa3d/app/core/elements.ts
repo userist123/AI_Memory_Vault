@@ -6,6 +6,7 @@
 import type { Snapshot, WallOrigin } from './types';
 import { floors } from './levels';
 import { TECH_KINDS } from './technical';
+import { MEP_SYSTEMS } from './mep';
 
 export const DISCIPLINES = ['architecture', 'structure', 'mechanical', 'plumbing', 'electrical', 'interior'] as const;
 export type Discipline = typeof DISCIPLINES[number];
@@ -23,7 +24,7 @@ export function elementIndex(s: Snapshot): ElementRef[] {
   for (const f of floors(s)) {
     for (const r of f.rooms) { levelOfRoom.set(r.id, f.id); add(r.id, 'architecture', 'room', f.id); }
     for (const w of f.walls) {
-      add(w.id, 'architecture', 'wall', f.id, w.origin);
+      add(w.id, w.structural ? 'structure' : 'architecture', w.structural ? 'structural_wall' : 'wall', f.id, w.origin);
       for (const o of w.openings) add(o.id, 'architecture', o.kind, f.id);
     }
     for (const x of f.stairs ?? []) add(x.id, 'architecture', 'stair', f.id);
@@ -36,6 +37,8 @@ export function elementIndex(s: Snapshot): ElementRef[] {
     for (const z of f.ceilingZones ?? []) add(z.id, 'architecture', 'ceiling_zone', f.id);
     for (const z of f.zones ?? []) add(z.id, 'interior', 'floor_zone', f.id);
     for (const w of f.wallItems ?? []) add(w.id, 'interior', 'wall_item', f.id);
+    for (const x of f.footings ?? []) add(x.id, 'structure', 'footing', f.id);
+    for (const r of f.mepRuns ?? []) { const sys = MEP_SYSTEMS[r.system]; if (sys) add(r.id, sys.discipline, 'run', f.id); }
   }
   for (const p of s.placements) add(p.id, 'interior', 'furniture', levelOfRoom.get(p.roomId) ?? null);
   for (const t of s.tech ?? []) {

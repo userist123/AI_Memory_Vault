@@ -19,7 +19,9 @@ export type WallStatus = 'existing' | 'new' | 'demolish';
 /** Proveniența unui perete importat (docs/bim/GHID_BIM.md §3.2–3.3): metoda, amprenta fișierului sursă, stratul din desen și dacă
  *  grosimea a fost măsurată în desen (`source`) sau introdusă de utilizator (`manual`). Lipsă = desenat în aplicație. */
 export interface WallOrigin { method: 'dxf'; sha256: string; layer: string; thickness: 'source' | 'manual' }
-export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[]; status?: WallStatus; origin?: WallOrigin }
+export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[]; status?: WallStatus; origin?: WallOrigin;
+  /** perete marcat structural (portant) de utilizator: reprezentare, nu verificare structurală (CONSTITUTION art. 12) */
+  structural?: true }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
 /** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m).
@@ -55,13 +57,22 @@ export interface CeilingZone { id: string; roomId: string; rect: RoomRect; dropC
 export type RailingKind = 'glass' | 'metal';
 export interface Railing { id: string; a: [number, number]; b: [number, number]; height?: number; kind?: RailingKind; product?: string }
 export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[]; zones?: FloorZone[];
-  ceilingZones?: CeilingZone[]; railings?: Railing[] }
+  ceilingZones?: CeilingZone[]; railings?: Railing[];
+  /** trasee de instalații (core/mep.ts) și fundații (ghidul BIM §3.4–3.5) */
+  mepRuns?: MepRun[]; footings?: Footing[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
 export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
 export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: Finish; ceiling?: Finish }>; wallFaces?: Record<string, Finish>; openings?: Record<string, Finish>; items?: Record<string, Finish> }
+/** Sistemul unui traseu de instalații (core/mep.ts MEP_SYSTEMS dă disciplina, culoarea și eticheta). */
+export type MepSystem = 'water_cold' | 'water_hot' | 'drain' | 'hvac_supply' | 'hvac_return' | 'refrigerant' | 'electric';
+/** Traseu de instalații: puncte [x, y, z] în m (y = cota de la pardoseala nivelului), în sensul curgerii. Diametrul (mm), materialul
+ *  și panta (%) sunt cele declarate; lipsă = necunoscut. `fromId`/`toId` = punctele tehnice legate (opțional). */
+export interface MepRun { id: string; system: MepSystem; points: [number, number, number][]; diameterMm?: number; material?: string; slopePct?: number; fromId?: string; toId?: string }
+/** Fundație (izolată, continuă sau radier): centrul x/z, laturile w/d și adâncimea, în m. Reprezentare, nu calcul. */
+export interface Footing { id: string; x: number; z: number; w: number; d: number; depth: number; kind?: 'pad' | 'strip' | 'raft' }
 /** Imagine de calc sub plan (scară din `widthM`, înălțimea vine din raportul imaginii). Nu intră în calcule, doar în desenul 2D. */
 /** Fișierul original al planului importat (ghidul BIM §3.1): hash SHA-256, nume, mărime și tip, calculate în browser înainte de
  *  reducerea imaginii. dataUrl e doar copia de lucru redusă; hash-ul identifică originalul păstrat de utilizator. */

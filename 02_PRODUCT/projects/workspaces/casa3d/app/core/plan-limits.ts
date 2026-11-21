@@ -3,6 +3,7 @@
 // salvarea întregului proiect (400), de aceea ambele citesc de aici. Funcții pure, fără I/O.
 import type { Annotation, Beam, CeilingZone, Column, DoorType, Floor, FloorLayout, FloorPattern, FloorZone, GlassWall, Niche, Railing, RailingKind, RoomSpaceKind, WallItem, WallStatus } from './types';
 import { DOOR_TYPES, DOOR_TYPE_RULES } from './rules';
+import { sanitizeFloorMep } from './mep';
 
 export const PLAN_LIMITS = {
   coordM: 1000,
@@ -217,6 +218,7 @@ export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   // tipul spațiului (balcon, terasă): o valoare necunoscută se elimină (camera rămâne interior), nu blochează salvarea
   for (const r of f.rooms || []) if ((r as any).spaceKind != null && !(SPACE_KINDS as readonly unknown[]).includes((r as any).spaceKind)) delete (r as any).spaceKind;
   for (const w of f.walls || []){ sanitizeWallStatus(w); sanitizeWallOrigin(w); }
+  sanitizeFloorMep(f, ceil);
   for (const w of f.walls || []) for (const o of w.openings || []){
     if (o.passage == null) delete o.passage;
     else { if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');

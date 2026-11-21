@@ -24,6 +24,7 @@ import { dimGeometry, dimOffsetAt, dimOk, textHeight } from '@/core/annotations'
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
 import type { DimAnnotation } from '@/core/types';
 import { allFixturePoints } from '@/core/fixtures';
+import { MEP_SYSTEMS } from '@/core/mep';
 import { finishesOf } from '@/core/boq';
 import { cladTarget, featurePlanRect, featureMarks, materialOf } from '@/core/finishes';
 import type { MaterialsCatalog, WallFeature } from '@/core/types';
@@ -532,6 +533,12 @@ export default function PlanView(p: Props){
         <text x={mid[0]} y={mid[1] - fs * .3} textAnchor="middle" fontSize={fs * .65} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={bs ? '#8B6A45' : '#4A5568'} pointerEvents="none">{t('tool.beam')} {Math.round(bm.width * 100)}×{Math.round(bm.depth * 100)}</text>
       </g>);
     })}
+    {/* Ghidul BIM (Faza 4): pereții structurali au axa marcată, fundațiile conturul punctat, traseele culoarea sistemului;
+        diametrul nedeclarat apare „necunoscut” în titlu, nu e inventat (core/mep.ts) */}
+    {floor.walls.filter(w => w.structural).map(w => <line key={`st-${w.id}`} data-k="structural" x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#c2410c" strokeWidth={fs * .09} strokeDasharray=".3 .08 .05 .08" pointerEvents="none"><title>{t('bim.structuralWall')}</title></line>)}
+    {(floor.footings || []).map(fd => <rect key={fd.id} data-k="footing" data-id={fd.id} x={fd.x - fd.w / 2} y={fd.z - fd.d / 2} width={fd.w} height={fd.d} fill="none" stroke="#4A5568" strokeWidth={fs * .06} strokeDasharray=".1 .06" pointerEvents="none"><title>{t('bim.footing')} {Math.round(fd.w * 100)}×{Math.round(fd.d * 100)} · {Math.round(fd.depth * 100)} cm</title></rect>)}
+    {(floor.mepRuns || []).map(r => <polyline key={r.id} data-k="mep" data-id={r.id} points={r.points.map(p => `${p[0]},${p[2]}`).join(' ')} fill="none" stroke={MEP_SYSTEMS[r.system]?.color ?? '#555'} strokeWidth={r.diameterMm ? Math.max(fs * .08, r.diameterMm / 1000) : fs * .08} strokeDasharray={r.diameterMm ? undefined : '.12 .06'} strokeLinejoin="round" strokeOpacity={.85} pointerEvents="none">
+      <title>{MEP_SYSTEMS[r.system]?.label[lang === 'en' ? 'en' : 'ro']} · {r.diameterMm ? `Ø${r.diameterMm} mm` : t('bim.diameterUnknown')}{r.material ? ` · ${r.material}` : ''}</title></polyline>)}
     {/* Balustrade: linie dublă (sticlă: albastră, metal: gri închis) cu stâlpii; zona de apucare e mai lată decât desenul */}
     {(floor.railings || []).map(rl => { const on = isSel('railing', rl.id), L = wallLength(rl.a, rl.b); if (L < .01) return null; const nx = -(rl.b[1] - rl.a[1]) / L * .03, nz = (rl.b[0] - rl.a[0]) / L * .03, glass = railingKind(rl) === 'glass', ink = on ? '#8B6A45' : glass ? '#2563EB' : '#3a352f', n = Math.max(1, Math.ceil(L / 1.2 - 1e-9));
       return (<g key={rl.id} data-k="railing" data-id={rl.id} data-railing={railingKind(rl)} style={{ cursor: 'pointer' }}><title>{t('tool.railing')} · {t(`railing.kind.${railingKind(rl)}`)} ({wl(L)} · h {Math.round(railingHeight(rl) * 100)})</title>

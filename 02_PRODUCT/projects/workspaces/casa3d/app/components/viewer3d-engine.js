@@ -926,6 +926,13 @@ function model(it){
       const bMesh = box(bw, bd, L, wallMat, mx, H - bd / 2, mz, rot, ceilings);
       bMesh.userData.beam = true; bMesh.userData.eid = bm.id;
     });
+    // trasee de instalații (ghidul BIM, Faza 4): un cilindru pe segment, cu diametrul declarat; fără diametru, un fir de 2 cm,
+    // doar ca să se vadă (verificarea interferențelor îl tratează ca linie). Fundațiile: cutii sub placă.
+    (p.trasee || []).forEach(tr => { const mat = MAT('paint', tr.color), rad = tr.d ? tr.d / 2000 : .01, up = new THREE.Vector3(0, 1, 0);
+      for (let i = 1; i < tr.pts.length; i++){ const a = new THREE.Vector3(...tr.pts[i - 1]), b = new THREE.Vector3(...tr.pts[i]), dir = b.clone().sub(a), len = dir.length(); if (len < .005) continue;
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 12), mat); m.position.copy(a.clone().add(b).multiplyScalar(.5)); m.quaternion.setFromUnitVectors(up, dir.normalize());
+        m.castShadow = false; m.userData.eid = tr.id; m.userData.mep = true; walls.add(m); } });
+    (p.fundatii || []).forEach(fd => { const m = box(fd.w, fd.depth, fd.d, MAT('paint', '#9a9488'), fd.x, -SLAB - fd.depth / 2, fd.z, 0, walls); m.userData.eid = fd.id; m.castShadow = false; });
     // pereți vitrați / compartimentări din sticlă
     // (balustrada de sticlă refolosește aceeași construcție, cu înălțimea ei `h` și fără să se scurteze în vederea tăiată: grupul casei)
     (p.peretiSticla || []).forEach(gw => {
