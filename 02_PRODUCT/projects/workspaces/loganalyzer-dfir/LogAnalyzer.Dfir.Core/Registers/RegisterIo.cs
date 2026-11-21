@@ -107,7 +107,7 @@ public static class RegisterStore
     /// Validates and writes. If any row is invalid nothing is written (and nothing is audited) and every error is returned. A change goes to the audit chain
     /// with who/when/before/after; saving an unchanged register adds no audit line. <paramref name="sha256"/> is the SHA-256 of the file.
     /// </summary>
-    public static List<RegisterIssue> Save<T>(T register, string? path, out string sha256, string? who = null, string action = "save") where T : class, IRegisterData, new()
+    public static List<RegisterIssue> Save<T>(T register, string? path, out string sha256, string? who = null, string action = "save", string? writerSchema = null) where T : class, IRegisterData, new()
     {
         sha256 = "";
         if (!OperatorIdentity.MayEditAdministration) return [new RegisterIssue(register.Title, 0, OperatorIdentity.AdministratorOnlyMessage)];
@@ -118,7 +118,10 @@ public static class RegisterStore
         var beforeSha = File.Exists(path) ? Hashing.Sha256File(path) : "";
         var after = register.Cells();
         if (beforeSha.Length > 0 && SameCells(before, after)) { sha256 = beforeSha; return issues; }
-        register.SchemaVersion = "1.0";
+        writerSchema ??= SchemaWrittenBy(typeof(T));
+        if (File.Exists(path) && StoredSchema(path) is { } stored && IsNewer(stored, writerSchema))
+            return [new RegisterIssue(register.Title, 0, $"Registrul a fost salvat de o versiune mai nouă a aplicației (schema {stored}); nu se suprascrie, ca să nu se piardă coloane.")];
+        register.SchemaVersion = writerSchema;
         register.UpdatedUtc = DateTimeOffset.UtcNow;
         Json.Write(path, register);
         sha256 = Hashing.Sha256File(path);
@@ -126,6 +129,28 @@ public static class RegisterStore
             DateTimeOffset.UtcNow, beforeSha, sha256, before, after));
         return issues;
     }
+
+    /// <summary>The schema version this build writes for a register type (1.1 users register: training and pledge columns; the others 1.0).</summary>
+    public static string SchemaWrittenBy(Type registerType) => registerType == typeof(UsersRegister) ? UsersRegister.CurrentSchemaVersion : "1.0";
+
+    private static string? StoredSchema(string path)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            return doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("schema_version", out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>Review r2: a newer MAJOR (e.g. "2.0" against "1.1") is newer too; Load refuses it and would show an empty register that a save then overwrote.</summary>
+    private static bool IsNewer(string stored, string writer)
+    {
+        int sm = LogAnalyzer.Dfir.IO.SchemaVersions.Major(stored), wm = LogAnalyzer.Dfir.IO.SchemaVersions.Major(writer);
+        return sm > wm || (sm == wm && Minor(stored) > Minor(writer));
+    }
+
+    private static int Minor(string version) => version.Split('.') is { Length: > 1 } p && int.TryParse(p[1], out var m) ? m : 0;
 
     private static bool SameCells(List<string[]> a, List<string[]> b) => a.Count == b.Count && a.Zip(b).All(p => p.First.SequenceEqual(p.Second, StringComparer.Ordinal));
 }

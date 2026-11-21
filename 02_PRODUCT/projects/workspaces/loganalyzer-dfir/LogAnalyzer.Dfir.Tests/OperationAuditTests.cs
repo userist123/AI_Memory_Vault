@@ -57,7 +57,8 @@ public sealed class OperationAuditTests : IDisposable
         File.WriteAllText(file, "pdf");
         var sha = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file)));
         Assert.Equal("case=C1; format=pdf; items=3; phase=intent", OperationAudit.ExportIntentDetail("C1", "pdf", 3));
-        Assert.Equal($"case=C1; format=pdf; items=3; sha256={sha}; phase=written", OperationAudit.ExportWrittenDetail("C1", "pdf", 3, file));
+        // planner #11 item 3: the destination (full path, drive, volume serial, medium) sits between the hash and the phase; with no resolver the medium is "necunoscut"
+        Assert.Equal($"case=C1; format=pdf; items=3; sha256={sha}; path={Path.GetFullPath(file)}; drive=necunoscut; volume=; medium=necunoscut; phase=written", OperationAudit.ExportWrittenDetail("C1", "pdf", 3, file));
         Assert.Contains("phase=failed; error=IOException", OperationAudit.ExportFailedDetail("", "pdf", 3, "IOException"));
         Assert.StartsWith("case=(fără caz)", OperationAudit.ExportIntentDetail("", "csv", 0));
     }

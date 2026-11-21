@@ -35,26 +35,133 @@ public sealed partial class AuthService
     private readonly bool _classified;
     private readonly Dictionary<Guid, AuthSession> _sessions = [];
     private readonly AuthStoreSecurity _security;
+    private readonly bool _requireNotice;
+
+    public const string NoticeNotAcceptedReason = "notice_not_accepted";
+    public const string NoticeAcceptedEvent = "notice.accepted";
+
+    /// <summary>The exact notice text the person was shown and accepted, and where it came from ("profil" or "implicit").</summary>
+    public sealed record NoticeAcceptance(string Text, string Source);
+
+    /// <summary>Private marker for Unlock (re-authentication of an open session, which was already accepted at sign-in): not asked again, not recorded again.</summary>
+    private static readonly NoticeAcceptance UnlockReauth = new("", "unlock");
+
+    /// <summary>"sha256=…; sursa=…" of an accepted notice, or null (none / unlock).</summary>
+    private static string? NoticeFacts(NoticeAcceptance? notice)
+    {
+        if (notice is null || string.IsNullOrWhiteSpace(notice.Text)) return null;
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(notice.Text)));
+        return $"sha256={hash}; sursa={(notice.Source == "profil" ? "profil" : "implicit")}";
+    }
+
+    /// <summary>Review L1: the auth.signin ok line itself carries the acceptance, so a failed notice.accepted write cannot leave a sign-in without it.</summary>
+    private static string WithNotice(string detail, NoticeAcceptance? notice) => NoticeFacts(notice) is { } f ? $"{detail}; notificare acceptată {f}" : detail;
+
+    private SignInResult? RefuseWithoutNotice(NoticeAcceptance? notice, string account, string mode)
+    {
+        if (!_requireNotice || ReferenceEquals(notice, UnlockReauth) || !string.IsNullOrWhiteSpace(notice?.Text)) return null;
+        // review L3: the typed name is kept only as a hash, as for an unknown account (it may be a password typed in the wrong box)
+        Audit("auth.signin", "(neautentificat)", "(nevalidat) sha256:" + Short(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(account.ToLowerInvariant())))), "refused", NoticeNotAcceptedReason, mode + "; notificarea de utilizare nu a fost acceptată");
+        return new SignInResult(false, NoticeNotAcceptedReason, "notificarea de utilizare trebuie citită și acceptată înainte de autentificare");
+    }
+
+    /// <summary>Writes <c>notice.accepted</c> (SHA-256 of the exact text + its source) for a sign-in that succeeded. Facts only, no notice text in the audit.</summary>
+    private void AuditNoticeAccepted(AuthAccount acc, NoticeAcceptance? notice, string card = "", string reader = "")
+    {
+        if (NoticeFacts(notice) is not { } facts) return;
+        Audit(NoticeAcceptedEvent, acc.Account, acc.Account, "ok", "", facts, card, reader);
+    }
 
     /// <param name="security">
     /// DACL check of the folder and the key sealing the audit head (security audit #4). Default: the real Windows checks for the production folder
     /// (<paramref name="dir"/> null), none for an explicit folder (tests, tools) unless given.
     /// </param>
-    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null, AuthStoreSecurity? security = null)
+    /// <param name="requireNoticeAcceptance">
+    /// HG 585 ID-03: when true, every sign-in must carry a <see cref="NoticeAcceptance"/>; without it the service itself refuses (reason
+    /// <see cref="NoticeNotAcceptedReason"/>, audited). The application turns it on in one place (AuthApp), so no sign-in path can skip the notice.
+    /// </param>
+    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null, AuthStoreSecurity? security = null, bool requireNoticeAcceptance = false)
     {
+        _requireNotice = requireNoticeAcceptance;
         Dir = dir ?? DefaultDir;
         _classified = classifiedEdition;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         Trust = new CertificateTrust(TrustDir, CrlDir, () => Policy.MissingCrl, _clock);
         _security = security ?? (dir is null && OperatingSystem.IsWindows() ? AuthStoreSecurity.Windows() : AuthStoreSecurity.None);
-        if (!ReferenceEquals(_security, AuthStoreSecurity.None)) SealAudit();
+        if (!ReferenceEquals(_security, AuthStoreSecurity.None)) { SealAudit(); ReportWitnessMove(probe: true); }
     }
+
+    private LogAnalyzer.Dfir.Case.IHeadWitness? _witness;
+    private readonly HashSet<string> _reportedMoves = new(StringComparer.OrdinalIgnoreCase);   // planner #10 item 5: every move, not only the last one
+
+    public const string WitnessMovedMessage =
+        "Folderul martorului anti-revenire nu era protejat și a fost mutat deoparte; martorul a fost refăcut. O înlocuire a jurnalului cu o copie mai veche, " +
+        "făcută înainte, nu mai poate fi detectată. Verificați cine a avut acces la stație.";
+
+    /// <summary>
+    /// Planner #9 item 3: the folder the anti-rollback witness moved aside because it was not protected (null = none). Moving it aside silently resets the
+    /// witness, so it is written to the sealed auth audit (auth.witness_moved_aside, once per folder) and shown at sign-in.
+    /// </summary>
+    public string? WitnessMovedAside { get; private set; }
+
+    /// <summary>Non-null when the move-aside could not be written to the audit (the reason, for the startup log).</summary>
+    public string? WitnessMoveNotRecorded { get; private set; }
+
+    /// <summary>Audits a witness folder moved aside, once per folder. <paramref name="probe"/>: read the witness first, so the folder is checked at start.</summary>
+    private void ReportWitnessMove(bool probe = false)
+    {
+        if (_witness is null) return;
+        if (probe)
+        {
+            try { _witness.Read(); }
+            // an unreadable witness is reported by the chain verification (Broken), not here
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException) { }
+        }
+        // review 2026-11-19: Audit() runs on several threads (collector sink, session context) -> check-and-set under a lock, so one move is one line;
+        // Monitor is re-entrant on the same thread, so the nested Audit() of the line below is stopped by _reportingMove.
+        lock (_witnessGate)
+        {
+            if (_reportingMove) return;
+            var pending = _witness.UntrustedFolders().Where(d => !_reportedMoves.Contains(d)).ToList();
+            if (pending.Count == 0) return;
+            // planner #10 item 5: a folder already named in the audit (an earlier start reported it) is not reported again
+            string auditText = "";
+            try { if (File.Exists(AuditPath)) { using var fs = new FileStream(AuditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); using var sr = new StreamReader(fs); auditText = sr.ReadToEnd(); } }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            _reportingMove = true;
+            try
+            {
+                foreach (var aside in pending)
+                {
+                    if (auditText.Contains(System.Text.Json.JsonEncodedText.Encode(aside).ToString(), StringComparison.OrdinalIgnoreCase) || auditText.Contains(aside, StringComparison.OrdinalIgnoreCase))
+                    { _reportedMoves.Add(aside); continue; }
+                    WitnessMovedAside = aside;
+                    try
+                    {
+                        Audit("auth.witness_moved_aside", "aplicație", "", "warning", "witness_untrusted",
+                              $"folderul martorului anti-revenire nu era protejat (Administrators/SYSTEM) și a fost mutat deoparte în {aside}, cu conținutul păstrat; martorul a fost refăcut");
+                        _reportedMoves.Add(aside);   // only once written: a failed write is retried at the next audited operation or verification
+                        WitnessMoveNotRecorded = null;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        WitnessMoveNotRecorded = $"{ex.GetType().Name}: {ex.Message}";
+                    }
+                }
+            }
+            finally { _reportingMove = false; }
+        }
+    }
+
+    private readonly object _witnessGate = new();
+    private bool _reportingMove;
 
     /// <summary>Registers the audit head seal; when the key was just created, an existing intact chain is sealed once (trusted on first use) and that is audited.</summary>
     private void SealAudit()
     {
         var (key, created) = _security.ChainKey(Dir);
-        HashChain.RegisterHeadSeal(AuditPath, key);
+        _witness = _security.Witness(AuditPath);
+        HashChain.RegisterHeadSeal(AuditPath, key, _witness);
         if (key is null || !created || !File.Exists(AuditPath)) return;
         var chain = new HashChain(AuditPath);
         if (File.Exists(HashChain.HeadPath(AuditPath)) || chain.Head().Seq == 0) return;
@@ -124,7 +231,12 @@ public sealed partial class AuthService
     public IReadOnlyList<AuthAccount> Accounts() => ReadAccounts()?.Accounts ?? [];
     public AuthAccount? Find(string account) => ReadAccounts()?.Accounts.FirstOrDefault(a => SameName(a.Account, account));
     public AuthAccount? PrimaryAdmin => ReadAccounts()?.Accounts.FirstOrDefault(a => a.IsPrimaryAdmin);
-    public ChainVerification VerifyAudit() => new HashChain(AuditPath).Verify();
+    public ChainVerification VerifyAudit()
+    {
+        var r = new HashChain(AuditPath).Verify();
+        ReportWitnessMove();   // review 2026-11-19: reading the witness can move its folder aside; audited now, not only at the next operation
+        return r;
+    }
 
     /// <summary>
     /// Reads the audit file ONCE and verifies the chain on those bytes; the caller reads the records it needs from the same <paramref name="content"/>, so the
@@ -132,16 +244,10 @@ public sealed partial class AuthService
     /// </summary>
     public ChainVerification VerifyAuditSnapshot(out byte[] content)
     {
-        content = [];
-        if (File.Exists(AuditPath))
-        {
-            using var fs = new FileStream(AuditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            using var ms = new MemoryStream();
-            fs.CopyTo(ms);
-            content = ms.ToArray();
-            return new HashChain(AuditPath).Verify(content);
-        }
-        return new HashChain(AuditPath).Verify();
+        var r = new HashChain(AuditPath).ReadVerified();   // bytes and sealed head from one snapshot
+        ReportWitnessMove();   // appended after the snapshot: the caller's verdict and records stay about the bytes it got
+        content = r.Content;
+        return r.Verification;
     }
     public string AccountsSha256 => File.Exists(AccountsPath) ? Hashing.Sha256File(AccountsPath) : "";
 
@@ -180,6 +286,7 @@ public sealed partial class AuthService
     {
         Directory.CreateDirectory(Dir);
         new HashChain(AuditPath).Append(new AuthAuditEntry(ev, who, account, card, reader, result, reason, _clock(), detail, accountsChanged ? AccountsSha256 : ""));
+        if (_witness?.MovedAside is { } moved && !_reportedMoves.Contains(moved)) ReportWitnessMove();   // the append itself may have moved the folder aside
     }
 
     private static string Short(string? thumb) => thumb is null ? "" : thumb[..Math.Min(16, thumb.Length)];
@@ -240,11 +347,12 @@ public sealed partial class AuthService
 
     // ───────────────────────── password sign-in (primary administrator only) ─────────────────────────
 
-    public SignInResult SignInWithPassword(string account, string password, bool acknowledgeUnprotectedStore = false)
+    public SignInResult SignInWithPassword(string account, string password, bool acknowledgeUnprotectedStore = false, NoticeAcceptance? notice = null)
     {
         lock (_gate)
         {
             account = (account ?? "").Trim();
+            if (RefuseWithoutNotice(notice, account, "mod=parolă") is { } noNotice) return noNotice;
             var now = _clock();
             var store = StoreProtection;
             if (!store.Protected && !acknowledgeUnprotectedStore)
@@ -309,7 +417,8 @@ public sealed partial class AuthService
                 warnings.Add(store.Message);
             }
             var s = NewSession(acc, SignInMode.Password, null, null);
-            Audit("auth.signin", acc.Account, acc.Account, "ok", "password", "mod=parolă");
+            Audit("auth.signin", acc.Account, acc.Account, "ok", "password", WithNotice("mod=parolă", notice));
+            AuditNoticeAccepted(acc, notice);
             return new SignInResult(true, "ok", "autentificat cu parolă", s, warnings);
         }
     }
@@ -322,10 +431,11 @@ public sealed partial class AuthService
     /// Card + PIN: lists certificates with a private key on inserted smart cards, validates the chain/revocation offline, asks the card to sign a random
     /// challenge (Windows / SafeNet shows the PIN prompt) and verifies the signature with the certificate's public key.
     /// </summary>
-    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null, bool acknowledgeUnprotectedStore = false)
+    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null, bool acknowledgeUnprotectedStore = false, NoticeAcceptance? notice = null)
     {
         lock (_gate)
         {
+            if (RefuseWithoutNotice(notice, "", "mod=card+PIN") is { } noNotice) return noNotice;   // before the PIN prompt
             var picked = SelectCard(provider, sha256Thumbprint, out var early);
             if (early is not null) return early;
             var (card, acc, binding) = picked!.Value;
@@ -346,7 +456,8 @@ public sealed partial class AuthService
                 warnings.Add(store.Message);
             }
             var s = NewSession(acc, SignInMode.Card, card.Sha256Thumbprint, card.Reader);
-            Audit("auth.signin", acc.Account, acc.Account, "ok", "card", "mod=card+PIN", Short(card.Sha256Thumbprint), card.Reader);
+            Audit("auth.signin", acc.Account, acc.Account, "ok", "card", WithNotice("mod=card+PIN", notice), Short(card.Sha256Thumbprint), card.Reader);
+            AuditNoticeAccepted(acc, notice, Short(card.Sha256Thumbprint), card.Reader);
             return new SignInResult(true, "ok", "autentificat cu card", s, warnings);
         }
     }

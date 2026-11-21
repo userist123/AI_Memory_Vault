@@ -356,8 +356,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (!_started || !_owner) return;
             var period = available ? PollWithEvents : PollWithoutEvents;
             Mode = available
-                ? "Monitor PORNIT: conectările și deconectările apar singure, în câteva secunde (evenimente Windows)."
-                : "Monitor PORNIT: evenimentele Windows nu sunt disponibile, așa că lista dispozitivelor se citește la 2 secunde și se compară.";
+                ? "Monitorul este pornit: conectările și deconectările apar singure, în câteva secunde (evenimente Windows)."
+                : "Monitorul este pornit: evenimentele Windows nu sunt disponibile, așa că lista dispozitivelor se citește la 2 secunde și se compară.";
             _timer?.Dispose();
             _timer = new Timer(_ => Post(() => _ = RefreshAsync(initial: false)), null, period, period);
         }

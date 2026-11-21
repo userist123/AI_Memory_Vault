@@ -18,6 +18,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportMediaHistory()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_report is null) { Status = "Rulați întâi controlul: istoricul mediilor folosește activitatea pe fișiere găsită de control (A15) și registrul semnat în vigoare."; return; }
             System.Collections.Generic.IReadOnlyList<LogAnalyzer.Dfir.Devices.DeviceRecord> devices;
             var notes = new System.Collections.Generic.List<string>();

@@ -29,6 +29,20 @@ public static class ApprovedSoftwareMatcher
         return null;
     }
 
+    /// <summary>
+    /// A valid row that names the software (an alias occurs in its Name) but approves it only at a path pattern, with no hash; or null. Used when the evidence
+    /// has no path to check (a session in the tool's own log): the approval can then be neither confirmed nor ruled out.
+    /// </summary>
+    public static ApprovedSoftwareRow? PathRowByName(ProcedureProfile? profile, IEnumerable<string> aliases)
+    {
+        if (profile is null || profile.ApprovedSoftware.Count == 0) return null;
+        var al = aliases.Select(a => a.Trim()).Where(a => a.Length >= 3).ToList();
+        return profile.ApprovedSoftware.FirstOrDefault(row =>
+            ProfileTables.ValidateRow(ProfileTable.ApprovedSoftware, [row.Name, row.Publisher, row.PathPattern, row.Sha256]).Count == 0
+            && row.Sha256.Trim().Length != 64 && row.PathPattern.Trim().Length > 0 && row.Name.Trim().Length > 0
+            && al.Any(a => row.Name.Contains(a, StringComparison.OrdinalIgnoreCase)));
+    }
+
     /// <summary>Path without its volume: "C:\x" and "\VOLUME{guid}\x" (Prefetch) both become "\x", so one pattern fits every source.</summary>
     private static string WithoutVolume(string path)
     {

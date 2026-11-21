@@ -461,7 +461,7 @@ public sealed class FindingContractTests : IDisposable
         Assert.Equal(StandardState.Observed, back.Status);
         Assert.Equal(task.Limitations, back.Limitations);
         var manifest = SchemaManifest.Read(analysis);
-        Assert.Equal("2.0", manifest.VersionOf("findings.json"));
+        Assert.Equal("2.1", manifest.VersionOf("findings.json"));
         Assert.Equal("1.1", manifest.VersionOf("parsers.json"));
         // parsers.json stays a bare array so existing consumers keep working, and now carries the capabilities.
         var inv = JsonDocument.Parse(File.ReadAllText(Path.Combine(analysis, "parsers.json"))).RootElement;

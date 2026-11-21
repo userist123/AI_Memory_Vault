@@ -24,19 +24,25 @@ namespace LogAnalyzer.UI.Views
             if (afterEmergency)
                 Intro.Text = "Izolarea a pornit pe scopul provizoriu. Completați acum scopul cazului: de ce, pentru ce perioadă, pe ce sisteme, cine aprobă. Până la confirmare, rapoartele și exporturile poartă mențiunea „scop provizoriu, neconfirmat”.";
             LegalBox.ItemsSource = ScopeForm.LegalBases; NetworkBox.ItemsSource = ScopeForm.NetworkCategories; ClassBox.ItemsSource = ScopeForm.ClassificationLevels;
-            PurposeBox.Text = _form.Purpose; ApproverBox.Text = _form.Approver; SystemsBox.Text = _form.Systems; NotesBox.Text = _form.Notes; ActBox.Text = _form.AuthorizingAct;
+            PurposeBox.Text = _form.Purpose; ApproverBox.Text = _form.Approver; SystemsBox.Text = _form.Systems; NotesBox.Text = _form.Notes; ActBox.Text = _form.AuthorizingAct; MarkingBox.Text = _form.Marking;
             FromPicker.SelectedDate = _form.PeriodFrom; ToPicker.SelectedDate = _form.PeriodTo;
             LegalBox.SelectedIndex = _form.LegalBasisIndex; NetworkBox.SelectedIndex = _form.NetworkIndex; ClassBox.SelectedIndex = _form.ClassificationIndex;
+            ShowPeriodWarning();
+            ToPicker.SelectedDateChanged += (_, _) => ShowPeriodWarning();
         }
+
+        // Non-blocking: the operator may confirm a past period (an audit of an earlier interval); the pipeline also records it in the case audit.
+        private void ShowPeriodWarning() => PeriodWarningText.Text = ScopeForm.PeriodEndsBeforeWarning(ToPicker.SelectedDate, DateTime.UtcNow) ?? "";
 
         private void Confirm_Click(object sender, RoutedEventArgs e)
         {
-            _form.Purpose = PurposeBox.Text; _form.Approver = ApproverBox.Text; _form.Systems = SystemsBox.Text; _form.Notes = NotesBox.Text; _form.AuthorizingAct = ActBox.Text;
+            _form.Purpose = PurposeBox.Text; _form.Approver = ApproverBox.Text; _form.Systems = SystemsBox.Text; _form.Notes = NotesBox.Text; _form.AuthorizingAct = ActBox.Text; _form.Marking = MarkingBox.Text;
             _form.PeriodFrom = FromPicker.SelectedDate; _form.PeriodTo = ToPicker.SelectedDate;
             _form.LegalBasisIndex = LegalBox.SelectedIndex; _form.NetworkIndex = NetworkBox.SelectedIndex; _form.ClassificationIndex = ClassBox.SelectedIndex;
             if (!_form.TryBuild(out var scope, out var missing))
             {
-                ErrorText.Text = "Câmpuri lipsă sau inconsistente: " + string.Join(", ", missing);
+                // in Romanian, as the wizard says them (lab VM 2026-11-06: the dialog showed the internal key „period.to”)
+                ErrorText.Text = "Câmpuri lipsă sau inconsistente: " + string.Join(", ", System.Linq.Enumerable.Select(missing, LogAnalyzer.UI.ViewModels.InvestigationViewModel.ScopeFieldRo));
                 return;
             }
             Result = scope;

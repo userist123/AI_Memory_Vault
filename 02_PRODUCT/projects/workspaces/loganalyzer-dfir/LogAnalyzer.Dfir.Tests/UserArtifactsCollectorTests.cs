@@ -4,6 +4,7 @@ using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.RemoteTools;
 using LogAnalyzer.Dfir.Tests.Synthetic;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using LogAnalyzer.Dfir.Windows.Investigation;
@@ -113,9 +114,11 @@ public sealed class UserArtifactsCollectorTests : IDisposable
 
     private UserArtifactsCollector Collector(IReadOnlyList<UserProfileEntry>? profiles = null, Func<string, string, string, string, CancellationToken, VssCopyResult>? vss = null,
         Func<IReadOnlySet<string>?>? shadows = null, Func<string, byte[]>? readInfo = null, int maxProfiles = UserArtifactsCollector.DefaultMaxProfiles,
-        int maxPerSid = UserArtifactsCollector.DefaultMaxInfoPerSid, int maxTotal = UserArtifactsCollector.DefaultMaxInfoTotal) =>
+        int maxPerSid = UserArtifactsCollector.DefaultMaxInfoPerSid, int maxTotal = UserArtifactsCollector.DefaultMaxInfoTotal, IReadOnlyList<UserArtifactsCollector.RemoteToolFolder>? remoteFolders = null) =>
+        // the system folders of the remote tools (ProgramData, Program Files) are never read from the real machine in a test: none unless the test gives them
         new(() => profiles ?? [new UserProfileEntry(Sid, _profile)], () => [_vol + Path.DirectorySeparatorChar], vss ?? FakeVss,
-            shadows ?? (() => new HashSet<string>()), readInfo, maxProfiles, maxPerSid, maxTotal);
+            shadows ?? (() => new HashSet<string>()), readInfo, () => remoteFolders ?? [], maxProfiles, maxPerSid, maxTotal,
+            transcriptPolicyDirs: () => []);   // never the transcription policy of the real machine
 
     private CollectorOutcome Collect(UserArtifactsCollector c, bool elevated = true, CancellationToken ct = default) =>
         c.Collect(new CollectorContext { Case = _ws, IsElevated = elevated }, ct);
@@ -192,6 +195,438 @@ public sealed class UserArtifactsCollectorTests : IDisposable
         Assert.Equal(("present", "9"), RecycleBinInfoParser.CollectedRState(collected));
     }
 
+    // ---- Notepad TabState ----
+
+    private static byte[] NotepadFixture(string id) => File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Corpus", "NotepadTabState", id + ".bin"));
+
+    private string TabDir(string profile)
+    {
+        var d = Path.Combine([profile, .. UserArtifactsCollector.NotepadTabStateRelative]);
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    [Fact]
+    public void Notepad_tab_files_are_collected_and_parsed_by_the_production_pipeline()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        File.WriteAllBytes(Path.Combine(tabs, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin"), NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        File.WriteAllBytes(Path.Combine(tabs, "13aa65cf-6a0d-48a7-8f5c-e6ac4be9bafc.0.bin"), NotepadFixture("13aa65cf-6a0d-48a7-8f5c-e6ac4be9bafc"));
+        File.WriteAllText(Path.Combine(tabs, "readme.txt"), "not a tab");                       // only *.bin is taken
+
+        var o = Collect(Collector());
+
+        Assert.Empty(o.Errors);
+        var tabEvidence = o.Evidence.Where(e => e.SourceType == NotepadTabStateParser.SourceTypeName).ToList();
+        Assert.Equal(2, tabEvidence.Count);
+        Assert.All(tabEvidence, e => { Assert.Contains(Sid, e.Notes); Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256); });
+        Assert.Equal(2, _copies.Count);                                                       // direct copy: only the two hives used VSS
+
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.All(tabEvidence, e => Assert.Equal("NotepadTabStateParser", r.Parsing.Single(p => p.EvidenceId == e.EvidenceId).Parser));
+        var events = r.Timeline.Where(e => e.Source == NotepadTabStateParser.EventSource).ToList();
+        Assert.Equal(2, events.Count);
+        Assert.Contains(events, e => e.Fields["Saved File Path"] == @"C:\LA\np\salvat-test.txt" && e.Fields["Copy Index"] == "0");
+        Assert.Contains(events, e => e.Fields["Content"].Contains("fila noua nesalvata"));
+    }
+
+    [Fact]
+    public void A_missing_TabState_folder_is_not_an_error()
+    {
+        Profile(_profile);
+        var o = Collect(Collector());
+        Assert.Empty(o.Errors);
+        Assert.DoesNotContain(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName);
+    }
+
+    [Fact]
+    public void Notepad_collection_stops_at_the_file_cap_and_skips_oversize_files()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        for (int i = 0; i < UserArtifactsCollector.MaxNotepadFilesPerProfile + 3; i++)
+            File.WriteAllBytes(Path.Combine(tabs, $"{Guid.NewGuid()}.bin"), [0x4E, 0x50, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        File.WriteAllBytes(Path.Combine(tabs, "00000000-0000-0000-0000-000000000000.bin"), new byte[UserArtifactsCollector.MaxNotepadFileBytes + 1]);   // sorts first
+
+        var o = Collect(Collector());
+
+        Assert.Equal(UserArtifactsCollector.MaxNotepadFilesPerProfile, o.Evidence.Count(e => e.SourceType == NotepadTabStateParser.SourceTypeName));
+        Assert.Contains(o.Errors, e => e.Contains("00000000-0000-0000-0000-000000000000.bin") && e.Contains("necopiat"));
+        Assert.Contains(o.Errors, e => e.Contains("limita de 500"));
+    }
+
+    [Fact]
+    public void A_TabState_folder_behind_a_junction_is_not_followed()
+    {
+        Profile(_profile);
+        var target = Path.Combine(_dir, "elsewhere");
+        Directory.CreateDirectory(target);
+        File.WriteAllBytes(Path.Combine(target, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin"), NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        var link = Path.Combine([_profile, .. UserArtifactsCollector.NotepadTabStateRelative]);
+        Directory.CreateDirectory(Path.GetDirectoryName(link)!);
+        if (!MakeJunction(link, target)) return;                                               // junctions not available here
+
+        var o = Collect(Collector());
+
+        Assert.DoesNotContain(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName);
+        Assert.Contains(o.Errors, e => e.Contains("Notepad TabState") && e.Contains("reparse point"));
+        Directory.Delete(link);
+    }
+
+    [Fact]
+    public void A_locked_tab_file_is_copied_from_the_snapshot()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        var locked = Path.Combine(tabs, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin");
+        File.WriteAllBytes(locked, NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        using var hold = new FileStream(locked, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var snapshotCopies = new List<string>();
+        VssCopyResult Vss(string src, string dest, string logDir, string label, CancellationToken ct)
+        {
+            if (!src.EndsWith(".bin", StringComparison.OrdinalIgnoreCase)) { File.Copy(src, dest); return new VssCopyResult(0, "esentutl hive"); }
+            snapshotCopies.Add(src);
+            File.WriteAllBytes(dest, NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+            return new VssCopyResult(0, $"esentutl.exe /y {src} /vss /d {dest}");
+        }
+
+        var o = Collect(Collector(vss: Vss));
+
+        Assert.Empty(o.Errors);
+        Assert.Single(snapshotCopies);
+        Assert.Single(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName && e.Notes.Contains("copia de umbră"));
+    }
+
+    // ---- remote-access tool session logs ----
+
+    private string ToolDir(string tool)
+    {
+        var d = Path.Combine(_profile, "AppData", "Roaming", tool);
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    private static string RtCorpus(string rel) => Path.Combine(AppContext.BaseDirectory, "Corpus", "RemoteToolLogs", rel);
+
+    private UserArtifactsCollector.RemoteToolFolder[] SystemFolders(out string programData, out string programFiles)
+    {
+        programData = Path.Combine(_vol, "ProgramData", "AnyDesk");
+        programFiles = Path.Combine(_vol, "Program Files", "TeamViewer");
+        Directory.CreateDirectory(programData);
+        Directory.CreateDirectory(programFiles);
+        return
+        [
+            new("ProgramData", "AnyDesk", programData, ["connection_trace.txt", "ad_svc.trace"]),
+            new("ProgramFiles", "TeamViewer", programFiles, ["Connections_incoming.txt"]),
+        ];
+    }
+
+    [Fact]
+    public void Remote_tool_session_logs_are_collected_from_profiles_and_system_folders_and_parsed_by_the_production_pipeline()
+    {
+        Profile(_profile);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(ToolDir("AnyDesk"), "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(ToolDir("AnyDesk"), "ad.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(ToolDir("TeamViewer"), "Connections.txt"));
+        var system = SystemFolders(out var pd, out var pf);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(pd, "connection_trace.txt"));       // same name as the user's: both must be kept
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(pd, "ad_svc.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(pf, "Connections_incoming.txt"));
+
+        var o = Collect(Collector(remoteFolders: system));
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => RemoteToolLogFormats.IsKnown(e.SourceType)).ToList();
+        Assert.Equal(6, logs.Count);
+        Assert.Equal(2, logs.Count(e => e.SourceType == AnyDeskConnectionTraceParser.SourceTypeName));
+        Assert.Equal(2, logs.Count(e => e.SourceType == AnyDeskTraceParser.SourceTypeName));
+        Assert.Equal(2, logs.Count(e => e.SourceType == TeamViewerConnectionsParser.SourceTypeName));
+        Assert.All(logs, e => { Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256); Assert.Contains("ora locală", e.Notes); });
+        Assert.Contains(logs, e => e.Notes.Contains(Sid) && e.Notes.Contains("connection_trace.txt"));
+        Assert.Contains(logs, e => e.Notes.Contains("ProgramData") && e.Notes.Contains("ad_svc.trace"));
+        // the file name is kept exactly (it names the format), each place in a folder of its own
+        Assert.All(logs, e => Assert.NotNull(RemoteToolLogFormats.ByName(Path.GetFileName(_ws.FullPath(e.StoredPath)))));
+        Assert.Equal(6, logs.Select(e => _ws.FullPath(e.StoredPath)).Distinct().Count());
+        Assert.Equal(2, _copies.Count);                                                    // direct copies: only the two hives used VSS
+
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.All(logs, e => Assert.Contains(r.Parsing, p => p.EvidenceId == e.EvidenceId && p.Parser is "AnyDeskConnectionTraceParser" or "AnyDeskTraceParser" or "TeamViewerConnectionsParser"));
+        Assert.Equal(8, r.Timeline.Count(e => e.Source == AnyDeskConnectionTraceParser.EventSource));       // 4 rows x 2 files
+        Assert.Equal(16, r.Timeline.Count(e => e.Source == AnyDeskTraceParser.EventSource));                 // 8 session lines x 2 files
+        Assert.Equal(4, r.Timeline.Count(e => e.Source == TeamViewerConnectionsParser.EventSource));
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("AnyDesk") && f.Description.Contains("999000111"));
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("TeamViewer"));
+    }
+
+    [Fact]
+    public void TeamViewer_main_logs_are_collected_by_pattern_from_the_profile_and_Program_Files_and_the_look_alikes_are_not()
+    {
+        Profile(_profile);
+        var tvUser = ToolDir("TeamViewer");
+        var sample = RtCorpus(@"teamviewer_TEST\TeamViewer15_Logfile.log");
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile.log"));
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile_OLD.log"));
+        File.Copy(sample, Path.Combine(tvUser, "MyTeamViewer15_Logfile.log"));      // not a TeamViewer name: not collected
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile.txt"));
+        var system = SystemFolders(out _, out var pf);
+        File.Copy(sample, Path.Combine(pf, "TeamViewer14_Logfile.log"));
+
+        var o = Collect(Collector(remoteFolders: system));
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == TeamViewerLogfileParser.SourceTypeName).ToList();
+        Assert.Equal(3, logs.Count);
+        Assert.Equal(["TeamViewer14_Logfile.log", "TeamViewer15_Logfile.log", "TeamViewer15_Logfile_OLD.log"],
+            logs.Select(e => Path.GetFileName(_ws.FullPath(e.StoredPath))).Order(StringComparer.Ordinal).ToArray());
+        Assert.All(logs, e => Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256));
+        Assert.Contains(logs, e => e.Notes.Contains("ProgramFiles"));
+        Assert.Equal(64L * 1024 * 1024, UserArtifactsCollector.MaxRemoteToolLogBytes("TeamViewer15_Logfile.log"));
+    }
+
+    [Fact]
+    public void RustDesk_logs_are_collected_per_folder_newest_30_only_with_the_service_profile_and_the_look_alikes_are_not()
+    {
+        Profile(_profile);
+        var sample = RtCorpus(@"rustdesk_TEST\rustdesk_rCURRENT.log");
+        var log = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log");
+        var server = Path.Combine(log, "server");
+        var cm = Path.Combine(log, "cm");
+        foreach (var d in new[] { log, server, cm }) Directory.CreateDirectory(d);
+        File.Copy(sample, Path.Combine(log, "rustdesk_rCURRENT.log"));
+        // 40 rotated files, the oldest 11 (January 1-11) are over the limit of 30 per folder together with rCURRENT
+        for (int i = 0; i < 40; i++)
+            File.Copy(sample, Path.Combine(log, i < 28 ? $"rustdesk_r2026-01-{i + 1:00}_10-00-00.log" : $"rustdesk_r2026-02-{i - 27:00}_10-00-00.log"));
+        File.Copy(sample, Path.Combine(server, "RustDesk_rCurrent.log"));            // another capitalisation of the same name
+        File.Copy(sample, Path.Combine(server, "rustdesk_rCURRENT.txt"));            // not RustDesk names: not collected
+        File.Copy(sample, Path.Combine(server, "myrustdesk_rCURRENT.log"));
+        File.Copy(sample, Path.Combine(server, "notes.log"));
+        File.WriteAllBytes(Path.Combine(cm, "rustdesk_rCURRENT.log"), []);           // empty: skipped, not an error
+        var svc = Path.Combine(_vol, "Windows", "ServiceProfiles", "LocalService", "AppData", "Roaming", "RustDesk", "log");
+        Directory.CreateDirectory(svc);
+        File.Copy(sample, Path.Combine(svc, "rustdesk_rCURRENT.log"));
+
+        var o = Collect(Collector(remoteFolders: [new("LocalService", "RustDesk", svc, [], "log")]));
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == RustDeskLogParser.SourceTypeName).ToList();
+        Assert.Equal(32, logs.Count);                                                   // 30 + 1 (server) + 1 (service profile)
+        var byDir = logs.GroupBy(e => Path.GetDirectoryName(_ws.FullPath(e.StoredPath))!).ToList();
+        Assert.Equal(3, byDir.Count);
+        Assert.Equal([1, 1, 30], byDir.Select(g => g.Count()).Order().ToArray());
+        var names = logs.Select(e => Path.GetFileName(_ws.FullPath(e.StoredPath))).ToList();
+        Assert.Contains("rustdesk_rCURRENT.log", names);
+        Assert.Contains("rustdesk_r2026-02-12_10-00-00.log", names);
+        Assert.Contains("rustdesk_r2026-01-12_10-00-00.log", names);                    // the 29th newest rotated file
+        Assert.DoesNotContain("rustdesk_r2026-01-11_10-00-00.log", names);              // the first one over the limit
+        Assert.DoesNotContain("rustdesk_r2026-01-01_10-00-00.log", names);
+        Assert.Contains("RustDesk_rCurrent.log", names);
+        Assert.DoesNotContain(names, n => n is "rustdesk_rCURRENT.txt" or "myrustdesk_rCURRENT.log" or "notes.log");
+        Assert.All(logs, e => Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256));
+        Assert.Contains(logs, e => e.Notes.Contains("LocalService"));
+        Assert.Equal(64L * 1024 * 1024, UserArtifactsCollector.MaxRemoteToolLogBytes("rustdesk_rCURRENT.log"));
+
+        // the production pipeline parses them with the RustDesk parser and the sessions reach REMOTE-TOOL-EXECUTED
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.All(logs, e => Assert.Contains(r.Parsing, p => p.EvidenceId == e.EvidenceId && p.Parser == "RustDeskLogParser"));
+        Assert.Equal(32 * 6, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource));   // 4 sessions + 2 FileRead rows per sample
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("RustDesk"));
+    }
+
+    [Fact]
+    public void A_RustDesk_cm_log_is_collected_parsed_and_its_transfers_reach_REMOTE_TOOL_EXECUTED()
+    {
+        Profile(_profile);
+        var cm = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log", "cm");
+        Directory.CreateDirectory(cm);
+        File.Copy(RtCorpus(@"rustdesk_TEST\cm\rustdesk_rCURRENT.log"), Path.Combine(cm, "rustdesk_rCURRENT.log"));
+
+        var o = Collect(Collector());
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == RustDeskLogParser.SourceTypeName).ToList();
+        var one = Assert.Single(logs);
+        Assert.Contains(Path.Combine("log", "cm"), _ws.FullPath(one.StoredPath), StringComparison.OrdinalIgnoreCase);
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.Contains(r.Parsing, p => p.EvidenceId == one.EvidenceId && p.Parser == "RustDeskLogParser");
+        Assert.Equal(3, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource && e.Fields.TryGetValue("Kind", out var k) && k == "FileWrite"));
+        var f = Assert.Single(r.Findings, x => x.RuleId == "REMOTE-TOOL-EXECUTED" && x.Title.Contains("RustDesk"));
+        Assert.Contains("3 scrise pe stație (primite de la distanță)", f.Description);
+    }
+
+    [Fact]
+    public void RustDesk_selection_always_takes_rCURRENT_and_the_newest_whatever_the_order_and_the_size_of_the_folder()
+    {
+        var dir = Path.Combine(_vol, "bigfolder");
+        Directory.CreateDirectory(dir);
+        // 20,500 rotated files (more than the old enumeration cut of 20,000): in a name-ordered folder rCURRENT and the newest names are read LAST
+        for (int i = 0; i < 20_500; i++)
+            File.WriteAllBytes(Path.Combine(dir, $"rustdesk_r{2000 + i / 366:0000}-{1 + i % 12:00}-{1 + i % 28:00}_{i % 24:00}-{i % 60:00}-{(i * 7) % 60:00}.log"), []);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_rCURRENT.log"), []);
+        File.WriteAllBytes(Path.Combine(dir, "not_a_rustdesk.log"), []);
+        var picked = UserArtifactsCollector.RustDeskLogsOf(dir);
+        Assert.Equal(UserArtifactsCollector.MaxRustDeskLogsPerFolder, picked.Count);
+        Assert.Equal("rustdesk_rCURRENT.log", picked[0]);
+        var rotated = Directory.EnumerateFiles(dir, "rustdesk_r2*.log").Select(Path.GetFileName).OfType<string>().ToList();
+        var expected = rotated.OrderByDescending(n => n.Substring(10, 19), StringComparer.Ordinal).Take(UserArtifactsCollector.MaxRustDeskLogsPerFolder - 1).ToList();
+        Assert.Equal(expected, picked.Skip(1).ToList());                              // newest first, independent of the enumeration order
+        // a folder with a copy of the current file and a few rotated ones: the current ones come first and all are kept
+        var small = Path.Combine(_vol, "smallfolder");
+        Directory.CreateDirectory(small);
+        foreach (var n in new[] { "rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-01-01_00-00-00.log", "rustdesk_r2026-03-01_00-00-00.log" })
+            File.WriteAllBytes(Path.Combine(small, n), [1]);
+        Assert.Equal(["rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-03-01_00-00-00.log", "rustdesk_r2026-01-01_00-00-00.log"], UserArtifactsCollector.RustDeskLogsOf(small));
+    }
+
+    [Fact]
+    public void A_folder_listed_both_as_a_profile_folder_and_as_a_system_folder_is_read_once()
+    {
+        // lab 2026-11-16: the LocalService profile is a ProfileList row (S-1-5-19) AND an explicit system folder; the same RustDesk log was copied twice
+        Profile(_profile);
+        var server = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log", "server");
+        Directory.CreateDirectory(server);
+        File.Copy(RtCorpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), Path.Combine(server, "rustdesk_rCURRENT.log"));
+        var o = Collect(Collector(remoteFolders: [new UserArtifactsCollector.RemoteToolFolder("LocalService", "RustDesk", server + Path.DirectorySeparatorChar, [])]));
+        Assert.Single(o.Evidence, e => e.SourceType == RemoteToolLogFormats.RustDeskLog);
+    }
+
+    [Fact]
+    public void Decoys_named_like_the_current_RustDesk_log_cannot_hide_it()
+    {
+        // review r2 2026-11-16: 30 decoys "rustdesk_rcurrent!NN.log" sort before "rustdesk_rCURRENT.log" and filled the cap before the name check
+        var dir = Path.Combine(_vol, "decoys");
+        Directory.CreateDirectory(dir);
+        for (int i = 0; i < 40; i++) File.WriteAllBytes(Path.Combine(dir, $"rustdesk_rcurrent!{i:00}.log"), [1]);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_rCURRENT.log"), [1]);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_r2026-01-01_00-00-00.log"), [1]);
+        var picked = UserArtifactsCollector.RustDeskLogsOf(dir);
+        Assert.Equal("rustdesk_rCURRENT.log", picked[0]);
+        Assert.Contains("rustdesk_r2026-01-01_00-00-00.log", picked);
+        Assert.DoesNotContain(picked, n => n.Contains('!'));
+    }
+
+    [Fact]
+    public void The_standard_profile_reads_the_session_logs_through_its_own_collector_and_exactly_one_collector_reads_them_per_profile()
+    {
+        // 2026-11-15: before, only "Completă" read the session logs, so a standard investigation silently had no session evidence
+        var c = new RemoteToolLogsCollector();
+        Assert.Equal(CollectionProfile.Standard, c.Profiles);
+        Assert.True(c.RequiresElevation);
+        foreach (var profile in new[] { CollectionProfile.Standard, CollectionProfile.FullForensic })
+            Assert.Single(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & profile) != 0), x => x is RemoteToolLogsCollector or UserArtifactsCollector);
+        Assert.DoesNotContain(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & CollectionProfile.Quick) != 0), x => x is RemoteToolLogsCollector or UserArtifactsCollector);
+    }
+
+    [Fact]
+    public void The_logs_only_collector_copies_the_session_logs_and_nothing_else_and_needs_administrator_rights()
+    {
+        Profile(_profile);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(ToolDir("AnyDesk"), "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(ToolDir("AnyDesk"), "ad.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(ToolDir("TeamViewer"), "Connections.txt"));
+        var system = SystemFolders(out var pd, out var pf);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(pd, "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(pd, "ad_svc.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(pf, "Connections_incoming.txt"));
+        var rc = new RemoteToolLogsCollector(Collector(remoteFolders: system));
+
+        var denied = rc.Collect(new CollectorContext { Case = _ws, IsElevated = false }, default);
+        Assert.Empty(denied.Evidence);
+        Assert.Equal(EvidenceStatus.NotAvailable, denied.Status);
+
+        var o = rc.Collect(new CollectorContext { Case = _ws, IsElevated = true }, default);
+        Assert.Empty(o.Errors);
+        Assert.Equal(EvidenceStatus.Success, o.Status);
+        Assert.Equal(6, o.Evidence.Count);
+        Assert.All(o.Evidence, e => Assert.True(RemoteToolLogFormats.IsKnown(e.SourceType)));
+        Assert.Empty(_copies);                                       // no hive, no shadow copy: only the logs, copied directly
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.Standard, collect: false);
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("AnyDesk") && f.Description.Contains("999000111"));
+    }
+
+    [Fact]
+    public void Missing_remote_tool_folders_and_files_are_not_errors_and_an_empty_log_is_skipped_with_a_note()
+    {
+        Profile(_profile);
+        var o = Collect(Collector(remoteFolders: SystemFolders(out _, out _)));
+        Assert.Empty(o.Errors);
+        Assert.DoesNotContain(o.Evidence, e => RemoteToolLogFormats.IsKnown(e.SourceType));
+
+        File.WriteAllBytes(Path.Combine(ToolDir("AnyDesk"), "connection_trace.txt"), []);
+        var o2 = Collect(Collector(remoteFolders: SystemFolders(out _, out _)));
+        Assert.Empty(o2.Errors);
+        Assert.DoesNotContain(o2.Evidence, e => RemoteToolLogFormats.IsKnown(e.SourceType));
+        Assert.Contains(o2.Commands, c => c.Contains("connection_trace.txt") && c.Contains("gol"));
+    }
+
+    [Fact]
+    public void An_AnyDesk_folder_behind_a_junction_is_not_followed_and_a_directory_named_like_a_log_is_refused()
+    {
+        Profile(_profile);
+        var target = Path.Combine(_dir, "elsewhere");
+        Directory.CreateDirectory(target);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(target, "connection_trace.txt"));
+        var link = Path.Combine(_profile, "AppData", "Roaming", "AnyDesk");
+        Directory.CreateDirectory(Path.GetDirectoryName(link)!);
+        // a directory that has the name of a log is not a file
+        Directory.CreateDirectory(Path.Combine(ToolDir("TeamViewer"), "Connections.txt"));
+        if (!MakeJunction(link, target)) return;                                            // junctions not available here
+
+        var o = Collect(Collector());
+
+        Assert.DoesNotContain(o.Evidence, e => RemoteToolLogFormats.IsKnown(e.SourceType));
+        Assert.Contains(o.Errors, e => e.Contains("Jurnale AnyDesk") && e.Contains("reparse point"));
+        Assert.Contains(o.Errors, e => e.Contains("Jurnale TeamViewer") && e.Contains("este un folder"));
+        Directory.Delete(link);
+    }
+
+    [Fact]
+    public void An_oversize_log_is_not_copied_and_the_error_is_reported()
+    {
+        Profile(_profile);
+        var big = Path.Combine(ToolDir("AnyDesk"), "connection_trace.txt");
+        using (var fs = File.Create(big)) fs.SetLength(AnyDeskConnectionTraceParser.MaxFileBytes + 1);
+        var o = Collect(Collector());
+        Assert.DoesNotContain(o.Evidence, e => RemoteToolLogFormats.IsKnown(e.SourceType));
+        Assert.Contains(o.Errors, e => e.Contains("connection_trace.txt") && e.Contains("peste limita") && e.Contains("necopiat"));
+        Assert.Empty(Directory.EnumerateFiles(_ws.Root, "connection_trace*", SearchOption.AllDirectories).Where(f => f.Contains("RemoteToolLogs")));
+    }
+
+    [Fact]
+    public void A_locked_remote_tool_log_is_copied_from_the_snapshot_and_a_failed_snapshot_copy_leaves_nothing()
+    {
+        Profile(_profile);
+        var path = Path.Combine(ToolDir("AnyDesk"), "ad.trace");
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), path);
+        using var hold = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var snapshotCopies = new List<string>();
+        VssCopyResult Good(string src, string dest, string logDir, string label, CancellationToken ct)
+        {
+            if (!src.EndsWith(".trace", StringComparison.OrdinalIgnoreCase)) { File.Copy(src, dest); return new VssCopyResult(0, "esentutl hive"); }
+            snapshotCopies.Add(src);
+            File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), dest);
+            return new VssCopyResult(0, $"esentutl.exe /y {src} /vss /d {dest}");
+        }
+        var o = Collect(Collector(vss: Good));
+        Assert.Empty(o.Errors);
+        Assert.Single(snapshotCopies);
+        Assert.Single(o.Evidence, e => e.SourceType == AnyDeskTraceParser.SourceTypeName && e.Notes.Contains("copia de umbră"));
+
+        // the snapshot copy fails after writing part of the file: the partial copy is deleted and the error says so
+        VssCopyResult Bad(string src, string dest, string logDir, string label, CancellationToken ct)
+        {
+            if (!src.EndsWith(".trace", StringComparison.OrdinalIgnoreCase)) { File.Copy(src, dest); return new VssCopyResult(0, "esentutl hive"); }
+            File.WriteAllText(dest, "partial");
+            return new VssCopyResult(5, "esentutl.exe /y " + src + " /vss /d " + dest);
+        }
+        var ws2 = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases2"), "e7-colectare-2", TestScopes.Valid());
+        var c2 = new UserArtifactsCollector(() => [new UserProfileEntry(Sid, _profile)], () => [_vol + Path.DirectorySeparatorChar], Bad, () => new HashSet<string>(), null, () => [], 200, 10_000, 20_000, transcriptPolicyDirs: () => []);
+        var o2 = c2.Collect(new CollectorContext { Case = ws2, IsElevated = true }, default);
+        Assert.Contains(o2.Errors, e => e.Contains("ad.trace") && e.Contains("copia de umbră a eșuat") && e.Contains("cod 5"));
+        Assert.DoesNotContain(o2.Evidence, e => e.SourceType == AnyDeskTraceParser.SourceTypeName);
+        Assert.Empty(Directory.EnumerateFiles(ws2.Root, "ad.trace", SearchOption.AllDirectories));
+    }
+
     // ---- gaps ----
 
     [Fact]
@@ -243,7 +678,7 @@ public sealed class UserArtifactsCollectorTests : IDisposable
     public void An_unreadable_profile_list_is_a_gap_and_the_recycle_bin_is_still_collected()
     {
         Info(Sid, "AB12CD.docx", @"C:\Users\test\a.docx");
-        var c = new UserArtifactsCollector(() => throw new UnauthorizedAccessException("acces refuzat"), () => [_vol], FakeVss, () => new HashSet<string>());
+        var c = new UserArtifactsCollector(() => throw new UnauthorizedAccessException("acces refuzat"), () => [_vol], FakeVss, () => new HashSet<string>(), transcriptPolicyDirs: () => []);
         var o = Collect(c);
         Assert.Contains(o.Errors, e => e.StartsWith("Lista profilurilor (ProfileList) nu a putut fi citită"));
         Assert.Single(o.Evidence, e => e.SourceType == "recycle_info");

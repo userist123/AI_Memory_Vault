@@ -28,37 +28,7 @@
     <!-- Success / Containment Button -->
 
     <!-- Sidebar Navigation RadioButton Styled as Button -->
-    <Style x:Key="SidebarTabStyle" TargetType="RadioButton">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="14,10"/>
-        <Setter Property="Margin" Value="0,2"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="FontSize" Value="{StaticResource FontSizeDense}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter Property="Background" Value="{StaticResource Surface3Brush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource PrimaryAccentBrush}"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+    <!-- SidebarTabStyle is defined in Navigation.xaml (merged later, so that definition was the one in use; redesign 2026-11-17 removed this dead copy) -->
 
     <!-- Chip Filter Toggle RadioButton -->
     <Style x:Key="ChipTabStyle" TargetType="RadioButton">

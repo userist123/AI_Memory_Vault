@@ -43,6 +43,7 @@ namespace LogAnalyzer.UI.ViewModels
             ImportCsvCommand = new RelayCommand(ImportCsv);
             PasteCommand = new RelayCommand(Paste);
             DiscoverCommand = new AsyncRelayCommand(DiscoverAsync, () => CanEdit);
+            PrintCommand = new RelayCommand(Print);
             LoadFrom(_registerPath, startup: true);
             Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); DiscoverCommand.NotifyCanExecuteChanged(); };
         }
@@ -77,6 +78,35 @@ namespace LogAnalyzer.UI.ViewModels
         public IRelayCommand PasteCommand { get; }
         /// <summary>"Preia de pe stație": reads what exists on this station (read-only) and adds the missing rows; never changes an existing row.</summary>
         public IAsyncRelayCommand DiscoverCommand { get; }
+        /// <summary>False for a register with nothing to read from the station (the "Preia de pe stație" button is then hidden).</summary>
+        public virtual bool HasDiscovery => true;
+
+        /// <summary>Planner #10 item 2: "Tipărește" - the register as a printed PDF (title, columns, rows, SHA-256, marking, signature lines). Off unless the register opts in.</summary>
+        public IRelayCommand PrintCommand { get; }
+        public virtual bool CanPrint => false;
+        /// <summary>The title printed on the PDF (ORNISS model wording when the register has one).</summary>
+        protected virtual string PrintTitle => _register.Title.ToUpperInvariant();
+        /// <summary>The kind written to the export audit.</summary>
+        protected virtual string PrintAuditKind => "pdf-register-" + _register.Kind;
+        private static string CurrentMarking() => LogAnalyzer.UI.Services.LiveCase.CurrentScope is { IsConfirmed: true } s ? s.Marking : "";
+
+        private void Print()
+        {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
+            if (!CanPrint) return;
+            var dlg = new SaveFileDialog { FileName = $"Registru_{_register.Kind}_{DateTime.Now:yyyyMMdd}.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = $"Tipărește: {Title}" };
+            if (dlg.ShowDialog() != true) return;
+            Pull();
+            var snapshot = _register;
+            var header = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(null, out _);
+            var integrity = LogAnalyzer.Dfir.Windows.Registers.RegisterReportPdf.Integrity(RegisterPath, snapshot);
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, PrintAuditKind, snapshot.Cells().Count, dlg.FileName,
+                    () => LogAnalyzer.Dfir.Windows.Registers.RegisterReportPdf.Write(dlg.FileName, snapshot, header, CurrentMarking(), PrintTitle, LogAnalyzer.UI.Views.ColumnLabels.For, integrity: integrity)) is { } refused)
+            { Status = refused; return; }
+            var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(dlg.FileName);
+            Status = $"Registrul a fost tipărit în {dlg.FileName}. {signLine}";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
+        }
 
         /// <summary>Reads the station on a background task. Returns the observed items for <see cref="MergeObserved"/>.</summary>
         protected abstract System.Collections.Generic.IReadOnlyList<object> Discover();
@@ -123,6 +153,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var i in issues) Issues.Add(i.ToString());
         }
 
+        /// <summary>The users register as the findings are told now: a person added after an analysis is named on the card and in the report (owner 2026-11-06).</summary>
+        private void Announce()
+        {
+            if (_register is UsersRegister u) LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf = u.PersonOf;
+        }
+
         private void LoadFrom(string path, bool startup = false)
         {
             var r = RegisterStore.Load<T>(path);
@@ -135,6 +171,7 @@ namespace LogAnalyzer.UI.ViewModels
                 return;
             }
             _register = r.Register;
+            Announce();
             Push();
             ShowIssues(r.Issues);
             Status = $"Registru încărcat din {path}." + (r.HasErrors ? " Unele rânduri sunt invalide (vezi lista); ele nu sunt folosite la analiză." : "");
@@ -156,6 +193,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void Save()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.Registers, out var licenseRefusal)) { Status = licenseRefusal; return; }
             Pull();
             try
             {
@@ -163,6 +201,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ShowIssues(issues);
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
+                Announce();
                 Definition = DefinitionText();
                 Status = $"Registru salvat în {RegisterPath} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie. Modificarea este în jurnalul de audit al registrelor.";
             }
@@ -185,6 +224,7 @@ namespace LogAnalyzer.UI.ViewModels
             ShowIssues(r.Issues);
             if (r.Register is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
             _register = r.Register;
+            Announce();
             Push();
             Status = $"Importat din {source}: {r.RowsAccepted} rânduri valide, {r.RowsRejected} cu erori (rămân în tabel, marcate în listă; nu se salvează până nu sunt corectate).";
         }
@@ -280,6 +320,59 @@ namespace LogAnalyzer.UI.ViewModels
             "Sha256: amprenta pachetului (64 hex); Origin: de unde provine pachetul; BroughtBy: cine a adus suportul; Medium: numărul suportului din registrul de medii; Notes.";
     }
 
+    /// <summary>
+    /// "Registrul intervențiilor hardware și software" (planner #9 item 7; HG 585 art. 277 and 329 alin. 2; ORNISS model Anexa 14): every intervention on the station with its
+    /// performer and witness. Entered by hand; the station control checks it (check S08). Nothing can be read from the station for it.
+    /// </summary>
+    public sealed class InterventionRegisterViewModel : RegisterViewModel<InterventionRegister>
+    {
+        public InterventionRegisterViewModel(string? path = null) : base(path) { }
+
+        /// <summary>Interventions are written by people; nothing on the station can be read into this register.</summary>
+        public override bool HasDiscovery => false;
+
+        /// <summary>ORNISS model, Anexa 14: the intervention register has a printed form.</summary>
+        public override bool CanPrint => true;
+        protected override string PrintTitle => "Registrul de evidență a intervențiilor hardware și software".ToUpper(System.Globalization.CultureInfo.GetCultureInfo("ro-RO"));
+        protected override string PrintAuditKind => "pdf-register-interventii";
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() => System.Array.Empty<object>();
+
+        protected override string MergeObserved(InterventionRegister register, System.Collections.Generic.IReadOnlyList<object> observed) =>
+            "Intervențiile nu se pot citi de pe stație: treceți fiecare intervenție de mână (executant și martor), apoi salvați.";
+
+        public override string Hint =>
+            "Data: aaaa-LL-zz; Ora: HH:mm (opțional); Stația; Felul: hardware | software | configurare | reparatie; Componentele sau programele afectate; Descrierea; " +
+            "Executantul și Martorul: două persoane diferite (orice modificare a sistemului se face de cel puțin 2 persoane); Autorizarea: referința, dacă există; " +
+            "Verificare după intervenție: data și persoana (cerută după hardware sau reparație, în 7 zile); Observații.";
+    }
+
+    /// <summary>
+    /// "Registrul copiilor de siguranță" (planner #10 item 3; ORNISS model Anexa 21): every backup copy with its medium, who made it, where it is kept and the restore test.
+    /// Entered by hand; the station control checks it (check S09). Nothing can be read from the station for it.
+    /// </summary>
+    public sealed class BackupRegisterViewModel : RegisterViewModel<BackupRegister>
+    {
+        public BackupRegisterViewModel(string? path = null) : base(path) { }
+
+        /// <summary>Backup copies are written down by people; nothing on the station can be read into this register.</summary>
+        public override bool HasDiscovery => false;
+
+        /// <summary>ORNISS model, Anexa 21: the backup register has a printed form.</summary>
+        public override bool CanPrint => true;
+        protected override string PrintTitle => "Registrul de evidență a copiilor de siguranță".ToUpper(System.Globalization.CultureInfo.GetCultureInfo("ro-RO"));
+        protected override string PrintAuditKind => "pdf-register-copii-siguranta";
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() => System.Array.Empty<object>();
+
+        protected override string MergeObserved(BackupRegister register, System.Collections.Generic.IReadOnlyList<object> observed) =>
+            "Copiile de siguranță nu se pot citi de pe stație: treceți fiecare copie de mână (data, suportul, cine a făcut-o), apoi salvați.";
+
+        public override string Hint =>
+            "Data: aaaa-LL-zz; Stația; Ce s-a copiat: date sau sistem; Suportul și numărul lui din registrul de medii, dacă există; Făcută de; Locul de păstrare; " +
+            "Testul de restaurare: data și persoana (opțional, dar controlul îl cere cel puțin o dată la 180 de zile); Observații.";
+    }
+
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {
@@ -303,11 +396,13 @@ namespace LogAnalyzer.UI.ViewModels
         private const string SimpleHint =
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizarea (nivelul), zonele și nevoia de a cunoaște. " +
             "Persoana; Conturile: DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont: opțional; Autorizarea: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "Autorizare valabilă de la / până la: aaaa-LL-zz; Necesitatea de a cunoaște: note; Zone permise: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+            "Autorizare valabilă de la / până la: aaaa-LL-zz; Necesitatea de a cunoaște: note; Zone permise: zone separate prin ; sau |; " +
+            "Ultima instruire și Angajament semnat: aaaa-LL-zz (opționale; verificarea U07 din control le cere). Abilitările se introduc manual; nu se deduc din nimic.";
 
         private const string ExpertHint =
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
             "Persoana (Person); Conturile (Accounts): DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont (Sids): opțional; Autorizația (Clearance): nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+            "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |; " +
+            "Ultima instruire (LastTraining) și Angajament semnat (PledgeSigned): aaaa-LL-zz (opționale; verificarea U07 din control le cere). Abilitările se introduc manual; nu se deduc din nimic.";
     }
 }

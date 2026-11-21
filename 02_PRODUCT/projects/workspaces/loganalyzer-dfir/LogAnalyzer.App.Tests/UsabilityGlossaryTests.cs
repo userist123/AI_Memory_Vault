@@ -87,8 +87,12 @@ public sealed class UsabilityGlossaryTests : IDisposable
     public void Check_ids_and_results_in_the_control_grids_get_a_tooltip_from_the_glossary()
     {
         var xaml = File.ReadAllText(Path.Combine(AppDir(), "Views", "StationControlView.xaml"));
-        Assert.Matches(@"Header=""Rezultat"" Binding=""\{Binding Status\}""[^>]*>\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
-        Assert.Matches(@"Header=""Cod"" Binding=""\{Binding Id\}"" Width=""50"">\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
+        // redesign 2026-11-17: the result is a badge (template column); its word, the PDF's text of the status, still carries the glossary tooltip
+        Assert.Matches(@"<DataGridTemplateColumn Header=""Rezultat""[^>]*SortMemberPath=""Status""", xaml);
+        Assert.Matches(@"<TextBlock Text=""\{Binding Status, Converter=\{x:Static local:ControlStatusTextConverter\.Instance\}\}""[^>]*local:TermTip\.Auto=""True""", xaml);
+        Assert.StartsWith("DE VERIFICAT — ", (string)LogAnalyzer.UI.Views.TermTooltipConverter.Instance.Convert(
+            LogAnalyzer.UI.Views.ControlStatusTextConverter.Instance.Convert(ControlStatus.DeVerificat, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture), typeof(object), null, System.Globalization.CultureInfo.InvariantCulture)!);
+        Assert.Matches(@"Header=""Cod"" Binding=""\{Binding Id\}"" Width=""50""[^>]*>\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
         Assert.Contains("local:HelpButton Term=\"anchor_code\"", xaml);
         // the converter behind the tooltips: the enum the grid binds, a check id, and nothing for an ordinary word
         Assert.StartsWith("DE VERIFICAT — ", (string)LogAnalyzer.UI.Views.TermTooltipConverter.Instance.Convert(ControlStatus.DeVerificat, typeof(object), null, System.Globalization.CultureInfo.InvariantCulture)!);

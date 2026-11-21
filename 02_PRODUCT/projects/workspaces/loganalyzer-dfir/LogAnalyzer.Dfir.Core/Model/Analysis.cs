@@ -45,8 +45,13 @@ public sealed class TimelineEvent
 }
 
 /// <summary>A pointer from a finding to the exact evidence behind it.</summary>
-/// <remarks><see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>.</remarks>
-public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "");
+/// <remarks>
+/// <see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>. The three trailing members (planner #11 A1) let the owner compare the report with the
+/// original on paper: <see cref="Quote"/> is the quoted raw content (at most 400 characters), <see cref="TimeSource"/> says where the time of that row comes from, and
+/// <see cref="Channel"/> is the event channel or the source kind. They are bound from the timeline row the reference points to (never invented): without that row
+/// the quote stays empty and the time source is <see cref="LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource"/>. A findings.json written before they existed reads back with exactly those defaults.
+/// </remarks>
+public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "", string Quote = "", string TimeSource = "Necunoscut", string Channel = "");
 
 /// <summary>Finding (spec §52). Severity and confidence are deliberately separate.</summary>
 public sealed class Finding
@@ -54,7 +59,21 @@ public sealed class Finding
     public required string FindingId { get; init; }
     public required string RuleId { get; init; }
     public required string Title { get; init; }
-    public Severity Severity { get; init; }
+    private Severity _severity;
+    public Severity Severity { get => _severity; init => _severity = value; }
+
+    /// <summary>
+    /// A copy with another severity and the reason written into its limitations, so a recalibration is visible in the finding itself
+    /// (evaluation 2026-11-05: programs signed by their publisher and installed in the profile were raised as high).
+    /// </summary>
+    public Finding WithSeverity(Severity severity, string reason)
+    {
+        var copy = (Finding)MemberwiseClone();
+        copy._severity = severity;
+        copy.Limitations = [.. Limitations, reason];   // new lists: the shallow copy shares the others with the original, which the caller replaces
+        copy.AuditTrail = [.. AuditTrail, new FindingAuditEntry("severity.calibrated", "LogAnalyzer", $"{_severity} -> {severity}: {reason}", DateTimeOffset.UtcNow)];
+        return copy;
+    }
     public string Category { get; init; } = "";
     public Classification Classification { get; init; }
     public Confidence Confidence { get; set; }
@@ -98,6 +117,14 @@ public sealed class Finding
     public string SummaryKey { get; set; } = "";
     public string HumanSummary { get; set; } = "";
     public string TechnicalSummary { get; set; } = "";
+    /// <summary>
+    /// What was done, in plain words, without the subject and the time (owner 2026-11-06: no event codes, no technical terms): „a introdus stick-ul
+    /// «SanDisk Cruzer Blade» și a scris pe el «Plan.docx»”. A text that starts with a capital letter is a whole clause with its own subject („Windows a…”).
+    /// "" = the rule does not tell its own story yet; <see cref="Plain"/> then says the title without technical words.
+    /// </summary>
+    public string PlainWhat { get; init; } = "";
+    /// <summary>The whole sentence a non-specialist reads first: when, on which computer, who (the person from the users register, else the account), what. Set by the finding contract.</summary>
+    public string Plain { get; set; } = "";
     /// <summary>Air-gap integrity detail (WP14a): channel, authorised?, observed, when, who, object, classification, transfer direction, destination, evidence. Null for every other finding.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public AirGapDetail? AirGap { get; set; }
     /// <summary>Combined-sequence detail (WP14b): the ordered steps, observed or not, with time, account, object, source and the findings each step comes from. Null for every other finding.</summary>

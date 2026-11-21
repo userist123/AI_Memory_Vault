@@ -37,6 +37,95 @@ public sealed class CaseArchiveTests : IDisposable
     }
 
     [Fact]
+    public void An_archive_waits_for_another_instance_writing_a_shared_case_log_and_never_zips_half_a_line()
+    {
+        // planner #7, 2026-11-17: the archive opened every file with FileShare.ReadWrite|Delete and could zip (and sign) a line another instance was writing
+        var ws = _k.Case(_k.File("in/a.bin", "alpha"));
+        var log = ws.AppAuditLogPath;
+        var writer = new FileStream(log, FileMode.Open, FileAccess.Write, FileShare.Read);   // what SharedAppend holds while it appends
+        writer.Seek(0, SeekOrigin.End);
+        writer.Write(System.Text.Encoding.UTF8.GetBytes("2026-11-17T00:00:00.000Z\tx\tpartial"));
+        writer.Flush();
+        var finish = Task.Run(() =>
+        {
+            Thread.Sleep(400);
+            writer.Write(System.Text.Encoding.UTF8.GetBytes("-line-complete\n"));
+            writer.Dispose();
+        });
+        var zip = Path.Combine(_k.Dir, "out", "caz.zip");
+        Directory.CreateDirectory(Path.GetDirectoryName(zip)!);
+        var a = CaseArchive.Export(ws.Root, ws.Info.CaseId, zip);
+        finish.Wait();
+        using var z = ZipFile.OpenRead(a.ZipPath);
+        using var r = new StreamReader(z.GetEntry("case/Logs/LogAnalyzer_Audit.log")!.Open());
+        var archived = r.ReadToEnd();
+        Assert.EndsWith("partial-line-complete\n", archived);
+        Assert.True(CaseArchive.Verify(a.ZipPath).Ok);
+    }
+
+    [Fact]
+    public void A_sealed_log_archived_while_another_instance_appends_keeps_its_head_from_the_same_moment()
+    {
+        // review 2026-11-17: the log and its .head were zipped one after the other; an append + head move in between gave a head past the log ("rescris")
+        var ws = _k.Case(_k.File("in/a.bin", "alpha"));
+        var log = Path.Combine(ws.Root, "Logs", "sealed_test.jsonl");
+        var key = RandomNumberGenerator.GetBytes(32);
+        HashChain.RegisterHeadSeal(log, key);
+        var chain = new HashChain(log);
+        chain.Append(new { Event = "first" });
+        var done = false;
+        var writer = Task.Run(() => { for (int i = 0; i < 150; i++) new HashChain(log).Append(new { Event = "e", I = i }); Volatile.Write(ref done, true); });
+        int exports = 0;
+        while (!Volatile.Read(ref done) || exports < 2)
+        {
+            var zip = Path.Combine(_k.Dir, "out", $"caz{exports}.zip");
+            Directory.CreateDirectory(Path.GetDirectoryName(zip)!);
+            var a = CaseArchive.Export(ws.Root, ws.Info.CaseId, zip);
+            var dest = Path.Combine(_k.Dir, $"x{exports}");
+            ZipFile.ExtractToDirectory(a.ZipPath, dest);
+            var copy = Path.Combine(dest, "case", "Logs", "sealed_test.jsonl");
+            HashChain.RegisterHeadSeal(copy, key);
+            var v = new HashChain(copy).Verify();
+            Assert.True(v.Status != ChainStatus.Broken, v.Message);
+            exports++;
+        }
+        writer.Wait();
+    }
+
+    [Fact]
+    public void A_file_time_the_zip_format_cannot_hold_is_clamped_instead_of_failing_the_export()
+    {
+        // a file removed after the listing reads as 1601-01-01 (File.GetLastWriteTime of a missing file)
+        Assert.Equal(new DateTime(1980, 1, 1), CaseArchive.ZipTime(File.GetLastWriteTime(Path.Combine(_k.Dir, "no-such-file"))).Date);
+        Assert.Equal(2107, CaseArchive.ZipTime(new DateTime(2200, 1, 1)).Year);
+        var t = new DateTime(2026, 11, 17, 10, 0, 0, DateTimeKind.Local);
+        Assert.Equal(t, CaseArchive.ZipTime(t));
+        Assert.True(CaseArchive.IsTransientHelper(@"C:\c\Evidence\evidence_index.jsonl.tmp"));
+        Assert.True(CaseArchive.IsTransientHelper(@"C:\c\Logs\workflow.jsonl.LOCK"));
+        Assert.False(CaseArchive.IsTransientHelper(@"C:\c\Logs\audit_chain.jsonl"));
+    }
+
+    [Theory]
+    [InlineData("Logs/LogAnalyzer_Audit.log", true)]
+    [InlineData("Logs/audit_chain.jsonl", true)]
+    [InlineData("Logs/chain_of_custody.jsonl.head", true)]
+    [InlineData("Evidence/evidence_index.jsonl", true)]
+    [InlineData("EVIDENCE/Evidence_Index.jsonl", true)]
+    [InlineData("media_live.jsonl", true)]
+    [InlineData("Evidence/evidence_index.jsonl.tmp", false)]
+    [InlineData("Logs/workflow.jsonl.lock", false)]
+    [InlineData("Logs/audit_chain.jsonl.head.tmp", false)]
+    [InlineData("Raw/media_live.jsonl", false)]
+    [InlineData("Evidence/other.jsonl", false)]
+    [InlineData("Raw/Security.evtx", false)]
+    [InlineData("Logs/sub/x.log", false)]
+    public void Only_the_shared_case_logs_are_read_with_writers_excluded(string rel, bool shared)
+    {
+        var root = Path.Combine(_k.Dir, "caseroot");
+        Assert.Equal(shared, CaseArchive.IsSharedCaseLog(root, Path.Combine(root, rel.Replace('/', Path.DirectorySeparatorChar))));
+    }
+
+    [Fact]
     public void Manual_verification_without_the_application_matches_the_manifest()
     {
         var (_, a) = Make();

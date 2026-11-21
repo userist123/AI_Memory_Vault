@@ -51,8 +51,14 @@ public static partial class Wp11Rules
             var impact = (first is null ? [] : c.Existing.Concat(o).Where(f => IsImpactFinding(f, lists) && (f.FirstSeenUtc ?? f.LastSeenUtc) is { } ft && (ft - first.Value).Duration() <= c.Options.ImpactWindow)).ToList();
             var sev = !anyDelete ? Severity.Low : impact.Count > 0 ? Severity.High : Severity.Medium;
             bool processStart = hits.Any(h => h.ProcessStart);
+            var vssUser = F(ordered[0].Event, "SubjectUserName", "User");
+            var vssAct = anyDelete ? vssOnly ? "o comandă care șterge copiile de rezervă ale discului (copiile shadow, din care se pot recupera fișierele)" : "o comandă care șterge copiile de rezervă sau dezactivează recuperarea sistemului"
+                                   : "o comandă care reduce spațiul copiilor de rezervă ale discului (copiile shadow)";
+            var vssPlain = (PlainPhrases.KnownActor(vssUser) ? "a lansat " : "S-a lansat ") + vssAct + (hits.Count > 1 ? $" ({LogAnalyzer.Dfir.Language.RoText.Count(hits.Count, "comandă", "comenzi")} de acest fel)" : "") +
+                           "; jurnalul arată că a fost lansată, nu că ștergerea a reușit" + (impact.Count > 0 ? "; în aceeași perioadă probele arată și alte semne de distrugere sau de criptare a datelor" : "");
             o.Add(new Finding
             {
+                PlainWhat = vssPlain,
                 FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
                 Title = anyDelete ? vssOnly ? "Comandă de ștergere a copiilor shadow (VSS) înregistrată" : "Comandă de ștergere a copiilor de rezervă sau de dezactivare a recuperării sistemului înregistrată" : "Comandă de reducere a spațiului copiilor shadow (VSS) înregistrată",
                 Severity = sev, Category = "Impact", Classification = impact.Count > 0 ? Classification.Correlated : Classification.Direct,
@@ -76,6 +82,9 @@ public static partial class Wp11Rules
         bool aborted = vol.Any(e => e.EventId == "25");
         o.Add(new Finding
         {
+            PlainWhat = (aborted ? "Windows a abandonat copiile de rezervă ale discului (copiile shadow) pentru că spațiul rezervat lor nu a putut crește"
+                                 : "Windows a șters cea mai veche copie de rezervă a discului (copie shadow) ca să respecte limita de spațiu") +
+                        "; sunt efecte ale limitei de spațiu, iar în probe nu apare nicio comandă de ștergere dată de cineva",
             FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
             Title = aborted ? "Copii umbră (VSS) abandonate de sistem: spațiul de stocare nu a putut crește" : "Cea mai veche copie umbră (VSS) ștearsă de sistem pentru limita de spațiu",
             Severity = aborted ? Severity.Low : Severity.Info, Category = "Impact", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1490",

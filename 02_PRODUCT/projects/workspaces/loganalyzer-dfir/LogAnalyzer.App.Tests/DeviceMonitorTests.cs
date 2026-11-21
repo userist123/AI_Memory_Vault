@@ -182,15 +182,35 @@ public sealed class DeviceMonitorTests
         public int Saves;
         public DeviceJournal? Saved;
         public Action? OnSave;
+        /// <summary>Called after each sealed record, on the thread that sealed it (a reading runs on a pool thread, so a test can stretch the interval between two effects of one reading).</summary>
+        public Action<string>? AfterAudit;
+        /// <summary>Called after each journal save with the saved copy.</summary>
+        public Action<DeviceJournal>? AfterSave;
         public DateTimeOffset Now = T0;
         public string User = "";
 
-        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
+        /// <summary>
+        /// Built on a fresh thread that has no dispatcher, so the monitor runs its posted work directly. CI 2026-11-06: built on the test's pool thread, the monitor
+        /// took the dispatcher an earlier WPF test had left on that thread, which never pumps: the posted rescan never ran and the test timed out after 60 s.
+        /// </summary>
+        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true)
+        {
+            DeviceMonitorViewModel? vm = null;
+            Exception? error = null;
+            var t = new Thread(() => { try { vm = CreateHere(isolated, journal, owner); } catch (Exception e) { error = e; } }) { IsBackground = true };
+            t.Start();
+            t.Join();
+            if (error is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error).Throw();
+            return vm!;
+        }
+
+        /// <summary>Built on the calling thread (a test that owns the thread's dispatcher on purpose).</summary>
+        public DeviceMonitorViewModel CreateHere(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
             _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
-            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
+            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } AfterAudit?.Invoke(ev); return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
             journal ?? new DeviceJournal(),
-            j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); return null; },
+            j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); AfterSave?.Invoke(Saved); return null; },
             isolated, () => Now, consoleUser: () => User, owner: owner, auditReader: Reader);
 
         public List<(string Ev, string Detail)> Events(string ev) { lock (Audited) return Audited.Where(a => a.Ev == ev).ToList(); }
@@ -329,12 +349,17 @@ public sealed class DeviceMonitorTests
     public async Task A_lost_event_source_is_sealed_as_a_gap_and_the_rescan_records_what_changed_meanwhile()
     {
         var f = new Fakes { Present = [Mouse] };
+        // the reading seals "observed on resume" before it records the alert in the journal: stretch that interval, which a loaded machine does at random
+        f.AfterAudit = ev => { if (ev == OperationAudit.DeviceObservedOnResume) Thread.Sleep(300); };
+        // the rescan is complete when its journal is saved with the alert: that, not the first sealed record, is what the test waits for
+        var rescanSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.AfterSave = j => { if (j.Alerts.Any(a => a.Text.StartsWith("observat la reluare: "))) rescanSaved.TrySetResult(); };
         using var vm = f.Create(isolated: true);
         await vm.StartAsync(eventsAvailable: true);
         f.Present = [Mouse, Phone];                                                  // a phone was connected while the events were lost
         f.Now = T0.AddMinutes(20);
         vm.ReportLoss("depășire de tampon: evenimente pierdute");
-        for (int i = 0; i < 100 && f.Events(OperationAudit.DeviceObservedOnResume).Count == 0; i++) await Task.Delay(30);
+        await rescanSaved.Task.WaitAsync(TimeSpan.FromSeconds(60));                   // a safety net against a hang, not the synchronisation
         var gap = Assert.Single(f.Events(OperationAudit.DeviceMonitorGap));
         Assert.Contains("reason=depășire de tampon", gap.Detail);
         Assert.Contains("from=", gap.Detail);
@@ -355,7 +380,7 @@ public sealed class DeviceMonitorTests
         var owner = new System.Threading.Thread(() =>
         {
             _ = System.Windows.Threading.Dispatcher.CurrentDispatcher;
-            vm = f.Create(isolated: true);
+            vm = f.CreateHere(isolated: true);
             created.Set();
             release.Wait();
         }) { IsBackground = true };
@@ -827,7 +852,10 @@ public sealed class DeviceMonitorTests
     {
         var main = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml"));
         Assert.DoesNotContain("Content=\"Registru medii\"", main);
-        Assert.Contains($"Content=\"Monitor dispozitive\" GroupName=\"Sidebar\" Style=\"{{StaticResource SidebarTabStyle}}\" Command=\"{{Binding NavigateCommand}}\" CommandParameter=\"{RoleProfiles.TabMediaRegister}\"", main);
+        // 2026-11-05: the Avansat menu is generated from the catalog; the monitor page is a catalog entry listed in it
+        Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                        p => p.Title == "Monitor dispozitive" && p.Tab == RoleProfiles.TabMediaRegister);
+        Assert.Contains("ItemsSource=\"{Binding AdvancedMenu}\"", main);
         Assert.Contains("MediaCenter.AlertIsCritical", main);
         foreach (var role in new[] { StationRole.Control })
         {

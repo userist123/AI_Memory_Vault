@@ -135,9 +135,9 @@ namespace LogAnalyzer.UI.Tests
 
             Assert.NotNull(alert);
             Assert.True(alert!.IsTestAlert);
-            Assert.StartsWith("[TEST", alert.Title);
-            Assert.Contains("NU ESTE O ALERTĂ REALĂ", alert.Title);
-            Assert.Contains("NU O DETECȚIE REALĂ", alert.Explanation);
+            Assert.StartsWith("[Test", alert.Title);
+            Assert.Contains("nu este o alertă reală", alert.Title);
+            Assert.Contains("nu o detecție reală", alert.Explanation);
         }
 
         [Fact]
@@ -213,7 +213,6 @@ namespace LogAnalyzer.UI.Tests
             Assert.DoesNotContain("APT Attribution", text);
             Assert.DoesNotContain("& Attribution", text);
             Assert.Contains("nu este atribuire", text);
-            Assert.Contains("NU este atribuire", text);
             Assert.DoesNotContain("Threat Intel &amp; APT\"", main);
         }
 
@@ -241,6 +240,32 @@ namespace LogAnalyzer.UI.Tests
             Assert.DoesNotContain("AC/35-D/1022", text);
             Assert.DoesNotContain("Conform NIST", text);
             Assert.Contains("NIST SP 800-88r2", text);
+        }
+
+        /// <summary>
+        /// HG585 DOC-01 (planner #11 item 2): no shipped source states that the application or one of its outputs CONFORMS to a standard or a law; a standard
+        /// is named only as a reference, with "conformitatea nu este atestată". No made-up "baseline HG 585" and no start argument the application ignores.
+        /// </summary>
+        [Fact]
+        public void No_shipped_source_claims_conformity_or_gives_an_ignored_start_argument()
+        {
+            var root = Directory.GetParent(AppDir())!.FullName;
+            string[] forbidden = ["Conformitate ISO", "Conform ISO/IEC", "Conform Standardelor", "Conformitate HG 585", "Matrice Conformitate", "Matrice de Conformitate",
+                                  "evaluare a conformității la nivel", "baseline securitate HG", "baseline-ul securizat HG", "--mode=network"];
+            var hits = new List<string>();
+            foreach (var f in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                var ext = Path.GetExtension(f);
+                if (ext is not (".cs" or ".xaml" or ".md")) continue;
+                var rel = Path.GetRelativePath(root, f);
+                var top = rel.Split(Path.DirectorySeparatorChar)[0];
+                // tests (which quote the old strings), recovered history, research and requirement documents, build output
+                if (top.EndsWith(".Tests", StringComparison.Ordinal) || top is "_recovered" or "docs" or "reports" or "research_notes" or "Documentation" or "publish") continue;
+                if (rel.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") || rel.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")) continue;
+                var text = File.ReadAllText(f);
+                hits.AddRange(forbidden.Where(p => text.Contains(p, StringComparison.Ordinal)).Select(p => $"{rel}: {p}"));
+            }
+            Assert.True(hits.Count == 0, "Unfounded conformity wording: " + string.Join("; ", hits));
         }
 
         [Fact]
@@ -279,7 +304,8 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("<views:HomeView DataContext=\"{Binding Home}\"/>", main);
             Assert.Contains("private int _selectedTabIndex = HomeViewModel.HomeTabIndex", vm);
             Assert.Contains("Command Dashboard", main);          // the existing pages are still there
-            Assert.Contains("Investigație completă (caz)", main);
+            Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                            p => p.Title == "Investigație completă (caz)");   // 2026-11-05: the Avansat menu comes from the catalog
         }
 
         [Fact]

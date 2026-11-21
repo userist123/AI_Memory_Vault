@@ -250,7 +250,10 @@ public sealed class EvidenceGraph
         }
 
         // Findings: what their evidence produced SUPPORTS them; chains contain their steps; a download tied to a run derives it.
-        var findingEntity = findings.ToDictionary(f => f.FindingId, f => g.Add("Finding", f.FindingId, $"{f.RuleId}: {f.Title}"));
+        // A repeated finding id must never stop the investigation (evaluation 2026-11-05: ToDictionary threw and the app closed); the
+        // pipeline records the duplicate as a gap, the graph keeps one node per id.
+        var findingEntity = findings.GroupBy(f => f.FindingId, StringComparer.Ordinal)
+                                    .ToDictionary(x => x.Key, x => g.Add("Finding", x.Key, $"{x.First().RuleId}: {x.First().Title}"), StringComparer.Ordinal);
         foreach (var f in findings)
         {
             var fe = findingEntity[f.FindingId];

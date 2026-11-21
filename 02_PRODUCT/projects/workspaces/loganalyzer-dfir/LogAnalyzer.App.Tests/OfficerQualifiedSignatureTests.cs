@@ -128,15 +128,24 @@ public sealed partial class OfficerQualifiedSignatureTests : IDisposable
         var signed = OfficerFlows.Sign(Report(), officer, "ST-1", "r", Now);
         var text = Encoding.Latin1.GetString(signed);
         int lt = text.LastIndexOf("/Contents <", StringComparison.Ordinal) + 11;
-        var hex = text[lt..text.IndexOf('>', lt)].TrimEnd('0');
-        if (hex.Length % 2 == 1) hex += "0";
+        // the CMS is cut at its DER length, not by trimming trailing '0' characters: a CMS that itself ends in 0x00 lost its last byte and Decode
+        // failed with "encoded length exceeds the number of bytes remaining" (flaky, about 1 run in 30-55, seen 2026-11-10 and 2026-11-14)
         var cms = new SignedCms();
-        cms.Decode(Convert.FromHexString(hex));
+        cms.Decode(DerPrefix(Convert.FromHexString(text[lt..text.IndexOf('>', lt)])));
         var attrs = cms.SignerInfos[0].SignedAttributes.Cast<CryptographicAttributeObject>().Select(a => a.Oid.Value).ToList();
         Assert.Contains(SignedCmsSigner.SigningCertificateV2Oid, attrs);
         Assert.Contains("1.2.840.113549.1.9.4", attrs);          // message-digest
         Assert.DoesNotContain("1.2.840.113549.1.9.5", attrs);    // no signing-time (PAdES baseline)
         Assert.Equal("2.16.840.1.101.3.4.2.1", cms.SignerInfos[0].DigestAlgorithm.Value);
+    }
+
+    /// <summary>The first DER element of a zero-padded buffer: tag, then a short or long-form length.</summary>
+    private static byte[] DerPrefix(byte[] b)
+    {
+        int len, head;
+        if (b[1] < 0x80) { len = b[1]; head = 2; }
+        else { int n = b[1] & 0x7F; len = 0; for (int i = 0; i < n; i++) len = (len << 8) | b[2 + i]; head = 2 + n; }
+        return b[..(head + len)];
     }
 
     [Fact]

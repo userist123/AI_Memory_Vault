@@ -94,15 +94,15 @@ public static class CodeExplainer
             "Pe o stație izolată, o conectare Wi-Fi este o abatere.", ""),
         [("AppLocker", 8003)] = E("AppLocker 8003", "eveniment Windows", "AppLocker (lista albă) ar fi oprit pornirea unui program, dar este doar în mod audit, așa că programul a rulat.",
             "Arată programe neaprobate care rulează pe stație; în mod de blocare ar fi fost oprite.", "Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul."),
-        [("AppLocker", 8004)] = E("AppLocker 8004", "eveniment Windows", "AppLocker (lista albă) a OPRIT pornirea unui program neaprobat.",
+        [("AppLocker", 8004)] = E("AppLocker 8004", "eveniment Windows", "AppLocker (lista albă) a oprit pornirea unui program neaprobat.",
             "Cineva a încercat să pornească un program care nu este aprobat pe stație.", "Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul."),
         [("AppLocker", 8006)] = E("AppLocker 8006", "eveniment Windows", "AppLocker ar fi oprit un script sau un pachet de instalare (MSI), dar este doar în mod audit, așa că a rulat.",
             "Arată scripturi sau instalări neaprobate care au rulat.", "Jurnalul „AppLocker/MSI and Script”."),
-        [("AppLocker", 8007)] = E("AppLocker 8007", "eveniment Windows", "AppLocker a OPRIT un script sau un pachet de instalare (MSI) neaprobat.",
+        [("AppLocker", 8007)] = E("AppLocker 8007", "eveniment Windows", "AppLocker a oprit un script sau un pachet de instalare (MSI) neaprobat.",
             "Cineva a încercat să ruleze un script sau să instaleze un program neaprobat.", "Jurnalul „AppLocker/MSI and Script”."),
         [(StationFactCollector.CodeIntegrityChannel, 3076)] = E("CodeIntegrity 3076", "eveniment Windows", "App Control (WDAC) ar fi oprit un fișier neaprobat, dar politica este doar în mod audit, așa că fișierul a rulat.",
             "Arată programe sau biblioteci neaprobate care au rulat pe stație.", "Câmpul „File Name” arată fișierul."),
-        [(StationFactCollector.CodeIntegrityChannel, 3077)] = E("CodeIntegrity 3077", "eveniment Windows", "App Control (WDAC) a OPRIT încărcarea unui fișier neaprobat.",
+        [(StationFactCollector.CodeIntegrityChannel, 3077)] = E("CodeIntegrity 3077", "eveniment Windows", "App Control (WDAC) a oprit încărcarea unui fișier neaprobat.",
             "Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație.", "Câmpul „File Name” arată fișierul."),
         [(StationFactCollector.DefenderChannel, 1000)] = E("Defender 1000", "eveniment Windows", "Microsoft Defender a început o scanare (rapidă, completă sau a unui suport anume).",
             "Arată dacă un suport a fost verificat cu antivirusul imediat după conectare.", "Câmpul „Scan Resources” arată ce s-a scanat (de exemplu E:\\)."),
@@ -195,6 +195,20 @@ public static class CodeExplainer
         E(@"0e796bdb-100d-47d6-a2d5-f7d2daa51f51\ACSettingIndex", "valoare de registru", "Politica „parolă la trezire” pentru stația alimentată din priză.", "Fără parolă, oricine trezește stația intră în sesiunea deschisă.", "1 = se cere parola, 0 = nu se cere."),
         E(@"0e796bdb-100d-47d6-a2d5-f7d2daa51f51\DCSettingIndex", "valoare de registru", "Politica „parolă la trezire” pentru stația alimentată din baterie.", "Fără parolă, oricine trezește stația intră în sesiunea deschisă.", "1 = se cere parola, 0 = nu se cere."),
         E(@"Desktop\DelayLockInterval", "valoare de registru", "Setarea „Solicitare autentificare” a utilizatorului (după cât timp de somn se cere parola).", "Valoarea „niciodată” lasă sesiunea deschisă la trezire.", "0 = la fiecare trezire; 4294967295 (sau -1) = niciodată."),
+        E(@"Lsa\RestrictAnonymousSAM", "valoare de registru", "Interzice utilizatorilor anonimi să listeze conturile stației.", "Lista conturilor îi arată unui atacator ce să încerce.", "1 = interzis (corect, implicit pe Windows 10/11), 0 = permis."),
+        E(@"Lsa\RestrictAnonymous", "valoare de registru", "Interzice utilizatorilor anonimi să listeze conturile și folderele partajate.", "Informațiile despre conturi și partajări ajută un atacator.", "1 = interzis (cerut de STIG), 0 = permis (implicit Windows)."),
+        E(@"Lsa\EveryoneIncludesAnonymous", "valoare de registru", "Dacă grupul „Toți” (Everyone) include și utilizatorii anonimi.", "Cu valoarea 1, drepturile date grupului „Toți” se aplică și celor fără cont.", "0 = nu include (corect, implicit), 1 = include."),
+        E(@"LanmanServer\Parameters\RestrictNullSessAccess", "valoare de registru", "Limitează sesiunile anonime (null session) la partajările cu nume anume.", "Sesiunile anonime permit citirea de informații din rețea fără cont.", "1 = limitat (corect, implicit), 0 = permis."),
+        E(@"Lsa\NoLMHash", "valoare de registru", "Împiedică păstrarea parolei în formatul vechi LAN Manager.", "Amprenta LAN Manager se sparge în câteva minute.", "1 = nu se păstrează (corect, implicit pe Windows 10/11), 0 = se păstrează."),
+        E(@"Lsa\LmCompatibilityLevel", "valoare de registru", "Ce metode de autentificare în rețea trimite și acceptă stația (LM, NTLM, NTLMv2).", "Metodele vechi se sparg ușor dacă sunt interceptate.", "5 = doar NTLMv2 (cerut de STIG); 0-2 = trimite și LM sau NTLMv1; 3 = implicit Windows; nesetat = 3."),
+        E(@"Installer\AlwaysInstallElevated", "valoare de registru", "Politica „Instalează întotdeauna cu drepturi ridicate” pentru pachetele MSI.", "Cu valoarea 1 orice utilizator instalează un pachet MSI cu drepturile sistemului.", "1 = activă (abatere gravă), 0 sau lipsă = oprită."),
+        E(@"kernel\DisableExceptionChainValidation", "valoare de registru", "Oprește sau pornește protecția SEHOP (validarea lanțului de gestionare a excepțiilor).", "SEHOP oprește o tehnică frecventă de exploatare a programelor.", "0 = SEHOP pornit (cerut de STIG), 1 = oprit."),
+        E(@"WinRM\Client\AllowBasic", "valoare de registru", "Politica care permite autentificarea Basic (parola trimisă aproape în clar) pentru clientul WinRM.", "Parola poate fi citită de oricine ascultă rețeaua.", "0 = interzisă (corect), 1 = permisă."),
+        E(@"WinRM\Client\AllowUnencryptedTraffic", "valoare de registru", "Politica care permite clientului WinRM să trimită trafic necriptat.", "Comenzile și datele pot fi citite de oricine ascultă rețeaua.", "0 = interzis (corect), 1 = permis."),
+        E(@"WinRM\Service\AllowBasic", "valoare de registru", "Politica care permite autentificarea Basic (parola trimisă aproape în clar) la serviciul WinRM.", "Parola poate fi citită de oricine ascultă rețeaua.", "0 = interzisă (corect), 1 = permisă."),
+        E(@"WinRM\Service\AllowUnencryptedTraffic", "valoare de registru", "Politica care permite serviciului WinRM să accepte trafic necriptat.", "Comenzile și datele pot fi citite de oricine ascultă rețeaua.", "0 = interzis (corect), 1 = permis."),
+        E(@"DNSClient\EnableMulticast", "valoare de registru", "Politica „Oprește rezolvarea numelor prin difuzare” (LLMNR).", "Un atacator din rețeaua locală poate răspunde în locul unui server real și captura parole.", "0 = oprită (recomandat), 1 sau lipsă = activă."),
+        E(@"Services\W3SVC\Start", "valoare de registru", "Modul de pornire al serviciului serverului web IIS.", "Un server web deschide stația către conexiuni din rețea.", "4 = dezactivat, 3 = la cerere, 2 = automat; lipsa cheii înseamnă că IIS nu este instalat."),
     ];
 
     private static readonly Dictionary<string, CodeExplanation> Settings = new(StringComparer.Ordinal)
@@ -368,6 +382,7 @@ public static class CodeExplainer
         ["icssvc"] = ("Hotspot mobil Windows (partajarea conexiunii).", "Ar transforma stația într-un punct de acces la rețea."),
         ["SharedAccess"] = ("Partajarea conexiunii la Internet (ICS).", "Face din stație o punte între rețele; pe o stație izolată trebuie oprit."),
         ["WMPNetworkSvc"] = ("Partajarea în rețea a Windows Media Player.", "Inutil; deschide stația către rețea."),
+        ["W3SVC"] = ("Serverul web Windows (IIS).", "Deschide stația către conexiuni web din rețea; o stație de lucru nu are nevoie de el."),
     };
 
     private static readonly Dictionary<string, (string What, string Why)> SecPol = new(StringComparer.OrdinalIgnoreCase)

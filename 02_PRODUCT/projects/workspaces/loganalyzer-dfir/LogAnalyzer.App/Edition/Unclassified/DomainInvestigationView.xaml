@@ -10,33 +10,37 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="0">
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" VerticalAlignment="Center"/>
             <StackPanel>
-                <TextBlock Text="Investigație domeniu și e-mail" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="{Binding ModeNote}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Investigație domeniu și e-mail"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="{Binding ModeNote}"/>
             </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <TabControl Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <!-- Design rule: one accent button per screen. The three tabs below each keep one accent button because only one tab is visible at a time. -->
             <TabItem Header="Domeniu" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                         <TextBlock Text="Controler de domeniu (opțional):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding DomainServer, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,10,0"/>
+                        <TextBox Text="{Binding DomainServer, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,10,0" AutomationProperties.Name="Controler de domeniu"/>
                         <Button Content="Inventar și verificări domeniu" Command="{Binding InventoryDomainCommand}" Style="{StaticResource AccentButtonStyle}"/>
                         <TextBlock Text="{Binding DomainStatus}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     </WrapPanel>
                     <DataGrid ItemsSource="{Binding DomainChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                               ToolTip="Dublu clic pe o verificare: ce verificăm, de ce contează și ce faceți, pe înțeles.">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
-                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55"/>
-                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                            <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"/>
+                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55" MinWidth="55"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*" MinWidth="100">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="55"/>
+                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="70" MinWidth="70"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -57,10 +61,10 @@
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8" Margin="0,0,0,8" VerticalContentAlignment="Top"/>
                     <DataGrid ItemsSource="{Binding UserTimeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
-                            <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>
-                            <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*"/>
+                            <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
+                            <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*" MinWidth="40"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*" MinWidth="70"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -89,21 +93,21 @@
                         <DataGrid Grid.Row="0" ItemsSource="{Binding MailChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260"
                                   ToolTip="Dublu clic pe o verificare: ce verificăm, de ce contează și ce faceți, pe înțeles.">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
-                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                                <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*" MinWidth="100"/>
+                                <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*" MinWidth="100">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                         <DataGrid Grid.Row="2" ItemsSource="{Binding MailMessages}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
-                                <DataGridTextColumn Header="Expeditor" Binding="{Binding Sender}" Width="1.5*"/>
-                                <DataGridTextColumn Header="Destinatari" Binding="{Binding Recipients}" Width="2*"/>
-                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*"/>
-                                <DataGridTextColumn Header="IP" Binding="{Binding ClientIp}" Width="*"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                                <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="Expeditor" Binding="{Binding Sender}" Width="1.5*" MinWidth="100"/>
+                                <DataGridTextColumn Header="Destinatari" Binding="{Binding Recipients}" Width="2*" MinWidth="110"/>
+                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*" MinWidth="80"/>
+                                <DataGridTextColumn Header="IP" Binding="{Binding ClientIp}" Width="*" MinWidth="40"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" MinWidth="70"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

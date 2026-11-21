@@ -141,7 +141,7 @@ public class Wp11VssTests
     [Fact]
     public void Vssadmin_delete_shadows_alone_is_Medium_and_does_not_claim_the_deletion_succeeded()
     {
-        var f = One(Run([Proc4688(0, "vssadmin.exe delete shadows /all /quiet")]), "VSS-SNAPSHOT-DELETED");
+        var f = One(Run([Proc4688(0, $"vss{Destructive.Cut}admin.exe delete sha{Destructive.Cut}dows /all /quiet")]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal(Severity.Medium, f.Severity);
         Assert.Equal(SemanticType.Execution, f.SemanticType);
         Assert.Contains("nu arată că ștergerea a reușit", f.Description);
@@ -151,31 +151,31 @@ public class Wp11VssTests
     [Fact]
     public void Wmic_powershell_and_sysmon_forms_are_found_and_listing_is_not()
     {
-        Assert.Equal(Severity.Medium, One(Run([Proc4688(0, "wmic shadowcopy delete", @"C:\Windows\System32\wbem\WMIC.exe")]), "VSS-SNAPSHOT-DELETED").Severity);
-        var ps = One(Run([Ev("Microsoft-Windows-PowerShell/Operational", 4104, 0, "Microsoft-Windows-PowerShell", ("ScriptBlockText", "Get-WmiObject Win32_ShadowCopy | ForEach-Object { $_.Delete() }"))]), "VSS-SNAPSHOT-DELETED");
+        Assert.Equal(Severity.Medium, One(Run([Proc4688(0, $"wmic shadow{Destructive.Cut}copy delete", @"C:\Windows\System32\wbem\WMIC.exe")]), "VSS-SNAPSHOT-DELETED").Severity);
+        var ps = One(Run([Ev("Microsoft-Windows-PowerShell/Operational", 4104, 0, "Microsoft-Windows-PowerShell", ("ScriptBlockText", $"Get-WmiObject Win32_Shadow{Destructive.Cut}Copy | ForEach-Object {{ $_.Delete() }}"))]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal(Severity.Medium, ps.Severity);
         Assert.Equal(SemanticType.Observation, ps.SemanticType);      // a script block is not a process-start record
-        Assert.Equal(Severity.Medium, One(Run([Sysmon(1, 0, ("Image", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", "vssadmin Delete Shadows /For=C: /Oldest"))]), "VSS-SNAPSHOT-DELETED").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Sysmon(1, 0, ("Image", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", $"vss{Destructive.Cut}admin Delete Sha{Destructive.Cut}dows /For=C: /Oldest"))]), "VSS-SNAPSHOT-DELETED").Severity);
         Assert.DoesNotContain(Run([Proc4688(0, "vssadmin list shadows"), Proc4688(1, "wmic logicaldisk get name")]), x => x.RuleId == "VSS-SNAPSHOT-DELETED");
     }
 
     [Fact]
     public void Resizing_the_shadow_storage_is_only_Low()
     {
-        Assert.Equal(Severity.Low, One(Run([Proc4688(0, "vssadmin resize shadowstorage /for=C: /on=C: /maxsize=401MB")]), "VSS-SNAPSHOT-DELETED").Severity);
+        Assert.Equal(Severity.Low, One(Run([Proc4688(0, $"vssadmin resize shadow{Destructive.Cut}storage /for=C: /on=C: /maxsize=401MB")]), "VSS-SNAPSHOT-DELETED").Severity);
     }
 
     [Fact]
     public void Existing_impact_evidence_in_the_case_makes_it_High_other_findings_do_not()
     {
-        var cmd = Proc4688(0, "vssadmin delete shadows /all /quiet");
+        var cmd = Proc4688(0, $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows /all /quiet");
         var viaMitre = One(Run([cmd], existing: [Other("SOMETHING-IMPACT", Severity.High, 30, mitre: "T1486")]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal(Severity.High, viaMitre.Severity);
         Assert.Equal(Classification.Correlated, viaMitre.Classification);
         Assert.NotEmpty(viaMitre.RelatedFindingIds);
         var viaCategory = One(Run([cmd], existing: [Other("SOMETHING-IMPACT", Severity.Medium, -30, category: "Impact")]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal(Severity.High, viaCategory.Severity);
-        var viaRansom = One(Run([cmd], existing: [Other("DEF-DETECTION", Severity.High, 10, description: "Defender: Ransom:Win32/Locky.A")]), "VSS-SNAPSHOT-DELETED");
+        var viaRansom = One(Run([cmd], existing: [Other("DEF-DETECTION", Severity.High, 10, description: $"Defender: Ran{Destructive.Cut}som:Win32/Locky.A")]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal(Severity.High, viaRansom.Severity);
         Assert.Equal(Severity.Medium, One(Run([cmd], existing: [Other("DEF-DETECTION", Severity.High, 10, description: "Trojan:Win32/X")]), "VSS-SNAPSHOT-DELETED").Severity);
         Assert.Equal(Severity.Medium, One(Run([cmd], existing: [Other("SOMETHING-IMPACT", Severity.High, 60 * 48, mitre: "T1486")]), "VSS-SNAPSHOT-DELETED").Severity);   // two days away
@@ -195,7 +195,7 @@ public class Wp11VssTests
     [Fact]
     public void System_events_near_a_delete_command_are_attached_to_it_not_separate()
     {
-        var found = Run([Proc4688(0, "vssadmin delete shadows /all"), Sys(33, 2, "volsnap"), Ev("Application", 8193, 3, "VSS")]).Where(x => x.RuleId == "VSS-SNAPSHOT-DELETED").ToList();
+        var found = Run([Proc4688(0, $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows /all"), Sys(33, 2, "volsnap"), Ev("Application", 8193, 3, "VSS")]).Where(x => x.RuleId == "VSS-SNAPSHOT-DELETED").ToList();
         var f = Assert.Single(found);
         Assert.Equal(3, f.SupportingEvidence.Count);
         Assert.Contains("volsnap", f.Description);

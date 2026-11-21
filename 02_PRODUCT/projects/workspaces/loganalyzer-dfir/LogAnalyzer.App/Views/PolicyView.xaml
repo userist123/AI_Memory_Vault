@@ -27,16 +27,76 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Politici" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Politici"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}"
                        Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+            <TextBlock
+                       Text="Stări: Ciornă → Validată → Testată → Aprobată → Aplicată → Verificată. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
-            <StackPanel Visibility="{Binding NothingOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource PageRuleStyle}"/>
+            <StackPanel Visibility="{Binding NothingOpenAndLibraryEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
             </StackPanel>
+            <!-- 2026-10-23: policies registered earlier (an import before a restart) are listed, so a beginner sees the import was kept -->
+            <StackPanel Margin="0,8,0,0" Visibility="{Binding HasLibrary, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.Name="Politici din bibliotecă">
+                <TextBlock Text="Politici din bibliotecă" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{Binding LibraryNote}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
+                <ItemsControl ItemsSource="{Binding Library}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2,0,2">
+                                <Button DockPanel.Dock="Right" Content="Deschide" Command="{Binding DataContext.OpenLibraryEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}" Style="{StaticResource OutlineButtonStyle}" Margin="12,0,0,0" AutomationProperties.Name="Deschide politica din bibliotecă"/>
+                                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+            <!-- master plan 6.12: offline, signed threat-intelligence packages: stage (verified on the copy) -> approve with a reason (administrator) -> rollback -->
+            <Expander Header="Pachete de informații despre amenințări (offline, semnate)" DataContext="{Binding ThreatIntel}" Margin="0,10,0,0" Foreground="{StaticResource TextPrimaryBrush}"
+                      AutomationProperties.Name="Pachete de informații despre amenințări" Expanded="ThreatIntelExpanded">
+                <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,6,0,0">
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                               Text="Un pachet CERT (liste IOC, reguli YARA și Sigma) ajunge pe un mediu aprobat și este semnat pentru stație de ofițerul de securitate. Îl puneți în așteptare (se verifică semnătura, semnatarul și fiecare fișier, pe copie); un administrator îl aprobă cu un motiv și abia apoi analizele îl folosesc. Se poate reveni la o versiune aprobată anterior; o versiune veche nu se poate importa din nou."/>
+                    <TextBlock Text="{Binding ActiveLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,6" AutomationProperties.Name="Pachetul activ"/>
+                    <DockPanel Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Content="Pune în așteptare" Command="{Binding StageCommand}" Margin="6,0,0,0" Padding="12,4"
+                                AutomationProperties.Name="Pune pachetul în așteptare"/>
+                        <TextBox Text="{Binding SourceFolder, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Folderul pachetului"/>
+                    </DockPanel>
+                    <!-- lab 2026-11-08: the answer right under the button; the text itself is what a screen reader announces -->
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource EvidenceAccentBrush}" Margin="0,0,0,4" AutomationProperties.LiveSetting="Polite"/>
+                    <ItemsControl ItemsSource="{Binding CheckLines}" AutomationProperties.Name="Verificarea pachetului" Margin="0,0,0,6">
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Motiv (cerut la aprobare, renunțare și revenire)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6" AutomationProperties.Name="Motivul deciziei asupra pachetului"/>
+                    <DataGrid ItemsSource="{Binding StagedRows}" SelectedItem="{Binding SelectedStaged}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              MaxHeight="140" AutomationProperties.Name="Pachete în așteptare">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding Id}"/></Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="În așteptare" Binding="{Binding Id}" Width="170" MinWidth="170"/>
+                            <DataGridTextColumn Header="Pachet" Binding="{Binding PackageId}" Width="*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="90" MinWidth="90"/>
+                            <DataGridTextColumn Header="Pus de" Binding="{Binding StagedBy}" Width="110" MinWidth="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <WrapPanel Margin="0,6,0,6">
+                        <Button Content="Aprobă și activează" Command="{Binding ApproveCommand}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Aprobă și activează pachetul ales"/>
+                        <Button Content="Renunță" Command="{Binding DiscardCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" Margin="0,0,16,0" AutomationProperties.Name="Renunță la pachetul ales"/>
+                        <TextBox Text="{Binding RollbackVersion, UpdateSourceTrigger=PropertyChanged}" Width="150" Margin="0,0,6,0" AutomationProperties.Name="Pachetul și versiunea pentru revenire, de exemplu CERT-RO v3"/>
+                        <Button Content="Revino la versiunea" Command="{Binding RollbackCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" AutomationProperties.Name="Revino la versiunea scrisă"/>
+                    </WrapPanel>
+                    <TextBlock Text="Istoricul pachetelor (înlănțuit, cel mai nou primul)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"/>
+                    <ListBox ItemsSource="{Binding HistoryLines}" MaxHeight="140" AutomationProperties.Name="Istoricul pachetelor"/>
+                </StackPanel>
+                </ScrollViewer>
+            </Expander>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
@@ -71,7 +131,7 @@
                 <Button Content="3. Rulare de probă" Command="{Binding DryRunCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="4. Aprobă" Command="{Binding ApproveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="Calculează planul" Command="{Binding ComputePlanCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Margin="0,0,6,0"/>
                 <Button Content="Rollback ultima execuție…" Command="{Binding RollbackLastCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Folder probe" Command="{Binding OpenEvidenceFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="Conformitate față de politică" Command="{Binding AssessAgainstPolicyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -125,16 +185,16 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90"/>
-                            <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*">
+                            <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90" MinWidth="90"/>
+                            <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*" MinWidth="70">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Setare" Binding="{Binding Setting.Display}" Width="2*"/>
-                            <DataGridTextColumn Header="Curent" Binding="{Binding Current.Display}" Width="1.3*"/>
-                            <DataGridTextColumn Header="Dorit" Binding="{Binding Desired}" Width="1.3*"/>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="105"/>
-                            <DataGridTextColumn Header="Acțiune" Binding="{Binding Action}" Width="75"/>
-                            <DataGridTextColumn Header="Motiv / impact" Binding="{Binding Reason}" Width="3*">
+                            <DataGridTextColumn Header="Setare" Binding="{Binding Setting.Display}" Width="2*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Curent" Binding="{Binding Current.Display}" Width="1.3*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Dorit" Binding="{Binding Desired}" Width="1.3*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="105" MinWidth="105"/>
+                            <DataGridTextColumn Header="Acțiune" Binding="{Binding Action}" Width="80" MinWidth="80"/>
+                            <DataGridTextColumn Header="Motiv / impact" Binding="{Binding Reason}" Width="3*" MinWidth="130">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                         </DataGrid.Columns>
@@ -144,13 +204,13 @@
             <TabItem Header="Rezultatul execuției" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding Results}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90"/>
-                        <DataGridTextColumn Header="Setare" Binding="{Binding Setting}" Width="3*"/>
-                        <DataGridTextColumn Header="Rezultat" Binding="{Binding Outcome}" Width="110"/>
-                        <DataGridTextColumn Header="Înainte" Binding="{Binding Before.Display}" Width="1.3*"/>
-                        <DataGridTextColumn Header="Acțiune" Binding="{Binding Action}" Width="1.2*"/>
-                        <DataGridTextColumn Header="După" Binding="{Binding After.Display}" Width="1.3*"/>
-                        <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*">
+                        <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90" MinWidth="90"/>
+                        <DataGridTextColumn Header="Setare" Binding="{Binding Setting}" Width="3*" MinWidth="70"/>
+                        <DataGridTextColumn Header="Rezultat" Binding="{Binding Outcome}" Width="110" MinWidth="110"/>
+                        <DataGridTextColumn Header="Înainte" Binding="{Binding Before.Display}" Width="1.3*" MinWidth="80"/>
+                        <DataGridTextColumn Header="Acțiune" Binding="{Binding Action}" Width="1.2*" MinWidth="80"/>
+                        <DataGridTextColumn Header="După" Binding="{Binding After.Display}" Width="1.3*" MinWidth="60"/>
+                        <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*" MinWidth="80">
                             <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                     </DataGrid.Columns>
@@ -159,11 +219,11 @@
             <TabItem Header="Conformitate" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding Compliance}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Control benchmark" Binding="{Binding BenchmarkControl}" Width="130"/>
-                        <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*"/>
-                        <DataGridTextColumn Header="Rezultat" Binding="{Binding Result}" Width="110"/>
-                        <DataGridTextColumn Header="Controale de politică" Binding="{Binding Observations.Count}" Width="80"/>
-                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*">
+                        <DataGridTextColumn Header="Control benchmark" Binding="{Binding BenchmarkControl}" Width="160" MinWidth="160"/>
+                        <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*" MinWidth="70"/>
+                        <DataGridTextColumn Header="Rezultat" Binding="{Binding Result}" Width="110" MinWidth="110"/>
+                        <DataGridTextColumn Header="Controale de politică" Binding="{Binding Observations.Count}" Width="190" MinWidth="190"/>
+                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*" MinWidth="70">
                             <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                     </DataGrid.Columns>
@@ -175,11 +235,11 @@
             <TabItem Header="Istoric ciclu de viață" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding AtUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
-                        <DataGridTextColumn Header="Din" Binding="{Binding From}" Width="90"/>
-                        <DataGridTextColumn Header="În" Binding="{Binding To}" Width="90"/>
-                        <DataGridTextColumn Header="Cine" Binding="{Binding Operator}" Width="1.5*"/>
-                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
+                        <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding AtUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
+                        <DataGridTextColumn Header="Din" Binding="{Binding From}" Width="90" MinWidth="90"/>
+                        <DataGridTextColumn Header="În" Binding="{Binding To}" Width="90" MinWidth="90"/>
+                        <DataGridTextColumn Header="Cine" Binding="{Binding Operator}" Width="1.5*" MinWidth="60"/>
+                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*" MinWidth="70"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>

@@ -81,7 +81,8 @@ public sealed class FirewallLogParser : EvidenceParserBase
     }
 
     /// <summary>Reads one line of at most <paramref name="max"/> characters; a longer line is consumed to its end and returned as null with <paramref name="tooLong"/> set.</summary>
-    private static string? ReadBoundedLine(TextReader r, int max, out bool tooLong)
+    /// <summary>One line of at most <paramref name="max"/> characters; a longer one is read to its end and returned as "" with <paramref name="tooLong"/> set.</summary>
+    internal static string? ReadBoundedLine(TextReader r, int max, out bool tooLong)
     {
         tooLong = false;
         var sb = new StringBuilder();

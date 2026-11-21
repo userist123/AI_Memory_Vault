@@ -12,6 +12,21 @@ namespace LogAnalyzer.UI.Services
     /// </summary>
     public static class ExportAudit
     {
+        /// <summary>
+        /// Planner #11 item 3: every written export records its destination (path, drive type, volume serial, medium of the verified signed media register).
+        /// Installed here, before the first export of the process; a test may replace <see cref="OperationAudit.MediumOf"/>.
+        /// </summary>
+        static ExportAudit()
+        {
+            OperationAudit.MediumOf ??= path => LogAnalyzer.Dfir.Windows.Devices.ExportMediumResolver.Resolve(path, () =>
+            {
+                string? audit;
+                try { audit = AuthApp.Service.AuditPath; } catch (InvalidOperationException) { audit = null; }   // not signed in yet: no version check against the audit
+                var active = MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, audit);
+                return active.Usable ? active.Doc : null;
+            });
+        }
+
         public const string RefusedPrefix = "Exportul nu s-a făcut: jurnalul de audit nu poate fi scris — ";
 
         /// <summary>The message shown when the audit could not be written before an export.</summary>

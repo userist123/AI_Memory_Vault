@@ -147,6 +147,14 @@ public class Wp11AccountTests
         Assert.Equal(Severity.Medium, bySid.Severity);
         var domainAdmins = One(Run([AddedToGroup(1, "Grup necunoscut", "S-1-5-21-1-2-3-512", id: 4728)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
         Assert.Equal(Severity.Medium, domainAdmins.Severity);
+        // lab SRV01 2026-11-06: the domain join adds Domain Admins (RID 512, member "-") to the local Administrators; the title names it, the
+        // alternative explanation says what Windows does at the join
+        var join = One(Run([Sec(4732, 1, ("MemberName", "-"), ("MemberSid", "S-1-5-21-1061-450-3444-512"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"),
+            ("SubjectUserName", "Administrator"), ("SubjectDomainName", "LAB-SRV01"))]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal("Cont adăugat într-un grup privilegiat: Domain Admins → Administrators", join.Title);
+        Assert.Contains(join.AlternativeExplanations, a => a.Contains("alăturarea stației în domeniu", StringComparison.Ordinal));
+        Assert.Equal("", Wp11Rules.DomainGroupOfSid("S-1-5-21-1-2-3-1105"));
+        Assert.Equal("", Wp11Rules.DomainGroupOfSid("S-1-5-32-544"));
         Assert.DoesNotContain(Run([AddedToGroup(1, "Users", "S-1-5-32-545")]), x => x.RuleId == "ACCOUNT-ADDED-PRIVILEGED-GROUP");
         One(Run([AddedToGroup(1, "Remote Desktop Users", "S-1-5-32-555", id: 4756)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
     }
@@ -172,6 +180,88 @@ public class Wp11AccountTests
         Assert.NotEmpty(f.AlternativeExplanations);
         var localOnly = One(Run([Created(0), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
         Assert.Equal(Severity.Medium, localOnly.Severity);
+    }
+
+    private static TimelineEvent At(TimelineEvent e, long record) => new()
+    {
+        Time = e.Time, Source = e.Source, EventId = e.EventId, Provider = e.Provider, EvidenceId = e.EvidenceId, Summary = e.Summary, Fields = e.Fields, Locator = $"EventRecordID={record}",
+    };
+
+    [Fact]
+    public void An_administrator_Windows_made_while_it_was_being_installed_is_Low_and_said_so_but_not_after_a_clear_or_later()
+    {
+        // lab WS02 2026-11-06: labadmin and defaultuser0, made administrators by Windows at setup, were Medium „created in this case and made admin”
+        var setup = Run([At(Created(0, by: "SYSTEM"), 40), At(AddedToGroup(1, "Administrators", "S-1-5-32-544") is var g ? new TimelineEvent { Time = g.Time, Source = g.Source, EventId = g.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(g.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "WS02$" } } : null!, 41), At(Logon(10), 300)]);
+        var used = One(setup, "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Low, used.Severity);
+        Assert.Contains("creat de Windows la instalare", used.PlainWhat);
+        var group = One(setup, "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal(Severity.Low, group.Severity);
+        Assert.Contains("Windows la instalare", group.PlainWhat);
+        // the same, later in the log (record 9000) or in a log that was cleared: an attacker running as SYSTEM looks like this
+        Assert.Equal(Severity.Medium, One(Run([At(Created(0, by: "SYSTEM"), 9000), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Sec(1102, -1), At(Created(0, by: "SYSTEM"), 40), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+        // made by a person, even at setup time: never lowered
+        Assert.Equal(Severity.Medium, One(Run([At(Created(0, by: "admin1"), 40), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+    }
+
+    [Fact]
+    public void What_Windows_does_when_a_server_becomes_a_domain_controller_is_Windows_not_an_attacker()
+    {
+        // lab DC01 2026-11-07: „krbtgt was created by ANONYMOUS LOGON” and the Administrator's Domain/Enterprise/Schema Admins memberships were
+        // reported as account activity (records ~1400, past the setup range)
+        TimelineEvent Anon(TimelineEvent e) => new()
+        {
+            Time = e.Time, Source = e.Source, EventId = e.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(e.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "ANONYMOUS LOGON", ["SubjectDomainName"] = "NT AUTHORITY", ["SubjectUserSid"] = "S-1-5-7" },
+        };
+        var krbtgt = At(Anon(Created(0, name: "krbtgt", sid: "S-1-5-21-1-2-3-502")), 1401);
+        var addAdmin = AddedToGroup(1, "Domain Admins", "S-1-5-21-1-2-3-512", member: "Administrator", memberSid: "S-1-5-21-1-2-3-500", id: 4728);
+        var bySystem = new TimelineEvent { Time = addAdmin.Time, Source = addAdmin.Source, EventId = addAdmin.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(addAdmin.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "DC01$" } };
+        var dc = Run([krbtgt, At(bySystem, 1450)]);
+        var created = One(dc, "ACCOUNT-CREATED");
+        Assert.Equal(Severity.Info, created.Severity);
+        Assert.Contains("de Windows, când serverul a fost transformat în controler de domeniu", created.PlainWhat);
+        var group = One(dc, "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal(Severity.Low, group.Severity);
+        Assert.Contains("controler de domeniu", group.PlainWhat);
+
+        // a person adding an account to Domain Admins in the same minutes is never lowered; neither is anything after a log clear
+        Assert.Equal(Severity.Medium, One(Run([krbtgt, AddedToGroup(2, "Domain Admins", "S-1-5-21-1-2-3-512")]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Sec(1102, -5), krbtgt, At(bySystem, 1450)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+        // the same SYSTEM action an hour after the promotion is not part of it
+        var late = new TimelineEvent { Time = AddedToGroup(60, "x", "y").Time, Source = bySystem.Source, EventId = bySystem.EventId, EvidenceId = "EV", Summary = "x", Fields = bySystem.Fields };
+        Assert.Equal(Severity.Medium, One(Run([krbtgt, At(late, 3000)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+    }
+
+    [Fact]
+    public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_unless_privileged()
+    {
+        // lab VM 2026-11-06: setup accounts of every fresh install were Medium "created then used"
+        var local = One(Run([Created(0, by: "SYSTEM"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Low, local.Severity);
+        Assert.Contains("aprovizionare", local.Description);
+        // review round 1: SYSTEM creating a local administrator is also what an attacker running as SYSTEM does
+        var admin = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Medium, admin.Severity);
+        // the same account used from another host keeps its severity
+        var remote = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10, type: "10", ip: "10.0.0.7")]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.High, remote.Severity);
+    }
+
+    [Fact]
+    public void A_local_group_member_logged_as_a_bare_SID_is_named_from_the_accounts_own_events()
+    {
+        // lab VM 2026-11-06: 4732 logs MemberName "-" for a local account; the title showed "S-1-5-21-…-1002 → Administrators"
+        var add = Sec(4732, 5, ("MemberName", "-"), ("MemberSid", "S-1-5-21-1-2-3-1002"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "it.admin"), ("SubjectDomainName", "LAB"));
+        var f = One(Run([Created(0, name: "labbackup$", sid: "S-1-5-21-1-2-3-1002"), add]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal("Cont adăugat într-un grup privilegiat: labbackup$ → Administrators", f.Title);
+        Assert.Contains("S-1-5-21-1-2-3-1002", f.Description);
+        // no event names the SID: the title keeps the SID rather than inventing a name
+        var unknown = Sec(4732, 5, ("MemberName", "-"), ("MemberSid", "S-1-5-21-9-9-9-1003"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "it.admin"), ("SubjectDomainName", "LAB"));
+        Assert.Contains("S-1-5-21-9-9-9-1003", One(Run([unknown]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Title);
     }
 
     [Fact]

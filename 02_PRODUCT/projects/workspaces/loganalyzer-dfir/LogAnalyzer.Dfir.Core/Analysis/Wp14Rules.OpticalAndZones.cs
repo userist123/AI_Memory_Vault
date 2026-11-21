@@ -35,7 +35,8 @@ public static partial class Wp14Rules
                 ["Stația poate fi singura cale aprobată de transfer prin disc, iar inscripționarea să fie permisă prin procedură și înregistrată.", "Unele unități raportează capacitatea de scriere deși nu au disc de scris sau sunt doar cititoare de Blu-ray.", "Politica poate fi aplicată dintr-o altă sursă (GPO de domeniu) care nu s-a putut citi local."],
                 [FactRef(c, "burn/writers", names)], [$"airgap_facts burn/writers {names}"], "", SemanticType.Configuration));
         }
-        var staged = b.StagingFiles.Where(f => PeriodOrUnset(c, f.LastWriteUtc)).OrderBy(f => f.LastWriteUtc).ToList();
+        // desktop.ini / thumbs.db are the folder's own Explorer files: every profile's Burn folder has a desktop.ini (lab VMs 2026-11-06), nothing was staged
+        var staged = b.StagingFiles.Where(f => !IsFolderShellFile(f.Name) && PeriodOrUnset(c, f.LastWriteUtc)).OrderBy(f => f.LastWriteUtc).ToList();
         if (staged.Count > 0)
         {
             var times = staged.Select(f => f.LastWriteUtc).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
@@ -45,7 +46,8 @@ public static partial class Wp14Rules
                 $"{staged.Count} fișiere în folderul de pregătire", times.Count > 0 ? times[0] : null, times.Count > 0 ? times[^1] : null, "necunoscut: folderul este al unui profil, fișierele nu poartă contul", "folderul Burn", "scriere pe disc probabilă, neconfirmată", "disc CD/DVD", desc,
                 "Fișiere în folderul de pregătire a inscripționării din Explorer, cu data ultimei modificări în perioada cazului sau necunoscută.",
                 ["Fișierele pot fi rămase dintr-o inscripționare anulată sau terminată, curățate doar la ejectarea discului.", "Un utilizator poate fi pregătit un disc de instalare sau de arhivă aprobat."],
-                staged.Take(10).Select(f => FactRef(c, $"burn/staging/{f.Name}", $"{f.Name}, {f.Size} octeți")).ToList(), staged.Take(5).Select(f => $"airgap_facts burn/staging/{f.Name}").ToList(), "T1052", SemanticType.Presence));
+                staged.Take(10).Select(f => FactRef(c, $"burn/staging/{f.Name}", $"{f.Name}, {f.Size} octeți")).ToList(), staged.Take(5).Select(f => $"airgap_facts burn/staging/{f.Name}").ToList(), "T1052", SemanticType.Presence,
+                plain: $"a pregătit {(staged.Count == 1 ? "fișierul" : "fișierele")} {PlainPhrases.List(staged.Select(f => PlainPhrases.Q(f.Name)).ToList(), 5)} pentru a fi scris{(staged.Count == 1 ? "" : "e")} pe un CD/DVD; nu se știe dacă discul a fost scris până la capăt"));
         }
         foreach (var log in b.ToolLogs.Where(l => PeriodOrUnset(c, l.LastWriteUtc)))
         {
@@ -86,6 +88,10 @@ public static partial class Wp14Rules
     /// of the same time, or within 10 minutes when the disconnect was not logged), or (b) is registered for a zone other than the zone declared for this station.
     /// Either way the medium may carry data across a boundary; the rule states which evidence it rests on and does not claim a transfer.
     /// </summary>
+    /// <summary>A file Explorer keeps in any folder for its own view (desktop.ini, thumbs.db): not content prepared for a disc.</summary>
+    internal static bool IsFolderShellFile(string name) =>
+        name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase) || name.Equals("thumbs.db", StringComparison.OrdinalIgnoreCase);
+
     private static void MediaZoneRoundTrip(Ctx c, List<Finding> o)
     {
         var reg = c.Input.Media;

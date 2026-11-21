@@ -37,6 +37,16 @@ public static class ProfileOps
             if (missing.Count > 0)
                 issues.Add(new ProfileIssue(ProfileTable.RotationProcedure, 0, "lipsesc pașii " + string.Join(", ", missing), false));
         }
+        if (!string.IsNullOrWhiteSpace(p.StationLevel) && StationLevelRules.Resolve(p.StationLevel) is null)
+            issues.Add(new ProfileIssue(null, 0, $"nivelul stației „{p.StationLevel.Trim()}” nu este un nivel de clasificare cunoscut; regulile care depind de nivel (A18, N14) îl tratează ca nedefinit", IsError: false));
+        if (p.BackupMaxAgeDays != 0 && p.BackupMaxAgeDays is < 1 or > ProcedureProfile.MaxBackupAgeDays)
+            issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a copiei de siguranță ({p.BackupMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxBackupAgeDays}; 0 = implicit ({ProcedureProfile.DefaultBackupMaxAgeDays})"));
+        if (p.BackupRestoreTestMaxAgeDays != 0 && p.BackupRestoreTestMaxAgeDays is < 1 or > ProcedureProfile.MaxBackupAgeDays)
+            issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a testului de restaurare ({p.BackupRestoreTestMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxBackupAgeDays}; 0 = implicit ({ProcedureProfile.DefaultBackupRestoreTestMaxAgeDays})"));
+        if (p.TrainingMaxAgeDays != 0 && p.TrainingMaxAgeDays is < 1 or > ProcedureProfile.MaxTrainingAgeDays)
+            issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a instruirii ({p.TrainingMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxTrainingAgeDays}; 0 = implicit ({ProcedureProfile.DefaultTrainingMaxAgeDays})"));
+        if ((p.SignInNotice?.Trim().Length ?? 0) > SignInNoticeResolver.MaxLength)
+            issues.Add(new ProfileIssue(null, 0, $"textul notificării de utilizare depășește {SignInNoticeResolver.MaxLength} de caractere"));
         return issues;
     }
 

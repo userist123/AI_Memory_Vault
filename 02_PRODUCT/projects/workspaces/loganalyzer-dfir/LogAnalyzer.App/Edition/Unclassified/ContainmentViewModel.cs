@@ -87,7 +87,7 @@ namespace LogAnalyzer.UI.ViewModels
             var (on, detail) = BlockedConnectionLog.IsFailureAuditEnabled();
             AuditStatus = on
                 ? "Auditul conexiunilor blocate este activ: încercările programelor izolate sunt înregistrate (evenimentul 5157)."
-                : $"Auditul conexiunilor blocate NU este activ ({detail}). Fără el, Windows nu înregistrează unde încearcă să se conecteze un program izolat.";
+                : $"Auditul conexiunilor blocate nu este activ ({detail}). Fără el, Windows nu înregistrează unde încearcă să se conecteze un program izolat.";
         }
 
         [RelayCommand]
@@ -137,6 +137,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private async Task ContainAsync(string path, int? pid, string trigger, bool suspend)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }
             EnsureCase();
             IsBusy = true;
             Status = $"Se izolează și se scanează {Path.GetFileName(path)}…";
@@ -181,6 +182,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task TrustSelected()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (SelectedSuspect is not { } s) { Status = "Selectați un proces din listă."; return; }
             if (MessageBox.Show($"Marcați programul ca fiind de încredere?\n\n{s.Path}\n\nNu va mai fi izolat automat. Încrederea se leagă de SHA-256-ul fișierului curent: " +
                                 "dacă fișierul se schimbă (actualizare sau înlocuire), trebuie confirmat din nou.",
@@ -218,8 +220,9 @@ namespace LogAnalyzer.UI.ViewModels
                     "Ridicare izolare", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             Status = ContainmentRelease.Run(_service, inc, "ridicată de operator");
             IncidentDetail = IncidentDetailFormatter.Format(inc);
+            // the same object put back in its own place is not a change for the grid (lab VM 2026-11-07: the row still said „IZOLAT” after the release)
             var idx = Incidents.IndexOf(inc);
-            if (idx >= 0) { Incidents[idx] = inc; SelectedIncident = inc; }
+            if (idx >= 0) { Incidents.RemoveAt(idx); Incidents.Insert(idx, inc); SelectedIncident = inc; }
         }
 
         [RelayCommand]
@@ -235,7 +238,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             var caseName = _case.Info.Name;
             if (LogAnalyzer.UI.Services.ExportAudit.Run(_case.Info.CaseId, "pdf-containment", 1, dlg.FileName,
-                    () => IncidentPdfReport.Write(inc, dlg.FileName, caseName, Environment.MachineName)) is { } refused) { Status = refused; return; }
+                    () => IncidentPdfReport.Write(inc, dlg.FileName, caseName, Environment.MachineName, _case.Info.Scope.Marking)) is { } refused) { Status = refused; return; }
             _case.Audit("report.pdf", $"{inc.IncidentId} {dlg.FileName}");
             Status = $"Raport salvat: {dlg.FileName}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
@@ -252,6 +255,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void EnableBlockedAudit()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (MessageBox.Show("Activați auditul Windows pentru conexiunile blocate (subcategoria „Filtering Platform Connection”, eșecuri)?\n\n" +
                                 "Este o modificare a politicii de audit a stației. Fără ea nu se poate vedea unde încearcă să se conecteze un program izolat.",
                     "Activare audit", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
@@ -342,19 +346,19 @@ namespace LogAnalyzer.UI.ViewModels
             if (s is { Persistence.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("PORNIRE AUTOMATĂ");
+                sb.AppendLine("Pornire automată");
                 foreach (var p in s.Persistence) sb.AppendLine($"  {p.Mechanism}: {p.Location}  {p.Value}");
             }
             sb.AppendLine();
             sb.AppendLine("CONSTATĂRI");
             foreach (var f in i.Findings) sb.AppendLine($"  [{f.Severity.ToSpec()}/{f.Classification.ToSpec()}] {f.Title}: {f.Description}");
             sb.AppendLine();
-            sb.AppendLine("JURNAL ACȚIUNI");
+            sb.AppendLine("Jurnal de acțiuni");
             foreach (var a in i.Actions) sb.AppendLine($"  {L(a.TimeUtc)}  {a.Action}  {ContainmentText.Action(a.Success)}  {a.Target}  {a.Detail}");
             if (s is { Gaps.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("SURSE LIPSĂ SAU INCOMPLETE");
+                sb.AppendLine("Surse lipsă sau incomplete");
                 foreach (var g in s.Gaps) sb.AppendLine($"  {g.Artifact}: {g.Status.ToSpec()} — {g.Reason}");
             }
             return sb.ToString();

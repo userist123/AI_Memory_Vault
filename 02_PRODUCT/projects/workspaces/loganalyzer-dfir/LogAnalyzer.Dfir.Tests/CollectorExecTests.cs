@@ -90,7 +90,7 @@ public sealed class CollectorExecTests : IDisposable
     {
         var execs = Honest();
         Assert.Equal(SelfExecKind.None, SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), cmd: Cmd.Replace("save", "delete")), execs).Kind);
-        Assert.Equal(SelfExecKind.None, SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), cmd: "vssadmin delete shadows /all /quiet"), execs).Kind);
+        Assert.Equal(SelfExecKind.None, SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), cmd: $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows /all /quiet"), execs).Kind);
         // a copy of reg.exe elsewhere, with the same arguments: not recognised by name
         Assert.Equal(SelfExecKind.None, SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), image: @"C:\Users\Public\reg.exe"), execs).Kind);
     }

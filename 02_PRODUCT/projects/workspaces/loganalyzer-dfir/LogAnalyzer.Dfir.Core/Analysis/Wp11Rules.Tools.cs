@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Profile;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
@@ -25,39 +26,392 @@ public static partial class Wp11Rules
             if (part.StartsWith("SHA256=", StringComparison.OrdinalIgnoreCase) && part.Length == 71) yield return part[7..];
     }
 
+    // ---- user-writable folders, two-tools window, DNS suffix: what raises or limits the severity of a tool finding ----
+
+    internal static readonly TimeSpan ToolWindow = TimeSpan.FromHours(24);
+    internal const int ToolMaxEvidence = 14;
+
+    private const System.Text.RegularExpressions.RegexOptions ToolRx = System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+    private static readonly TimeSpan ToolRxTimeout = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>An .exe path token of a command line: a quoted path (may contain spaces) or an unquoted one (no spaces).</summary>
+    private static readonly System.Text.RegularExpressions.Regex ToolExeToken = new(@"""[^""\r\n]{1,1024}?\.exe""|[^\s""',;]{1,1024}\.exe\b", ToolRx, ToolRxTimeout);
+
+    /// <summary>A launcher in front of the real program ("cmd /c x.exe", "rundll32 a.dll,f", "powershell -c …"), with or without .exe.</summary>
+    private static readonly System.Text.RegularExpressions.Regex ToolWrapper = new(@"^(?:[^\s""]*\\)?(?:cmd|rundll32|powershell|pwsh|wscript|cscript|mshta|conhost)(?:\.exe)?(?:\s|$)", ToolRx, ToolRxTimeout);
+
+    /// <summary>Cap for one path or name quoted in a finding (a hostile ImagePath can be 32 K characters).</summary>
+    private const int ToolTextCap = 400;
+
+    private static readonly System.Text.RegularExpressions.Regex[] ToolWritableFolders =
+    [
+        new(@"\\users\\[^\\]+\\downloads\\", ToolRx, ToolRxTimeout),
+        new(@"\\users\\[^\\]+\\desktop\\", ToolRx, ToolRxTimeout),
+        new(@"\\appdata\\local\\temp\\", ToolRx, ToolRxTimeout),
+        new(@"\\users\\public\\", ToolRx, ToolRxTimeout),
+        new(@"\\windows\\temp\\", ToolRx, ToolRxTimeout),
+        new(@"\\\$recycle\.bin\\", ToolRx, ToolRxTimeout),
+        new(@"\\appdata\\roaming\\", ToolRx, ToolRxTimeout),
+        new(@"\\users\\[^\\]+\\documents\\", ToolRx, ToolRxTimeout),
+        new(@"^(?:[a-z]:)?\\perflogs\\", ToolRx, ToolRxTimeout),
+        // folders under Windows that a standard user can write to
+        new(@"\\windows\\(?:tasks|tracing|registration\\crmlog|system32\\(?:tasks|com\\dmp|spool\\(?:drivers\\color|printers|servers))|syswow64\\(?:tasks|com\\dmp))\\", ToolRx, ToolRxTimeout),
+        // a file directly in ProgramData, not in a vendor sub-folder
+        new(@"^(?:[a-z]:)?\\programdata\\[^\\]+$", ToolRx, ToolRxTimeout),
+    ];
+
+    /// <summary>Where an installed program normally lives: Program Files, Program Files (x86), Windows on the system drive C: (or a path without a drive: kernel
+    /// and Prefetch forms) and their known-folder GUIDs as UserAssist writes them. The user-writable folders inside them are excluded by the caller.</summary>
+    private static readonly System.Text.RegularExpressions.Regex ToolStandardFolder =
+        new(@"^(?:(?:c:)?\\(?:program files(?: \(x86\))?|windows)\\|\{(?:6D809377-6AF0-444B-8957-A3773F02200E|7C5A40EF-A0FB-4BFC-874A-C0F2E0B9FA8E|1AC14E77-02E7-4E5D-B744-2EB1AE5198B7|F38BF404-1D43-42F2-9305-67DE0B28FC23|D65231B0-B2F1-4857-A4CE-A8E7C6EA7D27)\}\\)", ToolRx, ToolRxTimeout);
+
+    // \Device\HarddiskVolumeN (kernel paths) and \VOLUME{guid} (Prefetch ReferencedFiles) stand for the drive letter
+    private static readonly System.Text.RegularExpressions.Regex ToolDevicePrefix = new(@"^\\(?:device\\harddiskvolume\d+|volume\{[^}\\]*\})", ToolRx, ToolRxTimeout);
+
+    private static string ToolNormPath(string path)
+    {
+        var p = path.Trim().Trim('"').Replace('/', '\\');
+        if (p.StartsWith(@"\??\", StringComparison.Ordinal) || p.StartsWith(@"\\?\", StringComparison.Ordinal)) p = p[4..];
+        try { p = ToolDevicePrefix.Replace(p, ""); } catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { }
+        foreach (var (v, folder) in ToolEnv) p = p.Replace(v, folder, StringComparison.OrdinalIgnoreCase);
+        return ToolResolveDots(p);
+    }
+
+    /// <summary>"C:\Windows\..\Users\Public\x.exe" -> "C:\Users\Public\x.exe": "." and ".." segments resolved, never above the root.</summary>
+    private static string ToolResolveDots(string p)
+    {
+        if (!p.Contains(@"\.", StringComparison.Ordinal)) return p;
+        var parts = p.Split('\\');
+        var kept = new List<string>(parts.Length);
+        foreach (var s in parts)
+        {
+            if (s == ".") continue;
+            if (s == "..") { if (kept.Count > 1) kept.RemoveAt(kept.Count - 1); continue; }
+            kept.Add(s);
+        }
+        return string.Join('\\', kept);
+    }
+
+    /// <summary>True only for Program Files / Windows on the system drive and outside their user-writable sub-folders (an approval by name covers nothing
+    /// else: Windows\Temp, AppData, ProgramData sub-folders, UNC shares, 8.3 names, other drives, unknown places).</summary>
+    internal static bool ToolStandardLocation(string path)
+    {
+        try { return ToolStandardFolder.IsMatch(ToolNormPath(path)) && !ToolUserWritable(path); }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
+    }
+
+    /// <summary>The station a piece of evidence comes from: lower case, the NetBIOS part of an FQDN (an IP address is kept whole); "" when the parser did not record it.</summary>
+    private static string ToolHost(TimelineEvent e)
+    {
+        var h = e.Host.Trim().ToLowerInvariant();
+        if (System.Net.IPAddress.TryParse(h, out _)) return h;
+        int dot = h.IndexOf('.');
+        return dot > 0 ? h[..dot] : h;
+    }
+
+    private static readonly (string Var, string Folder)[] ToolEnv =
+        [("%temp%", @"\appdata\local\temp"), ("%tmp%", @"\appdata\local\temp"), ("%public%", @"\users\public"), ("%programdata%", @"\programdata"), ("%allusersprofile%", @"\programdata"),
+         ("%systemroot%", @"c:\windows"), ("%windir%", @"c:\windows"), ("%programfiles(x86)%", @"c:\program files (x86)"), ("%programfiles%", @"c:\program files"), ("%systemdrive%", "c:")];
+
+    /// <summary>True when the path is in a folder a standard user can write to (Downloads, Desktop, Temp, Public, Recycle Bin, the root of ProgramData).</summary>
+    internal static bool ToolUserWritable(string path)
+    {
+        var p = ToolNormPath(path);
+        try { return ToolWritableFolders.Any(r => r.IsMatch(p)); }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
+    }
+
+    /// <summary>The executable of a service ImagePath: without the \??\ prefix, the quotes and the arguments.</summary>
+    private static string ToolServiceExe(string imagePath)
+    {
+        var s = imagePath.Trim();
+        if (s.StartsWith(@"\??\", StringComparison.Ordinal) || s.StartsWith(@"\\?\", StringComparison.Ordinal)) s = s[4..];
+        var exe = Correlation.CommandExecutable(s).Trim().Trim('"');
+        return exe.Length > 0 ? exe : ServiceExe(s).Trim().Trim('"');
+    }
+
+    private static string? ToolInnerExe(string commandLine, Func<string, bool> isTool)
+    {
+        try { return ToolExeToken.Matches(commandLine).Select(m => m.Value.Trim('"')).FirstOrDefault(isTool); }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return null; }
+    }
+
+    /// <summary>The name is the domain or a subdomain of it, at a label boundary.</summary>
+    private static bool ToolDomainMatches(RemoteToolRow tool, string queryName)
+    {
+        var d = queryName.Trim().TrimEnd('.').ToLowerInvariant();
+        return d.Length > 0 && tool.Domains.Any(s => s.Length > 0 && (d == s.ToLowerInvariant() || d.EndsWith("." + s.ToLowerInvariant(), StringComparison.Ordinal)));
+    }
+
+    /// <summary>Text built from evidence: line breaks and hidden characters removed (ReportText.Clean), double quotes made single.</summary>
+    private static string ToolSafe(string s)
+    {
+        var t = DefenderDetectionHistoryParser.Safe(s).Replace('"', '\'');
+        if (t.Length <= ToolTextCap) return t;
+        int cut = char.IsHighSurrogate(t[ToolTextCap - 1]) ? ToolTextCap - 1 : ToolTextCap;
+        return t[..cut] + "…";
+    }
+
+    private static bool ToolIsWrapper(string exe)
+    {
+        try { return ToolWrapper.IsMatch(exe.Trim().Trim('"')); }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
+    }
+
+    private static bool ToolNear(List<DateTimeOffset> a, List<DateTimeOffset> b)
+    {
+        foreach (var t in a)
+        {
+            int i = b.BinarySearch(t);
+            if (i < 0) i = ~i;
+            if (i < b.Count && b[i] - t <= ToolWindow) return true;
+            if (i > 0 && t - b[i - 1] <= ToolWindow) return true;
+        }
+        return false;
+    }
+
+    private sealed record ToolResult(RemoteToolRow Tool, List<ToolHit> Exec, List<ToolHit> Present, List<(ToolHit Hit, ToolSession Info)> Sessions);
+
+    // ---- sessions from the tool's own logs (AnyDesk connection_trace / ad.trace, TeamViewer Connections*.txt) and ScreenConnect events in the Application log ----
+
+    /// <summary>Kind of a hit that comes from a session log: it is evidence that the tool was used, at least as strong as an execution artifact, but the file or log can be forged.</summary>
+    internal const string ToolSessionKind = "sesiune din jurnalul uneltei";
+    /// <summary>A file transfer in the tool's own log (RustDesk): use of the tool, but not a session; counted apart in the header of the finding (review 2026-11-16).</summary>
+    internal const string ToolTransferKind = "transfer de fișiere din jurnalul uneltei";
+    private const int ToolMaxSessionLines = 6;
+
+    private static readonly HashSet<string> ToolSessionSources = new(StringComparer.Ordinal)
+        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections", "Artifact:TeamViewerLogfile", "Artifact:RustDeskLog" };
+
+    /// <summary>One session as the rule reports it. <see cref="Remote"/> is the remote id or IP (empty when the log does not give one).</summary>
+    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What, bool AcceptanceUnknown = false, string TransferKind = "", string TransferPath = "");
+
+    /// <summary>The RustDesk log writes "Connection opened" before authentication and never shows acceptance: its incoming connections have <c>Accepted</c> = necunoscut by construction.</summary>
+    private const string RustDeskSource = "Artifact:RustDeskLog";
+    /// <summary>Evidence kind of a RustDesk log that holds only loopback connections: RustDesk ran locally, no partner is shown.</summary>
+    internal const string ToolLocalOnlyKind = "jurnal RustDesk (doar conexiuni locale)";
+
+    private static string ToolSessionWhat(string kind) => kind switch
+    {
+        "AcceptedFrom" => "acceptată de la ID", "IncomingSessionRequest" => "cerere de sesiune de intrare", "LoggedInFromRelay" => "adresă văzută pe releu",
+        "SessionEnded" => "încheiată", "AuthenticatedPermanentToken" => "autentificare cu token permanent", "FileTransfer" => "transfer de fișiere",
+        "RemoteOs" => "sistemul de operare al celuilalt capăt", "IncomingSession" => "sesiune de intrare (jurnal TeamViewer)",
+        "FailedAuthentication" => "autentificare eșuată (jurnal TeamViewer)", "IncomingConnection" => "conexiune, acceptarea nu reiese din jurnalul RustDesk", "" => "sesiune", _ => kind,
+    };
+
+    /// <summary>The session an event describes for <paramref name="tool"/>, or null. Only the known session-log sources count (a field named like ours in an EVTX event does not).</summary>
+    private static ToolSession? ToolSessionOf(TimelineEvent e, RemoteToolRow tool)
+    {
+        if (ToolSessionSources.Contains(e.Source))
+        {
+            if (!F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) || F(e, "Session Evidence") != "da") return null;
+            var remote = F(e, "Remote Id", "IP");
+            var what = F(e, "Kind").Length > 0 ? ToolSessionWhat(F(e, "Kind")) : F(e, "Session Type").Length > 0 ? F(e, "Session Type") : "sesiune";
+            // RustDesk file transfers (FileWrite = written on the station, FileRead = read from it) are not sessions: they are reported in a sentence of their own
+            if (e.Source == RustDeskSource && F(e, "Kind") is "FileWrite" or "FileRead")
+                return new("", false, "", "", "", "transfer de fișiere", false, F(e, "Kind"), F(e, "File Path"));
+            return new(F(e, "Direction"), F(e, "Accepted") == "da", remote, F(e, "Local Account"), F(e, "Auth Method"), what, e.Source == RustDeskSource);
+        }
+        // ScreenConnect Client writes Application events with ID 0 from the source "ScreenConnect Client (<thumbprint>)"; the text is the message
+        if (tool.Id == "screenconnect" && e.Source.Equals("EventLog:Application", StringComparison.OrdinalIgnoreCase) && e.EventId == "0"
+            && e.Provider.StartsWith("ScreenConnect Client (", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = AllText(e);
+            bool Has(string t) => text.Contains(t, StringComparison.OrdinalIgnoreCase);
+            if (Has("Transferred files")) return new("Incoming", true, "", "", "", "transfer de fișiere");
+            if (Has("Executed command")) return new("Incoming", true, "", "", "", "comandă executată");
+            if (Has("Disconnected")) return new("Incoming", false, "", "", "", "deconectare");
+            if (Has("Connected")) return new("Incoming", true, "", "", "", "conectare");
+        }
+        return null;
+    }
+
+    /// <summary>The sessions of a finding, as text: how many, then at most <see cref="ToolMaxSessionLines"/> (strangers first), each with direction, remote id / IP, time, local account and method.</summary>
+    private static string ToolSessionText(List<(ToolHit Hit, ToolSession Info)> sessions, List<(ToolHit Hit, ToolSession Info)> strangers)
+    {
+        string When(TimelineEvent e) => T(e) is { } t ? Time(t) : F(e, "Local Time", "Start Local").Length > 0 ? "ora locală " + ToolSafe(F(e, "Local Time", "Start Local")) + " (fusul stației nu este cunoscut)" : "oră necunoscută";
+        // Lab 2026-11-11 (WS01): the rows of ad.trace that only describe a session (relay address, the other end's OS, session closed) have no direction; they were
+        // counted and listed as sessions ("12 sesiuni" for 3 connections, "necunoscută adresă văzută pe releu"). Sessions are the rows with a direction;
+        // the others are counted apart and not listed. Each group is in time order, strangers first.
+        static bool Directed(ToolSession s) => s.Direction is "Incoming" or "Outgoing";
+        var transfers = sessions.Where(x => x.Info.TransferKind.Length > 0).ToList();
+        sessions = sessions.Where(x => x.Info.TransferKind.Length == 0).ToList();
+        var directed = sessions.Where(x => Directed(x.Info)).ToList();
+        int details = sessions.Count - directed.Count;
+        static DateTimeOffset Order((ToolHit Hit, ToolSession Info) x) => T(x.Hit.Event) ?? DateTimeOffset.MaxValue;
+        var strangerSet = new HashSet<(ToolHit Hit, ToolSession Info)>(strangers);   // review 2026-11-16: List.Contains per row was quadratic
+        var chosen = strangers.OrderBy(Order).Concat(directed.Where(x => !strangerSet.Contains(x)).OrderBy(Order)).Take(ToolMaxSessionLines).ToList();
+        var lines = chosen.Select(x =>
+        {
+            var i = x.Info;
+            return $"{When(x.Hit.Event)}: {(i.Direction == "Incoming" ? "intrare" : "ieșire")} ({ToolSafe(i.What)})" +
+                   (i.Remote.Length > 0 ? $", la distanță {ToolSafe(i.Remote)}" : "") + (i.Account.Length > 0 ? $", cont local {ToolSafe(i.Account)}" : "") +
+                   (i.Method.Length > 0 ? $", metodă {ToolSafe(i.Method)}" : "") + (i.Accepted || i.AcceptanceUnknown ? "" : ", neacceptată sau fără acceptare în rând");
+        });
+        // The same connection can be written more than once (ad.trace "Incoming session request" then "Accepting from"; connection_trace.txt and ad.trace
+        // both): the rows stay listed, and when they repeat, an estimate of distinct connections is added (same direction, partner and minute = one).
+        int distinct = DistinctConnections(directed);
+        var transferText = ToolTransferText(transfers, When);
+        // a log with only transfers has no session to count: the transfer sentence stands alone
+        if (sessions.Count == 0) return transferText;
+        return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" +
+               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată" +
+                   // the TeamViewer pairing note only where it applies (lab 2026-11-16: it was printed for RustDesk too)
+                   (directed.Any(x => IsTeamViewerSource(x.Hit.Event.Source)) ? "; pentru TeamViewer, același partener cu începuturi la cel mult 2 minute în jurnalul principal și în Connections_incoming.txt este o singură conexiune" : "") + ")" : "") +
+               (strangers.Count(x => !x.Info.AcceptanceUnknown) > 0 ? $", din care {strangers.Count(x => !x.Info.AcceptanceUnknown)} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
+               (strangers.Count(x => x.Info.AcceptanceUnknown) > 0 ? $", din care {strangers.Count(x => x.Info.AcceptanceUnknown)} de intrare cu acceptarea necunoscută (jurnalul RustDesk nu o arată) de la o adresă care nu este în profil" : "") +
+               (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
+               (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
+               " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); AnyDesk și TeamViewer scriu ora locală a stației (convertită în UTC doar când fusul stației sau decalajul din antet este cunoscut), RustDesk scrie decalajul față de UTC pe fiecare rând." +
+               " Jurnalul nu arată ce s-a făcut în sesiune." + transferText;
+    }
+
+    private const int ToolMaxTransferLines = 5;
+
+    /// <summary>
+    /// RustDesk file transfers as one sentence: how many were written on the station (received from the remote side) and how many were read from it (sent to the remote side),
+    /// then at most <see cref="ToolMaxTransferLines"/> sanitised paths with their time. The path comes from the station's own log and can be forged. Empty when there is none.
+    /// </summary>
+    private static string ToolTransferText(List<(ToolHit Hit, ToolSession Info)> transfers, Func<TimelineEvent, string> when)
+    {
+        if (transfers.Count == 0) return "";
+        int written = transfers.Count(x => x.Info.TransferKind == "FileWrite"), read = transfers.Count - written;
+        var first = transfers.OrderBy(x => T(x.Hit.Event) ?? DateTimeOffset.MaxValue).Take(ToolMaxTransferLines)
+            .Select(x => $"{when(x.Hit.Event)}: {(x.Info.TransferKind == "FileWrite" ? "scris" : "citit")} " + (x.Info.TransferPath.Length > 0 ? ToolSafe(x.Info.TransferPath) : "(date din memorie, fără cale)"));
+        return $" Transferuri de fișiere în jurnalul RustDesk: {written} scrise pe stație (primite de la distanță), {read} citite de pe stație (trimise la distanță). Primele: {string.Join("; ", first)}" +
+               (transfers.Count > ToolMaxTransferLines ? $" … (+{transfers.Count - ToolMaxTransferLines})" : "") +
+               ". Căile vin din jurnalul stației și pot fi falsificate; jurnalul nu arată dimensiunea, conținutul sau dacă transferul s-a terminat.";
+    }
+
+    /// <summary>Tolerance between the start written by the main TeamViewer log and the one written by Connections_incoming.txt for the same connection.</summary>
+    private static readonly TimeSpan ToolSameConnectionTolerance = TimeSpan.FromMinutes(2);
+
+    private static bool IsTeamViewerSource(string source) => source.StartsWith("Artifact:TeamViewer", StringComparison.Ordinal);
+
+    /// <summary>A local time written in a session event's fields ("yyyy-MM-dd HH:mm:ss"), or null.</summary>
+    private static DateTime? LocalOf(TimelineEvent e) =>
+        DateTime.TryParseExact(F(e, "Local Time", "Start Local"), "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d : null;
+
+    /// <summary>
+    /// Estimate of distinct connections among directed session rows. Same direction, partner and minute = one (as before). Added for TeamViewer: a row of the main log and a
+    /// row of Connections_incoming.txt (different sources) of the same direction and partner whose starts are at most 2 minutes apart are one connection. The starts are
+    /// compared in UTC when both rows have it, and also by the local time written in the row (both files use the station's clock, so the local times compare even when
+    /// only one of the rows could be converted or the zone of the item and the header offset of the log disagree).
+    /// </summary>
+    private static int DistinctConnections(List<(ToolHit Hit, ToolSession Info)> directed)
+    {
+        // Review r2 2026-11-16: the first version clustered every row against every member (quadratic, chain-merging, order-dependent, local time deciding
+        // even when UTC disagreed). Now linear apart from one sort per partner: same direction, partner, station and minute = one row (as before, plus the
+        // station); then, for TeamViewer only, a row of the main log and a row of Connections_incoming.txt are paired at most once each, nearest first,
+        // when their starts are at most 2 minutes apart: UTC when both rows have it, the local time only when one of them has no UTC.
+        static string MinuteKey(TimelineEvent e) => T(e) is { } t ? t.ToString("yyyyMMddHHmm", System.Globalization.CultureInfo.InvariantCulture) : "?" + F(e, "Local Time", "Start Local");
+        var units = directed
+            .GroupBy(x => (x.Info.Direction, x.Info.Remote, Host: ToolHost(x.Hit.Event).ToLowerInvariant(), Tv: IsTeamViewerSource(x.Hit.Event.Source) ? x.Hit.Event.Source : "", Key: MinuteKey(x.Hit.Event)))
+            .Select(g => (g.Key, Event: g.First().Hit.Event)).ToList();
+        int count = units.Count;
+        // Pass 1 pairs rows that both have UTC, by UTC. Pass 2 pairs the rows left, by the local time written in them, only when at least one of the two has no
+        // UTC: two UTC times that disagree are never overruled by the local time (the estimate may stay higher, never lower). Each row is paired at most once.
+        foreach (var partner in units.Where(u => u.Key.Tv.Length > 0).GroupBy(u => (u.Key.Direction, u.Key.Remote, u.Key.Host)))
+        {
+            var bySource = partner.GroupBy(u => u.Key.Tv).OrderByDescending(s => s.Count()).ToList();
+            if (bySource.Count < 2) continue;
+            // the two TeamViewer files: the main log and Connections*.txt (another split pairs the two largest groups; never chained)
+            var a = bySource[0].Select(u => (Utc: T(u.Event)?.UtcDateTime, Local: LocalOf(u.Event))).ToList();
+            var b = bySource[1].Select(u => (Utc: T(u.Event)?.UtcDateTime, Local: LocalOf(u.Event))).ToList();
+            var usedA = new bool[a.Count]; var usedB = new bool[b.Count];
+            void Pair(Func<(DateTime? Utc, DateTime? Local), DateTime?> key, Func<int, int, bool> allowed)
+            {
+                var ai = Enumerable.Range(0, a.Count).Where(i => !usedA[i] && key(a[i]) is not null).OrderBy(i => key(a[i])).ToList();
+                var bi = Enumerable.Range(0, b.Count).Where(i => !usedB[i] && key(b[i]) is not null).OrderBy(i => key(b[i])).ToList();
+                int lo = 0;
+                foreach (var i in ai)
+                {
+                    var x = key(a[i])!.Value;
+                    while (lo < bi.Count && key(b[bi[lo]])!.Value < x - ToolSameConnectionTolerance) lo++;
+                    int best = -1; var bestGap = TimeSpan.MaxValue;
+                    for (int j = lo; j < bi.Count && key(b[bi[j]])!.Value <= x + ToolSameConnectionTolerance; j++)
+                    {
+                        var g = (key(b[bi[j]])!.Value - x).Duration();
+                        if (!usedB[bi[j]] && allowed(i, bi[j]) && g < bestGap) { best = bi[j]; bestGap = g; }
+                    }
+                    if (best >= 0) { usedA[i] = true; usedB[best] = true; count--; }
+                }
+            }
+            Pair(r => r.Utc, (_, _) => true);
+            Pair(r => r.Local, (i, j) => a[i].Utc is null || b[j].Utc is null);
+        }
+        return count;
+    }
+
+    /// <summary>True when the remote id / IP is listed as a network destination in the procedure profile (the only place the profile names addresses).</summary>
+    private static bool ToolRemoteApproved(ProcedureProfile? profile, string remote) =>
+        remote.Length > 0 && profile is not null && profile.NetworkDestinations.Any(d => ToolAddressKey(d.Address).Equals(ToolAddressKey(remote), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// An address as compared with the profile: an IPv4-mapped IPv6 address ("::ffff:192.0.2.10", written by a tool listening on both protocols) is its IPv4
+    /// address, so it matches the IPv4 the profile names (review r2 2026-11-16). Anything else (an ID, a name) is compared as written.
+    /// </summary>
+    private static string ToolAddressKey(string address)
+    {
+        var a = address.Trim();
+        return System.Net.IPAddress.TryParse(a, out var ip) && ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4().ToString() : a;
+    }
+
     /// <summary>
     /// REMOTE-TOOL-EXECUTED (Prefetch / BAM / UserAssist / 4688 / Sysmon 1 for a known remote-access tool) and REMOTE-TOOL-PRESENT (Amcache /
-    /// ShimCache, 7045/4697 service, MsiInstaller 11707 install, the tool's own log files): one finding per tool, execution wins. Present is not
-    /// executed. Software approved in the procedure profile is Info with "aprobat în profil". The tool list is data (Data/remote_access_tools.json).
+    /// ShimCache, 7045/4697 service, MsiInstaller 11707 install, the tool's own log files, DNS queries for its domains): one finding per tool,
+    /// execution wins. Present is not executed. Software approved in the procedure profile is Info with "aprobat în profil". The tool list is data
+    /// (Data/remote_access_tools.json). All tools are collected first, because two distinct tools on one station within 24 h raise each other.
+    /// PRESENT becomes Medium when the tool runs or is a service from a folder a user can write to, or when two or more distinct tools have evidence on one
+    /// station within 24 h (Quick Assist, approved tools, DNS-only hits and unnamed evidence in a multi-station case do not count); EXECUTED is already High.
+    /// Quick Assist (common) is Info when present and Medium when run from its own place. An approval by name covers only runs and services in Program Files /
+    /// Windows on the system drive outside their user-writable sub-folders: any other copy is Medium.
     /// </summary>
     private static void Tools(Ctx c, List<Finding> o)
     {
         var starts = ProcessStarts(c.Events).ToList();
+        var results = new List<ToolResult>();
         foreach (var tool in c.Data.Tools.Tools)
         {
             bool IsExe(string path)
             {
                 if (path.Length == 0) return false;
-                var file = WinPath.GetFileName(path.TrimEnd('\\'));
+                var file = WinPath.GetFileName(path.Trim().Trim('"').TrimEnd('\\'));
                 if (tool.Executables.Contains(file, StringComparer.OrdinalIgnoreCase)) return true;
                 // A generic file name is the tool only together with a path hint (vendor folder).
                 var norm = path.Replace('/', '\\');
                 return tool.ConditionalExecutables.Contains(file, StringComparer.OrdinalIgnoreCase) && tool.PathHints.Any(h => norm.Contains(h, StringComparison.OrdinalIgnoreCase));
             }
             var exec = new List<ToolHit>(); var present = new List<ToolHit>();
+            var sessions = new List<(ToolHit Hit, ToolSession Info)>();
+            var localOnly = new List<ToolHit>();
             foreach (var e in c.Events)
             {
+                if (ToolSessionOf(e, tool) is { } session)
+                {
+                    // a session in the tool's own log is evidence of use, as strong as an execution artifact; it never goes through the path-based branches below
+                    var hit = new ToolHit(e, session.TransferKind.Length > 0 ? ToolTransferKind : ToolSessionKind, "", "");
+                    exec.Add(hit); sessions.Add((hit, session));
+                    continue;
+                }
+                if (e.Source == RustDeskSource && F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) && F(e, "Kind") == "LocalConnection")
+                {
+                    localOnly.Add(new ToolHit(e, ToolLocalOnlyKind, "", ""));
+                    continue;
+                }
                 if (e.Source is "Prefetch" or "BAM" or "UserAssist")
                 {
                     if (IsExe(e.Process) || IsExe(e.Path)) exec.Add(new(e, e.Source, ExePath(e), ""));
                 }
-                else if (e.Source is "Amcache" or "ShimCache")
+                else if (e.Source is "Amcache" or "ShimCache" or "MUICache" or "WindowsSearch")
                 {
                     if (IsExe(e.Path) || IsExe(e.Process)) present.Add(new(e, e.Source, e.Path, e.Hash.Length == 64 ? e.Hash : ""));
                 }
                 else if (Ev(e, "System", 7045) || Ev(e, "Security", 4697))
                 {
-                    var name = F(e, "ServiceName"); var exe = ServiceExe(F(e, "ImagePath", "ServiceFileName"));
+                    var name = F(e, "ServiceName"); var image = F(e, "ImagePath", "ServiceFileName"); var exe = ToolServiceExe(image);
+                    // a wrapper (cmd /c, rundll32 …) in front of the tool: the tool is a later token of the command line
+                    if (ToolInnerExe(image, IsExe) is { } inner && (!IsExe(exe) || ToolIsWrapper(exe))) exe = inner;
                     if (tool.ServiceNames.Contains(name, StringComparer.OrdinalIgnoreCase) || tool.DisplayContains.Any(d => name.Contains(d, StringComparison.OrdinalIgnoreCase)) || IsExe(exe))
                         present.Add(new(e, "serviciu " + e.EventId, exe, ""));
                 }
@@ -65,40 +419,135 @@ public static partial class Wp11Rules
                 {
                     if (tool.ProductContains.Any(p => AllText(e).Contains(p, StringComparison.OrdinalIgnoreCase))) present.Add(new(e, "instalare MSI", "", ""));
                 }
+                else if (tool.Domains.Count > 0 && (Ev(e, Sysmon, 22) || Ev(e, DnsClientChannel, 3006, 3008)))
+                {
+                    // A DNS query shows that the station looked the domain up; it is neither an install nor an execution.
+                    if (ToolDomainMatches(tool, F(e, "QueryName"))) present.Add(new(e, "interogare DNS", "", ""));
+                }
                 // The tool's own log files, seen as a path in any other collected source (file system, LNK, Jump Lists…).
-                bool artifactAlreadyRead = e.Source is "Prefetch" or "BAM" or "UserAssist" or "Amcache" or "ShimCache" || e.Source.StartsWith("EventLog:", StringComparison.Ordinal);
+                bool artifactAlreadyRead = e.Source is "Prefetch" or "BAM" or "UserAssist" or "Amcache" or "ShimCache" or "MUICache" || e.Source.StartsWith("EventLog:", StringComparison.Ordinal);
                 if (!artifactAlreadyRead && tool.LogMarkers.Any(m => e.Path.Replace('/', '\\').Contains(m, StringComparison.OrdinalIgnoreCase)))
                     present.Add(new(e, e.Source.Contains("Registry", StringComparison.OrdinalIgnoreCase) || e.Path.StartsWith("HK", StringComparison.OrdinalIgnoreCase) ? "cheie din registrul Windows (registry)" : "fișier de log al aplicației", e.Path, ""));
             }
             foreach (var p in starts.Where(p => IsExe(p.Image)))
-                exec.Add(new(p.Event, p.Event.EventId == "4688" ? "4688" : "Sysmon 1", p.Image, Sha256sOf(p.Event).FirstOrDefault() ?? ""));
+                exec.Add(new(p.Event, p.Event.EventId == "4688" ? "4688" : "Sysmon 1", p.Image.Trim().Trim('"'), Sha256sOf(p.Event).FirstOrDefault() ?? ""));
+            // a RustDesk log with only loopback connections: RustDesk ran on this station (presence), no partner is shown; with any partner session it is not listed apart
+            if (sessions.Count == 0) present.AddRange(localOnly);
             if (exec.Count == 0 && present.Count == 0) continue;
+            results.Add(new(tool, exec, present, sessions));
+        }
 
-            bool executed = exec.Count > 0;
-            var hits = (executed ? exec.Concat(present) : present).ToList();
+        // Approval first: an approved tool neither raises nor is raised by the others.
+        var assessed = results.Select(r =>
+        {
+            var hits = (r.Exec.Count > 0 ? r.Exec.Concat(r.Present) : r.Present).ToList();
+            // review 2026-11-16: List.Contains per hit made these filters quadratic (80,000 transfer rows: 9.6 s); a set keeps them linear
+            var execSet = new HashSet<ToolHit>(r.Exec, ReferenceEqualityComparer.Instance);
             var paths = hits.Select(h => h.Path).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            var aliases = tool.Aliases.Concat([tool.Name]).Concat(tool.Executables.Select(x => WinPath.GetFileNameWithoutExtension(x)));
+            var aliases = r.Tool.Aliases.Concat([r.Tool.Name]).Concat(r.Tool.Executables.Select(x => WinPath.GetFileNameWithoutExtension(x)));
             var hashes = hits.SelectMany(h => h.Hash.Length > 0 ? [h.Hash] : Sha256sOf(h.Event)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var approved = ApprovedSoftwareMatcher.Match(c.Profile, aliases, paths, hashes);
-            var times = hits.Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
-            var runCounts = exec.Where(h => h.Event.Source == "Prefetch").Select(h => F(h.Event, "RunCount")).Where(r => r.Length > 0).ToList();
+            // a profile row with no path pattern and no hash approves the name only: it covers only copies in Program Files / Windows
+            bool nameOnly = approved is not null && approved.PathPattern.Trim().Length == 0 && approved.Sha256.Trim().Length == 0;
+            var outside = nameOnly
+                ? hits.Where(h => (execSet.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && !ToolStandardLocation(h.Path))
+                      .Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                : [];
+            // no path among the hits (only sessions from the tool's own log) and a profile row that approves the tool only at a path: the approval cannot be checked
+            var pathUnchecked = approved is null && paths.Count == 0 ? ApprovedSoftwareMatcher.PathRowByName(c.Profile, aliases) : null;
+            return (R: r, Hits: hits, Paths: paths, Approved: outside.Count > 0 ? null : approved, ApprovedOutside: outside, PathUnchecked: pathUnchecked);
+        }).ToList();
+
+        // Two distinct tools (the common ones and approved ones excluded) with evidence on one station within 24 h: each names the others.
+        // A DNS query alone does not count (visiting a vendor's site is not having its tool). Prefetch / Amcache / ShimCache carry no station name:
+        // in a case with at most one named station they belong to it; with several stations they are not correlated.
+        var caseHosts = c.Events.Select(ToolHost).Where(h => h.Length > 0).Distinct(StringComparer.Ordinal).Take(2).ToList();
+        string StationOf(TimelineEvent e) => ToolHost(e) is { Length: > 0 } h ? h : caseHosts.Count <= 1 ? caseHosts.FirstOrDefault() ?? "*" : "";
+        var byHost = assessed.Where(a => !a.R.Tool.Common && a.Approved is null).ToDictionary(a => a.R, a => a.Hits
+            .Where(h => h.Kind != "interogare DNS" && T(h.Event) is not null && StationOf(h.Event).Length > 0).GroupBy(h => StationOf(h.Event))
+            .ToDictionary(g => g.Key, g => g.Select(h => T(h.Event)!.Value).OrderBy(t => t).ToList()));
+        List<RemoteToolRow> Others(ToolResult r) => !byHost.TryGetValue(r, out var mine) ? [] :
+            byHost.Where(kv => kv.Key != r && kv.Value.Any(h => mine.TryGetValue(h.Key, out var m) && ToolNear(m, h.Value))).Select(kv => kv.Key.Tool).ToList();
+
+        foreach (var a in assessed)
+        {
+            var r = a.R;
+            var tool = r.Tool; var exec = r.Exec; var present = r.Present;
+            bool executed = exec.Count > 0;
+            var hits = a.Hits; var paths = a.Paths; var approved = a.Approved;
+            // runs, or is a service, from a folder a user can write to (an Amcache / ShimCache entry shows presence, not a run)
+            var execHits = new HashSet<ToolHit>(exec, ReferenceEqualityComparer.Instance);
+            var writable = hits.Where(h => (execHits.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && ToolUserWritable(h.Path)).Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var others = Others(r);
+            bool approvedOutside = a.ApprovedOutside.Count > 0;
+            var sessions = r.Sessions;
+            // an accepted incoming session whose remote id / IP is not a destination named in the profile: the approval of the software does not cover who connects
+            var strangers = sessions.Where(x => x.Info.Direction == "Incoming" && (x.Info.Accepted || x.Info.AcceptanceUnknown) && !ToolRemoteApproved(c.Profile, x.Info.Remote)).ToList();
+            bool incomingUnknown = strangers.Count > 0;
+            bool realExec = exec.Any(h => h.Kind is not (ToolSessionKind or ToolTransferKind));
+
+            var severity = executed ? Severity.High : Severity.Low;
+            string why = "";
+            if (!executed && (writable.Count > 0 || others.Count > 0)) severity = Severity.Medium;
+            // Quick Assist is part of Windows: run from its own place it is Medium (help-desk scams use exactly that copy), present it is Info (E3, 2026-11-21: built into Windows, presence alone is not a mistake)
+            if (tool.Common && writable.Count == 0) { severity = executed ? Severity.Medium : Severity.Info; why = $" {tool.Name} face parte din Windows; rulat din locul lui normal, severitatea este cel mult Medium; doar prezent, este informativ (escrocheriile de tip „suport tehnic” folosesc exact această copie)."; }
+            if (approved is not null) severity = Severity.Info;
+            if (approvedOutside) { severity = Severity.Medium; why += $" Unealta figurează în profil doar după nume, iar aprobarea pe nume acoperă numai Program Files și Windows, nu și: {Join(a.ApprovedOutside.Select(ToolSafe), 3)}."; }
+            // the profile approves the software, not the person who connects: a stranger's accepted incoming session is treated as an unapproved tool that ran
+            bool approvedInfo = approved is not null && !incomingUnknown;
+            // owner decision 2026-11-11: an approved tool with an accepted incoming session from an ID / IP the profile does not name is Medium, "de verificat" (a
+            // help-desk session from a new technician is common); an UNAPPROVED tool with sessions stays High (executed). The finding is no longer Info.
+            if (approved is not null && incomingUnknown)
+            {
+                severity = Severity.Medium;
+                bool anyUnnamed = strangers.Any(x => x.Info.Remote.Length == 0);
+                if (strangers.All(x => x.Info.AcceptanceUnknown))
+                    // owner decision 2026-11-16 (safe variant): the RustDesk log shows "Connection opened" even before authentication, so acceptance is not claimed
+                    why += " De verificat: software aprobat în profil, dar jurnalul RustDesk arată o conexiune de intrare de la o adresă care nu figurează în profil" + (anyUnnamed ? " (sau pe care jurnalul nu o arată ca adresă validă)" : "") + ". Acceptarea nu reiese din jurnalul RustDesk " +
+                           "(rândul „Connection opened” apare și înaintea autentificării), deci conexiunea poate să nu fi fost acceptată. Aprobarea acoperă programul, nu pe cel care se conectează: confirmați cu responsabilul uneltei că era așteptată.";
+                else
+                why += " De verificat: software aprobat în profil, dar jurnalul uneltei arată o sesiune de intrare acceptată de la un ID sau o adresă care nu figurează în profil" +
+                       (anyUnnamed ? " (sau pe care jurnalul nu o arată)" : "") + ". Aprobarea acoperă programul, nu pe cel care se conectează: confirmați cu responsabilul uneltei că sesiunea era așteptată.";
+            }
+            // the profile approves the tool only at a path and the case has no path for it (only its session log): neither approved nor ruled out
+            if (approved is null && a.PathUnchecked is { } pathRow && !realExec && !approvedOutside)
+            {
+                severity = Severity.Medium;
+                why += $" De verificat: profilul aprobă {ToolSafe(pathRow.Name)} doar în {ToolSafe(pathRow.PathPattern)}, iar cazul are numai jurnalul de sesiune al uneltei, fără calea programului; aprobarea nu poate fi nici confirmată, nici exclusă.";
+            }
+            // "raised" only where it changed the severity: an executed tool is High anyway, an approved one stays Info
+            string raised = !executed && approved is null ? "; severitatea este crescută" : "";
+            if (writable.Count > 0) why += $" Rulează sau este serviciu dintr-un folder în care utilizatorul poate scrie ({Join(writable.Select(ToolSafe), 3)}){raised}.";
+            if (others.Count > 0 && !tool.Common) why += $" Pe aceeași stație, în cel mult 24 de ore, apar și: {Join(others.Select(t => t.Name))}{raised}.";
+
+            // The time of a ShimCache entry and of a Windows Search entry is the FILE's last-modified time, not when the tool was seen on the station
+            // (lab 2026-11-10: a copied executable carried 2024-09-06, so the report said "observed between September 2024 and November 2026").
+            // The period of the finding comes from the other traces; those two are used only when nothing else has a time.
+            static bool FileTimeOnly(ToolHit h) => h.Kind is "ShimCache" or "WindowsSearch";
+            var times = hits.Where(h => !FileTimeOnly(h)).Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
+            if (times.Count == 0) times = hits.Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
+            var runCounts = exec.Where(h => h.Event.Source == "Prefetch").Select(h => F(h.Event, "RunCount")).Where(rc => rc.Length > 0).ToList();
             string kinds = string.Join(", ", hits.GroupBy(h => h.Kind).Select(g => $"{g.Count()} × {g.Key}"));
+            bool dnsOnly = hits.All(h => h.Kind == "interogare DNS");
+            // one of every kind first, then the earliest: a flood of one kind does not hide the others
+            var evidence = hits.GroupBy(h => h.Kind).Select(g => g.First()).Concat(hits).Distinct().Take(ToolMaxEvidence).ToList();
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = executed ? "REMOTE-TOOL-EXECUTED" : "REMOTE-TOOL-PRESENT",
-                Title = $"Unealtă de acces la distanță {(executed ? "rulată" : "prezentă")}: {tool.Name}" + (approved is not null ? " (aprobat în profil)" : ""),
-                Severity = approved is not null ? Severity.Info : executed ? Severity.High : Severity.Low,
-                Category = "Command and Control", Classification = Classification.Direct, Confidence = executed ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1219",
-                FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(), Process = tool.Executables.FirstOrDefault() ?? "", File = paths.FirstOrDefault() ?? "",
+                Title = $"Unealtă de acces la distanță {(executed ? "rulată" : "prezentă")}: {tool.Name}" + (approvedInfo ? " (aprobat în profil)" : ""),
+                Severity = severity,
+                Category = "Command and Control", Classification = Classification.Direct, Confidence = realExec ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1219",
+                FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(), Process = tool.Executables.FirstOrDefault() ?? "", File = ToolSafe(paths.FirstOrDefault() ?? ""),
                 Description = $"{tool.Name}: {kinds}; {Time(times.FirstOrDefault())}" + (times.Count > 1 ? $" – {Time(times.LastOrDefault())}" : "") + "." +
-                              (paths.Count > 0 ? $" Căi: {Join(paths, 4)}." : "") + (runCounts.Count > 0 ? $" Prefetch: număr de rulări {Join(runCounts)}." : "") +
-                              (executed ? present.Count > 0 ? $" Alte dovezi de prezență: {present.Count} (instalare/serviciu/amcache/log)." : "" : " Prezența unui artefact nu dovedește execuția; nu există în caz un artefact de execuție pentru această unealtă.") +
-                              (approved is not null ? $" Software aprobat în profil: {approved.Name} ({(approved.PathPattern.Length > 0 ? approved.PathPattern : approved.Publisher)}); aprobat în profil, deci informativ." : "") +
-                              " Existența unei aplicații de acces de la distanță nu arată o sesiune sau cine s-a conectat.",
-                ClassificationReason = executed ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Artefact de prezență (Amcache/ShimCache/serviciu/instalare/log) pentru o aplicație din lista de acces de la distanță.",
+                              (paths.Count > 0 ? $" Căi: {Join(paths.Select(ToolSafe), 4)}." : "") + (runCounts.Count > 0 ? $" Prefetch: număr de rulări {Join(runCounts)}." : "") +
+                              (executed ? present.Count > 0 ? $" Alte dovezi de prezență: {present.Count} (instalare/serviciu/amcache/log/DNS)." : "" : dnsOnly ? " Există doar interogări DNS către domeniul uneltei: arată că stația a căutat domeniul, nu că unealta este instalată sau a rulat." : " Prezența unui artefact nu dovedește execuția; nu există în caz un artefact de execuție pentru această unealtă.") +
+                              (approved is not null ? $" Software aprobat în profil: {ToolSafe(approved.Name)} ({ToolSafe(approved.PathPattern.Length > 0 ? approved.PathPattern : approved.Publisher)})" + (approvedInfo ? "; aprobat în profil, deci informativ." : ".") : "") + why +
+                              " Identificarea este după nume (fișier, serviciu, domeniu), nu după semnătură: un alt producător poate folosi același nume." +
+                              (sessions.Count > 0 ? ToolSessionText(sessions, strangers) : " Existența unei aplicații de acces de la distanță nu arată o sesiune sau cine s-a conectat."),
+                ClassificationReason = executed ? (realExec ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Sesiune în jurnalul propriu al unei aplicații din lista de acces de la distanță (AnyDesk, TeamViewer, ScreenConnect); jurnalul poate fi falsificat, deci încrederea este Medie.") + (realExec && sessions.Count > 0 ? " Plus sesiuni în jurnalul propriu al uneltei." : "") : "Artefact de prezență (Amcache/ShimCache/MUICache/Windows Search/serviciu/instalare/log/DNS) pentru o aplicație din lista de acces de la distanță.",
                 SemanticType = executed ? SemanticType.Execution : SemanticType.Presence,
-                SupportingEvidence = hits.Take(14).Select(h => Ref(h.Event, $"{h.Kind} {tool.Name}")).ToList(),
-                AlternativeExplanations = ["Suport tehnic sau administrare legitimă; aplicația poate fi aprobată de organizație, dar netrecută în profil.", "O aplicație prezentă doar ca fișier descărcat sau instalată și nefolosită."],
+                SupportingEvidence = evidence.Select(h => Ref(h.Event, $"{h.Kind} {tool.Name}")).ToList(),
+                AlternativeExplanations = ["Suport tehnic sau administrare legitimă; aplicația poate fi aprobată de organizație, dar netrecută în profil.", "O aplicație prezentă doar ca fișier descărcat sau instalată și nefolosită.", "Unealtă folosită legitim de departamentul IT.", "Software preinstalat pe stație."],
             });
         }
     }

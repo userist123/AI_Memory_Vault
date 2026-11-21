@@ -9,7 +9,8 @@ namespace LogAnalyzer.Dfir.Tests;
 internal static class W11
 {
     public static readonly DateTime T0 = new(2026, 10, 1, 10, 0, 0, DateTimeKind.Utc);
-    private static int _rec;
+    // far past the first records of a log: a test event is never „written while Windows was being installed” (Wp11Rules.CreatedAtSetup) by the order tests run in
+    private static int _rec = 100_000;
 
     public static TimelineEvent Ev(string channel, int id, double minute, string provider = "", params (string K, string V)[] f) => new()
     {

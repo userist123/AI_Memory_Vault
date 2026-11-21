@@ -161,9 +161,9 @@
 
 - **Ce verificăm:** Dacă folosirea stick-urilor și discurilor USB este blocată prin politică.
 - **De ce contează:** Stick-urile sunt principala cale prin care datele ies de pe o stație izolată sau prin care intră viruși.
-- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”.
-- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All`
-- **Cum se citește rezultatul:** Conform = blocat. De verificat = permis: atunci trebuie folosite doar suporturi aprobate și înregistrate.
+- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”, apoi canalele de transfer aprobate în Profilul de proceduri.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All; Profilul de proceduri → Canale de transfer`
+- **Cum se citește rezultatul:** Conform = blocat. Neconform = permis, deși toate canalele aprobate în profilul de proceduri sunt recunoscute ca altceva decât un suport de stocare (hârtie, rețea, disc). De verificat = permis și profilul aprobă un suport de stocare (atunci trebuie folosite doar suporturile din registrul mediilor, D01–D04), un canal al cărui mediu nu poate fi încadrat, sau profilul nu definește canalele.
 
 ### P15
 
@@ -275,7 +275,7 @@
 - **De ce contează:** Un disc inscripționat este un mod simplu de a scoate date și nu apare ca stick USB; politica NoCDBurning oprește doar inscripționarea din Explorer, nu un program de inscripționare.
 - **Cum verifică aplicația:** A căutat unitățile optice cu capacitate de scriere, din două surse: ce raportează driverul prin WMI și lista de tipuri de disc pe care unitatea însăși spune că le poate scrie (IMAPI2, interfața Windows de inscripționare, doar citită). Apoi a citit politica de refuzare a scrierii pe CD/DVD și politica NoCDBurning.
 - **Sursa tehnică:** `WMI Win32_CDROMDrive → Capabilities; IMAPI2 MsftDiscRecorder2 → SupportedProfiles; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write; ...\Policies\Explorer → NoCDBurning`
-- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient). De verificat = la o stație neizolată.
+- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient), iar profilul de proceduri nu aprobă transfer pe disc. De verificat = la o stație neizolată, sau profilul aprobă transferul pe CD/DVD (atunci discurile trebuie să fie cele din registrul mediilor).
 
 ### P29
 
@@ -365,6 +365,70 @@
 - **Sursa tehnică:** `WMI root\SecurityCenter2 AntiVirusProduct → displayName, productState`
 - **Cum se citește rezultatul:** Conform = cel puțin un antivirus pornit, cu semnături la zi. Neconform = niciun antivirus înregistrat sau toate oprite. De verificat = pornit, dar cu semnături vechi. Decodarea stării nu este documentată oficial de Microsoft; confirmați vizual în consola antivirusului.
 
+### P40
+
+- **Ce verificăm:** Dacă un utilizator anonim (fără cont) poate afla din rețea lista conturilor și a folderelor partajate ale stației.
+- **De ce contează:** Lista conturilor și a partajărilor îi arată unui atacator ce să încerce; accesul anonim este una dintre cele mai vechi căi de recunoaștere a unei stații Windows.
+- **Cum verifică aplicația:** A citit patru valori din registru (RestrictAnonymousSAM, RestrictAnonymous, EveryoneIncludesAnonymous, RestrictNullSessAccess). Regulă STIG Windows 11 WN11-SO-000145, WN11-SO-000150 și WN11-SO-000165, categoria I. O valoare nesetată este socotită la implicitul Windows, iar constatarea spune acest lucru.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Lsa → RestrictAnonymousSAM, RestrictAnonymous, EveryoneIncludesAnonymous; HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters → RestrictNullSessAccess`
+- **Cum se citește rezultatul:** Conform = RestrictAnonymousSAM 1, RestrictAnonymous 1, EveryoneIncludesAnonymous 0, RestrictNullSessAccess 1. Neconform = cel puțin o valoare setată altfel. De verificat = RestrictAnonymous nesetat (implicitul Windows este 0, STIG cere 1). Nedeterminat = nu s-a putut citi.
+
+### P41
+
+- **Ce verificăm:** Dacă stația păstrează parolele în formatul vechi LAN Manager și dacă mai trimite răspunsuri de autentificare vechi (LM, NTLMv1).
+- **De ce contează:** Amprenta LAN Manager și răspunsurile NTLMv1 se sparg în minute dacă sunt interceptate sau furate.
+- **Cum verifică aplicația:** A citit NoLMHash (nesetat înseamnă 1, implicitul Windows 10/11) și LmCompatibilityLevel (nesetat înseamnă 3, implicitul Windows). Regulă STIG Windows 11 WN11-SO-000195 și WN11-SO-000205, categoria I.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Lsa → NoLMHash, LmCompatibilityLevel`
+- **Cum se citește rezultatul:** Conform = NoLMHash 1 și LmCompatibilityLevel 5 (doar NTLMv2, refuză LM și NTLM). Neconform = amprenta veche se păstrează sau nivelul este sub 5 (0-2: se trimit răspunsuri LM sau NTLMv1; 3-4 sau nesetat: STIG cere 5). Nedeterminat = nu s-a putut citi.
+
+### P42
+
+- **Ce verificăm:** Ce conturi au drepturi care dau control deplin asupra stației: acționare ca parte a sistemului de operare, crearea de jetoane de acces, depanarea programelor.
+- **De ce contează:** Un cont cu aceste drepturi poate prelua orice alt cont sau poate citi parolele din memorie.
+- **Cum verifică aplicația:** A cerut Autorității de securitate locale (LSA) lista conturilor care au fiecare drept, fără a modifica nimic (poate necesita administrator). SeTcbPrivilege și SeCreateTokenPrivilege nu trebuie acordate nimănui, SeDebugPrivilege doar grupului Administrators. Regulă STIG Windows 11 WN11-UR-000015, WN11-UR-000045 și WN11-UR-000065, categoria I.
+- **Sursa tehnică:** `LSA LsaEnumerateAccountsWithUserRight → SeTcbPrivilege, SeCreateTokenPrivilege, SeDebugPrivilege`
+- **Cum se citește rezultatul:** Conform = niciun deținător pentru primele două și doar Administrators pentru SeDebugPrivilege. Neconform = cel puțin un cont în plus (sunt numite în constatare). Nedeterminat = lista nu s-a putut citi, de obicei fără drepturi de administrator.
+
+### P43
+
+- **Ce verificăm:** Dacă orice utilizator poate instala pachete MSI cu drepturi ridicate (AlwaysInstallElevated).
+- **De ce contează:** Cu această politică activată, un utilizator obișnuit instalează un pachet MSI cu drepturile sistemului și poate prelua stația.
+- **Cum verifică aplicația:** A citit politica în HKLM (stația) și în HKCU (doar utilizatorul care a pornit aplicația, nu toți utilizatorii). Regulă STIG Windows 11 WN11-CC-000315, categoria I.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer → AlwaysInstallElevated; HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer → AlwaysInstallElevated`
+- **Cum se citește rezultatul:** Conform = valoarea lipsește sau este 0, în ambele locuri. Neconform = 1 în HKLM sau în HKCU. Nedeterminat = nu s-a putut citi.
+
+### P44
+
+- **Ce verificăm:** Dacă protecțiile memoriei împotriva exploatării (DEP și SEHOP) sunt pornite.
+- **De ce contează:** DEP oprește rularea codului din zonele de date, iar SEHOP oprește o tehnică frecventă de exploatare a programelor; fără ele un defect al unui program se exploatează mai ușor.
+- **Cum verifică aplicația:** A cerut Windows politica DEP (Win32_OperatingSystem) și a citit valoarea SEHOP din registru. Regulă STIG Windows 11 WN11-00-000145 și WN11-00-000150, categoria I.
+- **Sursa tehnică:** `WMI Win32_OperatingSystem → DataExecutionPrevention_SupportPolicy; HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel → DisableExceptionChainValidation`
+- **Cum se citește rezultatul:** Conform = DEP AlwaysOn (1) sau OptOut (3) și DisableExceptionChainValidation 0. Neconform = DEP AlwaysOff (0) sau OptIn (2), sau SEHOP oprit (1). De verificat = SEHOP nesetat (STIG cere valoarea 0 setată explicit). Nedeterminat = nu s-a putut citi.
+
+### P45
+
+- **Ce verificăm:** Dacă administrarea la distanță WinRM acceptă autentificare Basic (parola trimisă aproape în clar) sau trafic necriptat.
+- **De ce contează:** Autentificarea Basic și traficul necriptat expun parolele și comenzile oricui ascultă rețeaua.
+- **Cum verifică aplicația:** A citit patru politici (AllowBasic și AllowUnencryptedTraffic, pentru clientul și serviciul WinRM) și modul de pornire al serviciului WinRM. Regulă STIG Windows 11 WN11-CC-000330 și WN11-CC-000345 (categoria I), WN11-CC-000335 și WN11-CC-000350 (categoria II).
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client → AllowBasic, AllowUnencryptedTraffic; HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service → AllowBasic, AllowUnencryptedTraffic; HKLM\SYSTEM\CurrentControlSet\Services\WinRM → Start`
+- **Cum se citește rezultatul:** Conform = toate valorile 0, sau nesetate cât timp serviciul WinRM este oprit ori lipsește. Neconform = cel puțin o valoare 1. De verificat = nesetate și serviciul poate porni. Nedeterminat = nu s-a putut citi. Verificarea se face pe toate edițiile, chiar dacă contează mai ales în rețea.
+
+### P46
+
+- **Ce verificăm:** Dacă stația răspunde la întrebări de nume trimise prin difuzare în rețeaua locală (LLMNR).
+- **De ce contează:** Un atacator din aceeași rețea poate răspunde în locul unui server real și poate captura parole.
+- **Cum verifică aplicația:** A citit politica care oprește rezoluția numelor prin difuzare. Este o recomandare de întărire, fără regulă STIG.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient → EnableMulticast`
+- **Cum se citește rezultatul:** Conform = EnableMulticast 0. Neconform = 1 sau nesetat, pe o stație izolată. De verificat = 1 sau nesetat, pe o stație neizolată (LLMNR rămâne activ implicit). Nedeterminat = nu s-a putut citi.
+
+### P47
+
+- **Ce verificăm:** Dacă serverul web Windows (IIS) este instalat pe stație.
+- **De ce contează:** Un server web deschide stația către conexiuni din rețea și mărește suprafața de atac; o stație de lucru nu are nevoie de el.
+- **Cum verifică aplicația:** A verificat dacă serviciul W3SVC există și cum pornește. Regulă STIG Windows 11 WN11-00-000100, categoria I.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\W3SVC → Start`
+- **Cum se citește rezultatul:** Conform = IIS nu este instalat. Neconform = instalat, pe o stație izolată. De verificat = instalat, pe o stație neizolată; trebuie să fie aprobat. Nedeterminat = nu s-a putut citi.
+
 ### A01
 
 - **Ce verificăm:** Dacă stația înregistrează în jurnal tot ce are nevoie un control (autentificări, conturi, programe, USB etc.).
@@ -379,7 +443,7 @@
 - **De ce contează:** Un jurnal mic se umple în câteva zile și evenimentele vechi dispar.
 - **Cum verifică aplicația:** A citit dimensiunea maximă și modul jurnalului.
 - **Sursa tehnică:** `Configurația jurnalului Security (EventLogConfiguration)`
-- **Cum se citește rezultatul:** Conform = cel puțin 128 MB. Mod Circular = suprascrie cele mai vechi evenimente.
+- **Cum se citește rezultatul:** Conform = cel puțin 192 MB (pragul CIS pentru Windows 11; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente, deci pe o stație cu audit bogat poate fi nevoie de mai mult). Mod Circular = suprascrie cele mai vechi evenimente.
 
 ### A03
 
@@ -501,6 +565,30 @@
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (collector.exec, collector.exec_done, control.started, control.finished, audit.anchor); Security 4688, Sysmon 1, PowerShell 4104`
 - **Cum se citește rezultatul:** Conform = toate comenzile aplicației găsite în jurnale sunt consemnate (numărul lor apare în rezultat; nu sunt constatări). De verificat = evenimente care se potrivesc cu o comandă din jurnalul aplicației care nu trece verificarea („activitate pretinsă a aplicației, neconfirmată”, de exemplu scrisă în afara unui control sau pentru un program din afara inventarului): ele rămân și la celelalte verificări. Fără jurnalul aplicației verificarea nu apare și niciun eveniment nu este recunoscut. Limită: un administrator care deține cheia de sigilare poate adăuga după ultimul cod de ancorare înregistrări false pentru programele din inventarul aplicației și poate ascunde astfel orice număr de rulări ale acelor programe la controlul următor; A11 nu detectează intrările adăugate după ancorare; ofițerul compară lista din A17 cu ce a rulat operatorul. Între verificarea amprentei scriptului și citirea lui de către PowerShell există un interval scurt în care un administrator cu drept de scriere în folderul aplicației poate înlocui scriptul; cu jurnalizarea blocurilor de script (4104) activă, conținutul înlocuit apare ca nepotrivit; fără ea, se vede doar pornirea PowerShell, recunoscută ca proprie. Un script PowerShell lung, împărțit de Windows în mai multe evenimente 4104 (același ScriptBlockId), este reasamblat în ordine înainte de comparare; un set incomplet sau cu o parte dublată nu este confirmat și rămâne DE VERIFICAT, cu motivul. Comenzile pornite în afara unui control (investigație, izolare) își primesc propria fereastră de acțiune în jurnalul sigilat și sunt confirmate la fel.
 
+### A18
+
+- **Ce verificăm:** Dacă înregistrările de acces (jurnalul Security) sunt păstrate atât cât cere nivelul de clasificare al stației.
+- **De ce contează:** HG 585 art. 291 cere păstrarea registrelor de acces cel puțin 3 ani la secret și strict secret și cel puțin 10 ani la strict secret de importanță deosebită; la secret de serviciu durata o fixează documentația de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri, data celui mai vechi eveniment din jurnalul Security și intervalul fiecărei arhive Archive-Security-*.evtx lăsate de Windows pe stație; arhivele care se leagă fără întrerupere (cel mult o zi) de jurnalul curent prelungesc acoperirea. A comparat începutul acoperirii cu începutul perioadei cerute de nivel.
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment; %SystemRoot%\System32\winevt\Logs\Archive-Security-*.evtx (primul și ultimul eveniment)`
+- **Cum se citește rezultatul:** Conform = jurnalul de pe stație, singur sau împreună cu arhivele lui de pe stație, acoperă fără întrerupere durata cerută. De verificat = acoperirea începe mai târziu sau are o întrerupere (spusă în constatare): înregistrările mai vechi trebuie să fie în arhivele exportate pe alte suporturi, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
+
+### A19
+
+- **Ce verificăm:** Dacă, pe un controler de domeniu, se notează încercările de autentificare refuzate (parolă greșită, cont inexistent).
+- **De ce contează:** Parola greșită a unui cont de domeniu este refuzată de controlerul de domeniu, nu de stația pe care s-a tastat: dacă controlerul nu notează refuzurile, ghicirea parolelor nu lasă nicio urmă și nu poate fi descoperită.
+- **Cum verifică aplicația:** A citit din registru rolul calculatorului și, dacă este controler de domeniu, politica de audit pentru autentificarea Kerberos și pentru validarea parolelor.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions → ProductType (LanmanNT = controler de domeniu); auditpol: Kerberos Authentication Service, Credential Validation`
+- **Cum se citește rezultatul:** Conform = ambele subcategorii notează eșecurile. Neconform = cel puțin una nu le notează. Nedeterminat = politica de audit nu a putut fi citită. Pe o stație care nu este controler de domeniu verificarea nu apare.
+
+### A20
+
+- **Ce verificăm:** Dacă sunt pornite jurnalele Windows care notează conectarea stick-urilor și a discurilor externe.
+- **De ce contează:** Partition/Diagnostic (pornit implicit) notează fiecare dispozitiv conectat, cu producătorul și seria; DriverFrameworks-UserMode (oprit implicit) notează și conectările și deconectările. Un jurnal implicit pornit, găsit oprit, înseamnă că cineva l-a oprit.
+- **Cum verifică aplicația:** A citit configurația celor două canale de jurnal (dacă sunt activate).
+- **Sursa tehnică:** `Microsoft-Windows-Partition/Diagnostic; Microsoft-Windows-DriverFrameworks-UserMode/Operational (EventLogConfiguration.IsEnabled)`
+- **Cum se citește rezultatul:** Conform = ambele pornite. De verificat = doar Partition/Diagnostic pornit (situația implicită). Neconform = Partition/Diagnostic oprit. Nedeterminat = nu au putut fi citite. Niciunul nu arată ce fișiere s-au copiat (vezi A01, A08).
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.
@@ -548,6 +636,14 @@
 - **Cum verifică aplicația:** A căutat în textul scripturilor înregistrate cuvinte-cheie: DownloadString, FromBase64String, Invoke-Expression/IEX, Set-MpPreference, -EncodedCommand.
 - **Sursa tehnică:** `Microsoft-Windows-PowerShell/Operational 4104`
 - **Cum se citește rezultatul:** De verificat: un specialist IT trebuie să se uite la textul scriptului din probe.
+
+### U07
+
+- **Ce verificăm:** Dacă fiecare cont local activ de pe stație (fără cele dezactivate, încorporate sau ale sistemului) este în Registrul utilizatori, dacă fiecare dintre ele are o abilitare valabilă la data controlului și dacă fiecare persoană are o instruire recentă și un angajament de confidențialitate semnat.
+- **De ce contează:** HG 585 cere ca accesul să fie dat doar persoanelor cu abilitare valabilă, instruite periodic și care au semnat angajamentul de confidențialitate (art. 35, 274 alin. 2 și 278). Un cont activ fără rând în registru este un acces pe care nimeni nu l-a aprobat în scris, iar o abilitare expirată sau o instruire veche înseamnă că persoana nu mai îndeplinește condițiile.
+- **Cum verifică aplicația:** A citit conturile locale ale stației și Registrul utilizatori (pagina Control stație). A potrivit fiecare cont activ cu rândurile registrului după cont (DOMENIU\utilizator sau utilizator) sau după identificatorul de cont, ca la analiza suporturilor. Pentru fiecare persoană a luat cea mai recentă dată de instruire (termenul din profil, „Vechimea maximă a instruirii”, implicit 365 de zile; 0 sau gol înseamnă implicit; exact cât termenul este încă în regulă) și a căutat o dată a angajamentului semnat. Pentru fiecare cont a căutat în rândurile lui o abilitare valabilă la data controlului (de la și până la). Un rând expirat nu contează cât timp contul are alt rând valabil: rândurile vechi rămân în registru, fiindcă sunt necesare pentru folosirile din trecut, iar la reînnoirea unei abilitări se adaugă un rând nou. Instruirea și angajamentul se verifică și pentru persoanele din registru cu abilitare valabilă care nu au cont local (de exemplu pe o stație de domeniu). Datele ilizibile sau în viitor (mai mult de o zi după data controlului) nu se numără și sunt arătate separat.
+- **Sursa tehnică:** `Registrul utilizatori (pagina Control stație); lista conturilor locale citită de control; termenul din profilul de proceduri (pagina Profil)`
+- **Cum se citește rezultatul:** Conform = fiecare cont activ este în registru și are cel puțin o abilitare valabilă la data controlului (rândurile expirate rămân ca istoric și nu schimbă rezultatul), instruirea este în termen și angajamentul este trecut. Neconform = un cont activ fără rând în registru sau fără nicio abilitare valabilă (toate rândurile lui sunt expirate sau încă nevalabile). De verificat = rândurile contului nu au niciun nivel de abilitare (de exemplu rânduri preluate de pe stație), fără dată de instruire, instruire mai veche decât termenul din profil, fără dată a angajamentului, dată ilizibilă ori în viitor, sau stația nu are niciun cont local de persoană de comparat (atunci se verifică doar instruirea și angajamentul persoanelor din registru). Nedeterminat = registrul nu există, nu a putut fi citit sau nu are niciun rând (registru nedefinit), sau lista conturilor locale nu a putut fi citită. Limite: verificarea se bazează pe ce a fost scris în registru; aplicația nu poate arăta că instruirea sau angajamentul au avut loc; conturile de domeniu nu se compară cu lista locală.
 
 ### D01
 
@@ -785,17 +881,17 @@
 
 - **Ce verificăm:** Dacă stația are adaptor Wi-Fi, dacă serviciul Wi-Fi poate porni și câte rețele Wi-Fi sunt salvate.
 - **De ce contează:** Un adaptor Wi-Fi poate crea o legătură cu exteriorul și strică izolarea stației.
-- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă).
+- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă: pot conține parole) și a numit rețelele Wi-Fi ținute minte în NetworkList, cu ultima conectare.
 - **Sursa tehnică:** `Adaptoare de rețea Windows (tip 802.11); HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start; ProgramData\Microsoft\Wlansvc\Profiles\Interfaces`
-- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi. Neconform = pe stația izolată există un adaptor Wi-Fi pornit. De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
+- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi și nicio rețea Wi-Fi ținută minte. Neconform = pe stația izolată există un adaptor Wi-Fi pornit (conectările din perioada controlată sunt judecate la N01). De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
 
 ### N04
 
-- **Ce verificăm:** Dacă stația are componente Bluetooth și dacă serviciul Bluetooth poate porni.
+- **Ce verificăm:** Dacă stația are componente Bluetooth, dacă serviciul Bluetooth poate porni și ce dispozitive au fost asociate cu ea.
 - **De ce contează:** Prin Bluetooth se pot trimite fișiere fără cablu, fără ca stația să fie conectată la vreo rețea.
-- **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
-- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
-- **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+- **Cum verifică aplicația:** A căutat componentele Bluetooth cunoscute de Windows, a citit modul de pornire al serviciului Bluetooth și lista dispozitivelor asociate (adresă și nume; cheile de legătură nu se citesc).
+- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start; HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices (subchei = adrese, valoarea Name)`
+- **Cum se citește rezultatul:** Conform = nu există Bluetooth și niciun dispozitiv asociat. Neconform = pe stația izolată Bluetooth există și serviciul poate porni, sau există un dispozitiv asociat (chiar dacă radioul a fost scos sau serviciul oprit între timp). De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
 
 ### N05
 
@@ -868,6 +964,14 @@
 - **Cum verifică aplicația:** Doar în ediția Rețea, doar pe o stație membră a domeniului și doar dacă modul de lucru permite traficul. Localizarea controlerului folosește traficul obișnuit al Windows, cel de la fiecare autentificare în domeniu: localizatorul (DsGetDcName, Netlogon) întreabă serverul DNS configurat de înregistrarea _ldap._tcp.dc._msdcs a domeniului, trimite controlerelor găsite pingul UDP Netlogon (389), iar numele controlerului se rezolvă prin același server DNS; acest trafic pleacă înainte să se cunoască vreo adresă. Conexiunea proprie a aplicației este una singură, TCP la LDAP (389), numai spre o adresă privată, fără autentificare și fără date trimise. Dacă vreo adresă rezolvată este publică, aplicația nu deschide nicio conexiune TCP. Totul are o limită de timp de 10 secunde.
 - **Sursa tehnică:** `DsGetDcName (netapi32) → numele și adresa controlerului; rezolvarea numelui; conexiune TCP la portul 389`
 - **Cum se citește rezultatul:** Conform = controler găsit la o adresă privată, LDAP răspunde. Neconform = controlerul se rezolvă la o adresă publică (aplicația nu deschide conexiunea TCP). De verificat = controlerul nu a răspuns, nu a fost găsit sau limita de timp a trecut. Nedeterminat = stația nu este membră a unui domeniu (N12), verificarea nu a rulat sau a fost anulată. Nu se aplică pe Standalone și Internet.
+
+### N14
+
+- **Ce verificăm:** Dacă stația are voie să fie conectată la internet la nivelul ei de clasificare.
+- **De ce contează:** La strict secret de importanță deosebită conectarea la internet este interzisă; la celelalte niveluri interconectarea se face doar cu aprobarea agenției de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri și ediția aplicației (doar ediția Internet are acces la internet).
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); ediția aplicației`
+- **Cum se citește rezultatul:** Neconform = nivel strict secret de importanță deosebită pe ediția Internet. De verificat = alt nivel: confirmați aprobarea interconectării. Nedeterminat = nivelul nu este definit. Nu se aplică pe Standalone și Rețea izolată.
 
 ### EM01
 
@@ -957,6 +1061,30 @@
 - **Sursa tehnică:** `WMI MSFT_MpComputerStatus → AntivirusSignatureVersion, AntivirusSignatureLastUpdated; Defender 2000; registrul actualizărilor offline (pagina Control stație)`
 - **Cum se citește rezultatul:** Conform = toate actualizările de semnături din perioadă apar în registru, iar registrul nu are actualizări mai noi decât semnăturile stației. Neconform = o actualizare de semnături de pe stație lipsește din registru, sau registrul are o actualizare antivirus mai nouă decât semnăturile stației, care nu a ajuns pe ea. De verificat = registrul nu are nicio actualizare antivirus (comparați manual, verificarea M05), jurnalul Defender nu a putut fi citit (se compară doar semnăturile în vigoare), sau semnăturile în vigoare nu apar în registru, iar jurnalul nu mai are actualizarea lor, sau jurnalul Defender începe după începutul perioadei (a fost rotit, deci actualizările mai vechi nu pot fi verificate; constatările Neconform rămân valabile). Se numără doar actualizările de tip antivirus sau antispyware. Nedeterminat = starea Defender nu a putut fi citită. Limite: scanarea suportului pe stația de decontaminare, înainte de prima conectare, rămâne verificare manuală (M04); jurnalul Defender poate fi rotit și atunci actualizările vechi nu se mai văd; alt antivirus decât Microsoft Defender nu este citit.
 
+### S07
+
+- **Ce verificăm:** Dacă programele aprobate în profilul de proceduri (cu cale și amprentă SHA-256) sunt pe stație exact în versiunea aprobată, adică fișierul lor nu a fost modificat.
+- **De ce contează:** Un program aprobat care a fost schimbat (înlocuit, corectat, infectat) nu mai este programul pe care l-a aprobat organizația. HG 585 cere ca versiunile de software în uz să fie verificate la intervale regulate, ca să se garanteze integritatea și funcționarea lor corectă (art. 309 și 311 alin. 1).
+- **Cum verifică aplicația:** Pentru fiecare rând din „Programe aprobate” care are și cale, și amprentă SHA-256, aplicația a citit fișierul de pe stație (doar a citit, nu l-a schimbat), i-a calculat amprenta SHA-256 și a comparat-o cu cea din profil. Dacă în cale sunt * sau ?, a căutat fișierele doar în folderul indicat (fără subfoldere), cel mult 50, și le-a verificat pe fiecare. Un fișier mai mare de 1 GiB nu se calculează. Variabilele de mediu din cale (de exemplu %ProgramFiles%) se înlocuiesc cu valorile stației. Rândurile cu amprentă, dar fără cale, nu se pot verifica și sunt numărate separat.
+- **Sursa tehnică:** `Fișierele din calea fiecărui rând „Programe aprobate” din profilul de proceduri (pagina Profil); amprenta SHA-256 din profil`
+- **Cum se citește rezultatul:** Conform = toate fișierele verificate au amprenta din profil. Neconform = cel puțin un fișier are altă amprentă (se arată numele programului, calea și primele 16 caractere din amprenta așteptată și din cea găsită): programul a fost modificat sau este altă versiune. De verificat = un fișier lipsește, nu a putut fi citit (acces refuzat), este prea mare, sau modelul cu * sau ? are peste 50 de potriviri; tot de verificat sunt celelalte fișiere găsite de un model cu * sau ? atunci când fișierul aprobat se află printre ele (pentru un model, Neconform înseamnă că niciun fișier găsit nu are amprenta aprobată); verificați manual. Nedeterminat = profilul nu are programe aprobate cu cale și amprentă SHA-256, sau amprentele nu s-au citit. Atenție: după o actualizare aprobată a programului, amprenta din profil trebuie actualizată, altfel verificarea arată Neconform; actualizarea se înregistrează.
+
+### S08
+
+- **Ce verificăm:** Dacă intervențiile făcute pe echipamentele sau programele stației în perioada controlată sunt trecute în Registrul intervențiilor, fiecare cu un martor diferit de executant, și dacă după o reparație sau o schimbare de hardware s-au verificat dispozitivele de securitate.
+- **De ce contează:** HG 585 cere ca orice modificare a sistemului informatic să se facă de cel puțin două persoane (art. 277) și ca, după o reparație, dispozitivele de securitate să fie verificate (art. 329 alin. 2). Fără registru nu se poate arăta cine a modificat ce, împreună cu cine, și dacă protecțiile au rămas în funcțiune.
+- **Cum verifică aplicația:** A citit rândurile din Registrul intervențiilor (pagina Control stație) care au data în perioada controlată. Pentru fiecare a verificat că are executant și martor și că martorul este altă persoană decât executantul (numele se compară fără deosebire între litere mari și mici sau între spații). Pentru intervențiile de tip hardware sau reparație a căutat data și persoana care a făcut verificarea după intervenție; termenul este de 7 zile de la data intervenției. A căutat și operațiile Windows Installer din perioadă și a verificat dacă în aceeași zi (±1 zi, pentru că jurnalul este în UTC, iar registrul în ora locală) există o intervenție în registru sau o actualizare în registrul actualizărilor offline (o astfel de zi este deja documentată).
+- **Sursa tehnică:** `Registrul intervențiilor hardware și software (pagina Control stație); Application 11707, 11724, 1033, 1034`
+- **Cum se citește rezultatul:** Conform = fiecare intervenție din perioadă are martor diferit de executant și, pentru hardware sau reparație, verificare după intervenție; sau registrul este folosit, dar nu are nicio intervenție în perioadă (absența înregistrărilor nu dovedește absența intervențiilor). Neconform = o intervenție fără martor sau cu martorul identic cu executantul, sau o intervenție de tip hardware sau reparație fără verificare după intervenție la mai mult de 7 zile de la dată. De verificat = verificarea după intervenție nu este încă făcută, dar termenul de 7 zile nu a trecut; data unui rând lipsește sau este greșită; felul nu este recunoscut; sau jurnalul arată o operație de instalare ori dezinstalare fără o intervenție în registru în aceeași zi. Nedeterminat = registrul nu există, nu a putut fi citit sau nu are niciun rând (registru nedefinit). Limite: verificarea se bazează pe ce a fost scris în registru; o intervenție netrecută în registru se vede doar dacă a lăsat urme în jurnale (instalări de programe), nu și o schimbare de hardware sau de configurare; programele instalate de Windows Update pot apărea ca operații fără rând.
+
+### S09
+
+- **Ce verificăm:** Dacă ultima copie de siguranță din Registrul copiilor de siguranță este suficient de recentă (termenul din profil, implicit 30 de zile) și dacă s-a încercat vreodată restaurarea dintr-o copie (testul se cere cel mult la 180 de zile, implicit).
+- **De ce contează:** HG 585 cere ca datele și sistemul să poată fi refăcute după o pierdere sau o avarie; modelul ORNISS are un registru al copiilor de siguranță (Anexa 21). O copie veche nu mai acoperă munca recentă, iar o copie care nu a fost niciodată restaurată nu dovedește că se poate folosi.
+- **Cum verifică aplicația:** A citit Registrul copiilor de siguranță (pagina Control stație) și a luat cea mai recentă dată de copie. A comparat-o cu data controlului: dacă au trecut mai multe zile decât termenul din profil („Vechimea maximă a copiei de siguranță”, implicit 30 de zile; 0 sau gol înseamnă implicit), rezultatul este Neconform; exact cât termenul este încă în regulă. Apoi a căutat cea mai recentă dată a unui test de restaurare și a comparat-o cu termenul din profil („Vechimea maximă a testului de restaurare”, implicit 180 de zile). Rândurile cu data ilizibilă sau în viitor (mai mult de o zi după data controlului) nu se numără și sunt arătate separat.
+- **Sursa tehnică:** `Registrul copiilor de siguranță (pagina Control stație); termenele din profilul de proceduri (pagina Profil)`
+- **Cum se citește rezultatul:** Conform = ultima copie este în termen și ultimul test de restaurare este în termen. Neconform = ultima copie este mai veche decât termenul din profil. De verificat = nu este trecut niciun test de restaurare, ultimul test este mai vechi decât termenul din profil, sau sunt rânduri cu data ilizibilă ori în viitor. Nedeterminat = registrul nu există, nu a putut fi citit sau nu are niciun rând (registru nedefinit). Limite: verificarea se bazează pe ce a fost scris în registru; aplicația nu citește copiile în sine și nu poate dovedi că o copie este completă sau că se poate restaura.
+
 ## Ce înseamnă rezultatele
 
 - CONFORM: ce s-a verificat corespunde regulii.
@@ -976,11 +1104,11 @@
 | Security 4616 | eveniment Windows | Ora sistemului a fost schimbată. | Cu ora schimbată, orele din toate jurnalele devin greșite; poate fi folosită pentru a ascunde când s-a întâmplat ceva. | Windows își corectează singur ora (svchost.exe, cont SYSTEM) — acelea nu sunt listate. Listate sunt doar schimbările făcute de o persoană. |
 | Storage\\HotPlugSecureOpen | valoare de registru | Setare folosită de unele versiuni de Windows pentru a înregistra accesul la fișiere pe suporturi amovibile. | Fără ea, auditarea pe suporturi amovibile poate să nu noteze fișierele copiate. | 1 = pornită; lipsa înseamnă comportamentul implicit al versiunii. |
 | AppLocker 8003 | eveniment Windows | AppLocker (lista albă) ar fi oprit pornirea unui program, dar este doar în mod audit, așa că programul a rulat. | Arată programe neaprobate care rulează pe stație; în mod de blocare ar fi fost oprite. | Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul. |
-| AppLocker 8004 | eveniment Windows | AppLocker (lista albă) a OPRIT pornirea unui program neaprobat. | Cineva a încercat să pornească un program care nu este aprobat pe stație. | Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul. |
+| AppLocker 8004 | eveniment Windows | AppLocker (lista albă) a oprit pornirea unui program neaprobat. | Cineva a încercat să pornească un program care nu este aprobat pe stație. | Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul. |
 | AppLocker 8006 | eveniment Windows | AppLocker ar fi oprit un script sau un pachet de instalare (MSI), dar este doar în mod audit, așa că a rulat. | Arată scripturi sau instalări neaprobate care au rulat. | Jurnalul „AppLocker/MSI and Script”. |
-| AppLocker 8007 | eveniment Windows | AppLocker a OPRIT un script sau un pachet de instalare (MSI) neaprobat. | Cineva a încercat să ruleze un script sau să instaleze un program neaprobat. | Jurnalul „AppLocker/MSI and Script”. |
+| AppLocker 8007 | eveniment Windows | AppLocker a oprit un script sau un pachet de instalare (MSI) neaprobat. | Cineva a încercat să ruleze un script sau să instaleze un program neaprobat. | Jurnalul „AppLocker/MSI and Script”. |
 | CodeIntegrity 3076 | eveniment Windows | App Control (WDAC) ar fi oprit un fișier neaprobat, dar politica este doar în mod audit, așa că fișierul a rulat. | Arată programe sau biblioteci neaprobate care au rulat pe stație. | Câmpul „File Name” arată fișierul. |
-| CodeIntegrity 3077 | eveniment Windows | App Control (WDAC) a OPRIT încărcarea unui fișier neaprobat. | Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație. | Câmpul „File Name” arată fișierul. |
+| CodeIntegrity 3077 | eveniment Windows | App Control (WDAC) a oprit încărcarea unui fișier neaprobat. | Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație. | Câmpul „File Name” arată fișierul. |
 | Reguli de audit (SACL) | setare Windows | Lista care spune ce acces la fișierele unui folder se înregistrează în jurnalul Security, și pentru cine. | Fără reguli, accesul la documente nu lasă nicio urmă. | Citirea ei cere drepturi de administrator; aplicația nu o schimbă. |
 | Security 4656 | eveniment Windows | Un program a cerut acces la un fișier marcat pentru audit (de exemplu un document dintr-un folder clasificat); câmpul AccessMask spune ce fel de acces. | Arată cine a încercat să deschidă documentul și cu ce program. | Apare doar dacă folderul are reguli de audit și subcategoria „File System” sau „Removable Storage” este pornită. |
 | Security 4660 | eveniment Windows | Un fișier marcat pentru audit a fost șters. | Ștergerea unui document clasificat trebuie să aibă proces-verbal de distrugere. | Se citește împreună cu 4663 (același HandleId) pentru numele fișierului. |
@@ -1070,6 +1198,20 @@
 | UsermodeCodeIntegrityPolicyEnforcementStatus | interogare Windows (WMI) | Cum aplică App Control (WDAC) lista albă pentru programe. | Doar modul de aplicare oprește programele neaprobate. | 0 = oprită, 1 = doar audit (notează), 2 = aplicată (blochează). |
 | FullScanEndTime | interogare Microsoft Defender | Data la care s-a terminat ultima scanare completă a stației. | O scanare veche poate lăsa nedescoperit un program adus înainte de ultima actualizare. | Gol = nicio scanare completă, niciodată. |
 | AntiVirusProduct | interogare Windows (WMI) | Antivirusurile înregistrate în Centrul de securitate Windows, inclusiv ale altor producători. | Arată ce antivirus protejează efectiv stația. | productState: un cod numeric; aplicația îl citește ca pornit/oprit și semnături la zi/vechi (decodare nedocumentată oficial). |
+| Lsa\\RestrictAnonymousSAM | valoare de registru | Interzice utilizatorilor anonimi să listeze conturile stației. | Lista conturilor îi arată unui atacator ce să încerce. | 1 = interzis (corect, implicit pe Windows 10/11), 0 = permis. |
+| Lsa\\RestrictAnonymous | valoare de registru | Interzice utilizatorilor anonimi să listeze conturile și folderele partajate. | Informațiile despre conturi și partajări ajută un atacator. | 1 = interzis (cerut de STIG), 0 = permis (implicit Windows). |
+| Lsa\\EveryoneIncludesAnonymous | valoare de registru | Dacă grupul „Toți” (Everyone) include și utilizatorii anonimi. | Cu valoarea 1, drepturile date grupului „Toți” se aplică și celor fără cont. | 0 = nu include (corect, implicit), 1 = include. |
+| LanmanServer\\Parameters\\RestrictNullSessAccess | valoare de registru | Limitează sesiunile anonime (null session) la partajările cu nume anume. | Sesiunile anonime permit citirea de informații din rețea fără cont. | 1 = limitat (corect, implicit), 0 = permis. |
+| Lsa\\NoLMHash | valoare de registru | Împiedică păstrarea parolei în formatul vechi LAN Manager. | Amprenta LAN Manager se sparge în câteva minute. | 1 = nu se păstrează (corect, implicit pe Windows 10/11), 0 = se păstrează. |
+| Lsa\\LmCompatibilityLevel | valoare de registru | Ce metode de autentificare în rețea trimite și acceptă stația (LM, NTLM, NTLMv2). | Metodele vechi se sparg ușor dacă sunt interceptate. | 5 = doar NTLMv2 (cerut de STIG); 0-2 = trimite și LM sau NTLMv1; 3 = implicit Windows; nesetat = 3. |
+| Installer\\AlwaysInstallElevated | valoare de registru | Politica „Instalează întotdeauna cu drepturi ridicate” pentru pachetele MSI. | Cu valoarea 1 orice utilizator instalează un pachet MSI cu drepturile sistemului. | 1 = activă (abatere gravă), 0 sau lipsă = oprită. |
+| kernel\\DisableExceptionChainValidation | valoare de registru | Oprește sau pornește protecția SEHOP (validarea lanțului de gestionare a excepțiilor). | SEHOP oprește o tehnică frecventă de exploatare a programelor. | 0 = SEHOP pornit (cerut de STIG), 1 = oprit. |
+| WinRM\\Client\\AllowBasic | valoare de registru | Politica care permite autentificarea Basic (parola trimisă aproape în clar) pentru clientul WinRM. | Parola poate fi citită de oricine ascultă rețeaua. | 0 = interzisă (corect), 1 = permisă. |
+| WinRM\\Client\\AllowUnencryptedTraffic | valoare de registru | Politica care permite clientului WinRM să trimită trafic necriptat. | Comenzile și datele pot fi citite de oricine ascultă rețeaua. | 0 = interzis (corect), 1 = permis. |
+| WinRM\\Service\\AllowBasic | valoare de registru | Politica care permite autentificarea Basic (parola trimisă aproape în clar) la serviciul WinRM. | Parola poate fi citită de oricine ascultă rețeaua. | 0 = interzisă (corect), 1 = permisă. |
+| WinRM\\Service\\AllowUnencryptedTraffic | valoare de registru | Politica care permite serviciului WinRM să accepte trafic necriptat. | Comenzile și datele pot fi citite de oricine ascultă rețeaua. | 0 = interzis (corect), 1 = permis. |
+| DNSClient\\EnableMulticast | valoare de registru | Politica „Oprește rezolvarea numelor prin difuzare” (LLMNR). | Un atacator din rețeaua locală poate răspunde în locul unui server real și captura parole. | 0 = oprită (recomandat), 1 sau lipsă = activă. |
+| Services\\W3SVC\\Start | valoare de registru | Modul de pornire al serviciului serverului web IIS. | Un server web deschide stația către conexiuni din rețea. | 4 = dezactivat, 3 = la cerere, 2 = automat; lipsa cheii înseamnă că IIS nu este instalat. |
 | Application 11707 | eveniment Windows | Windows Installer: un program a fost instalat cu succes. | Software-ul instalat trebuie să fie pe lista aprobată. |  |
 | Application 11724 | eveniment Windows | Windows Installer: un program a fost dezinstalat cu succes. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | Application 1033 | eveniment Windows | Windows Installer: instalare încheiată (cu codul de rezultat). | Software-ul instalat trebuie să fie pe lista aprobată. | Codul de stare 0 = reușit. |

@@ -15,7 +15,8 @@ namespace LogAnalyzer.KeyGen;
 /// report key (DPAPI for the current user by default, or a passphrase); never overwrites, never inside a git repository. The printed public key
 /// goes into <c>LogAnalyzer.Core/Licensing/license-public-keys.txt</c> (compiled into the editions).</item>
 /// <item><c>license-sign &lt;private-key-file&gt; --hardware-id &lt;16 hex&gt; --expires &lt;yyyy-MM-dd&gt; [--id &lt;licence id&gt;] [--out &lt;license.lic&gt;]</c>:
-/// prints the signed licence (LA1.…), after checking it with the same verification the application performs.</item>
+/// prints the signed licence (LA1.…), after checking it with the same verification the application performs. With <c>--module insula|arhipelag|continent
+/// --holder &lt;text&gt; [--feature &lt;name&gt;]…</c> it issues an LA2 licence instead (no <c>--feature</c> = the base set of the module); without <c>--module</c> it issues LA1 as before.</item>
 /// </list>
 /// </summary>
 public static class LicenseCli
@@ -69,9 +70,10 @@ public static class LicenseCli
 
     public static int Sign(string[] args, TextWriter o, TextReader? input = null)
     {
-        const string usage = "Utilizare: license-sign <fișier-cheie-privată> --hardware-id <16 hex> --expires <AAAA-LL-ZZ> [--id <id licență>] [--out <license.lic>]";
+        const string usage = "Utilizare: license-sign <fișier-cheie-privată> --hardware-id <16 hex> --expires <AAAA-LL-ZZ> [--id <id licență>] [--out <license.lic>] [--module <insula|arhipelag|continent> --holder <titular> [--feature <capabilitate>]…]";
         if (args.Length < 2) { o.WriteLine(usage); return 1; }
-        string? hw = null, expires = null, id = null, outFile = null;
+        string? hw = null, expires = null, id = null, outFile = null, module = null, holder = null;
+        var features = new System.Collections.Generic.List<string>();
         for (int i = 2; i < args.Length; i++)
         {
             string? Next() => i + 1 < args.Length ? args[++i] : null;
@@ -81,10 +83,21 @@ public static class LicenseCli
                 case "--expires": expires = Next(); break;
                 case "--id": id = Next(); break;
                 case "--out": outFile = Next(); break;
+                case "--module": module = Next(); break;
+                case "--holder": holder = Next(); break;
+                case "--feature": if (Next() is { } f) features.Add(f.Trim()); else { o.WriteLine(usage); return 1; } break;
                 default: o.WriteLine(usage); return 1;
             }
         }
         if (hw is null || expires is null) { o.WriteLine(usage); return 1; }
+        if (module is null && (holder is not null || features.Count > 0)) { o.WriteLine("[-] --holder și --feature se folosesc doar împreună cu --module (licență LA2)."); return 1; }
+        if (module is not null)
+        {
+            module = module.Trim().ToLowerInvariant();
+            if (!LicenseFeatures.IsKnownModule(module)) { o.WriteLine("[-] Modul necunoscut: insula, arhipelag sau continent."); return 1; }
+            if (string.IsNullOrWhiteSpace(holder) || holder.Trim().Length > LicenseService.MaxHolderLength)
+            { o.WriteLine($"[-] Pentru o licență LA2, --holder este obligatoriu (1–{LicenseService.MaxHolderLength} caractere)."); return 1; }
+        }
         hw = hw.Trim().ToUpperInvariant();
         if (!LicenseService.IsHardwareId(hw)) { o.WriteLine("[-] Hardware ID invalid: exact 16 caractere hexazecimale, cum apare în fereastra de activare a aplicației."); return 1; }
         if (!DateTime.TryParseExact(expires.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var expiry))
@@ -102,9 +115,12 @@ public static class LicenseCli
                 if (string.IsNullOrEmpty(pass)) { o.WriteLine("Parola cheii (nu se afișează pe ecran):"); pass = ReportCli.ReadSecret(input); }
             }
             using var key = ReportSignature.LoadPrivateKey(text, pass);
-            var licence = LicenseService.Sign(key, hw, expiry.Date, id);
-            // Self-check with exactly the verification the application performs, against this key's public half.
-            var self = new LicenseService([Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())]).Check(hw, licence, DateTime.UtcNow, out _);
+            var licence = module is null
+                ? LicenseService.Sign(key, hw, expiry.Date, id)
+                : LicenseService.SignV2(key, hw, expiry.Date, module, holder!, features.Count > 0 ? features : null, id);
+            // Self-check with exactly the verification the application performs, against this key's public half (for LA2, as the module it is issued for).
+            var self = new LicenseService([Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())], null, null, module is null ? null : LicenseFeatures.PostureOf(module))
+                .Check(hw, licence, DateTime.UtcNow, out _);
             if (self != LicenseCheck.Valid) { o.WriteLine("[-] Auto-verificarea a eșuat (" + self + "): licența nu se distribuie."); return 1; }
             if (outFile is not null) File.WriteAllText(outFile, licence);
             o.WriteLine($"[+] Licență semnată pentru {hw}, valabilă până la {expiry:yyyy-MM-dd} inclusiv (UTC), cheia {ReportSignature.KeyId(Convert.ToBase64String(key.ExportSubjectPublicKeyInfo()))}:");

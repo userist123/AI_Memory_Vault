@@ -21,15 +21,82 @@ namespace LogAnalyzer.UI.Views
         private readonly AuthSession? _locked;
         private List<CardCertificate> _choices = [];
 
+        private LogAnalyzer.Dfir.Profile.SignInNoticeChoice _notice = new("", LogAnalyzer.Dfir.Profile.SignInNoticeResolver.SourceDefault, null);
+
         public AuthSession? Session { get; private set; }
+
+        /// <summary>Unlock re-authenticates an open session and does not ask again; every other mode needs the box ticked (the service refuses otherwise).</summary>
+        public static bool SignInEnabled(SignInWindowMode mode, bool noticeAccepted) => mode == SignInWindowMode.Unlock || noticeAccepted;
+
+        private bool NoticeAccepted => SignInEnabled(_mode, NoticeAck.IsChecked == true);
+
+        private LogAnalyzer.Dfir.Auth.AuthService.NoticeAcceptance? Acceptance() =>
+            _mode == SignInWindowMode.Unlock ? null : new(_notice.Text, _notice.Source);
+
+        private void UpdateSignInButtons() { CardButton.IsEnabled = NoticeAccepted; PasswordButton.IsEnabled = NoticeAccepted; }
+
+        private void NoticeAck_Changed(object sender, RoutedEventArgs e) => UpdateSignInButtons();
 
         public SignInWindow(SignInWindowMode mode, AuthSession? lockedSession = null)
         {
             InitializeComponent();
             _mode = mode; _locked = lockedSession;
+            ShowIdentity();
             Configure();
             ShowStoreProtection();
+            NoticeAck.Visibility = _mode == SignInWindowMode.Unlock ? Visibility.Collapsed : Visibility.Visible;
+            UpdateSignInButtons();
             Loaded += async (_, _) => await RefreshCardsAsync();
+            // Enter in the password field signs in / unlocks (lab VM 2026-11-06: only the mouse could); while a new password is set, Enter first
+            // moves to the confirmation and submits from there.
+            PasswordBox.KeyDown += (_, e) => OnPasswordEnter(e, fromConfirm: false);
+            ConfirmBox.KeyDown += (_, e) => OnPasswordEnter(e, fromConfirm: true);
+        }
+
+        /// <summary>What Enter does in a password field: true = submit, false = move on to the confirmation field.</summary>
+        public static bool EnterSubmits(SignInWindowMode mode, bool fromConfirm) =>
+            fromConfirm || mode is not (SignInWindowMode.FirstRun or SignInWindowMode.Recovery);
+
+        private void OnPasswordEnter(System.Windows.Input.KeyEventArgs e, bool fromConfirm)
+        {
+            if (e.Key != System.Windows.Input.Key.Enter) return;
+            e.Handled = true;
+            if (!EnterSubmits(_mode, fromConfirm)) { ConfirmBox.Focus(); return; }
+            if (PasswordButton.IsEnabled && PasswordButton.IsVisible) Password_Click(PasswordButton, new RoutedEventArgs());
+        }
+
+        public sealed record IdentityRow(string Label, string Value)
+        {
+            /// <summary>What a screen reader announces for the row (the list item's name): never the record's „IdentityRow { Label = … }” form.</summary>
+            public override string ToString() => $"{Label}: {Value}";
+        }
+
+        /// <summary>
+        /// Plan 2026-11-04 (R3): the left column says what the person signs in to before anything else. Only facts the application knows at this point:
+        /// the licence was verified before this window opens (App startup order), the level comes from the procedure profile ("nedefinit" otherwise).
+        /// </summary>
+        internal static IReadOnlyList<IdentityRow> IdentityRows(string station, string stationLevelText, string version) =>
+        [
+            new("Stația", station),
+            new("Nivelul stației", stationLevelText),
+            new("Versiunea", version),
+            new("Licența", "verificată la pornire"),
+        ];
+
+        private void ShowIdentity()
+        {
+            var posture = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
+            ModuleText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(posture);
+            ModulePurposeText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Purpose(posture);
+            // HG 585 ID-03: the officer's text from the profile, else the module default; shown as is and hashed as is when accepted.
+            _notice = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.Resolve(LogAnalyzer.Dfir.Profile.ProfileProvider.Shared,
+                LogAnalyzer.Core.Services.Edition.ModuleCatalog.DefaultNotice(posture));
+            NoticeText.Text = _notice.Text;
+            if (_notice.Remark is { } remark) { NoticeRemark.Text = remark; NoticeRemark.Visibility = Visibility.Visible; }
+            string level = LogAnalyzer.Dfir.Profile.StationLevelRules.UndefinedText;
+            try { level = LogAnalyzer.Dfir.Profile.StationLevelRules.Describe(LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.Current?.StationLevel); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            IdentityList.ItemsSource = IdentityRows(Environment.MachineName, level, LogAnalyzer.Dfir.Model.DfirInfo.ApplicationVersion);
         }
 
         private void Configure()
@@ -72,9 +139,12 @@ namespace LogAnalyzer.UI.Views
             if (_mode == SignInWindowMode.Unlock) return;
             try
             {
-                if (AuthApp.Service.SealNotRecorded is not null)
+                var warnings = new List<string>();
+                if (AuthApp.Service.SealNotRecorded is not null) warnings.Add(LogAnalyzer.Dfir.Auth.AuthService.SealNotRecordedMessage);
+                if (AuthApp.Service.WitnessMovedAside is not null) warnings.Add(LogAnalyzer.Dfir.Auth.AuthService.WitnessMovedMessage);
+                if (warnings.Count > 0)
                 {
-                    SealText.Text = LogAnalyzer.Dfir.Auth.AuthService.SealNotRecordedMessage;
+                    SealText.Text = string.Join(Environment.NewLine, warnings);
                     SealText.Visibility = Visibility.Visible;
                 }
             }
@@ -121,7 +191,8 @@ namespace LogAnalyzer.UI.Views
                     return;
                 }
                 var ack = Acknowledged;
-                var r = await Task.Run(() => AuthApp.Service.SignInWithCard(AuthApp.Cards, thumb, ack));
+                var acceptance = Acceptance();
+                var r = await Task.Run(() => AuthApp.Service.SignInWithCard(AuthApp.Cards, thumb, ack, acceptance));
                 if (r.Reason == "choose_card" && r.Choices is { Count: > 0 } ch)
                 {
                     _choices = ch.ToList();
@@ -132,7 +203,7 @@ namespace LogAnalyzer.UI.Views
                 Finish(r);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = StoreUnwritable(ex); }
-            finally { CardButton.IsEnabled = true; }
+            finally { CardButton.IsEnabled = NoticeAccepted; }
         }
 
         private async void Password_Click(object sender, RoutedEventArgs e)
@@ -146,6 +217,7 @@ namespace LogAnalyzer.UI.Views
                 var accountText = AccountBox.Text;
                 var personText = PersonBox.Text;
                 var ack = Acknowledged;
+                var acceptance = Acceptance();
                 switch (_mode)
                 {
                     case SignInWindowMode.FirstRun:
@@ -157,7 +229,7 @@ namespace LogAnalyzer.UI.Views
                             : await Task.Run(() => AuthApp.Service.RecoverPrimaryPassword(pw));
                         if (!r.Ok) { StatusText.Text = r.Message; return; }
                         var account = _mode == SignInWindowMode.FirstRun ? accountText : AuthApp.Service.PrimaryAdmin!.Account;
-                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(account, pw, ack)));
+                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(account, pw, ack, acceptance)));
                         break;
                     }
                     case SignInWindowMode.Unlock:
@@ -167,12 +239,12 @@ namespace LogAnalyzer.UI.Views
                         break;
                     }
                     default:
-                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(accountText, pw, ack)));
+                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(accountText, pw, ack, acceptance)));
                         break;
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = StoreUnwritable(ex); }
-            finally { PasswordBox.Clear(); ConfirmBox.Clear(); PasswordButton.IsEnabled = true; }
+            finally { PasswordBox.Clear(); ConfirmBox.Clear(); PasswordButton.IsEnabled = NoticeAccepted; }
         }
 
         /// <summary>The auth store or its audit cannot be written: nobody is signed in (fail closed) and the cause is shown instead of crashing.</summary>

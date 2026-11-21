@@ -39,7 +39,7 @@ public static class EvtxCompleteness
     /// <summary>Channels Windows writes to all the time while it runs: a tail that stops early means the log was stopped.</summary>
     public static readonly IReadOnlyList<string> AlwaysActiveChannels = ["Security", "System", "Application"];
 
-    private static long RecordId(TimelineEvent e)
+    internal static long RecordId(TimelineEvent e)
     {
         if (!e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal)) return -1;
         var s = e.Locator.AsSpan(14);

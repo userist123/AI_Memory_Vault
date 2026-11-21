@@ -45,6 +45,9 @@ namespace LogAnalyzer.Core.Services.Edition
     {
         public string TabText => Tab.ToString(System.Globalization.CultureInfo.InvariantCulture);
         public string Tooltip => Enabled ? Title : $"{Title}: {Reason}";
+        /// <summary>The name a screen reader announces for the menu item (WPF uses ToString when the item has no name of its own);
+        /// the record's default text "NavigationEntry { Title = …, Tab = 21, … }" was announced (evaluation 2026-11-05).</summary>
+        public override string ToString() => Tooltip;
     }
 
     /// <summary>
@@ -69,26 +72,40 @@ namespace LogAnalyzer.Core.Services.Edition
 
         public const string NeedsNetworkReason = "necesită modul conectat; această stație este izolată (air-gap)";
 
+        /// <summary>The profile with the base rights of the compiled module (<see cref="LicenseFeatures.DefaultFor(StationPosture)"/>).</summary>
         public static RoleProfile For(StationRole role, IEditionProfile edition, AppMode mode)
         {
-            IntentAvailability A(HomeIntent i)
+            var basics = LicenseFeatures.DefaultFor(edition.Posture);
+            return For(role, edition, mode, f => basics.Contains(f));
+        }
+
+        /// <summary>
+        /// The profile for the rights of the licence (<paramref name="has"/>): an intent or sidebar entry whose page needs a capability the licence lacks is left out
+        /// (like a page the module does not have), never shown disabled.
+        /// </summary>
+        public static RoleProfile For(StationRole role, IEditionProfile edition, AppMode mode, Func<string, bool> has)
+        {
+            // plan 2026-11-04 (ModuleCatalog): what the edition can NEVER have is left out (null, filtered below), never shown disabled; what it has but cannot use now
+            // (a network page while a network station runs isolated) stays, disabled, with the reason
+            bool Never(EditionFeature? feature, bool network) =>
+                feature is { } f && !edition.Has(f) || network && edition.Kind == EditionKind.Classified;
+            IntentAvailability? A(HomeIntent i)
             {
-                if (i.RequiresFeature is { } f && !edition.Has(f))
-                    return new(i, false, edition.Kind == EditionKind.Classified ? EditionText.NotAvailableClassified : "nu este inclus în această ediție");
+                if (Never(i.RequiresFeature, i.RequiresNetwork) || !ModuleCatalog.IsTabLicensed(i.TargetTab, has)) return null;
                 if (i.RequiresNetwork && mode == AppMode.AirGapped) return new(i, false, NeedsNetworkReason);
                 return new(i, true, "");
             }
-            NavigationEntry N(string title, int tab, EditionFeature? feature = null, bool network = false)
+            NavigationEntry? N(string title, int tab, EditionFeature? feature = null, bool network = false)
             {
-                if (feature is { } f && !edition.Has(f))
-                    return new(title, tab, false, edition.Kind == EditionKind.Classified ? EditionText.NotAvailableClassified : "nu este inclus în această ediție");
+                if (Never(feature, network) || !ModuleCatalog.IsTabLicensed(tab, has)) return null;
                 if (network && mode == AppMode.AirGapped) return new(title, tab, false, NeedsNetworkReason);
                 return new(title, tab, true, "");
             }
+            static T[] Present<T>(params T?[] items) where T : class => items.Where(x => x is not null).Select(x => x!).ToArray();
 
             if (role == StationRole.Csirt)
             {
-                var primary = new[]
+                var primary = Present(new[]
                 {
                     A(new("receive_evidence", "Primește probe de la o stație",
                         "Importă jurnalele, Prefetch, SRUM sau captura de rețea aduse de la stația afectată. Integritatea se verifică la intrare și ce lipsește se spune clar.",
@@ -105,8 +122,8 @@ namespace LogAnalyzer.Core.Services.Edition
                     A(new("open_cases", "Cazuri deschise",
                         "Un caz lucrat anterior, cu starea lui și cu reverificarea probelor la deschidere.",
                         TabHome, IntentSource.OpenExistingCase)),
-                };
-                var more = new[]
+                });
+                var more = Present(new[]
                 {
                     A(new("check_this_computer", "Verifică acest calculator",
                         "Colectare de pe această stație și analiză completă.", TabInvestigation, IntentSource.CollectFromThisStation)),
@@ -117,8 +134,8 @@ namespace LogAnalyzer.Core.Services.Edition
                     A(new("evidence_history", "Istoricul probelor", "Cine a avut fiecare probă, când și ce s-a făcut cu ea.", TabChainOfCustody)),
                     A(new("send_to_vault", "Trimite în Memory Vault",
                         "Doar o propunere, după verificare; nimic nu devine fapt fără revizuirea unui om.", TabInvestigation)),
-                };
-                var nav = new[]
+                });
+                var nav = Present(new[]
                 {
                     N("Investigație completă (caz)", TabInvestigation),
                     N("Izolare procese suspecte", TabContainment, EditionFeature.HostResponse),
@@ -127,14 +144,14 @@ namespace LogAnalyzer.Core.Services.Edition
                     N("Istoricul probelor", TabChainOfCustody),
                     N("Control stație", TabStationControl),
                     N("Autentificare și conturi", TabAccounts),
-                };
+                });
                 return new RoleProfile(role, "Stație de sprijin răspuns la incidente",
                     "Primiți probe de la stațiile afectate, aflați ce s-a întâmplat și ce urmează, și produceți raportul potrivit pentru cine îl citește.",
                     primary, more, nav);
             }
             else
             {
-                var primary = new[]
+                var primary = Present(new[]
                 {
                     A(new("check_station", "Verifică această stație",
                         "Rulează controlul de conformitate pe perioada aleasă. Aplicația doar citește; nu modifică nimic pe stație.",
@@ -151,8 +168,8 @@ namespace LogAnalyzer.Core.Services.Edition
                     A(new("control_report", "Raport pentru proces-verbal",
                         "PDF cu verificările, pe ce se bazează fiecare și golurile de probă, salvat în caz cu amprentă SHA-256.",
                         TabStationControl)),
-                };
-                var more = new[]
+                });
+                var more = Present(new[]
                 {
                     A(new("analyze_evidence", "Analizează probe aduse de pe altă stație",
                         "Import de jurnale și artefacte dintr-un folder sau de pe un suport.", TabInvestigation, IntentSource.ImportEvidence)),
@@ -160,8 +177,8 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Orele de lucru, rotația jurnalelor, software aprobat, zone și transferuri, după care se judecă controlul.", TabProcedureProfile)),
                     A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație: conturile se preiau de pe stație cu un clic, organizația adaugă autorizațiile.", TabUsersRegister)),
                     A(new("accounts", "Persoane și carduri", "Conturile aplicației și cardurile înregistrate (numai administratorul).", TabAccounts)),
-                };
-                var nav = new[]
+                });
+                var nav = Present(new[]
                 {
                     N("Control stație", TabStationControl),
                     N("Monitor dispozitive", TabMediaRegister),   // owner decision 2026-10-16: the media register page became the real-time device monitor
@@ -171,7 +188,7 @@ namespace LogAnalyzer.Core.Services.Edition
                     N("Investigație completă (caz)", TabInvestigation),
                     N("Politici", TabPolicies),
                     N("Autentificare și conturi", TabAccounts),
-                };
+                });
                 return new RoleProfile(role, "Stație de control",
                     "Verificați o stație izolată după procedurile organizației și obțineți raportul pentru procesul-verbal. Nimic nu se modifică pe stația controlată.",
                     primary, more, nav);

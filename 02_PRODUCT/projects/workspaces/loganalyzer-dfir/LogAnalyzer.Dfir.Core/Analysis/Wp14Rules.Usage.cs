@@ -13,6 +13,46 @@ public static partial class Wp14Rules
 {
     internal const string UsageRuleId = "MEDIA-USAGE";
 
+    /// <summary>MEDIA-USAGE in plain words: who used the stick (only real accounts are named; Windows' own sessions are left out), or that this cannot be told.</summary>
+    internal static string UsageStory(string stick, IReadOnlyList<string> accounts, bool ambiguous, bool direct, int openedFromStick, string host = "")
+    {
+        var real = accounts.Where(a => !PlainPhrases.IsStationAccount(a, host)).Select(PlainPhrases.ShortAccount).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var files = openedFromStick > 0 ? $"; de pe el {(openedFromStick == 1 ? "s-a deschis" : "s-au deschis")} {LogAnalyzer.Dfir.Language.RoText.Count(openedFromStick, "fișier", "fișiere")}" : "";
+        if (real.Count == 1 && !ambiguous) return $"a folosit stick-ul {PlainPhrases.Q(stick)}" + (direct ? "" : " (după toate semnele, dar nesigur)") + files;
+        if (real.Count == 0) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat, dar nu se poate stabili cine l-a folosit" + files;
+        // one real account beside Windows' own sessions: it is named, but not as the certain user (lab WS02: „conturile „labadmin”; care dintre ele”)
+        // a profile that mounted it (MountPoints2) is not a session open at the connection: say which the evidence is (round-2 review)
+        if (real.Count == 1) return direct
+            ? $"Stick-ul {PlainPhrases.Q(stick)} a fost deschis din profilul contului {PlainPhrases.Q(real[0])}; probele nu arată sigur că el l-a folosit la această conectare" + files
+            : $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când era deschis doar contul {PlainPhrases.Q(real[0])} (în afara sesiunilor Windows); probele nu arată sigur că el l-a folosit" + files;
+        if (direct) return $"Stick-ul {PlainPhrases.Q(stick)} a fost deschis din profilurile conturilor {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit la această conectare" + files;
+        return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când erau deschise conturile {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit" + files;
+    }
+
+    /// <summary>
+    /// The accounts MEDIA-USAGE would list for a medium (profiles that mounted it, else the sessions open at the connection), and whether a profile mounted it
+    /// directly (MountPoints2). The presence finding of the same medium names them the same way instead of „cineva”.
+    /// </summary>
+    internal static (List<string> Accounts, bool Direct) UsageAccounts(Ctx c, Observed m)
+    {
+        if (m.Serial.Length == 0) return ([], false);
+        var volumeToSerial = c.Events.Where(e => e.Source == "MountedVolume" && F(e, "VolumeGuid").Length > 0)
+            .GroupBy(e => F(e, "VolumeGuid"), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => MediaRegister.NormalizeSerial(F(g.First(), "Serial")), StringComparer.OrdinalIgnoreCase);
+        var mounts = c.Events.Where(e => e.Source == "MountPoints2" && F(e, "VolumeGuid").Length > 0 && T(e) is not null)
+            .Select(e => new VolumeMount(F(e, "Account"), F(e, "VolumeGuid"), T(e))).ToList();
+        var sessions = MediaUsageRules.PairSessions(c.Events.Where(e => Ev(e, "Security", 4624, 4634, 4647) && T(e) is not null).Select(e =>
+        {
+            var name = F(e, "TargetUserName");
+            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !PlainPhrases.IsOwnMachineOrWindows(name, e.Host) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
+        })).ToList();
+        var arrivals = m.Events.Where(e => Ev(e, "Microsoft-Windows-Partition/Diagnostic", 1006) && T(e) is not null).Select(e => T(e)!.Value).Distinct().OrderBy(t => t).ToList();
+        if (arrivals.Count == 0) arrivals = m.Times.Distinct().OrderBy(t => t).ToList();
+        if (arrivals.Count == 0) return ([], false);
+        var verdicts = MediaUsageRules.Attribute(m.Serial, arrivals.Select(t => new MediumConnection(t, null)).ToList(), volumeToSerial, mounts, sessions);
+        return (verdicts.SelectMany(v => v.Accounts).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList(), verdicts.Any(v => v.Status == UsageStatus.Direct));
+    }
+
     internal static void MediaUsageFindings(Ctx c, List<Finding> o)
     {
         var media = ObservedUsb(c.Events).Where(m => m.Serial.Length > 0).OrderBy(m => m.Times.DefaultIfEmpty(DateTimeOffset.MaxValue).Min()).ToList();
@@ -28,7 +68,7 @@ public static partial class Wp14Rules
         var sessions = MediaUsageRules.PairSessions(logonEvents.Select(e =>
         {
             var name = F(e, "TargetUserName");
-            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !IsMachineAccount(name) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
+            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !PlainPhrases.IsOwnMachineOrWindows(name, e.Host) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
         })).ToList();
         var files = c.Events.Where(e => e.Source is "LNK" or "JumpList")
             .Select(e => new LinkedFile<TimelineEvent>(e, e.Path, F(e, "VolumeSerial"), F(e, "DriveType"), e.Source == "LNK" ? ParseIso(F(e, "LnkFileModifiedUtc")) : T(e)))
@@ -86,6 +126,7 @@ public static partial class Wp14Rules
                 Severity = verdicts.Any(v => v.Status == UsageStatus.Ambiguous) ? Sev(c, Severity.Medium) : Severity.Low,
                 Category = c.FindingCategory, Classification = Classification.Correlated, Confidence = Confidence.Medium,
                 FirstSeenUtc = arrivals[0], LastSeenUtc = arrivals[^1], User = string.Join(", ", accounts),
+                PlainWhat = UsageStory(PlainName(Kind(m)), accounts, verdicts.Any(v => v.Status == UsageStatus.Ambiguous), verdicts.Any(v => v.Status == UsageStatus.Direct), strong, PlainPhrases.HostOf(c.Events)),
                 Description = desc,
                 ClassificationReason = "Corelație între registrul fiecărui profil (MountPoints2), MountedDevices, sesiunile de logon și scurtăturile LNK. " +
                                        "Nicio sursă nu spune singură cine a conectat stick-ul; regula arată ce se poate afirma și ce nu.",

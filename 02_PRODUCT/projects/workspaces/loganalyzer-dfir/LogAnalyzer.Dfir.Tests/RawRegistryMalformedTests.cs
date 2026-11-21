@@ -162,6 +162,46 @@ public sealed class RawRegistryMalformedTests : IDisposable
         Assert.Throws<InvalidDataException>(() => Bounded(() => Open(hive).OpenKey("")));
     }
 
+    /// <summary>A root key with one value "v" stored as big data: declared size <paramref name="declared"/>, one "db" segment list entry.</summary>
+    private static byte[] BigDataValueHive(uint declared, ushort segments)
+    {
+        const int VkCell = 0x140, DbCell = 0x200, SegList = 0x240, Seg = 0x280;
+        var hive = Hive(0, put =>
+        {
+            put(ListCell, [.. BitConverter.GetBytes(VkCell)]);
+            var vk = new byte[0x14 + 1 + 3];
+            vk[0] = (byte)'v'; vk[1] = (byte)'k';
+            BinaryPrimitives.WriteUInt16LittleEndian(vk.AsSpan(2), 1);
+            BinaryPrimitives.WriteUInt32LittleEndian(vk.AsSpan(4), declared);          // no inline bit
+            BinaryPrimitives.WriteInt32LittleEndian(vk.AsSpan(8), DbCell);
+            BinaryPrimitives.WriteInt32LittleEndian(vk.AsSpan(0x0C), 3);               // REG_BINARY
+            BinaryPrimitives.WriteUInt16LittleEndian(vk.AsSpan(0x10), 1);              // ASCII name
+            vk[0x14] = (byte)'v';
+            put(VkCell, vk);
+            var db = new byte[12];
+            db[0] = (byte)'d'; db[1] = (byte)'b';
+            BinaryPrimitives.WriteUInt16LittleEndian(db.AsSpan(2), segments);
+            BinaryPrimitives.WriteInt32LittleEndian(db.AsSpan(4), SegList);
+            put(DbCell, db);
+            put(SegList, [.. BitConverter.GetBytes(Seg), 0, 0, 0, 0]);
+            put(Seg, new byte[32]);
+        });
+        BinaryPrimitives.WriteInt32LittleEndian(hive.AsSpan(HbinBase + RootCell + 4 + 0x24), 1);
+        BinaryPrimitives.WriteInt32LittleEndian(hive.AsSpan(HbinBase + RootCell + 4 + 0x28), ListCell);
+        return hive;
+    }
+
+    [Fact]
+    public void A_big_data_value_declaring_more_bytes_than_the_hive_or_its_segments_can_hold_is_a_parse_error_before_any_allocation()
+    {
+        // 0x7FFFFFF0 bytes (about 2 GB) from a hive of 8 KB: must be rejected, not allocated (OutOfMemoryException would escape every catch for InvalidDataException)
+        var huge = Corrupt(() => Open(BigDataValueHive(0x7FFFFFF0, 1)).OpenKey(""));
+        Assert.Contains("big-data", huge.Message);
+        // smaller than the file but larger than 2 segments can hold (2 x 16344 = 32688 < 40000 > file size 8192 as well; also check a size within the file)
+        var tooManyForSegments = Corrupt(() => Open(BigDataValueHive(20000, 1)).OpenKey(""));
+        Assert.Contains("big-data", tooManyForSegments.Message);
+    }
+
     [Fact]
     public void Zero_length_truncated_and_random_hives_never_crash()
     {

@@ -24,6 +24,16 @@
     <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Helper process for MultiProcessChainTests: built first (never referenced as an assembly), then copied to <output>\chainworker\. -->
+    <ProjectReference Include="..\LogAnalyzer.Dfir.ChainWorker\LogAnalyzer.Dfir.ChainWorker.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyChainWorker" AfterTargets="Build">
+    <ItemGroup>
+      <ChainWorkerFiles Include="..\LogAnalyzer.Dfir.ChainWorker\bin\$(Configuration)\net10.0\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ChainWorkerFiles)" DestinationFiles="@(ChainWorkerFiles->'$(OutDir)chainworker\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <ItemGroup>
     <None Update="Corpus\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

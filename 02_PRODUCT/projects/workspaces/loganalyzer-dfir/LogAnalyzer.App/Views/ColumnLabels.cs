@@ -14,6 +14,7 @@ namespace LogAnalyzer.UI.Views
             ["Person"] = "Persoana", ["Accounts"] = "Conturi", ["Account"] = "Cont", ["Sids"] = "Identificatori cont (SID)",
             ["Clearance"] = "Autorizație", ["ClearanceValidFrom"] = "Autorizație valabilă de la", ["ClearanceValidTo"] = "Autorizație valabilă până la",
             ["NeedToKnow"] = "Necesitatea de a cunoaște", ["ZonesAllowed"] = "Zone permise",
+            ["LastTraining"] = "Ultima instruire", ["PledgeSigned"] = "Angajament semnat",
             ["RegistrationNumber"] = "Număr de înregistrare", ["Serial"] = "Număr de serie", ["VidPid"] = "Cod producător/produs (VID:PID)",
             ["Type"] = "Tip", ["Classification"] = "Clasificare", ["AssignedUser"] = "Utilizator", ["Zone"] = "Zonă",
             ["ValidFrom"] = "Valabil de la", ["ValidTo"] = "Valabil până la", ["Status"] = "Stare", ["Notes"] = "Observații", ["Note"] = "Observații",
@@ -23,6 +24,10 @@ namespace LogAnalyzer.UI.Views
             ["PolicyPath"] = "Calea politicii", ["Description"] = "Descriere",
             ["FromZone"] = "Din zona", ["ToZone"] = "În zona", ["Medium"] = "Suport", ["Address"] = "Adresă", ["Purpose"] = "Scop",
             ["Path"] = "Calea folderului", ["Package"] = "Pachet (nume sau KB)", ["Origin"] = "Proveniență", ["BroughtBy"] = "Adus de",
+            ["Time"] = "Ora", ["Station"] = "Stația", ["Components"] = "Componente / programe afectate", ["Performer"] = "Executant", ["Witness"] = "Martor",
+            ["AuthorizationRef"] = "Autorizare (referință)", ["PostCheckDate"] = "Verificare după intervenție: data", ["PostCheckBy"] = "Verificare după intervenție: efectuată de",
+            ["What"] = "Ce s-a copiat", ["MediumNumber"] = "Număr suport", ["MadeBy"] = "Făcută de", ["StoredAt"] = "Locul de păstrare",
+            ["RestoreTestDate"] = "Test de restaurare: data", ["RestoreTestBy"] = "Test de restaurare: efectuat de",
         };
 
         public static string For(string column) => Romanian.TryGetValue(column, out var ro) ? ro : column;

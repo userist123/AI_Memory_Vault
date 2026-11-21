@@ -1,0 +1,11 @@
+{
+  "_comment": "HOSTS-REDIRECT: hosts-file entries that known software adds on purpose. Data, not code: add a row to cover another tool. hostnames = exact names (case-insensitive); a row matches an entry when ALL its names are in the listed hostnames or the entry sits in a section whose comment contains one of sectionContains. reason = the classification reason shown in the report.",
+  "entries": [
+    {
+      "id": "docker-desktop",
+      "reason": "intrare adăugată de Docker Desktop",
+      "hostnames": ["host.docker.internal", "gateway.docker.internal", "kubernetes.docker.internal"],
+      "sectionContains": ["Added by Docker Desktop"]
+    }
+  ]
+}

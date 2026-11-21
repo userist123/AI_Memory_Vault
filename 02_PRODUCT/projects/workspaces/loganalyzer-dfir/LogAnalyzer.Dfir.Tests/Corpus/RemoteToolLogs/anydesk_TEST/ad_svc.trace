@@ -1,0 +1,11 @@
+TEST synthetic AnyDesk ad_svc.trace sample (not from a real installation)
+   info 2026-11-09 21:21:49.000       gsvc   4120   6000   21  app.init - Starting AnyDesk 0.0.0-TEST
+   info 2026-11-09 21:21:50.001       gsvc   4120   6000   21  anynet.relay_conn - Logged in from 203.0.113.7:50123 on relay 2f8a1cTEST
+   info 2026-11-09 21:21:53.500       gsvc   4120   6000   21  app.service - Incoming session request: 999000111 (TEST-alias)
+   info 2026-11-09 21:21:55.123       gsvc   4120   6000   21  app.service - Accepting from 999000111 (TEST-alias)
+   info 2026-11-09 21:21:55.900       back   4388   6044   22  app.session - Remote OS: Windows 10 (TEST)
+   info 2026-11-09 21:22:01.250       back   4388   6044   22  app.session - Authenticated with permanent token.
+warning 2026-11-09 21:30:12.000       back   4388   6044   22  app.session - File transfer: started (TEST)
+  error 2026-11-09 21:40:00.000       gsvc   4120   6000   21  app.misc - Unrelated TEST error line
+   info 2026-11-09 21:47:10.777       back   4388   6044   22  app.session - Session closed.
+   info 2026-11-09 21:47:11.000       back   4388   6044   22  app.session - Session stopped.

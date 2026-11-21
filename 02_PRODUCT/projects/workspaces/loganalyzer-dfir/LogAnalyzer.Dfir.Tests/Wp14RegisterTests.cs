@@ -193,7 +193,7 @@ public sealed class Wp14RegisterTests : IDisposable
     [Fact]
     public void Users_register_columns_and_a_valid_row()
     {
-        Assert.Equal(["Person", "Accounts", "Sids", "Clearance", "ClearanceValidFrom", "ClearanceValidTo", "NeedToKnow", "ZonesAllowed"], UsersRegister.ColumnNames);
+        Assert.Equal(["Person", "Accounts", "Sids", "Clearance", "ClearanceValidFrom", "ClearanceValidTo", "NeedToKnow", "ZonesAllowed", "LastTraining", "PledgeSigned"], UsersRegister.ColumnNames);
         var u = new UsersRegister(); u.SetCells([Ion]);
         Assert.Empty(u.Validate());
         Assert.Equal([@"CORP\ion", "ion.local"], u.Rows[0].AccountList);

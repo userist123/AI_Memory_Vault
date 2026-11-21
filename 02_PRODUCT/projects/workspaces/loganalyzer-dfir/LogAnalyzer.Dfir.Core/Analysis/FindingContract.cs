@@ -8,6 +8,12 @@ public sealed class FindingContractContext
     public Func<string, IEnumerable<string>> ParsersOf { get; init; } = _ => [];
     public DateTimeOffset? NowUtc { get; init; }
     public string ApplicationVersion { get; init; } = DfirInfo.ApplicationVersion;
+    /// <summary>The person an account belongs to (the users register), for the plain sentence; null = accounts only.</summary>
+    public Func<string, string?>? PersonOf { get; init; }
+    /// <summary>The account name the case's events give a SID (<see cref="LogAnalyzer.Dfir.Language.AccountResolver"/>); null = SIDs stay unresolved and are never printed.</summary>
+    public Func<string, string?>? AccountOfSid { get; init; }
+    /// <summary>The time zone the plain sentence is told in (the station's); null = the local one.</summary>
+    public TimeZoneInfo? Zone { get; init; }
 }
 
 /// <summary>
@@ -36,7 +42,13 @@ public static class FindingContract
     public static string ParserLabel(string parserId) => parserId switch
     {
         "EvtxParser" => "Jurnalele de evenimente (EVTX)",
+        "PsReadLineHistoryParser" => "Istoricul PowerShell PSReadLine (ConsoleHost_history.txt)",
+        "HostsFileParser" => "Fișierul hosts",
+        "PowerShellTranscriptParser" => "Transcrierile PowerShell (PowerShell_transcript*.txt)",
         "ServicesParser" => "Instantaneul serviciilor",
+        "AuditPolicyCsvParser" => "Politica de audit (auditpol)",
+        "LocalAccountsParser" => "Conturile locale și administratorii locali",
+        "BitLockerVolumesParser" => "Starea criptării discului (BitLocker)",
         "ScheduledTaskParser" => "Definițiile activităților planificate",
         "UsbDevicesParser" => "Dispozitivele USB din registry",
         "SystemHiveExecutionParser" => "Registry-ul sistemului (SYSTEM)",
@@ -46,6 +58,15 @@ public static class FindingContract
         "SoftwareHiveParser" => "Registry-ul SOFTWARE",
         "UsnJournalParser" => "Jurnalul USN",
         "SrumNetworkParser" => "SRUM (rețea)",
+        "DefenderDetectionHistoryParser" => "Istoricul detecțiilor Defender (DetectionHistory)",
+        "AnyDeskConnectionTraceParser" => "Jurnalul de sesiuni AnyDesk (connection_trace.txt)",
+        "AnyDeskTraceParser" => "Jurnalul AnyDesk (ad.trace / ad_svc.trace)",
+        "TeamViewerConnectionsParser" => "Jurnalul de sesiuni TeamViewer (Connections*.txt)",
+        "TeamViewerLogfileParser" => "Jurnalul principal TeamViewer (TeamViewer<NN>_Logfile.log)",
+        "RustDeskLogParser" => "Jurnalul RustDesk (rustdesk_rCURRENT.log, rustdesk_r*.log)",
+        "NotepadTabStateParser" => "Filele Notepad din Windows 11 (TabState)",
+        "WindowsSearchIndexParser" => "Indexul Windows Search (Windows.db)",
+        "WindowsSearchGatherParser" => "Baza gatherer Windows Search (Windows-gather.db)",
         "PcapngParser" => "Captura de rețea (PCAPNG)",
         "FirewallLogParser" => "Jurnalul firewall-ului (pfirewall.log)",
         var p when p.EndsWith("Parser", StringComparison.Ordinal) => p[..^6],
@@ -130,6 +151,7 @@ public static class FindingContract
         var rule = RuleContracts.For(f.RuleId);
         var viol = AntiOverclaim.Violations(f);
         f.AuditTrail.Add(new("anti_overclaim.check", Actor, viol.Count == 0 ? "fără încălcări" : string.Join("; ", viol)));
+        f.Plain = LogAnalyzer.Dfir.Language.PlainStory.Tell(f, ctx.PersonOf, ctx.Zone ?? TimeZoneInfo.Local, ctx.AccountOfSid);
         f.HumanSummary = $"{f.Title}. {rule?.Meaning ?? "Regulă fără descriere în catalog."} Stare: {StateLabels.Romanian(f.Status)}.";
         f.TechnicalSummary = $"{f.RuleId} v{RuleContract.RuleVersion} · severitate {f.Severity.ToSpec()} · încredere {f.Confidence.ToSpec()} · " +
                              $"{f.Classification.ToSpec()} → {f.Status.ToSpec()} · {f.SemanticType.ToSpec()} · {f.SupportingEvidence.Count} referințe de probă" +

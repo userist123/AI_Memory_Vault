@@ -37,7 +37,7 @@ namespace LogAnalyzer.UI.Services
         /// </summary>
         internal static void Initialize(string? storeDirectory)
         {
-            _service = new AuthService(storeDirectory, Classified);
+            _service = new AuthService(storeDirectory, Classified, requireNoticeAcceptance: true);   // HG 585 ID-03: the service refuses a sign-in without an accepted notice
             LogAnalyzer.Dfir.Policy.PolicyApprovals.Ledger = _service;   // review #2: policy approvals are recorded in and verified against the sealed auth audit
             OperatorIdentity.AuthenticationRequired = true;     // from now on registers / profile edits fail closed without an administrator session
             // every program the application starts is written to the sealed audit before it starts ("collector.exec"); a failed write raises the audit warning

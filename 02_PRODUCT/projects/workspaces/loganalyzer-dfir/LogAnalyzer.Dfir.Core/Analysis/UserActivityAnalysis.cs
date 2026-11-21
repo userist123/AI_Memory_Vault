@@ -14,7 +14,7 @@ public enum DriveMatch
     Possible,
 }
 
-/// <summary>One row of the user-activity view: an event of ShellBags, RecentDocs, Office MRU or the Recycle Bin ($I) with what it means and how it relates to the classified folders and removable volumes.</summary>
+/// <summary>One row of the user-activity view: an event of ShellBags, RecentDocs, Office MRU, the Open/Save dialog lists (OpenSaveMRU, LastVisitedMRU) or the Recycle Bin ($I) with what it means and how it relates to the classified folders and removable volumes.</summary>
 public sealed class UserActivityItem
 {
     public required TimelineEvent Origin { get; init; }
@@ -30,7 +30,7 @@ public sealed class UserActivityItem
     /// <summary>The classified folder the path is in or equal to ("" = none).</summary>
     public string ClassifiedRoot { get; init; } = "";
     public DriveMatch Drive { get; init; }
-    /// <summary>ShellBags only: the absolute path the known-folder root (Documente, Desktop, Descărcări, Rețea...) was resolved to, used for matching; "" = not resolved (the displayed <see cref="Path"/> is then matched as it is).</summary>
+    /// <summary>ShellBags and the Open/Save lists: the absolute path the known-folder root (Documente, Desktop, Descărcări, Rețea...) was resolved to, used for matching; "" = not resolved (the displayed <see cref="Path"/> is then matched as it is).</summary>
     public string ResolvedPath { get; init; } = "";
     /// <summary>"E:" when the path is on a drive letter, else "".</summary>
     public string DriveLetter { get; init; } = "";
@@ -62,8 +62,9 @@ public sealed class UserActivityReport
     public string Summary =>
         Unevaluable.Length > 0 ? $"Activitatea utilizatorului: {Total:N0} urme în cronologie; {Unevaluable}" :
         Total == 0
-            ? "Activitatea utilizatorului: nicio urmă ShellBags, RecentDocs, Office MRU sau Coș de reciclare ($I) în sursele citite; asta nu dovedește că nu s-a întâmplat nimic (hive-urile utilizatorilor sau Coșul pot să nu fi fost colectate: profilul „Complet”)."
-            : $"Activitatea utilizatorului: {Total:N0} urme (ShellBags {Count(UserActivityAnalysis.ShellBags):N0}, RecentDocs {Count(UserActivityAnalysis.RecentDocs):N0}, Office MRU {Count(UserActivityAnalysis.OfficeMru):N0}, Coș de reciclare {Count(UserActivityAnalysis.RecycleBin):N0}) · " +
+            ? "Activitatea utilizatorului: nicio urmă ShellBags, RecentDocs, Office MRU, Deschide/Salvează sau Coș de reciclare ($I) în sursele citite; asta nu dovedește că nu s-a întâmplat nimic (hive-urile utilizatorilor sau Coșul pot să nu fi fost colectate: profilul „Complet”)."
+            : $"Activitatea utilizatorului: {Total:N0} urme (ShellBags {Count(UserActivityAnalysis.ShellBags):N0}, RecentDocs {Count(UserActivityAnalysis.RecentDocs):N0}, Office MRU {Count(UserActivityAnalysis.OfficeMru):N0}, " +
+              $"fișiere alese în Deschide/Salvează {Count(UserActivityAnalysis.OpenSaveMru):N0}, foldere de program din Deschide/Salvează {Count(UserActivityAnalysis.LastVisitedMru):N0}, Coș de reciclare {Count(UserActivityAnalysis.RecycleBin):N0}) · " +
               (HasFolders ? $"în foldere clasificate: {Classified.Count:N0} · " : "foldere clasificate: nedefinite în profil · ") +
               $"pe volume amovibile (confirmate de istoricul dispozitivelor): {Removable.Count:N0} · posibil amovibile: {PossibleRemovable.Count:N0} · șterse din foldere clasificate sau de pe volume amovibile: {Deleted.Count:N0}.";
 }
@@ -72,15 +73,22 @@ public sealed class UserActivityReport
 /// E7 slice 3: what the user-activity artifacts say about classified folders and removable volumes. Pure function of the timeline (no I/O); the rules, the
 /// investigation page and the reports all read the same result.
 /// Evidence semantics (binding): a ShellBags time is the last update of the folder's entry by Explorer, not the first opening and not proof that a file was
-/// read; RecentDocs gives a time only to the newest entry of a key; an Office MRU time is the last open by that Office application; a Recycle Bin time is the
+/// read; RecentDocs gives a time only to the newest entry of a key; an Office MRU time is the last open by that Office application; an Open/Save list
+/// (OpenSaveMRU: a file chosen in a common Open/Save dialog; LastVisitedMRU: the last folder a program used there) gives the key time only to the entry
+/// MRUListEx names first, and no entry proves the file was read or written; a Recycle Bin time is the
 /// deletion time and a missing $R means emptied or removed content, not "never existed". None of these is, alone, a finding of a breach: the severity of the
 /// rules is DE VERIFICAT (candidate) and the owner decides later whether any of them is stronger.
 /// </summary>
 public static class UserActivityAnalysis
 {
     public const string ShellBags = "ShellBags", RecentDocs = "RecentDocs", OfficeMru = "OfficeMRU", RecycleBin = "RecycleBin";
+    /// <summary>The common Open/Save dialog lists of NTUSER (ComDlg32). CIDSizeMRU is not one of them: it names a program, not a path.</summary>
+    public const string OpenSaveMru = "OpenSaveMRU", LastVisitedMru = "LastVisitedMRU";
 
-    private static readonly HashSet<string> Sources = new(StringComparer.Ordinal) { ShellBags, RecentDocs, OfficeMru, RecycleBin };
+    private static readonly HashSet<string> Sources = new(StringComparer.Ordinal) { ShellBags, RecentDocs, OfficeMru, OpenSaveMru, LastVisitedMru, RecycleBin };
+
+    /// <summary>Whether a timeline source is one of the user-activity sources (the view, the rules and the saved context use the same list).</summary>
+    public static bool IsSource(string source) => Sources.Contains(source);
 
     /// <summary>The meaning of each source's time, printed beside the time. <paramref name="timeKnown"/> false = the row has no time of its own.</summary>
     public static string TimeMeaningFor(string source, bool timeKnown) => source switch
@@ -91,6 +99,10 @@ public static class UserActivityAnalysis
         RecentDocs => "fără oră proprie: doar cea mai nouă intrare din cheia RecentDocs primește ora cheii",
         OfficeMru when timeKnown => "ultima deschidere de către aplicația Office (câmpul [T], UTC); nu dovedește ce s-a făcut cu documentul",
         OfficeMru => "ora [T] lipsește sau nu este validă",
+        OpenSaveMru when timeKnown => "ora ultimei scrieri a cheii listei Deschide/Salvează: se aplică doar celei mai recente alegeri din listă; nu este ora deschiderii sau a salvării fișierului",
+        OpenSaveMru => "fără oră proprie: doar cea mai recentă intrare a listei Deschide/Salvează primește ora cheii",
+        LastVisitedMru when timeKnown => "ora ultimei scrieri a cheii LastVisitedMRU: se aplică doar programului folosit cel mai recent; nu este ora la care folderul a fost deschis",
+        LastVisitedMru => "fără oră proprie: doar cea mai recentă intrare a listei LastVisitedMRU primește ora cheii",
         RecycleBin when timeKnown => "ora ștergerii, scrisă când elementul a fost mutat în Coșul de reciclare ($I, UTC)",
         RecycleBin => "ora ștergerii este necunoscută în metadate",
         _ => "",
@@ -101,12 +113,20 @@ public static class UserActivityAnalysis
         ShellBags => "ShellBags (folder văzut în Explorer)",
         RecentDocs => "RecentDocs (document recent)",
         OfficeMru => "Office MRU (fișier deschis în Office)",
+        OpenSaveMru => "OpenSaveMRU (fișier ales în fereastra Deschide/Salvează)",
+        LastVisitedMru => "LastVisitedMRU (ultimul folder al unui program în Deschide/Salvează)",
         RecycleBin => "Coș de reciclare ($I)",
         _ => source,
     };
 
     /// <summary>The source's short name, for counts.</summary>
-    public static string ShortLabel(string source) => source switch { OfficeMru => "Office MRU", RecycleBin => "Coș de reciclare", _ => source };
+    public static string ShortLabel(string source) => source switch
+    {
+        OfficeMru => "Office MRU", OpenSaveMru => "Deschide/Salvează", LastVisitedMru => "Ultimul folder Deschide/Salvează", RecycleBin => "Coș de reciclare", _ => source,
+    };
+
+    /// <summary>OpenSaveMRU or LastVisitedMRU: a choice in a common Open/Save dialog, not a folder shown by Explorer or a document opened.</summary>
+    public static bool IsDialogList(string source) => source is OpenSaveMru or LastVisitedMru;
 
     /// <summary>The $R state in words; the absent case says what it does and does not mean.</summary>
     public static string RContentText(string state) => state switch
@@ -144,10 +164,27 @@ public static class UserActivityAnalysis
         }
 
         var items = new List<UserActivityItem>();
+        // Windows writes one Open/Save choice to the "*" list AND to the list of its extension: the same path in several OpenSaveMRU lists of one
+        // profile is ONE row (the newest dated one), whose detail names every list it is in (review 2026-11-18: no inflated counts)
+        var openSave = new Dictionary<string, List<TimelineEvent>>(StringComparer.OrdinalIgnoreCase);
         foreach (var e in events)
         {
-            if (!Sources.Contains(e.Source)) continue;
+            if (!IsSource(e.Source)) continue;
+            if (e.Source == OpenSaveMru && e.Path.Length > 0)
+            {
+                var key = $"{e.EvidenceId}|{F(e, "Account")}|{e.Path}";
+                if (!openSave.TryGetValue(key, out var same)) openSave[key] = same = [];
+                same.Add(e);
+                continue;
+            }
             items.Add(Build(e, roots, removable, volumeMap, evaluate));
+        }
+        foreach (var same in openSave.Values)
+        {
+            var keep = same.OrderByDescending(x => x.Time.Utc ?? DateTimeOffset.MinValue).ThenBy(x => F(x, "Extension") == "*" ? 0 : 1).First();
+            var lists = same.Select(x => F(x, "Extension")).Distinct(StringComparer.OrdinalIgnoreCase)
+                            .Select(x => x.Length == 0 ? "lista de bază" : x == "*" ? "toate extensiile" : "extensia " + x).ToList();
+            items.Add(Build(keep, roots, removable, volumeMap, evaluate, lists.Count > 1 ? lists : null));
         }
         // the relevant rows first (classified, then removable, then possible), newest first; undated rows last
         var ordered = items
@@ -160,10 +197,11 @@ public static class UserActivityAnalysis
 
     private static string F(TimelineEvent e, string key) => e.Fields.TryGetValue(key, out var v) ? v : "";
 
-    private static UserActivityItem Build(TimelineEvent e, List<(string Root, string Canonical)> roots, HashSet<string> removable, IReadOnlyDictionary<string, string>? volumeMap, bool evaluate)
+    private static UserActivityItem Build(TimelineEvent e, List<(string Root, string Canonical)> roots, HashSet<string> removable, IReadOnlyDictionary<string, string>? volumeMap, bool evaluate,
+        IReadOnlyList<string>? sameChoiceLists = null)
     {
         var path = e.Source == RecycleBin && F(e, "OriginalPath").Length > 0 ? F(e, "OriginalPath") : e.Path;
-        var resolvedPath = e.Source == ShellBags ? F(e, "ResolvedPath") : "";
+        var resolvedPath = e.Source == ShellBags || IsDialogList(e.Source) ? F(e, "ResolvedPath") : "";
         var normalized = ClassifiedAccess.Normalize(resolvedPath.Length > 0 ? resolvedPath : path, volumeMap);
         var root = "";
         if (evaluate)
@@ -179,7 +217,8 @@ public static class UserActivityAnalysis
             ? (F(e, "OwnerSid").Length > 0 ? "SID " + F(e, "OwnerSid") : e.User)
             : F(e, "Account") is { Length: > 0 } acc ? acc : e.User;
         var rcontent = e.Source == RecycleBin ? F(e, "RContent") : "";
-        var relevance = root.Length > 0 ? $"Folder clasificat: {root}" + (resolvedPath.Length > 0 ? $" (calea afișată de Explorer a fost rezolvată la {resolvedPath})" : "") : "";
+        var shownBy = IsDialogList(e.Source) ? "în fereastra Deschide/Salvează" : "de Explorer";
+        var relevance = root.Length > 0 ? $"Folder clasificat: {root}" + (resolvedPath.Length > 0 ? $" (calea afișată {shownBy} a fost rezolvată la {resolvedPath})" : "") : "";
         if (drive == DriveMatch.Removable)
             relevance += (relevance.Length > 0 ? "; " : "") + $"Volum amovibil {letter} (litera apare în istoricul dispozitivelor din caz)";
         else if (drive == DriveMatch.Possible)
@@ -189,7 +228,8 @@ public static class UserActivityAnalysis
         {
             Origin = e, Source = e.Source, SourceLabel = SourceLabel(e.Source), Path = path, TimeUtc = time,
             TimeText = time is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC" : "fără oră",
-            TimeMeaning = TimeMeaningFor(e.Source, known), Who = who.Length > 0 ? who : "necunoscut în sursă", Detail = DetailOf(e, rcontent),
+            TimeMeaning = TimeMeaningFor(e.Source, known), Who = who.Length > 0 ? who : "necunoscut în sursă",
+            Detail = DetailOf(e, rcontent) + (sameChoiceLists is { } sl ? $"; aceeași cale apare în {sl.Count} liste ({string.Join(", ", sl)}): numărată o singură dată" : ""),
             ClassifiedRoot = root, ResolvedPath = resolvedPath, Drive = drive, DriveLetter = letter, Relevance = relevance, RContent = rcontent,
         };
     }
@@ -211,6 +251,17 @@ public static class UserActivityAnalysis
             case OfficeMru:
                 parts.Add($"{F(e, "App")} {F(e, "OfficeVersion")}, {F(e, "MruKind")}");
                 break;
+            case OpenSaveMru:
+            case LastVisitedMru:
+                if (F(e, "ExeName") is { Length: > 0 } exe) parts.Add($"programul „{exe}”");
+                if (e.Source == OpenSaveMru && F(e, "Extension") is { Length: > 0 } ext) parts.Add(ext == "*" ? "lista pentru toate extensiile" : $"lista extensiei {ext}");
+                if (e.Source == LastVisitedMru) parts.Add("perechea program–folder din lista LastVisitedMRU (nu o alegere separată de fișier)");
+                parts.Add(F(e, "MruListed") == "false" ? "neinclusă în ordinea listei (MRUListEx)"
+                          : int.TryParse(F(e, "MruPosition"), out var mp) ? $"poziția {mp + 1} în listă" : "poziție necunoscută");
+                if (F(e, "ResolutionNote") is { Length: > 0 } mrn) parts.Add(mrn);
+                if (F(e, "DecodeNote") is { Length: > 0 } dn) parts.Add("avertismente la decodare: " + dn);
+                parts.Add("alegerea în fereastră nu dovedește că fișierul a fost citit sau scris");
+                break;
             case RecycleBin:
                 var size = F(e, "OriginalSize");
                 parts.Add(long.TryParse(size, out var n) && n >= 0 ? $"{n:N0} octeți" : "dimensiune necunoscută");
@@ -230,7 +281,7 @@ public static class UserActivityAnalysis
         var l = new List<(string, bool)>();
         if (report is null)
         {
-            l.Add(("Activitatea utilizatorului (ShellBags, RecentDocs, Office MRU, Coș de reciclare $I) nu a fost evaluată de acest raport: ea provine din investigația stației cu profilul „Complet” (pagina Investigație, fila „Activitatea utilizatorului”).", false));
+            l.Add(("Activitatea utilizatorului (ShellBags, RecentDocs, Office MRU, Deschide/Salvează, Coș de reciclare $I) nu a fost evaluată de acest raport: ea provine din investigația stației cu profilul „Complet” (pagina Investigație, fila „Activitatea utilizatorului”).", false));
             return l;
         }
         l.Add(("Activitatea utilizatorului — urme ale folosirii folderelor și fișierelor", true));
@@ -241,7 +292,7 @@ public static class UserActivityAnalysis
             l.Add(($"  {i.SourceLabel} · {i.Path} · {i.TimeText} ({i.TimeMeaning}) · {i.Who} · {i.Relevance}" + (i.IsDeletion ? $" · {RContentText(i.RContent)}" : ""), false));
         var more = report.Items.Count(i => i.IsRelevant) - strong.Count;
         if (more > 0) l.Add(($"  … încă {more} urme relevante (în pagina Investigație, fila „Activitatea utilizatorului”).", false));
-        l.Add(("Limită: aceste urme arată că Explorer a afișat un folder, că un document a fost deschis recent sau că un element a fost șters; nu dovedesc citirea, copierea sau scoaterea unui fișier. Rezultatul este DE VERIFICAT, nu NECONFORM; severitatea o stabilește proprietarul procedurii.", false));
+        l.Add(("Limită: aceste urme arată că Explorer a afișat un folder, că un document a fost deschis recent, că un fișier a fost ales într-o fereastră Deschide/Salvează sau că un element a fost șters; nu dovedesc citirea, copierea sau scoaterea unui fișier. Rezultatul este DE VERIFICAT, nu NECONFORM; severitatea o stabilește proprietarul procedurii.", false));
         return l;
     }
 }

@@ -11,6 +11,8 @@ public sealed class EvidenceContext
 {
     public static readonly EvidenceContext Empty = new();
 
+    /// <summary>Absolute case folder (for the stored-copy paths in the manual verification steps); null = unknown.</summary>
+    public string? CaseRoot { get; init; }
     public IReadOnlyList<EvidenceItem> Items { get; init; } = [];
     public IReadOnlyList<TimelineEvent> Timeline { get; init; } = [];
     public IReadOnlyList<ParseResult> Parsing { get; init; } = [];

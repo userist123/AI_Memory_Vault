@@ -534,6 +534,58 @@
         "note": "THIRD_PARTY_NOTICES.md QuestPDF entry: owner checks eligibility against the licence terms or buys a commercial licence.",
         "tests": ""
       }
+    },
+    {
+      "id": "EVAL-ADVANCED-PAGES-NOT-CASE",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Advanced pages (Panou general, Firul atacului, Conturi locale si USB) show a separately loaded data set, not the open case: 16.161 events / 0 alerts / no attack next to a case with 67.123 events, 237 findings and a critical incident chain.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Fixed: MainViewModel.CaseWorkspace.cs loads the open case into the advanced pages (banner WorkspaceSourceLine); verified on screen. Tests CaseWorkspaceTests.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-SRUM-NETWORK-INTERMITTENT",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "SRUM network usage parse fails intermittently on a live copy (JetAttachDatabase2 JET -550, dirty ESE database); with it the same station gives 129 high findings instead of 63.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Fixed: SRUM ESE logs collected (srum_log) and replayed with esentutl /r on the working copy after a SHA-256 check (SrumNetworkParser.VerifiedSrumLogs). Tests SrumRecoveryTests.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-SUMMARY-FINDINGS-REJECTED",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "The overflow summaries (Alte N blocuri PowerShell / linii de comanda) carry no supporting evidence, are rejected by ProvenanceBinder and never reach the report.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Fixed: overflow summaries carry the first references of the unlisted items. Tests PowerShellCommandLineTests.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-USERPATH-CALIBRATION",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Userpath execution/upload rules raise high findings for signed per-user applications (browser, AI clients) installed in the profile.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Fixed: SignatureCalibration lowers one level a live-collected signed per-user program (not -CORRELATED). Tests SignatureCalibrationTests.",
+        "tests": ""
+      }
     }
   ]
 }

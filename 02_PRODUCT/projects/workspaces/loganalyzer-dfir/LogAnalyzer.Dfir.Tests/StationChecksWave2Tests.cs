@@ -66,7 +66,9 @@ public class StationChecksWave2Tests
         Assert.Equal(ControlStatus.Neconform, on.Status);
         Assert.Contains("fișiere fără cablu", on.Detail);
         Assert.Equal(ControlStatus.DeVerificat, Check(Station(true, ("Bluetooth.ComponentCount", "2"), ("Bluetooth.ServiceStart", "4")), "N04").Status);
-        Assert.Equal(ControlStatus.Conform, Check(Station(true, ("Bluetooth.ComponentCount", "0"), ("Bluetooth.ServiceStart", Absent)), "N04").Status);
+        Assert.Equal(ControlStatus.Conform, Check(Station(true, ("Bluetooth.ComponentCount", "0"), ("Bluetooth.ServiceStart", Absent), ("Bluetooth.PairedCount", "0")), "N04").Status);
+        // review 2026-11-08: with the pairing list unread, "no radio now" is not enough for CONFORM
+        Assert.Equal(ControlStatus.Nedeterminat, Check(Station(true, ("Bluetooth.ComponentCount", "0"), ("Bluetooth.ServiceStart", Absent)), "N04").Status);
     }
 
     [Fact]

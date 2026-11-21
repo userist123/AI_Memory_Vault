@@ -52,8 +52,29 @@ public sealed partial class CaseWorkspace
         Zone = TryZone(info.Timezone);
         _custodyChain = new HashChain(Path.Combine(Root, "Logs", "chain_of_custody.jsonl"));
         _auditChain = new HashChain(Path.Combine(Root, "Logs", "audit_chain.jsonl"));
-        _evidenceCounter = Json.ReadLines<EvidenceItem>(EvidenceIndexPath).Count();
+        _evidenceCounter = CountEvidence(EvidenceIndexPath);
     }
+
+    /// <summary>
+    /// Number of index entries. A damaged index stops the case from opening with a message that says where the rewrite backup is (a crash in the middle
+    /// of a state change can leave the index damaged, review 2026-11-17); the case is never repaired here, the operator decides.
+    /// </summary>
+    private static int CountEvidence(string index)
+    {
+        try { return Json.ReadLines<EvidenceItem>(index).Count(); }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException)
+        {
+            throw new InvalidDataException(DamagedIndexMessage(index, File.Exists(index + ".tmp")), ex);
+        }
+    }
+
+    internal static string DamagedIndexMessage(string index, bool backupExists) =>
+        $"Indexul probelor cazului este deteriorat ({index}); cazul nu se deschide, iar aplicația nu îl repară. " +
+        (backupExists
+            ? $"Lângă el există copia completă scrisă chiar înainte de ultima schimbare de stare a unei probe ({index}.tmp); o oprire bruscă în timpul acelei " +
+              "schimbări poate lăsa indexul astfel. Comparați cele două fișiere; dacă copia este cea bună, puneți-o în locul indexului (păstrați indexul " +
+              "deteriorat ca probă) și deschideți din nou cazul. Schimbarea de stare din copie poate să nu aibă intrare în lanțul de custodie."
+            : "Nu există o copie de rescriere (.tmp); verificați fișierul și lanțul de custodie al cazului.");
 
     /// <summary>Set when the case has no complete scope (a case created before WP3: "scop incomplet (caz vechi)") or only a provisional one.</summary>
     public string? ScopeNote => Info.Scope.MissingFields().Count > 0 ? "scop incomplet (caz vechi)"
@@ -101,6 +122,41 @@ public sealed partial class CaseWorkspace
         ws.Audit("case.created", $"name={info.Name} host={info.Host}");
         if (info.Scope.Provisional) ws.Audit("case.scope_provisional", ws.ScopeNote!);
         return ws;
+    }
+
+    /// <summary>
+    /// <see cref="Create"/> for a folder that a component of the application wrote to before the case existed (the live device journal of the station's
+    /// LIVE case, lab 2026-11-09: once it existed, every later report and officer export of that station failed with "Case folder is not empty").
+    /// Only plain files named in <paramref name="preCaseFiles"/> are accepted: they are set aside, the case is created in the empty folder, and they are
+    /// put back unchanged (the case audit records each one). Any other content is refused exactly as <see cref="Create"/> refuses it.
+    /// </summary>
+    public static CaseWorkspace CreateKeepingPreCaseFiles(string root, CaseInfo info, IReadOnlyCollection<string> preCaseFiles)
+    {
+        if (!Directory.Exists(root)) return Create(root, info);
+        var entries = Directory.EnumerateFileSystemEntries(root).ToList();
+        if (entries.Count == 0) return Create(root, info);
+        if (!entries.All(e => File.Exists(e) && new FileInfo(e).LinkTarget is null && preCaseFiles.Contains(Path.GetFileName(e), StringComparer.OrdinalIgnoreCase)))
+            throw new IOException($"Case folder is not empty: {root}");
+        var aside = root.TrimEnd(Path.DirectorySeparatorChar) + ".precase-" + Guid.NewGuid().ToString("N");
+        Directory.CreateDirectory(aside);
+        var moved = new List<(string From, string To)>();
+        try
+        {
+            foreach (var e in entries) { var to = Path.Combine(aside, Path.GetFileName(e)); File.Move(e, to); moved.Add((e, to)); }
+            var ws = Create(root, info);
+            foreach (var (from, to) in moved)
+            {
+                File.Move(to, from);
+                ws.Audit("case.precase_file_kept", $"{Path.GetFileName(from)} sha256={Hashing.Sha256File(from)} (scris de aplicație înainte de crearea cazului)");
+            }
+            moved.Clear();
+            return ws;
+        }
+        finally
+        {
+            foreach (var (from, to) in moved) if (File.Exists(to) && !File.Exists(from)) File.Move(to, from);   // creation failed: put everything back
+            try { if (!Directory.EnumerateFileSystemEntries(aside).Any()) Directory.Delete(aside); } catch (IOException) { }
+        }
     }
 
     /// <summary>
@@ -156,7 +212,7 @@ public sealed partial class CaseWorkspace
     /// <summary>Copies an external file into Raw/ (never moves the original) and registers it.</summary>
     public EvidenceItem ImportFile(string originalPath, string source, string sourceType, TemporalType temporal,
                                    string collector, string collectorVersion, Sensitivity sensitivity = Sensitivity.Confidential,
-                                   string? parentEvidenceId = null, string notes = "")
+                                   string? parentEvidenceId = null, string notes = "", string? timezone = null)
     {
         ThrowIfReadOnly();
         var dir = RawDir(source);
@@ -165,14 +221,14 @@ public sealed partial class CaseWorkspace
         using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
             src.CopyTo(dst);
         File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(originalPath));
-        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes);
+        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes, timezone: timezone);
     }
 
     /// <summary>Registers a file already written inside the case (e.g. by wevtutil). Hashes it and makes it read-only.</summary>
     public EvidenceItem RegisterStored(string storedFullPath, string originalPath, string source, string sourceType, TemporalType temporal,
                                        string collector, string collectorVersion, string action = "acquired",
                                        Sensitivity sensitivity = Sensitivity.Confidential, string? parentEvidenceId = null, string notes = "",
-                                       EvidenceStatus status = EvidenceStatus.Success)
+                                       EvidenceStatus status = EvidenceStatus.Success, string? timezone = null, DateTimeOffset? acquiredAtUtc = null)
     {
         ThrowIfReadOnly();
         var full = Path.GetFullPath(storedFullPath);
@@ -185,9 +241,14 @@ public sealed partial class CaseWorkspace
         EvidenceItem item;
         lock (_gate)
         {
-            item = new EvidenceItem
+            // the id is allocated under the index file's write handle, so two processes (or two workspace objects) on one case never issue the same id
+            EvidenceItem? built = null;
+            SharedAppend.WriteAfterLastLine(EvidenceIndexPath, lastLine =>
             {
-                EvidenceId = $"EV-{++_evidenceCounter:D6}",
+                _evidenceCounter = Math.Max(_evidenceCounter, LastEvidenceNumber(lastLine)) + 1;
+                built = new EvidenceItem
+            {
+                EvidenceId = $"EV-{_evidenceCounter:D6}",
                 CaseId = Info.CaseId,
                 Source = source,
                 SourceType = sourceType,
@@ -196,10 +257,11 @@ public sealed partial class CaseWorkspace
                 OriginalName = Path.GetFileName(originalPath),
                 Size = fi.Length,
                 Sha256 = sha,
-                AcquiredAtUtc = DateTimeOffset.UtcNow,
+                AcquiredAtUtc = acquiredAtUtc ?? DateTimeOffset.UtcNow,
                 Host = Info.Host,
                 User = Info.User,
-                Timezone = Info.Timezone,
+                // the zone of the station the file came from: the case machine's zone unless the caller knows better ("" = not known, e.g. a file imported from elsewhere)
+                Timezone = timezone ?? Info.Timezone,
                 Collector = collector,
                 CollectorVersion = collectorVersion,
                 AcquisitionMethod = action,
@@ -210,12 +272,29 @@ public sealed partial class CaseWorkspace
                 ParentEvidenceId = parentEvidenceId,
                 Notes = notes,
             };
-            Json.AppendLine(EvidenceIndexPath, item);
+                return System.Text.Json.JsonSerializer.Serialize(built, Json.Line) + "\n";
+            });
+            item = built!;
         }
         WarnIfCollectorIsAdministrator();
         Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, action, item.EvidenceId, originalPath, item.StoredPath, sha, collector, collectorVersion, "", ""));
         Audit("evidence.registered", $"{item.EvidenceId} {item.Source} {item.StoredPath} sha256={sha}");
         return item;
+    }
+
+    /// <summary>The number in "EV-nnnnnn" of the last index line; 0 when the line is missing or does not parse (the in-memory counter then applies).</summary>
+    private static int LastEvidenceNumber(string? lastLine)
+    {
+        if (lastLine is null) return 0;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(lastLine);
+            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && doc.RootElement.TryGetProperty("evidenceId", out var id) && id.ValueKind == System.Text.Json.JsonValueKind.String
+                && id.GetString() is { } v && v.StartsWith("EV-", StringComparison.Ordinal) && int.TryParse(v.AsSpan(3), out var n) && n > 0) return n;
+        }
+        catch (System.Text.Json.JsonException) { }
+        return 0;
     }
 
     /// <summary>Records a parser or transformation applied to existing evidence (custody of derived data).</summary>
@@ -239,7 +318,7 @@ public sealed partial class CaseWorkspace
                 CollectorAccount = Unknown(e.CollectorAccount), CollectorMachine = Unknown(e.CollectorMachine),
                 SourceSystem = Unknown(e.SourceSystem), MediaId = Unknown(e.MediaId),
             };
-            using (var w = new CsvWriter(CustodyCsvPath, CustodyEntry.Header, append: true)) w.WriteRow(e.Row());
+            CsvWriter.AppendShared(CustodyCsvPath, CustodyEntry.Header, e.Row());
             _custodyChain.Append(e);
         }
     }
@@ -289,16 +368,18 @@ public sealed partial class CaseWorkspace
         if (_readOnlyReason is { } ro) return StateResult.Refuse("caz doar pentru citire: " + ro);
         lock (_gate)
         {
-            var all = LoadEvidence().ToList();
-            var item = all.FirstOrDefault(e => e.EvidenceId == evidenceId);
-            if (item is null) return StateResult.Refuse($"evidență necunoscută: {evidenceId}");
-            if (to == EvidenceState.Disposed) return StateResult.Refuse("DISPOSED se setează doar manual, cu doi aprobatori (MarkDisposed)");
-            if (item.State == EvidenceState.Disposed) return StateResult.Refuse("evidența este DISPOSED (stare finală)");
-            if (!NextState.TryGetValue(item.State, out var allowed) || allowed != to)
-                return StateResult.Refuse($"tranziție nepermisă {Label(item.State)} -> {Label(to)}" + (NextState.TryGetValue(item.State, out var a) ? $" (permis doar -> {Label(a)})" : ""));
-            var from = item.State;
-            item.State = to;
-            RewriteEvidenceIndex(all);
+            var from = EvidenceState.Acquired;
+            var refused = UpdateEvidenceIndex(evidenceId, e =>
+            {
+                if (to == EvidenceState.Disposed) return "DISPOSED se setează doar manual, cu doi aprobatori (MarkDisposed)";
+                if (e.State == EvidenceState.Disposed) return "evidența este DISPOSED (stare finală)";
+                if (!NextState.TryGetValue(e.State, out var allowed) || allowed != to)
+                    return $"tranziție nepermisă {Label(e.State)} -> {Label(to)}" + (NextState.TryGetValue(e.State, out var a) ? $" (permis doar -> {Label(a)})" : "");
+                from = e.State;
+                e.State = to;
+                return null;
+            }, out var item);
+            if (refused is not null) return StateResult.Refuse(refused);
             Custody(new CustodyEntry(DateTimeOffset.UtcNow, string.IsNullOrWhiteSpace(actor) ? OperatorIdentity.Who : actor, "state.transition", evidenceId, "", item.StoredPath,
                 item.Sha256, "", "", "", $"{Label(from)}->{Label(to)}"));
             Audit("evidence.state", $"{evidenceId} {Label(from)}->{Label(to)}");
@@ -318,12 +399,13 @@ public sealed partial class CaseWorkspace
             var a1 = (approver1 ?? "").Trim(); var a2 = (approver2 ?? "").Trim();
             if (a1.Length == 0 || a2.Length == 0) return StateResult.Refuse("sunt necesari doi aprobatori");
             if (string.Equals(a1, a2, StringComparison.OrdinalIgnoreCase)) return StateResult.Refuse("cei doi aprobatori trebuie să fie persoane distincte");
-            var all = LoadEvidence().ToList();
-            var item = all.FirstOrDefault(e => e.EvidenceId == evidenceId);
-            if (item is null) return StateResult.Refuse($"evidență necunoscută: {evidenceId}");
-            if (item.State != EvidenceState.Archived) return StateResult.Refuse($"DISPOSED se poate marca doar din ARCHIVED (acum {Label(item.State)})");
-            item.State = EvidenceState.Disposed;
-            RewriteEvidenceIndex(all);
+            var refused = UpdateEvidenceIndex(evidenceId, e =>
+            {
+                if (e.State != EvidenceState.Archived) return $"DISPOSED se poate marca doar din ARCHIVED (acum {Label(e.State)})";
+                e.State = EvidenceState.Disposed;
+                return null;
+            }, out var item);
+            if (refused is not null) return StateResult.Refuse(refused);
             Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, "state.disposed", evidenceId, "", item.StoredPath, item.Sha256, "", "", "",
                 $"ARCHIVED->DISPOSED approvers={a1};{a2} reason={reason}".ReplaceLineEndings(" ")));
             Audit("evidence.disposed_mark", $"{evidenceId} approvers={a1};{a2}");
@@ -331,11 +413,29 @@ public sealed partial class CaseWorkspace
         }
     }
 
-    private void RewriteEvidenceIndex(List<EvidenceItem> items)
+    /// <summary>
+    /// Changes one evidence entry of the index under the index file's write handle, so an entry another process appends meanwhile is neither dropped nor
+    /// given a duplicate id (a temp file + move replaced the whole index). <paramref name="change"/> returns the refusal reason, or null after it changed
+    /// the entry; nothing is written on a refusal. Returns the refusal, or null with <paramref name="item"/> = the changed entry. Same line format as before.
+    /// </summary>
+    private string? UpdateEvidenceIndex(string evidenceId, Func<EvidenceItem, string?> change, out EvidenceItem item)
     {
-        var tmp = EvidenceIndexPath + ".tmp";
-        File.WriteAllLines(tmp, items.Select(i => System.Text.Json.JsonSerializer.Serialize(i, Json.Line)));
-        File.Move(tmp, EvidenceIndexPath, overwrite: true);
+        string? refusal = $"evidență necunoscută: {evidenceId}";
+        EvidenceItem? found = null;
+        if (File.Exists(EvidenceIndexPath))
+            SharedAppend.RewriteUnderHandle(EvidenceIndexPath, text =>
+            {
+                var all = text.Split('\n').Select(l => l.TrimEnd('\r')).Where(l => !string.IsNullOrWhiteSpace(l))
+                    .Select(l => System.Text.Json.JsonSerializer.Deserialize<EvidenceItem>(l, Json.Line) ?? throw new InvalidDataException($"Bad JSONL line in {EvidenceIndexPath}"))
+                    .ToList();
+                found = all.FirstOrDefault(e => e.EvidenceId == evidenceId);
+                if (found is null) return null;
+                refusal = change(found);
+                if (refusal is not null) return null;
+                return string.Concat(all.Select(i => System.Text.Json.JsonSerializer.Serialize(i, Json.Line) + Environment.NewLine));
+            });
+        item = found!;
+        return refusal;
     }
 
     public void SetLegalHold(bool on, string reason)
@@ -371,11 +471,7 @@ public sealed partial class CaseWorkspace
 
     public void RecordCollection(CollectionAuditRecord r)
     {
-        lock (_gate)
-        {
-            using var w = new CsvWriter(CollectionAuditPath, CollectionAuditRecord.Header, append: true);
-            w.WriteRow(r.Row());
-        }
+        lock (_gate) CsvWriter.AppendShared(CollectionAuditPath, CollectionAuditRecord.Header, r.Row());
         Audit("collector.finished", $"{r.Collector} status={r.Status.ToSpec()} exit={r.ExitCode} {r.Error}");
     }
 
@@ -386,7 +482,7 @@ public sealed partial class CaseWorkspace
         var d = detail.ReplaceLineEndings(" ");
         lock (_gate)
         {
-            File.AppendAllText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{OperatorIdentity.Who}\t{action}\t{d}\n");
+            SharedAppend.WriteText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{OperatorIdentity.Who}\t{action}\t{d}\n");
             _auditChain.Append(new AuditEntry(now, OperatorIdentity.Who, action, d));
         }
     }

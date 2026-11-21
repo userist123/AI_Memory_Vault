@@ -97,7 +97,8 @@ public sealed class PcapngParser : EvidenceParserBase
             {
                 if (PacketDecoder.ParseTlsClientHello(payload) is { } tls)
                     Emit(sink, result, item, f, "TLS", p, $"TLS ClientHello SNI={(tls.Sni.Length > 0 ? tls.Sni : "(none)")} → {p.Dst}:{p.DstPort}",
-                         dnsName: tls.Sni, fields: new() { ["SNI"] = tls.Sni, ["RecordVersion"] = tls.RecordVersion, ["ALPN"] = tls.Alpn });
+                         dnsName: tls.Sni, fields: new() { ["SNI"] = tls.Sni, ["RecordVersion"] = tls.RecordVersion, ["ALPN"] = tls.Alpn,
+                         ["JA3"] = PacketDecoder.Ja3(payload)?.Ja3 ?? "", ["JA3Hash"] = PacketDecoder.Ja3(payload)?.Ja3Md5 ?? "" });
                 else if (PacketDecoder.ParseHttpRequest(payload) is { } http)
                     Emit(sink, result, item, f, "HTTP", p, $"HTTP {http.RequestLine} Host={http.Host}",
                          dnsName: http.Host, fields: new() { ["RequestLine"] = http.RequestLine, ["HTTPHost"] = http.Host, ["UserAgent"] = http.UserAgent });

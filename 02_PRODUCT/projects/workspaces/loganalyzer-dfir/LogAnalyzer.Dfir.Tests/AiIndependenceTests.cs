@@ -6,6 +6,7 @@ using Xunit;
 namespace LogAnalyzer.Dfir.Tests;
 
 /// <summary>Owner decision 14: collection and interpretation are complete and deterministic without any AI; AI is an optional explanation layer.</summary>
+[Collection("AppMode")]   // resets / initialises the process-wide AppModeContext like the other AppMode tests
 public sealed class AiIndependenceTests
 {
     private static readonly string[] SharedAssemblies = ["LogAnalyzer.Core", "LogAnalyzer.Dfir.Core", "LogAnalyzer.Dfir.Windows"];

@@ -22,9 +22,12 @@ public static class Program
         if (args.Length >= 1 && args[0] == "report-sign") { Environment.ExitCode = ReportCli.Sign(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "verify-report") { Environment.ExitCode = ReportCli.Verify(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "verify-archive") { Environment.ExitCode = ReportCli.VerifyArchive(args, Console.Out); return; }
+        if (args.Length >= 1 && args[0] == "compare-case") { Environment.ExitCode = ReportCli.CompareCase(args, Console.Out); return; }
         // Security audit #3: licences are ECDSA signatures made with an offline key (the former salted-hash scheme is gone).
         if (args.Length >= 1 && args[0] == "license-keygen") { Environment.ExitCode = LicenseCli.Keygen(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "license-sign") { Environment.ExitCode = LicenseCli.Sign(args, Console.Out); return; }
+        // Master plan 6.6: the administrator approves the Volatility 3 executable and its symbol folder (pinned hashes in tools.json).
+        if (args.Length >= 1 && args[0] == "volatility-profile") { Environment.ExitCode = ToolsCli.VolatilityProfile(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "hardware-id")
         {
             try { Console.WriteLine(new LicenseService().GetHardwareId()); }
@@ -52,6 +55,11 @@ public static class Program
         Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>...");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport-semnat.pdf> --officer-fingerprint <amprenta certificatului> --report-sha256 <amprenta raportului> [--ca <CA>]... [--crl <CRL>]...");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip> [<sha256-manifest> | <cheie-publică>]...");
+        Console.WriteLine("  LogAnalyzer.KeyGen compare-case <caz-1 (folder sau arhivă .zip)> <caz-2>   (compară jurnalele înlănțuite: identice / copie mai veche / ramificate la Seq N)");
+        Console.WriteLine();
+        Console.WriteLine("Unelte externe (administratorul stației):");
+        Console.WriteLine("  LogAnalyzer.KeyGen volatility-profile <vol.exe> <folder-simboluri> [--timeout <minute>] [--profile-dir <folder>]");
+        Console.WriteLine("    ca administrator: fixează amprentele folderului uneltei și ale simbolurilor în %PROGRAMDATA%\\LogAnalyzer\\tools (protejat).");
         Console.WriteLine();
         Console.WriteLine("Pachete de date de detecție:");
         Console.WriteLine("  LogAnalyzer.KeyGen datapack-keygen <fișier-cheie-privată>");

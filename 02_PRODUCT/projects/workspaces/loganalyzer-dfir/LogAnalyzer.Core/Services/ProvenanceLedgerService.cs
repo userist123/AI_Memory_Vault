@@ -85,7 +85,7 @@ namespace LogAnalyzer.Core.Services
                     expectedPrev = entry.EntryHash;
                 }
 
-                return (true, $"✅ Integritatea întregului lanț probatoriu ({_entries.Count} intrări) a fost verificată cu succes criptografic!", 0);
+                return (true, $"Integritatea întregului lanț probatoriu ({_entries.Count} intrări) a fost verificată cu succes criptografic!", 0);
             }
         }
 

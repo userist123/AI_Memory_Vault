@@ -19,5 +19,7 @@
     <ProjectReference Include="..\LogAnalyzer.App\LogAnalyzer.App.csproj" />
     <!-- F3 / F4: the report verifier and the archive verifier of the command line (report-keygen, verify-report, verify-archive). -->
     <ProjectReference Include="..\LogAnalyzer.KeyGen\LogAnalyzer.KeyGen.csproj" />
+    <!-- TurnstileStarvationTests starts the real multi-process writer; built first (the exe is read from its own bin folder, nothing is referenced). -->
+    <ProjectReference Include="..\LogAnalyzer.Dfir.ChainWorker\LogAnalyzer.Dfir.ChainWorker.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

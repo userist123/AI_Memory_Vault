@@ -19,7 +19,12 @@ namespace LogAnalyzer.UI.ViewModels
             Table = table;
             Data = new DataTable(table.ToString());
             foreach (var c in ProfileTables.Columns(table)) Data.Columns.Add(c, typeof(string));
+            // the hint is level-dependent text: it follows the Simplu / Expert switch (2026-10-23 PC walkthrough: it stayed in Expert after switching to Simplu)
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
         }
+
+        // a named method, not a lambda: the weak event manager keeps only a weak reference to the handler's target
+        private void OnLevelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => OnPropertyChanged(nameof(Hint));
 
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
@@ -81,6 +86,9 @@ namespace LogAnalyzer.UI.ViewModels
             Data.Rows.Cast<DataRow>().Select(r => r.ItemArray.Select(v => v?.ToString() ?? "").ToArray()).Where(r => r.Any(c => !string.IsNullOrWhiteSpace(c))).ToList();
     }
 
+    /// <summary>One entry of the „Nivelul stației” list: <see cref="Name"/> is what the profile stores ("" = nedefinit), <see cref="Display"/> what is shown.</summary>
+    public sealed record StationLevelChoice(string Name, string Display);
+
     /// <summary>
     /// "Profil de proceduri" (owner decisions 18 and 19): working hours, log maintenance, approved software, expected GPO policy, zones and transfers,
     /// entered by hand, pasted or imported. It is data only: nothing here is applied to Windows. A section left empty is "nedefinit", never "conform".
@@ -90,6 +98,8 @@ namespace LogAnalyzer.UI.ViewModels
         private ProcedureProfile _profile = new();
         private readonly ProfileProvider _provider;
 
+        /// <summary>R7a: the library of known-good / known-bad fingerprint sets, shown under the tables.</summary>
+        public HashSetsViewModel HashSets { get; } = new();
         public ObservableCollection<ProfileTableViewModel> Tables { get; } = new();
         public ObservableCollection<string> Issues { get; } = new();
         public ObservableCollection<string> SectionLines { get; } = new();
@@ -107,6 +117,34 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _status = "Introduceți datele în tabele (sau lipiți / importați), apoi apăsați „Salvează”. Secțiunile goale rămân „nedefinit”. Nimic din profil nu se aplică pe Windows.";
         [ObservableProperty] private bool _replaceOnImport;
         [ObservableProperty] private string _sha256 = "";
+
+        /// <summary>The station's classification level as the profile stores it: the level's Name, or "" = nedefinit. Rules that depend on it (A18 log retention, N14 internet) read it.</summary>
+        [ObservableProperty] private string _stationLevel = "";
+        public const string StationLevelHelp = "Nivelul de secretizare al stației. Regulile care depind de nivel (cât timp se păstrează jurnalele de acces, A18, și dacă stația poate avea internet, N14) folosesc această valoare; fără ea rezultă NEDETERMINAT.";
+        /// <summary>„nedefinit”, then the national levels, then NATO / UE, in the order of <see cref="LogAnalyzer.Dfir.Model.SecrecyLevels.All"/>.</summary>
+        public static System.Collections.Generic.IReadOnlyList<StationLevelChoice> StationLevelChoices { get; } = BuildStationLevelChoices();
+        private static System.Collections.Generic.List<StationLevelChoice> BuildStationLevelChoices()
+        {
+            var all = LogAnalyzer.Dfir.Model.SecrecyLevels.All;
+            var l = new System.Collections.Generic.List<StationLevelChoice> { new("", "nedefinit") };
+            l.AddRange(all.Where(x => x.Scheme == LogAnalyzer.Dfir.Model.SecrecyScheme.National).Select(x => new StationLevelChoice(x.Name, x.Name)));
+            l.AddRange(all.Where(x => x.Scheme != LogAnalyzer.Dfir.Model.SecrecyScheme.National).Select(x => new StationLevelChoice(x.Name, x.Name)));
+            return l;
+        }
+
+        /// <summary>HG 585 ID-03: the system-use notice shown (and accepted) at sign-in; empty = the module default text.</summary>
+        [ObservableProperty] private string _signInNotice = "";
+        public const string SignInNoticeHelp = "Textul notificării de utilizare afișat la autentificare, aprobat de ofițerul de securitate (cel mult 2000 de caractere). Dacă rămâne gol, se folosește textul implicit al aplicației. Fiecare acceptare se înregistrează în jurnalul sigilat împreună cu amprenta textului.";
+        /// <summary>Planner #10 item 3 (check S09): the oldest the newest backup copy may be, in days; empty = the default (30). Text, so that a wrong entry reaches the validation instead of being dropped.</summary>
+        [ObservableProperty] private string _backupMaxAgeDaysText = "";
+        /// <summary>The oldest the newest restore test may be, in days; empty = the default (180).</summary>
+        [ObservableProperty] private string _backupRestoreTestMaxAgeDaysText = "";
+        public const string BackupLimitsHelp = "Controlul copiilor de siguranță (S09) arată Neconform dacă ultima copie din Registrul copiilor de siguranță este mai veche decât prima valoare (implicit 30 de zile) și De verificat dacă ultimul test de restaurare este mai vechi decât a doua (implicit 180 de zile) sau lipsește. Valori între 1 și 3650; gol = implicit.";
+        /// <summary>Planner #10 item 4 (check U07): the oldest the last training of a person may be, in days; empty = the default (365). Text, like the backup limits.</summary>
+        [ObservableProperty] private string _trainingMaxAgeDaysText = "";
+        public const string TrainingLimitHelp = "Controlul persoanelor din Registrul utilizatori (U07) arată De verificat dacă data ultimei instruiri a unui utilizator este mai veche decât această valoare (implicit 365 de zile) sau lipsește. Valori între 1 și 3650; gol = implicit.";
+        private static int ParseDays(string? text) => string.IsNullOrWhiteSpace(text) ? 0 : int.TryParse(text.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : -1;
+        public const int SignInNoticeMaxLength = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.MaxLength;
 
         // WP18 S5 (decision D3): the unit's report header, next to the procedure profile; only the administrator saves it.
         public string HeaderPath { get; } = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.DefaultPath;
@@ -128,6 +166,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveHeader()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { HeaderStatus = licenseRefusal; return; }
             if (!CanEdit) { HeaderStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage; return; }
             try
             {
@@ -169,11 +208,22 @@ namespace LogAnalyzer.UI.ViewModels
         private void Pull()
         {
             foreach (var t in Tables) ProfileTables.SetCells(_profile, t.Table, t.Rows());
+            _profile.StationLevel = StationLevel ?? "";
+            _profile.SignInNotice = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.Normalize(SignInNotice);
+            _profile.BackupMaxAgeDays = ParseDays(BackupMaxAgeDaysText);                       // an entry that is not a whole number becomes -1: the validation refuses it
+            _profile.BackupRestoreTestMaxAgeDays = ParseDays(BackupRestoreTestMaxAgeDaysText);
+            _profile.TrainingMaxAgeDays = ParseDays(TrainingMaxAgeDaysText);
         }
 
         private void Push()
         {
             foreach (var t in Tables) t.Load(_profile);
+            // an imported or hand-written marking ("SSID", "secret") is shown as the level's name, so the picker finds it and never clears it
+            StationLevel = LogAnalyzer.Dfir.Profile.StationLevelRules.Resolve(_profile.StationLevel)?.Name ?? _profile.StationLevel ?? "";
+            SignInNotice = _profile.SignInNotice ?? "";
+            BackupMaxAgeDaysText = _profile.BackupMaxAgeDays == 0 ? "" : _profile.BackupMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            BackupRestoreTestMaxAgeDaysText = _profile.BackupRestoreTestMaxAgeDays == 0 ? "" : _profile.BackupRestoreTestMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            TrainingMaxAgeDaysText = _profile.TrainingMaxAgeDays == 0 ? "" : _profile.TrainingMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
             Refresh();
             OnPropertyChanged(nameof(IsEmpty));
         }
@@ -233,12 +283,14 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveAs()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var dlg = new SaveFileDialog { FileName = ProfileStore.FileName, Filter = "Profil de proceduri (*.json)|*.json", Title = "Salvați o copie a profilului" };
             if (dlg.ShowDialog() == true) SaveTo(dlg.FileName);
         }
 
         private void SaveTo(string path)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             Pull();
             try
             {

@@ -13,7 +13,7 @@ public class Wp14ContractTests
     private static readonly string[] AllRules =
     [
         "MEDIA-AUTHORIZED", "MEDIA-REGISTERED", "MEDIA-UNREGISTERED", "MEDIA-UNAUTHORIZED", "MEDIA-UNKNOWN", "MEDIA-FILE-ACTIVITY", "MEDIA-OPTICAL-ACTIVITY",
-        "AIRGAP-NETWORK-CONNECTED", "AIRGAP-WIFI-ASSOCIATED", "AIRGAP-BLUETOOTH-PAIRED", "AIRGAP-DHCP-LEASE", "AIRGAP-NIC-ADDED",
+        "AIRGAP-NETWORK-CONNECTED", "AIRGAP-WIFI-ASSOCIATED", "AIRGAP-BLUETOOTH-PAIRED", "AIRGAP-DHCP-LEASE", "AIRGAP-NIC-ADDED", "AIRGAP-PORTABLE-DEVICE",
     ];
 
     /// <summary>A timeline in which every rule fires at least once (classified, air-gapped scope; register defined).</summary>
@@ -27,6 +27,7 @@ public class Wp14ContractTests
         Ev("Microsoft-Windows-Kernel-PnP/Configuration", 400, 9, "Microsoft-Windows-Kernel-PnP", ("DeviceInstanceId", @"BTHENUM\DEV_001A7DDA7113\7&1")),
         Ev("Microsoft-Windows-Dhcp-Client/Operational", 50036, 10, "Microsoft-Windows-Dhcp-Client", ("IPAddress", "192.168.1.9")),
         Ev("Microsoft-Windows-Kernel-PnP/Configuration", 400, 11, "Microsoft-Windows-Kernel-PnP", ("DeviceInstanceId", @"PCI\VEN_8086&DEV_15BB\3&1"), ("ClassGuid", "{4d36e972-e325-11ce-bfc1-08002be10318}")),
+        Ev("Microsoft-Windows-Kernel-PnP/Configuration", 400, 12, "Microsoft-Windows-Kernel-PnP", ("DeviceInstanceId", @"USB\VID_04E8&PID_6860\R58M12ABCDE"), ("ClassGuid", Wp14Rules.WpdClassGuid), ("DriverDescription", "Galaxy A52")),
     ];
 
     private static List<Finding> Enriched()

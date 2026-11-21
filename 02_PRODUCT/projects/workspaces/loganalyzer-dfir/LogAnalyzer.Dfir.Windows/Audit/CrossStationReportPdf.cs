@@ -28,8 +28,9 @@ public static class CrossStationReportPdf
     };
 
     /// <summary>The PDF bytes (with the reserved, empty signature field).</summary>
-    public static byte[] Generate(CrossStationResult r, CrossStationSettings s, string officerStation, string registerLine, DateTimeOffset generatedUtc)
+    public static byte[] Generate(CrossStationResult r, CrossStationSettings s, string officerStation, string registerLine, DateTimeOffset generatedUtc, string? marking = null)
     {
+        var markingLine = LogAnalyzer.Dfir.Reporting.MarkingText.Line(marking);
         QuestPDF.Settings.License = LicenseType.Community;
         void Say(string t) => TextObserver.Value?.Invoke(t);
         var generated = Document.Create(doc =>
@@ -41,6 +42,7 @@ public static class CrossStationReportPdf
                 page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily("Segoe UI").FontColor("#1e293b"));
                 page.Header().Column(h =>
                 {
+                    h.Item().AlignCenter().Text(markingLine).Bold().FontSize(8).FontColor("#b91c1c");
                     h.Item().AlignCenter().Text(ControlReportPdf.OfficialLabel).Bold().FontSize(9).FontColor("#b91c1c");
                     h.Item().Text("Confruntarea istoricului mediilor de stocare între stații").Bold().FontSize(14);
                     h.Item().Text($"Perioada: {U(s.FromUtc)} – {U(s.ToUtc)} · generat {U(generatedUtc)} pe stația ofițerului {officerStation}").FontSize(7.5f).FontColor("#64748b");
@@ -81,7 +83,7 @@ public static class CrossStationReportPdf
                     Line("3. Limitări (ce această confruntare nu poate arăta)", 11, true);
                     foreach (var l in r.Limits) Line("• " + l, 7.5f);
                 });
-                ReportFooter.Compose(page.Footer(), "confruntare", $"LogAnalyzer {DfirInfo.ApplicationVersion} · confruntare între stații", null);
+                ReportFooter.Compose(page.Footer(), "confruntare", $"LogAnalyzer {DfirInfo.ApplicationVersion} · confruntare între stații", null, markingLine);
             });
             SignatureBoxPage.Add(doc, null, SignHere);
         }).GeneratePdf();

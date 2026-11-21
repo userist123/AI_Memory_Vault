@@ -1,8 +1,16 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.EventExplorerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:LogAnalyzer.UI.ViewModels">
-    <Grid Margin="20">
+             xmlns:vm="clr-namespace:LogAnalyzer.UI.ViewModels"
+             xmlns:conv="clr-namespace:LogAnalyzer.UI.Views">
+    <DockPanel Margin="20">
+        <!-- standard page header: title, one-line explanation, register rule -->
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Jurnale Windows (EVTX)"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" Text="Evenimentele din jurnalele Windows încărcate, cu filtrare și detaliile fiecărui eveniment."/>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="4"/>
@@ -15,7 +23,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="180"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Top Filter / Search Query Console -->
@@ -33,7 +41,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Text="{Binding SearchEventsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" Width="100"/>
+                        <Button Grid.Column="1" Content="Șterge filtrele" Command="{Binding ClearFiltersCommand}" Width="100"/>
                     </Grid>
                     
                     <!-- Filter Toggles: Severity & Quick Forensics -->
@@ -46,45 +54,45 @@
                         
                         <!-- Severity Toggles -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Severity:" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
-                            <CheckBox IsChecked="{Binding FilterCritical}" Content="Critical" Foreground="{StaticResource CriticalBrush}" Margin="0,0,10,0"/>
-                            <CheckBox IsChecked="{Binding FilterHigh}" Content="High" Foreground="{StaticResource HighBrush}" Margin="0,0,10,0"/>
-                            <CheckBox IsChecked="{Binding FilterMedium}" Content="Medium" Foreground="{StaticResource MediumBrush}" Margin="0,0,10,0"/>
-                            <CheckBox IsChecked="{Binding FilterInfo}" Content="Info" Foreground="{StaticResource SuccessBrush}" Margin="0,0,10,0"/>
+                            <TextBlock Text="Severitate:" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                            <CheckBox IsChecked="{Binding FilterCritical}" Content="Critică" Foreground="{StaticResource CriticalBrush}" Margin="0,0,10,0"/>
+                            <CheckBox IsChecked="{Binding FilterHigh}" Content="Ridicată" Foreground="{StaticResource HighBrush}" Margin="0,0,10,0"/>
+                            <CheckBox IsChecked="{Binding FilterMedium}" Content="Medie" Foreground="{StaticResource MediumBrush}" Margin="0,0,10,0"/>
+                            <CheckBox IsChecked="{Binding FilterInfo}" Content="Informativă" Foreground="{StaticResource SuccessBrush}" Margin="0,0,10,0"/>
                         </StackPanel>
                         
                         <!-- Quick Threat Use Cases -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="SOC Presets:" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
-                            <CheckBox IsChecked="{Binding FilterFailedLogins}" Content="Failed Logins (4625)" Margin="0,0,10,0"/>
-                            <CheckBox IsChecked="{Binding FilterPrivEsc}" Content="Account Changes (4720/4732)"/>
+                            <TextBlock Text="Filtre rapide:" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                            <CheckBox IsChecked="{Binding FilterFailedLogins}" Content="Autentificări eșuate (4625)" Margin="0,0,10,0"/>
+                            <CheckBox IsChecked="{Binding FilterPrivEsc}" Content="Modificări de conturi (4720/4732)"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
             </Border>
             
             <!-- Center Forensic DataGrid -->
-            <DataGrid Grid.Row="1" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True"
+            <DataGrid Grid.Row="1" MinHeight="260" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True"
                       VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                 <DataGrid.ContextMenu>
                     <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
-                        <MenuItem Header="Inspect Event Properties" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Vezi proprietățile evenimentului" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedEvent}"/>
                         <Separator Background="{StaticResource BorderBrush}"/>
-                        <MenuItem Header="Filter by Event ID" Command="{Binding PivotByEventIdCommand}" CommandParameter="{Binding SelectedEvent}"/>
-                        <MenuItem Header="Filter by Provider Source" Command="{Binding PivotByProviderCommand}" CommandParameter="{Binding SelectedEvent}"/>
-                        <MenuItem Header="Filter by Host Machine" Command="{Binding PivotByMachineCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Filtrează după ID eveniment" Command="{Binding PivotByEventIdCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Filtrează după sursă" Command="{Binding PivotByProviderCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Filtrează după stație" Command="{Binding PivotByMachineCommand}" CommandParameter="{Binding SelectedEvent}"/>
                         <Separator Background="{StaticResource BorderBrush}"/>
-                        <MenuItem Header="Copy Row as JSON" Command="{Binding CopyRowAsJsonCommand}" CommandParameter="{Binding SelectedEvent}"/>
-                        <MenuItem Header="Copy Timestamp (UTC)" Command="{Binding CopyUtcTimestampCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Copiază rândul ca JSON" Command="{Binding CopyRowAsJsonCommand}" CommandParameter="{Binding SelectedEvent}"/>
+                        <MenuItem Header="Copiază marcajul de timp (UTC)" Command="{Binding CopyUtcTimestampCommand}" CommandParameter="{Binding SelectedEvent}"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Timestamp (UTC)" Binding="{Binding TimeCreated, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="145"/>
-                    <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60"/>
-                    <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
-                    <DataGridTextColumn Header="Provider Source" Binding="{Binding ProviderName}" Width="140"/>
-                    <DataGridTextColumn Header="Host Machine" Binding="{Binding MachineName}" Width="110"/>
-                    <DataGridTextColumn Header="Event Message / Summary" Binding="{Binding Message}" Width="*"/>
+                    <DataGridTextColumn Header="Marcaj de timp (UTC)" Binding="{Binding TimeCreated, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="180" MinWidth="180"/>
+                    <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60" MinWidth="60"/>
+                    <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static conv:LiveLevelLabelConverter.Instance}}" Width="100" MinWidth="100"/>
+                    <DataGridTextColumn Header="Sursă" Binding="{Binding ProviderName}" Width="140" MinWidth="140"/>
+                    <DataGridTextColumn Header="Stație" Binding="{Binding MachineName}" Width="110" MinWidth="110"/>
+                    <DataGridTextColumn Header="Mesaj / rezumat" Binding="{Binding Message}" Width="*" MinWidth="200" ElementStyle="{StaticResource TwoLineCellTextStyle}"/>
                 </DataGrid.Columns>
                 <DataGrid.InputBindings>
                     <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
@@ -98,36 +106,34 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Pagination: 100 records / page" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                <TextBlock Text="100 de înregistrări pe pagină" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="◀ Prev" Command="{Binding PrevEvtxPageCommand}" Width="80" Margin="2,0"/>
+                    <Button Content="◀ Înapoi" Command="{Binding PrevEvtxPageCommand}" Width="80" Margin="2,0"/>
                     <TextBlock Text="{Binding EvtxCurrentPage}" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" FontWeight="Bold"/>
                     <TextBlock Text=" / " VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding EvtxTotalPages}" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,8,0"/>
-                    <Button Content="Next ▶" Command="{Binding NextEvtxPageCommand}" Width="80" Margin="2,0"/>
+                    <Button Content="Înainte" Command="{Binding NextEvtxPageCommand}" Width="80" Margin="2,0"/>
                 </StackPanel>
             </Grid>
 
             <!-- Bottom Dockable Process Tree Visualizer -->
+            <!-- The process tree is closed by default so the event table keeps the room; its own scroll is capped at 240 -->
             <Border Grid.Row="3" Style="{StaticResource ObsidianCardStyle}" Padding="12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Text="Process Execution Lineage (Triage Tree)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
-                    <TreeView Grid.Row="1" ItemsSource="{Binding ProcessTreeNodes}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
+                <Expander x:Name="ProcessTreeExpander" IsExpanded="False" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Expander.Header>
+                        <TextBlock Text="Arborele proceselor" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    </Expander.Header>
+                    <TreeView MaxHeight="240" Margin="0,6,0,0" ItemsSource="{Binding ProcessTreeNodes}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
                         <TreeView.Resources>
                             <HierarchicalDataTemplate DataType="{x:Type vm:ProcessNode}" ItemsSource="{Binding Children}">
                                 <StackPanel Orientation="Horizontal" Margin="2">
-                                    <TextBlock Text="{Binding ProcessIcon}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" Foreground="{Binding RiskColor}" VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding PID, StringFormat=' [PID: {0}]'}" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="6,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </HierarchicalDataTemplate>
                         </TreeView.Resources>
                     </TreeView>
-                </Grid>
+                </Expander>
             </Border>
         </Grid>
 
@@ -146,9 +152,9 @@
                     <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedEventMeaning}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Ce ar putea însemna" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
+                            <TextBlock Text="Ce ar putea însemna" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
                             <TextBlock Text="{Binding SelectedEventThreatScenario, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Tehnica de atac asociată (MITRE ATT&amp;CK)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Tehnica de atac asociată (MITRE ATT&amp;CK)" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
                             <TextBlock Text="{Binding SelectedEventMitreMapping, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock Text="Asocierea nu înseamnă că a avut loc un atac; arată doar la ce să fiți atenți." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
@@ -162,11 +168,11 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="PARSED EVENT FIELDS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
+                        <TextBlock Text="Câmpurile evenimentului" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedEventProperties}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Background="Transparent" BorderThickness="0" GridLinesVisibility="Horizontal" HorizontalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Property" Binding="{Binding Key}" Width="120" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <DataGridTextColumn Header="Proprietate" Binding="{Binding Key}" Width="120" MinWidth="120" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*" MinWidth="80" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -179,7 +185,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="RAW PAYLOAD &amp; SCRIPTBLOCK" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
+                        <TextBlock Text="Conținut brut și ScriptBlock" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
                         <TextBox Grid.Row="1" Text="{Binding InspectorMessage}" IsReadOnly="True" TextWrapping="Wrap" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" FontFamily="{StaticResource CodeFontFamily}" FontSize="11.5" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
                     </Grid>
                 </TabItem>
@@ -200,4 +206,5 @@
             </Border>
         </Grid>
     </Grid>
+    </DockPanel>
 </UserControl>

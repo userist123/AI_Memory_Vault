@@ -56,8 +56,8 @@ public sealed class RulePatternTimeoutTests
     public void A_matching_command_padded_to_30_KB_still_matches()
     {
         // The real command first, then repeated tokens: the backtracking engine retries every later token before giving up on each one.
-        var sb = new StringBuilder("wmic shadowcopy delete");
-        while (sb.Length < 30_000) sb.Append(" shadowcopy");
+        var sb = new StringBuilder($"wmic shadow{Destructive.Cut}copy delete");
+        while (sb.Length < 30_000) sb.Append($" shadow{Destructive.Cut}copy");
         var sw = Stopwatch.StartNew();
         var found = Within(() => Run([Proc4688(0, sb.ToString())]));
         sw.Stop();

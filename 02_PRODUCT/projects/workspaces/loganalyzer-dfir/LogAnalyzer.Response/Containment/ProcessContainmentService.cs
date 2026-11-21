@@ -120,8 +120,19 @@ public sealed class ProcessContainmentService
 
         // 3. Read-only scan, then evidence.
         ct.ThrowIfCancellationRequested();
-        incident.Scan = _scanner.Scan(programPath, pid, ct);
-        Record(incident, "scan", programPath, true, $"{incident.Scan.SuspicionReasons.Count} motive de suspiciune, {incident.Scan.Gaps.Count} goluri");
+        // the scan never loses an applied containment: a failed scan is a gap in the incident, which is still saved and listed (so it can be released)
+        try
+        {
+            incident.Scan = _scanner.Scan(programPath, pid, ct);
+            Record(incident, "scan", programPath, true, $"{incident.Scan.SuspicionReasons.Count} motive de suspiciune, {incident.Scan.Gaps.Count} goluri");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            incident.Scan = new ProcessScanReport { Process = new ProcessIdentity(pid, Path.GetFileName(programPath), programPath, "", null, "", "", null, "") };
+            incident.Scan.Gaps.Add(new EvidenceGap("Scanarea programului", EvidenceStatus.Failed, $"scanarea a eșuat: {ex.Message}",
+                "Detaliile programului lipsesc din incident; izolarea de rețea rămâne aplicată și verificată", "Reluați scanarea sau analizați programul separat", "Da, prin reluare"));
+            Record(incident, "scan", programPath, false, ex.Message);
+        }
 
         if (options.CopySampleIntoCase && File.Exists(programPath))
         {

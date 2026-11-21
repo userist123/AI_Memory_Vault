@@ -166,7 +166,7 @@ namespace LogAnalyzer.Core.Services
                         col.Item().LineHorizontal(0.5f).LineColor("#cbd5e1");
                         col.Item().PaddingTop(4).Row(row =>
                         {
-                            row.RelativeItem().Text("Raport generat de LogAnalyzer DFIR Platform | Conformitate ISO/IEC 27037:2012 (Ghid manipulare probe digitale)")
+                            row.RelativeItem().Text("Raport generat de LogAnalyzer DFIR Platform | Referință metodologică: ISO/IEC 27037:2012 (ghid de manipulare a probelor digitale); conformitatea nu este atestată de acest raport")
                                 .FontSize(7.5f).FontColor("#94a3b8");
                             row.ConstantItem(80).AlignRight().DefaultTextStyle(s => s.FontSize(7.5f).FontColor("#94a3b8")).Text(x =>
                             {

@@ -47,6 +47,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportDataPack()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { DataPackStatus = licenseRefusal; return; }
             if (!LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration) { DataPackStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + "."; return; }
             var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Pachetul de date semnat (.zip)", Filter = "Pachet de date (*.zip)|*.zip" };
             if (dlg.ShowDialog() != true) return;
@@ -136,6 +137,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task EnrollForMeAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s || SelectedDetected is not { } d) { Status = "Alegeți un card detectat."; return; }
             Status = "Introduceți PIN-ul în fereastra Windows / SafeNet…";
             Report(await Task.Run(() => AuthApp.Service.EnrollCard(s, s.Account, d.Card, AuthApp.Cards)), "Card înrolat pentru contul dumneavoastră.");
@@ -144,6 +146,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task EnrollForSelectedAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s || SelectedAccount is not { } a || SelectedDetected is not { } d) { Status = "Alegeți un cont și un card detectat."; return; }
             Status = "Utilizatorul introduce PIN-ul în fereastra Windows / SafeNet…";
             Report(await Task.Run(() => AuthApp.Service.EnrollCard(s, a.Account, d.Card, AuthApp.Cards)), $"Card înrolat pentru {a.Account}.");
@@ -152,6 +155,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void CreateAccount()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s) return;
             if (Report(AuthApp.Service.CreateAccount(s, NewAccount, NewPerson, NewIsAdministrator ? AuthRole.Administrator : AuthRole.Operator), $"Cont creat: {NewAccount} (numai card + PIN)."))
             { NewAccount = ""; NewPerson = ""; NewIsAdministrator = false; }
@@ -160,6 +164,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ToggleRole()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s || SelectedAccount is not { } a) return;
             Report(AuthApp.Service.SetRole(s, a.Account, a.Role == "administrator" ? AuthRole.Operator : AuthRole.Administrator), "Rol schimbat.");
         }
@@ -181,6 +186,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportCa()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s) return;
             var dlg = new OpenFileDialog { Title = "Certificat CA al organizației (DER sau PEM)", Filter = "Certificate (*.cer;*.crt;*.pem;*.der)|*.cer;*.crt;*.pem;*.der|Toate fișierele|*.*" };
             if (dlg.ShowDialog() == true) Report(AuthApp.Service.ImportTrustCertificate(s, File.ReadAllBytes(dlg.FileName), dlg.FileName), "Certificat CA importat.");
@@ -197,6 +203,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SavePolicy()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Session is not { } s) return;
             Report(AuthApp.Service.SetPolicy(s, new AuthPolicy
             {

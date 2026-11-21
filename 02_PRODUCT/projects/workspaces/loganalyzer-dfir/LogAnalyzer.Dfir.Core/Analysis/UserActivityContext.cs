@@ -32,11 +32,17 @@ public sealed class UserActivityContext
         public Dictionary<string, string> Fields { get; set; } = [];
     }
 
-    private static bool IsUserActivity(TimelineEvent e) => e.Source is UserActivityAnalysis.ShellBags or UserActivityAnalysis.RecentDocs or UserActivityAnalysis.OfficeMru or UserActivityAnalysis.RecycleBin;
+    /// <summary>"1.1" (2026-11-18): the Open/Save dialog lists (OpenSaveMRU, LastVisitedMRU) are user-activity rows too. A "1.0" context was written when only
+    /// the four original sources were; its rows are matched against those sources only, so a case written by an older build still reopens evaluable.</summary>
+    public const string CurrentSchemaVersion = "1.1";
+
+    private static bool IsUserActivity(TimelineEvent e) => UserActivityAnalysis.IsSource(e.Source);
+    private static bool IsLegacyUserActivity(TimelineEvent e) => e.Source is UserActivityAnalysis.ShellBags or UserActivityAnalysis.RecentDocs or UserActivityAnalysis.OfficeMru or UserActivityAnalysis.RecycleBin;
     private static string KeyOf(TimelineEvent e) => $"{e.Source}|{e.EvidenceId}|{e.Locator}|{e.Path}";
 
     public static UserActivityContext From(IReadOnlyList<TimelineEvent> timeline, IEnumerable<ClassifiedFolderRow>? folders, IEnumerable<string>? removableLetters) => new()
     {
+        SchemaVersion = CurrentSchemaVersion,
         ClassifiedFolders = [.. (folders ?? []).Select(f => new ClassifiedFolderRow { Path = f.Path, Note = f.Note })],
         RemovableLetters = [.. (removableLetters ?? []).Distinct(StringComparer.OrdinalIgnoreCase)],
         Rows = [.. timeline.Where(IsUserActivity).Select(e => new SavedRow { Key = KeyOf(e), Fields = new Dictionary<string, string>(e.Fields) })],
@@ -61,7 +67,7 @@ public sealed class UserActivityContext
     /// </summary>
     public bool TryRestoreFields(IReadOnlyList<TimelineEvent> timeline)
     {
-        var rows = timeline.Where(IsUserActivity).ToList();
+        var rows = timeline.Where(SchemaVersion == SchemaVersions.Legacy ? IsLegacyUserActivity : IsUserActivity).ToList();
         if (rows.Count != Rows.Count) return false;
         for (int i = 0; i < rows.Count; i++) if (KeyOf(rows[i]) != Rows[i].Key) return false;
         for (int i = 0; i < rows.Count; i++)

@@ -89,17 +89,22 @@ public sealed class CoverageMatrix
         new("shimcache", "ShimCache (AppCompatCache)", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca BAM"),
         new("bam", "BAM", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca ShimCache"),
         new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citesc utilizarea rețelei per aplicație și durata conectării per interfață"),
-        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector", "UserArtifactsCollector"], [], []),
+        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["UserArtifactsCollector", "SoftwareHiveCollector"], [], []),   // not ExecutionArtifactsCollector: it saves only SYSTEM + Amcache (lab WS02 2026-11-17: Standard showed a false "ran but produced no source"); the live SOFTWARE hive comes from SoftwareHiveCollector (Standard / Full)
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
+        new("local_security", "Politica de audit, conturi locale și administratori locali (instantaneu)", ["AuditPolicyCsvParser", "LocalAccountsParser"], ["LocalSecurityStateCollector"], [], [], "auditpol cere drepturi de administrator; profilurile Rapid, Standard și Complet; starea la colectare, fără istoric"),
+        new("bitlocker", "Criptarea discului (BitLocker, instantaneu)", ["BitLockerVolumesParser"], ["BitLockerCollector"], [], [], "cere drepturi de administrator; lipsește pe ediția Home fără criptarea dispozitivului (atunci apare o lacună cu motivul); starea la colectare, fără istoric"),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
         new("usb", "Istoric dispozitive USB", ["UsbDevicesParser"], [], [], []),
         new("network_profiles", "Profiluri de rețea", [], [], [], [], "niciun parser de familie: profilurile și semnăturile NetworkList se citesc din faptele stației (AirGapFacts) și se folosesc la constatările de conectare"),
         new("firewall_log", "Jurnalul firewall-ului (pfirewall.log)", ["FirewallLogParser"], ["FirewallLogCollector"], [], [], "există doar dacă jurnalizarea firewall-ului este pornită"),
         new("network_capture", "Captură de rețea (pcapng)", ["PcapngParser"], [], [], []),
-        new("browser", "Istoric browser (Chromium, Firefox)", ["BrowserHistoryParser", "FirefoxHistoryParser"], [], [], []),
+        new("browser", "Istoric browser (Chromium, Firefox)", ["BrowserHistoryParser", "FirefoxHistoryParser"], ["UserHistoryCollector"], [], [], "colectat live pentru Chrome, Edge, Brave și Firefox din fiecare profil; descărcările alimentează regulile existente (descărcare urmată de rulare), vizitele apar doar în cronologie"),
+        new("ps_history", "Istoric PowerShell (PSReadLine)", ["PsReadLineHistoryParser"], ["UserHistoryCollector"], [], [], "fișierul nu are ore; există doar pentru consolele cu PSReadLine"),
+        new("hosts_file", "Fișierul hosts", ["HostsFileParser"], ["UserHistoryCollector"], [], []),
         new("tasks", "Sarcini programate", ["ScheduledTaskParser"], [], [], []),
-        new("live_state", "Starea live (procese, conexiuni, rulare automată)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser"),
+        new("ps_transcripts", "Transcrieri PowerShell", ["PowerShellTranscriptParser"], ["UserArtifactsCollector"], [], [], "există doar dacă transcrierea este pornită (politică sau Start-Transcript); colectată cu profilul complet"),
+        new("live_state", "Starea live (procese, conexiuni, rulare automată, abonamente WMI permanente, foldere Startup)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser; abonamentele WMI și folderele Startup se citesc doar în starea curentă (nu istoricul: pentru istoric există evenimentele WMI-Activity 5861 și Sysmon 19-21)"),
     ];
 
     public static CoverageMatrix Build(CoverageInputs inp)

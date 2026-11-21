@@ -13,8 +13,9 @@ public class Wp11ContractTests
     internal static readonly string[] AllRules =
     [
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
-        "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
-        "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED",
+        "REMOTE-RDP-INTERNAL", "RDP-SESSIONS", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
+        "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
+        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY", "WSEARCH-GATHER-ONLY", "SMB-SERVER-AUTH-FAIL", "SMB-CLIENT-SHARE-DENIED",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -27,16 +28,39 @@ public class Wp11ContractTests
         Sec(4732, 3, ("MemberSid", "S-1-5-21-1-2-3-1105"), ("MemberName", "CN=svc_x,DC=c"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "admin1")),
         Sec(4624, 4, ("TargetUserName", "svc_x"), ("TargetUserSid", "S-1-5-21-1-2-3-1105"), ("LogonType", "3"), ("IpAddress", "10.0.0.8")),
         Sec(4624, 5, ("TargetUserName", "bob"), ("TargetDomainName", "CORP"), ("LogonType", "10"), ("IpAddress", "10.0.0.9")),
+        Ev("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 21, 5.1, "Microsoft-Windows-TerminalServices-LocalSessionManager", ("User", @"CORP\bob"), ("SessionID", "7"), ("Address", "10.0.0.9")),
+        Ev("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 24, 5.5, "Microsoft-Windows-TerminalServices-LocalSessionManager", ("User", @"CORP\bob"), ("SessionID", "7"), ("Address", "10.0.0.9")),
         Ev("Microsoft-Windows-WinRM/Operational", 91, 6, "Microsoft-Windows-WinRM"),
         Sys(7045, 7, "Service Control Manager", ("ServiceName", "PSEXESVC"), ("ImagePath", @"%SystemRoot%\PSEXESVC.exe")),
         Ev("OpenSSH/Operational", 4, 8, "OpenSSH", ("payload", "Accepted password for al from 10.0.0.5 port 22 ssh2")),
         Sys(7036, 9, "Service Control Manager", ("param1", "Windows Defender Antivirus Service"), ("param2", "stopped")),
-        Sec(4688, 10, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", "vssadmin delete shadows /all"), ("SubjectUserName", "bob")),
+        Sec(4688, 10, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows /all"), ("SubjectUserName", "bob")),
         Sysmon(22, 11, ("QueryName", "x.rare-example.org"), ("Image", @"C:\Windows\System32\rundll32.exe")),
         Row("SystemConfig", 12, f: [("Interface", "{A}"), ("NameServer", "10.0.0.1")]),
         Row("SystemConfig", 13, f: [("Interface", "{A}"), ("NameServer", "8.8.8.8")]),
         Row("Amcache", 14, "teamviewer.exe", @"C:\Users\bob\Downloads\TeamViewer.exe", "abc"),
         Row("Prefetch", 15, "ANYDESK.EXE", @"C:\Program Files (x86)\AnyDesk\AnyDesk.exe", f: [("RunCount", "2")]),
+        Sec(4688, 16, ("NewProcessName", @"C:\Windows\System32\whoami.exe"), ("CommandLine", "whoami /all"), ("SubjectUserName", "bob")),
+        Sec(4688, 16.1, ("NewProcessName", @"C:\Windows\System32\nltest.exe"), ("CommandLine", "nltest /dclist:corp"), ("SubjectUserName", "bob")),
+        Sec(4688, 16.2, ("NewProcessName", @"C:\Windows\System32\net.exe"), ("CommandLine", "net group \"Domain Admins\" /domain"), ("SubjectUserName", "bob")),
+        Sec(4769, 17, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_a"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4769, 17.1, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_b"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4769, 17.2, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_c"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4768, 18, ("TargetUserName", "svc_old"), ("PreAuthType", "0"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4887, 19, ("Attributes", "SAN:upn=administrator@corp"), ("RequestId", "5"), ("Requester", @"CORP\bob")),
+        Sec(4624, 19.5, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "Kerberos"), ("LogonType", "3"), ("IpAddress", "10.0.0.20")),
+        Sec(4624, 20, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "NTLM"), ("LogonType", "3"), ("IpAddress", "10.0.0.66")),
+        Sec(5441, 21, ("FilterName", "Custom Outbound Filter"), ("FilterId", "9")),
+        Ev("Microsoft-Windows-Windows Defender/Operational", 1150, 22, "Microsoft-Windows-Windows Defender"),   // the Defender channel was collected, with no 1116
+        Row("Artifact:DefenderDetectionHistory", 23, "powershell.exe", @"C:\LA\eicar\eicar-test.com", "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
+            ("Detection ID", "{2169D50A-AB8F-4CC5-992A-DEAFEE4FAE82}"), ("Threat Name", "Virus:DOS/EICAR_Test_File"), ("Path", @"file:_C:\LA\eicar\eicar-test.com")),
+        // Windows Search: the store knows WorkId 1811, the gatherer also knows DocumentID 1827 (same shadow copy)
+        Row("WindowsSearch", 24, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("WorkId", "1811"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        Row("WindowsSearchGather", 24.1, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("DocumentID", "1811"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        Row("WindowsSearchGather", 24.2, path: @"C:\LA\TEST-LA-gather-sters.txt", f: [("DocumentID", "1827"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        // SMB: ten sessions refused to one client address (real lab layout), one administrative share refused to this station
+        .. Enumerable.Range(0, 10).Select(i => Ev("Microsoft-Windows-SMBServer/Security", 551, 25 + i * 0.1, "Microsoft-Windows-SMBServer", ("Status", "0xc0000072"), ("ClientAddress", "0200D9010A0A0A0A0000000000000000"), ("ClientName", @"\\10.10.10.10"))),
+        Ev("Microsoft-Windows-SmbClient/Security", 31010, 26, "Microsoft-Windows-SMBClient", ("Status", "3221225506"), ("ShareName", @"\\10.10.10.32\C$")),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();
@@ -109,15 +133,16 @@ public class Wp11ContractTests
             ("Security", 5140), ("Security", 5145), ("Security", 4670), ("Security", 4720), ("Security", 4722), ("Security", 4724), ("Security", 4738),
             ("Security", 4728), ("Security", 4732), ("Security", 4756), ("Security", 4624), ("Security", 4648), ("Security", 4688),
             ("System", 7036), ("System", 7040), ("System", 7045), ("System", 25), ("System", 33), ("System", 1074), ("System", 6006),
-            ("Application", 1034), ("Application", 11724), ("Application", 11707), ("Application", 8193), ("Application", 8194),
+            ("Application", 1034), ("Application", 11724), ("Application", 11707), ("Application", 8193), ("Application", 8194), ("Application", 0),
             ("Microsoft-Windows-Sysmon/Operational", 1), ("Microsoft-Windows-Sysmon/Operational", 4), ("Microsoft-Windows-Sysmon/Operational", 16), ("Microsoft-Windows-Sysmon/Operational", 22),
             ("Microsoft-Windows-WinRM/Operational", 6), ("Microsoft-Windows-WinRM/Operational", 91), ("Microsoft-Windows-WinRM/Operational", 142),
             ("OpenSSH/Operational", 4),
             ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 21), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 22),
-            ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 25), ("Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", 1149),
+            ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 25), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 23), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 24), ("Security", 4778), ("Security", 4779), ("Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", 1149),
             ("Microsoft-Windows-DNS-Client/Operational", 3006), ("Microsoft-Windows-DNS-Client/Operational", 3008), ("Microsoft-Windows-DNS-Client/Operational", 3020),
             ("Microsoft-Windows-NetworkProfile/Operational", 10000),
             ("Microsoft-Windows-PowerShell/Operational", 4104),
+            ("Microsoft-Windows-SMBServer/Security", 551), ("Microsoft-Windows-SmbClient/Security", 31010),
         ];
         foreach (var (ch, id) in needed)
         {

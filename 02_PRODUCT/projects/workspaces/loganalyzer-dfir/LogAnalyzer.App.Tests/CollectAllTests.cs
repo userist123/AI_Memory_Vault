@@ -60,6 +60,26 @@ public sealed class CollectAllTests : IDisposable
     }
 
     [Fact]
+    public void After_collect_all_the_status_line_keeps_the_investigation_and_the_control_of_the_same_run()
+    {
+        // Lab WS02 2026-11-17: the control line replaced the investigation line of the same „Colectează tot”.
+        var state = CollectAllState.Instance;
+        state.Clear();
+        var result = new InvestigationResult { Case = _k.Case(_k.File("a.bin", "alpha")) };
+        state.BeginCollectAll();
+        state.Publish(result);
+        state.RecordControl("Control stație finalizat: NECONFORM 2.");
+        state.EndCollectAll();
+        Assert.StartsWith("Investigație finalizată: ", state.LastActivity);
+        Assert.EndsWith("; control stație finalizat: NECONFORM 2.", state.LastActivity);
+        state.RecordControl("Control stație finalizat: CONFORM 5.");          // a later control alone: only its own line
+        Assert.Equal("Control stație finalizat: CONFORM 5.", state.LastActivity);
+        state.Publish(result);                                                    // outside a run, publish and control stay separate as before
+        state.RecordControl("Control stație finalizat: X.");
+        Assert.Equal("Control stație finalizat: X.", state.LastActivity);
+    }
+
+    [Fact]
     public void Without_a_handler_the_command_says_so_instead_of_doing_nothing()
     {
         CollectAllState.Handler = null;

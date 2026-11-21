@@ -26,8 +26,9 @@ public static class ProvenanceBinder
     }
 
     public static (List<Finding> Kept, List<RejectedFinding> Rejected) BindFindings(
-        IEnumerable<Finding> findings, IReadOnlyDictionary<string, EvidenceItem> evidence)
+        IEnumerable<Finding> findings, IReadOnlyDictionary<string, EvidenceItem> evidence, IEnumerable<TimelineEvent>? timeline = null)
     {
+        var rows = timeline is null ? null : EvidenceQuote.Index(timeline);   // planner #11 A1: the quote, its time source and channel come from the row the reference points to
         var kept = new List<Finding>();
         var rejected = new List<RejectedFinding>();
         foreach (var f in findings)
@@ -48,6 +49,7 @@ public static class ProvenanceBinder
                 var r = f.SupportingEvidence[i];
                 f.SupportingEvidence[i] = r with { Sha256 = evidence[r.EvidenceId].Sha256 };
             }
+            if (rows is not null) EvidenceQuote.Bind(f.SupportingEvidence, rows);
             kept.Add(f);
         }
         return (kept, rejected);
