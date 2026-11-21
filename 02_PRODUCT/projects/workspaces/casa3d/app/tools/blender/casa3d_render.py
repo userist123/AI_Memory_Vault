@@ -759,11 +759,27 @@ def clear_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+DISCIPLINES = ('architecture', 'structure', 'mechanical', 'plumbing', 'electrical', 'interior')  # core/elements.ts
+
+
 def build(scene_data, assets=''):
     mats = Materials(assets)
     col = bpy.data.collections.new('Casa3D')
     bpy.context.scene.collection.children.link(col)
     material_list = scene_data.get('materials', [])
+    # disciplina fiecărui element (core/elements.ts, trimisă de vederea 3D): obiectele cu id merg în subcolecția disciplinei
+    # (Casa3D_architecture, Casa3D_structure...), restul (pereții fără id, decorul generat) rămân în Casa3D
+    disciplines = scene_data.get('elements') if isinstance(scene_data.get('elements'), dict) else {}
+    subs = {}
+
+    def collection_for(eid):
+        d = disciplines.get(eid) if eid else None
+        if d not in DISCIPLINES:
+            return col
+        if d not in subs:
+            subs[d] = bpy.data.collections.new(f'Casa3D_{d}')
+            col.children.link(subs[d])
+        return subs[d]
     for i, e in enumerate(scene_data.get('meshes', [])):
         me, bevel = build_mesh(e['g'], f'c3d_{i}')
         if me is None:
@@ -777,6 +793,8 @@ def build(scene_data, assets=''):
         ob = bpy.data.objects.new(f'c3d_{i}', me)
         if isinstance(e['m'], list):  # cutiile de perete au câte un material pe față
             ob['c3d_wall'] = 1
+        if isinstance(e.get('id'), str) and e['id']:  # id-ul elementului din proiect (stâlp, grindă, punct tehnic, piesă)
+            ob['c3d_id'] = e['id'][:64]
         q = e['q']
         local = Matrix.Translation(Vector(e['p'])) @ Quaternion((q[3], q[0], q[1], q[2])).to_matrix().to_4x4() @ Matrix.Diagonal((*e['s'], 1.0))
         ob.matrix_world = Y_UP_TO_Z_UP @ local
@@ -788,7 +806,7 @@ def build(scene_data, assets=''):
             mod.harden_normals = False
             for poly in me.polygons:
                 poly.use_smooth = True
-        col.objects.link(ob)
+        collection_for(ob.get('c3d_id')).objects.link(ob)
     # teren în jurul casei
     ground = bpy.data.objects.new('teren', mesh_plane('teren', 200, 200))
     ground.matrix_world = Matrix.Translation((0, 0, -0.02))

@@ -1242,6 +1242,24 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/docs/bim/GHID_BIM.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document of the Casa3D BIM track (guide, inventory, adapter contract); not a memory note. Giving it note frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/docs/bim/FAZA0_INVENTAR.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document of the Casa3D BIM track (guide, inventory, adapter contract); not a memory note. Giving it note frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/docs/bim/ADAPTERS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document of the Casa3D BIM track (guide, inventory, adapter contract); not a memory note. Giving it note frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     }
   ]
 }

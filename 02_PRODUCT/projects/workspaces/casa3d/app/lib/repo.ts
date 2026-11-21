@@ -18,6 +18,8 @@ import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/type
 import { checkBrief } from '../core/brief';
 import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
+import { sanitizeIssues } from '../core/issues';
+import { elementIndex } from '../core/elements';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
 import { aiConfigured, aiModel, proposeWithClaude } from './ai';
@@ -60,12 +62,19 @@ export function checkUnderlay(u: any): Underlay {
   if (!fin(u.widthM) || u.widthM < 1 || u.widthM > 100) throw bad('Lățimea imaginii de calc trebuie să fie între 1 și 100 m.');
   if (!fin(u.opacity) || u.opacity < 0.1 || u.opacity > 1) throw bad('Opacitatea imaginii de calc trebuie să fie între 0,1 și 1.');
   if (typeof u.locked !== 'boolean') throw bad('Starea de blocare a imaginii de calc este invalidă.');
-  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}) };
+  let source: Underlay['source'];
+  if (u.source != null){ const s = u.source;
+    const ok = s && typeof s === 'object' && typeof s.sha256 === 'string' && /^[0-9a-f]{64}$/.test(s.sha256) && typeof s.name === 'string'
+      && Number.isInteger(s.bytes) && s.bytes >= 0 && s.bytes <= 1e9 && (s.type === 'image/png' || s.type === 'image/jpeg')
+      && typeof s.importedAt === 'string' && !Number.isNaN(Date.parse(s.importedAt));
+    if (!ok) throw bad('Sursa imaginii de calc este invalidă.');
+    source = { sha256: s.sha256, name: s.name.slice(0, 200), bytes: s.bytes, type: s.type, importedAt: new Date(s.importedAt).toISOString() }; }
+  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}), ...(source ? { source } : {}) };
 }
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -74,6 +83,9 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   const { underlay: rawUnderlay, ...rest } = s;
   if (JSON.stringify(rest).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
   if (rawUnderlay != null) s.underlay = checkUnderlay(rawUnderlay);
+  // statusurile constatărilor de coordonare (core/issues.ts): doar id-uri cf-…, statusuri cunoscute, justificare la acceptare
+  if (s.issues != null){ let v: Record<string, unknown>; try { v = sanitizeIssues(s.issues); } catch (e: any){ throw new HttpError(400, e?.message || 'Statusurile constatărilor sunt invalide.'); }
+    if (Object.keys(v).length) s.issues = v; else delete s.issues; }
   const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
   // etajele: același format ca parterul, cel mult MAX_LEVELS niveluri în total, id-uri unice pe toată casa
   if (s.levels != null){
@@ -99,6 +111,9 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
     if (!f.stairs.length) delete f.stairs; }
   // stâlpi și ghene, grinzi, pereți de sticlă, nișe, adnotări, goluri de trecere, starea pereților, zone de pardoseală: limitele comune cu interfața (core/plan-limits.ts)
   for (const f of fls){ try { sanitizeFloorElements(f); } catch (e){ if (e instanceof PlanLimitError) throw new HttpError(400, e.message); throw e; } }
+  // traseele și fundațiile (core/mep.ts): id unic pe toată casa, ca interferențele și statusurile lor să numească un singur element
+  { const cnt = new Map<string, number>(); for (const el of elementIndex(s)) cnt.set(el.elementId, (cnt.get(el.elementId) ?? 0) + 1);
+    for (const f of fls) for (const x of [...(f.mepRuns ?? []), ...(f.footings ?? [])]) if ((cnt.get(x.id) ?? 0) > 1) throw new HttpError(400, `Id-ul ${x.id} este folosit de mai multe elemente.`); }
   for (const p of s.placements) if (!inBox(p.x) || !inBox(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
   // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
   const cm = (v: unknown) => num(v) && (v as number) >= SIZE_LIMITS_CM.min && (v as number) <= SIZE_LIMITS_CM.max;

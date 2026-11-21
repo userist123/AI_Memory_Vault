@@ -21,6 +21,7 @@ import { ceilingZoneRect, ceilingZoneHidden } from '@/core/ceiling-zones';
 import { railingVisual } from '@/core/railings';
 import { ceilingOf, materialOf as matOf } from '@/core/finishes';
 import type { RoomFinishes } from '@/core/types';
+import { MEP_SYSTEMS } from '../core/mep';
 
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
 export interface PlateVoid { x0: number; z0: number; x1: number; z1: number; dir: [number, number] }
@@ -35,6 +36,8 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const rise = snap.floor.ceilingHeight + SLAB;
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;
+  // id-ul peretelui (plan.pereti are același index ca snap.floor.walls): ajunge pe cutiile peretelui și în scena pentru Blender
+  plan.pereti.forEach((pw: any, i: number) => { const id = snap.floor.walls[i]?.id; if (id) pw.id = id; });
   // finisajele de designer ale fiecărei camere (modul de așezare, placări, tavan), doar când avem catalogul de materiale
   if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (!r) return; const f = finishesOf(snap, r), tv = textileVisual(mc, snap.floor, r, f);
     c.fin = { ...roomVisual(mc, f, r.type, r, snap.floor), rug: tv.rug, ...(tv.rugs ? { rugs: tv.rugs } : {}) };
@@ -52,6 +55,9 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
   const stalpi = snap.floor.columns ?? [];
   const grinzi = snap.floor.beams ?? [];
+  // traseele de instalații (culoarea sistemului, diametrul declarat) și fundațiile; lipsesc din plan când nivelul nu le are
+  const trasee = (snap.floor.mepRuns ?? []).map(r => ({ id: r.id, color: MEP_SYSTEMS[r.system]?.color ?? '#777777', d: r.diameterMm ?? null, pts: r.points }));
+  const fundatii = snap.floor.footings ?? [];
   // balustradele: cele de sticlă refolosesc pereții de sticlă (cu înălțimea lor, `h`), cele de metal au lista lor
   const rv = railingVisual(snap.floor);
   const peretiSticla = rv.glass.length ? [...(snap.floor.glassWalls ?? []), ...rv.glass] : snap.floor.glassWalls ?? [];
@@ -82,6 +88,6 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     const roomDrop = ceilingOf(finishesOf(snap, room)).dropCm; if (ceilingZoneHidden(z, roomDrop)) return [];
     const top = roomDrop / 100, led = z.led ? (mc ? matOf(mc, z.led) : null) : null, cct = led?.specs?.cctK ?? 3000;
     return [{ id: z.id, room: z.roomId, ...c, top, drop: Math.max(top + .02, z.dropCm / 100), cove: (z.coveCm ?? 0) / 100, led: z.led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null }]; });
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(trasee.length ? { trasee } : {}), ...(fundatii.length ? { fundatii } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
     ...(tavaneZona.length ? { tavaneZona } : {}), ...(rv.metal.length ? { balustrade: rv.metal } : {}), goluriPlaca: extra.voids ?? [] }, items };
 }

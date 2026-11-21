@@ -12,6 +12,8 @@ import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/
 import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } from '@/core/saved-views';
 import { askPrompt } from '@/lib/dialog';
 import { classifyTier, parseTierPick, TIER_KEY, type Tier, type TierPick } from '@/core/viewport-tiers';
+import { elementIndex, DISCIPLINES, type Discipline } from '@/core/elements';
+import { detectClashes } from '@/core/clash';
 
 export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
@@ -56,6 +58,13 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(() => { v.current?.setHover?.(hoverId); }, [hoverId]);
   useEffect(() => { if (frame && v.current?.frame?.(frame.id)){ setMode('house'); setRoom(null); } }, [frame?.n]); // eslint-disable-line
   useEffect(() => { v.current?.setXray?.(xray); }, [xray]);
+  // vederile BIM (docs/bim/GHID_BIM.md §6): federat = tot; o disciplină = doar elementele ei (plus pardoseli și decor fără id);
+  // revizia interferențelor = totul, cu elementele implicate colorate. Exporturile ies mereu din modelul întreg.
+  const [bimView, setBimView] = useState<'federated' | 'clash' | Discipline>('federated');
+  useEffect(() => { if (!v.current?.setElementView) return;
+    if (bimView === 'federated') { v.current.setElementView(null); return; }
+    if (bimView === 'clash') { v.current.setElementView({ highlight: detectClashes(snap, catalog).filter(c => c.type !== 'penetration').flatMap(c => c.refs) }); return; }
+    v.current.setElementView({ hidden: elementIndex(snap).filter(e => e.discipline !== bimView).map(e => e.elementId) }); }, [bimView, snap, catalog]);
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
@@ -69,7 +78,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
   // scena pentru randarea fotorealistă în Blender (tools/blender/casa3d_render.py): aceleași forme, materiale și lumină
-  async function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang }); if (!sc) return;
+  async function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang, elements: Object.fromEntries(elementIndex(snap).map(e => [e.elementId, e.discipline])) }); if (!sc) return;
     // pe calculatorul cu Blender: randarea pornește direct, imaginile apar în etapa Prezentare; altfel se descarcă scena
     if (projectId){ try { const r = await fetch(`/api/projects/${projectId}/renders`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sc) });
         if (r.status === 202){ setPanoMsg(t('render.started')); return; } if (r.status !== 501){ const j = await r.json().catch(() => ({})); setPanoMsg(j.error || t('render.failed')); return; } } catch { /* fără server: descărcăm */ } }
@@ -126,6 +135,8 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.displayTitle')}>
       <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}><Icon name="door" size={16} />{t('viewer.doorsOpen')}</button>
       <button className="btn" aria-pressed={xray} title={t('viewer.xrayTitle')} onClick={() => setXray(x => !x)}>{t('viewer.xray')}</button>
+      <select className="btn" aria-label={t('viewer.bimView')} title={t('viewer.bimView')} value={bimView} onChange={e => setBimView(e.target.value as typeof bimView)}>
+        <option value="federated">{t('viewer.bim.federated')}</option>{DISCIPLINES.map(d => <option key={d} value={d}>{t(`coord.disc.${d}`)}</option>)}<option value="clash">{t('viewer.bim.clash')}</option></select>
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
       <label className="f" style={{ minWidth: 160 }} title={t('viewer.qualityTitle')}><span>{t('viewer.quality')}</span><select value={tierPick} onChange={e => setTierPick(parseTierPick(e.target.value))}>

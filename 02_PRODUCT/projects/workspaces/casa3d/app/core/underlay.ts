@@ -1,6 +1,6 @@
 // Imaginea de calc: calibrarea scării și dimensiunile ei pe plan. Funcții pure.
 import { r3 } from './geometry';
-import type { Underlay } from './types';
+import type { Underlay, UnderlaySource } from './types';
 
 export const UNDERLAY_LIMITS = { minWidthM: 1, maxWidthM: 100, minOpacity: 0.1, maxOpacity: 1, maxSide: 2000, jpegQuality: 0.85 } as const;
 /** Punct în metri pe plan. */
@@ -17,6 +17,15 @@ export function scaleFromPoints(a: Pt, b: Pt, realCm: number, widthM: number): n
 /** Noua poziție (x, z) după recalibrare, astfel încât punctul `a` să rămână pe loc (scalarea se face față de el). */
 export function anchorAfterScale(u: Pick<Underlay, 'x' | 'z' | 'widthM'>, a: Pt, newWidthM: number): Pt {
   const k = newWidthM / u.widthM; return [r3(a[0] - (a[0] - u.x) * k), r3(a[1] - (a[1] - u.z) * k)];
+}
+/** SHA-256 în hex (Web Crypto: browser și Node ≥ 19). */
+export async function sha256Hex(buf: ArrayBuffer): Promise<string> {
+  const d = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', buf));
+  return Array.from(d, b => b.toString(16).padStart(2, '0')).join('');
+}
+/** Proveniența fișierului original, înainte de reducere (ghidul BIM §3.1). */
+export async function sourceOfFile(f: File, now: string = new Date().toISOString()): Promise<UnderlaySource> {
+  return { sha256: await sha256Hex(await f.arrayBuffer()), name: f.name.slice(0, 200), bytes: f.size, type: f.type === 'image/png' ? 'image/png' : 'image/jpeg', importedAt: now };
 }
 /** Dimensiunile redimensionate pentru încărcare: latura lungă ≤ maxSide, fără mărire. */
 export function fitWithin(w: number, h: number, maxSide: number = UNDERLAY_LIMITS.maxSide): { w: number; h: number } {

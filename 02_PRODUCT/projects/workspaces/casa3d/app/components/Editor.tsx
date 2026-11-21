@@ -95,6 +95,10 @@ import { buildOutliner } from '@/core/outliner';
 import { DEFAULT_WS, MODE_KEY, WS_KEY, fitToViewport, parseWorkspace, resolveMode, serializeWorkspace, type LayoutMode, type WorkspaceState } from '@/lib/workspace-layout';
 import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core/plan-limits';
 import ToolRail from './ToolRail';
+import DxfImportPanel from './DxfImportPanel';
+import MepPanel from './MepPanel';
+import CoordinationPanel from './CoordinationPanel';
+import { elementIndex } from '@/core/elements';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
@@ -181,6 +185,8 @@ export default function Editor({ id }: { id: string }){
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
   const snap = useMemo(() => house ? levelView(house, L) : null, [house, L]);
+  // id-urile tuturor elementelor casei (core/elements.ts): pentru id-urile noi din importul DXF și din panoul de instalații
+  const elementIds = useMemo(() => house ? elementIndex(house).map(e => e.elementId) : [], [house]);
   const health = useMemo(() => snap && catalog && mc ? evaluateProjectHealth(snap, catalog, mc) : null, [snap, catalog, mc]);
   const labAlternatives = useMemo(() => {
     const alts = [];
@@ -298,8 +304,8 @@ export default function Editor({ id }: { id: string }){
       }
       return; }
     const base = latest.current || house!, n = structuredClone(levelView(base, L)); fn(n); const h = mergeLevel(base, L, n); latest.current = h; setHouse(h); persist(h); };
-  const addUnderlay = (dataUrl: string) => mutate(s => { const xs = s.floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1]), zs = s.floor.rooms.flatMap(r => [r.rect.z0]);
-    const x0 = xs.length ? Math.min(...xs) : 0, w = xs.length ? Math.max(...xs) - x0 : 10; s.underlay = { dataUrl, x: r3(x0), z: r3(zs.length ? Math.min(...zs) : 0), widthM: Math.min(100, Math.max(1, r3(w || 10))), opacity: .5, locked: false }; });
+  const addUnderlay = (dataUrl: string, source?: NonNullable<Snapshot['underlay']>['source']) => mutate(s => { const xs = s.floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1]), zs = s.floor.rooms.flatMap(r => [r.rect.z0]);
+    const x0 = xs.length ? Math.min(...xs) : 0, w = xs.length ? Math.max(...xs) - x0 : 10; s.underlay = { dataUrl, x: r3(x0), z: r3(zs.length ? Math.min(...zs) : 0), widthM: Math.min(100, Math.max(1, r3(w || 10))), opacity: .5, locked: false, ...(source ? { source } : {}) }; });
   const patchUnderlay = (patch: Partial<NonNullable<Snapshot['underlay']>>, record: boolean) => { if (!snap?.underlay) return; const n = structuredClone(snap); Object.assign(n.underlay!, patch); commit(n, record); };
   const applyCalib = (realCm: number) => { const u = snap?.underlay; if (!snap || !u || calib?.stage !== 'enter' || !calib.a || !calib.b) return false; const w = scaleFromPoints(calib.a, calib.b, realCm, u.widthM); if (w == null) return false;
     const [x, z] = anchorAfterScale(u, calib.a, w); const n = structuredClone(snap); n.underlay = { ...u, widthM: w, x, z }; commit(n); setCalib(null); return true; };
@@ -833,6 +839,9 @@ export default function Editor({ id }: { id: string }){
             <label className="f"><span>{t('editor.ceilingHeight', { u })}</span><input type="number" value={inField(snap.floor.ceilingHeight)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.ceilingHeight = r3(x / 100); }), 200)} /></label>
             {L > 0 ? <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('level.underlayGround')}</p> : <UnderlayPanel underlay={snap.underlay} calib={calib} say={say} onAdd={addUnderlay} onPatch={patchUnderlay} onRemove={() => { mutate(s => { delete s.underlay; }); setCalib(null); }}
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
+            <DxfImportPanel floor={snap.floor} takenIds={elementIds} say={say} onApply={walls => mutate(s => { s.floor.walls = walls; })} />
+            <MepPanel snap={snap} takenIds={elementIds} say={say} onChange={fn => mutate(s => fn(s.floor))} />
+            {catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} focusFeature={cladFocus?.room === selRoom.id ? cladFocus : null} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
@@ -1330,6 +1339,7 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
     <a className="docrow" href={`/p/${id}/print`} target="_blank" rel="noopener"><b>{t('docs.pack')}</b><small>{t('docs.packSub')}</small></a>
     <button className="docrow" onClick={onSchedule}><b>{t('docs.schedule')}</b><small>{t('docs.scheduleSub')}</small></button>
     <a className="docrow" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download><b>{t('docs.dxf')}</b><small>{t('docs.dxfSub')}</small></a>
+    <a className="docrow" href={`/api/projects/${id}/export.ifc`} download><b>{t('docs.ifc')}</b><small>{t('docs.ifcSub')}</small></a>
   </div>);
 }
 
