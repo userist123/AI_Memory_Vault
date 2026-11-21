@@ -11,9 +11,14 @@ For an unreadable note the reason comes from ``MemoryController.cognitive_read``
   cannot fit within hard budget")``; default 3000 tokens at 3 chars/token, about 9 KB);
 - ``BUDGET_HARD_BYTES``        protected content over the byte hard limit (``budget.py``,
   ``apply_degradation`` never truncates protected content; default 32 KiB);
-- ``DROPPED_FROM_PACK``        the pack came back empty: an AI_AGENT reading a REVIEW note gets
-  ``allow_unverified`` only when its provenance is ``inference`` (``controller.py``), whatever the
+- ``REVIEW_TRUST_GATE``        the pack came back empty for a REVIEW note: an AI_AGENT gets
+  ``allow_unverified`` only when the provenance is ``inference`` (``controller.py``), whatever the
   verification label; ``memory_access`` then falls back only for an ``unverified`` REVIEW note;
+- ``NO_PROVENANCE``            the pack came back empty for a note with no ``provenance`` mapping and
+  no ``source_ref``: the egress contract in ``pack_builder._verify_and_reduce`` drops it (counted
+  there as ``items_rejected_unverified``; the note's own id is not used as a source reference);
+- ``DROPPED_FROM_PACK``        the pack came back empty for another reason.
+  The three "empty pack" reasons are attributed from the note's metadata, in that order;
 - ``BODY_WITHHELD``            the pack returned the note with ``model_egress`` False;
 - ``SERVED_EMPTY``             cognitive_read served it but memory_get returned an empty body;
 - an exception type name       any other refusal.
@@ -61,7 +66,17 @@ def _route_eligible(controller, note_id: str) -> bool:
     return eligible_for_agent(controller, note_id)
 
 
-def _refusal_reason(controller, note_id: str) -> str:
+def _empty_pack_reason(note: Dict[str, Any]) -> str:
+    provenance = note.get("provenance")
+    if str(note.get("lifecycle") or "").upper() == "REVIEW" and not (
+            isinstance(provenance, dict) and provenance.get("source_type") == "inference"):
+        return "REVIEW_TRUST_GATE"
+    if not isinstance(provenance, dict) and note.get("source_ref") is None:
+        return "NO_PROVENANCE"
+    return "DROPPED_FROM_PACK"
+
+
+def _refusal_reason(controller, note_id: str, note: Dict[str, Any]) -> str:
     try:
         pack = controller.cognitive_read(Principal.AI_AGENT, note_id)
     except Exception as exc:  # noqa: BLE001
@@ -74,7 +89,7 @@ def _refusal_reason(controller, note_id: str) -> str:
         return type(exc).__name__
     results = (pack or {}).get("results") or []
     if not results:
-        return "DROPPED_FROM_PACK"
+        return _empty_pack_reason(note)
     if results[0].get("model_egress") is False:
         return "BODY_WITHHELD"
     return "SERVED_EMPTY"
@@ -108,7 +123,7 @@ def agent_readability(controller) -> Dict[str, Any]:
                 disagreements += 1
             if outcome == "ok":
                 continue
-            reason = _refusal_reason(controller, note_id)
+            reason = _refusal_reason(controller, note_id, note)
         except Exception as exc:  # noqa: BLE001 - a check that cannot run is a finding, not a crash
             outcome, route_ok, reason = "unknown", None, f"CheckError:{type(exc).__name__}"
         label = _verification(note)

@@ -109,7 +109,7 @@ def test_withheld_review_note_reports_its_verification_label(tmp_path):
     result = agent_readability(_controller(v))
     row = next(r for r in result["unreadable"] if r["id"] == nid)
     assert row["verification"] == "verified_source" and row["verification_in_schema"] is False
-    assert row["reason"] == "DROPPED_FROM_PACK"
+    assert row["reason"] == "REVIEW_TRUST_GATE"
     assert result["summary"]["verification_outside_schema"] >= 1
 
 
@@ -144,7 +144,7 @@ def test_review_refusal_does_not_depend_on_the_verification_label(tmp_path):
                                      "lifecycle: REVIEW", "---", "# t", "", "body"])
     rows = {r["id"]: r for r in agent_readability(_controller(v))["unreadable"]}
     for label, nid in ids.items():
-        assert rows[nid]["reason"] == "DROPPED_FROM_PACK", label
+        assert rows[nid]["reason"] == "REVIEW_TRUST_GATE", label
 
 
 def test_memory_get_with_empty_content_counts_as_unreadable(tmp_path):
@@ -159,3 +159,15 @@ def test_memory_get_with_empty_content_counts_as_unreadable(tmp_path):
     rows = {r["id"]: r for r in agent_readability(_controller(v))["unreadable"]}
     if nid in rows:  # served with an empty body -> unreadable, and the outcome says so
         assert rows[nid]["memory_get"] in {"ok_empty_content", "error:ValueError"}
+
+
+def test_active_note_without_provenance_is_dropped_by_the_provenance_gate(tmp_path):
+    """Found by the Fable worker, verified: pack_builder drops a note with no provenance mapping
+    and no source_ref (egress contract), counted as items_rejected_unverified."""
+    from memory_vault_fixture import make_vault
+
+    v = make_vault(tmp_path)
+    _write(v, "moc.md", ["---", "id: moc-test-0001", "type: moc", "lifecycle: ACTIVE", "category: navigation",
+                         "tags: [moc]", "---", "# map", "", "a navigation note"])
+    row = next(r for r in agent_readability(_controller(v))["unreadable"] if r["id"] == "moc-test-0001")
+    assert row["reason"] == "NO_PROVENANCE"

@@ -131,10 +131,10 @@ The obvious next Loop B step was a ranking experiment for the 10 `PAGINATION_CUT
 
 | Notes | Reason | Mechanism (verified by `vault-reviewer` probes) |
 |---:|---|---|
-| 44 | `DROPPED_FROM_PACK`, REVIEW (26 `verified_source`, 18 `inferred`) | `controller.py` (`_cognitive_read_impl`) gives an AI_AGENT `allow_unverified` on a REVIEW note only when its provenance is `inference`. Otherwise the note is dropped from the pack, and `memory_access._review_candidate` falls back only for an `unverified` REVIEW note. **The label does not matter**: REVIEW notes labelled `verified` or `partially_verified` are refused the same way. 26 of these labels (`verified_source`) are also outside the schema enum, which is recorded but is not the cause. |
+| 44 | `REVIEW_TRUST_GATE`, REVIEW (26 `verified_source`, 18 `inferred`) | `controller.py` (`_cognitive_read_impl`) gives an AI_AGENT `allow_unverified` on a REVIEW note only when its provenance is `inference`. Otherwise the note is dropped from the pack, and `memory_access._review_candidate` falls back only for an `unverified` REVIEW note. **The label does not matter**: REVIEW notes labelled `verified` or `partially_verified` are refused the same way. 26 of these labels (`verified_source`) are also outside the schema enum, which is recorded but is not the cause. |
 | 2 | `BUDGET_PROTECTED_TOKENS`, ACTIVE | protected content that cannot fit the **token** hard limit of the pack (`pack_builder.py`, 3000 tokens at 3 chars/token, about 9 KB): `10 Imports and Sources Map.md` (28 KB), `Continuity_Handoff.md` (22 KB) |
 | 1 | `BUDGET_HARD_BYTES`, ACTIVE | protected content over the 32 KiB byte limit: `ContextBudget.apply_degradation` never truncates protected content (`Master_Skills_Catalog_251.md`, 925 KB; the gold of held-out H03 and H27) |
-| 1 | `DROPPED_FROM_PACK`, ACTIVE, no verification | not explained yet |
+| 1 | `NO_PROVENANCE`, ACTIVE (`moc-knowledge-0002`, `02 Memory Knowledge Map.md`) | the egress contract in `pack_builder._verify_and_reduce` (lines 127-131) drops a note with no `provenance` mapping and no `source_ref`; the drop is counted as `items_rejected_unverified` and `memory_get` reports "not found or not eligible". The comment there says "an id/source reference", but the note's own id is not accepted. Root cause found by a Fable worker, then checked by Opus against the code and a single-variable counterfactual (adding only `source_ref` makes the note served). Blast radius: 1 ACTIVE note; 26 REVIEW notes also lack provenance, but the REVIEW trust gate stops them first. |
 | 1 | `BODY_WITHHELD`, REVIEW `inferred` with `inference` provenance | served with an empty body (`memory_get` returns `ok_empty_content`) |
 
 ### Decisions left to the owner; nothing changed here
@@ -148,3 +148,7 @@ The obvious next Loop B step was a ranking experiment for the 10 `PAGINATION_CUT
    - Option c: keep refusing.
 
    Options a and b change canonical content or a security boundary.
+3. **Navigation notes without provenance (1 ACTIVE).**
+   - Option: give `moc-*` notes a provenance.
+   - Option: let `pack_builder` accept the note id as its source reference, which the comment already suggests.
+   - Option: keep dropping it, but report the real reason instead of "unverified".
