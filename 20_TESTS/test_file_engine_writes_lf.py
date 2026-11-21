@@ -53,3 +53,13 @@ def test_attested_crlf_body_still_promotes_after_a_reload(tmp_path):
     fresh.review(Principal.HUMAN, note["id"], "approve")
     fresh.promote(Principal.HUMAN, note["id"])
     assert str(fresh.storage.get(note["id"])["lifecycle"]).endswith("ACTIVE")
+
+
+def test_cache_after_set_matches_the_file(tmp_path):
+    """Review follow-up: get() right after set() must return what a reload returns."""
+    vault = make_vault(tmp_path)
+    engine = FileStorageEngine(str(vault))
+    c = MemoryController(storage=engine)
+    note = _note("a\r\nb\rc\n")
+    c.propose(Principal.HUMAN, note)
+    assert engine.get(note["id"])["content"] == FileStorageEngine(str(vault)).get(note["id"])["content"]

@@ -278,7 +278,11 @@ class FileStorageEngine:
                 os.remove(existing_path)
         self.id_to_path[note_id] = target_path
         mtime = os.path.getmtime(target_path)
-        self._cache[note_id] = (mtime, data)
+        cached = dict(data)
+        if isinstance(cached.get("content"), str):
+            # the file holds LF only: cache what a reload would return
+            cached["content"] = cached["content"].replace("\r\n", "\n").replace("\r", "\n")
+        self._cache[note_id] = (mtime, cached)
 
     def delete(self, note_id: str) -> None:
         filepath = self.id_to_path.get(note_id)
