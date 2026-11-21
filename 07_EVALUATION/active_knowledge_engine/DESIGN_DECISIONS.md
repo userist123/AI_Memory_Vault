@@ -112,43 +112,39 @@ It raised one MEDIUM and two LOW findings. This was the last review round, so th
 
 ### Why the reranker experiment was not run
 
-The obvious next Loop B step was a reranker or ranking-arm experiment for the 10 `PAGINATION_CUT` cases. It was not run.
+The obvious next Loop B step was a ranking experiment for the 10 `PAGINATION_CUT` cases. It was not run.
 
-- The controller's ranking arms (A1-A4) were already compared and validated on this same held-out v2 set (`07_EVALUATION/r024_wp1_ranking/`, `07_EVALUATION/r025_wp8_a1_heldout/`).
-- Re-selecting among them on held-out v2 would turn the held-out set into a tuning set.
-- A new reranker needs the dev set (12 cases) for development and a preregistration before one held-out run.
+- The controller's ranking arms A1-A4 were compared on the dev set (`07_EVALUATION/r024_wp1_ranking/`, 8 cases).
+- A1 alone was validated on held-out v2 (`07_EVALUATION/r025_wp8_a1_heldout/`).
+- Choosing among the arms by running them on held-out v2 would turn it into a tuning set.
+- A new reranker has to be developed on the 12-case dev set and pre-registered before a single held-out run.
 
-### What was found instead: the read-path defect behind Milestone 2
+### The read-path defect behind Milestone 2: what the stage measures
 
-Root cause, with a reproduction:
-- `ContextBudget.apply_degradation` (`retrieval/context/budget.py`) never truncates "protected" content (lines matching MUST/NEVER/SHALL/REQUIRED/FORBIDDEN).
-- So a protected note larger than the 32,768-byte hard limit always raises `BudgetExceededError` inside `cognitive_read`.
-- `memory_get` then refuses it (fail closed).
-- The held-out gold of H03 and H27 is `Master_Skills_Catalog_251.md`, 919,796 characters.
+`active_knowledge_engine/readability.py` checks every ACTIVE/REVIEW note with **`memory_get` itself** (`interfaces/memory_access.get` as AI_AGENT).
 
-The new stage `active_knowledge_engine/readability.py` checks every ACTIVE/REVIEW note.
-- The verdict comes from the production predicate `vault_cli.eligible_for_agent`.
-- The reason comes from the exception `cognitive_read` raises.
-- It records ids, paths, sizes and verification labels, never content.
+- **Verdict:** a note is readable only when the call succeeds with a non-empty body.
+- **Cross-check:** the vault-route predicate `vault_cli.eligible_for_agent` is recorded too. It agreed with `memory_get` on every note.
+- **Reason:** taken from `cognitive_read`. An exception message is classified only by its fixed prefix and is never copied.
 
-### Real vault result (498 notes in scope): 49 notes an agent can never read
+### Real vault (498 notes in scope): 49 an agent cannot read
 
-| Group | Notes | Cause |
-|---|---:|---|
-| REVIEW, `verification: verified_source` | 26 | `verified_source` is **not in the schema enum** (`lifecycle/validation/schema.py`: verified, partially_verified, unverified, inferred). All are legal sources and indexes with no provenance; the route withholds their body and `memory_access` hands over only `unverified` REVIEW notes |
-| REVIEW, `verification: inferred` | 19 | a valid label, but `memory_access._review_candidate` hands over only `unverified` REVIEW notes, so an `inferred` candidate is withheld while an `unverified` one is served |
-| ACTIVE, `verified`, `BudgetExceededError` | 3 | protected content over the hard limit (catalogue 925 KB, `10 Imports and Sources Map.md` 28 KB, `Continuity_Handoff.md` 22 KB) |
-| ACTIVE, no verification, withheld | 1 | withheld by the route |
+| Notes | Reason | Mechanism (verified by `vault-reviewer` probes) |
+|---:|---|---|
+| 44 | `DROPPED_FROM_PACK`, REVIEW (26 `verified_source`, 18 `inferred`) | `controller.py` (`_cognitive_read_impl`) gives an AI_AGENT `allow_unverified` on a REVIEW note only when its provenance is `inference`. Otherwise the note is dropped from the pack, and `memory_access._review_candidate` falls back only for an `unverified` REVIEW note. **The label does not matter**: REVIEW notes labelled `verified` or `partially_verified` are refused the same way. 26 of these labels (`verified_source`) are also outside the schema enum, which is recorded but is not the cause. |
+| 2 | `BUDGET_PROTECTED_TOKENS`, ACTIVE | protected content that cannot fit the **token** hard limit of the pack (`pack_builder.py`, 3000 tokens at 3 chars/token, about 9 KB): `10 Imports and Sources Map.md` (28 KB), `Continuity_Handoff.md` (22 KB) |
+| 1 | `BUDGET_HARD_BYTES`, ACTIVE | protected content over the 32 KiB byte limit: `ContextBudget.apply_degradation` never truncates protected content (`Master_Skills_Catalog_251.md`, 925 KB; the gold of held-out H03 and H27) |
+| 1 | `DROPPED_FROM_PACK`, ACTIVE, no verification | not explained yet |
+| 1 | `BODY_WITHHELD`, REVIEW `inferred` with `inference` provenance | served with an empty body (`memory_get` returns `ok_empty_content`) |
 
 ### Decisions left to the owner; nothing changed here
 
-1. Is `verified_source` a label the schema should accept, or should the 26 legal notes be relabelled?
-   Relabelling edits canonical notes.
-2. Should `memory_access` hand over `inferred` REVIEW notes the way it hands over `unverified` ones, flagged as unverified?
-   This changes the agent read contract.
-3. How should a protected note over the hard limit be served?
-   - Option a: split it at ingestion.
-   - Option b: allow a bounded, explicitly `[PARTIAL]` excerpt of protected content.
+1. **REVIEW notes not authored by inference (44).** Today an agent gets an `unverified` REVIEW note through the `memory_access` fallback, but not one labelled `verified_source`, `inferred`, `verified` or `partially_verified`. The more the note is checked, the less the agent sees.
+   - Option: extend the fallback to every non-quarantined REVIEW note, flagged unverified. This changes the agent read contract.
+   - Changing the schema enum or relabelling the notes would not fix this.
+2. **Protected notes over about 9 KB (3).**
+   - Option a: split them at ingestion.
+   - Option b: allow a bounded, explicitly `[PARTIAL]` protected excerpt.
    - Option c: keep refusing.
 
-   Options a and b change a security boundary or canonical content.
+   Options a and b change canonical content or a security boundary.

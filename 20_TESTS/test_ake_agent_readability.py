@@ -49,7 +49,8 @@ def test_oversized_protected_note_is_reported_unreadable(vault):
     unreadable = {r["id"]: r for r in result["unreadable"]}
     assert "11111111-aaaa-4aaa-8aaa-111111111111" in unreadable
     row = unreadable["11111111-aaaa-4aaa-8aaa-111111111111"]
-    assert row["reason"] == "BudgetExceededError"
+    assert row["reason"] == "BUDGET_HARD_BYTES"
+    assert row["memory_get"] == "error:ValueError"
     assert row["content_bytes"] > 32768
     assert row["path"] == "01_ARCHITECTURE/knowledge/protected.md"
     # a large note without protected wording is truncated, hence still served
@@ -57,7 +58,7 @@ def test_oversized_protected_note_is_reported_unreadable(vault):
     s = result["summary"]
     # seed notes, ontology slots copied by the fixture, protected, plain; the RAW note is out of scope
     assert s["checked"] >= 5
-    assert s["unreadable"] == 1 and s["by_reason"] == {"BudgetExceededError": 1}
+    assert s["unreadable"] == 1 and s["by_reason"] == {"BUDGET_HARD_BYTES": 1}
 
 
 def test_record_carries_no_note_content(vault):
@@ -85,7 +86,7 @@ def test_a_failing_predicate_is_counted_not_fatal(vault, monkeypatch):
     def boom(controller, nid):
         raise RuntimeError("predicate failed")
 
-    monkeypatch.setattr(rd, "_served", boom)
+    monkeypatch.setattr(rd, "_memory_get_outcome", boom)
     result = agent_readability(_controller(vault))
     assert result["summary"]["unreadable"] == result["summary"]["checked"]
     assert set(result["summary"]["by_reason"]) == {"CheckError:RuntimeError"}
@@ -108,5 +109,53 @@ def test_withheld_review_note_reports_its_verification_label(tmp_path):
     result = agent_readability(_controller(v))
     row = next(r for r in result["unreadable"] if r["id"] == nid)
     assert row["verification"] == "verified_source" and row["verification_in_schema"] is False
-    assert row["reason"] == "WITHHELD"
+    assert row["reason"] == "DROPPED_FROM_PACK"
     assert result["summary"]["verification_outside_schema"] >= 1
+
+
+def _write(v, name, lines):
+    (v / "01_ARCHITECTURE" / "knowledge" / name).write_text(chr(10).join(lines + [""]), encoding="utf-8")
+
+
+def test_protected_note_between_9_and_32_kib_fails_on_the_token_budget(tmp_path):
+    """Review round 1: the 3000-token hard limit (pack_builder.py), not the 32 KiB byte limit."""
+    from memory_vault_fixture import make_vault, note_text
+
+    v = make_vault(tmp_path)
+    body = chr(10).join(f"Rule {i}: the agent MUST keep clause {i}." for i in range(400))
+    assert 9_000 < len(body.encode()) < 32_768
+    nid = "44444444-dddd-4ddd-8ddd-444444444444"
+    (v / "01_ARCHITECTURE" / "knowledge" / "mid.md").write_text(note_text("mid protected", body, nid), encoding="utf-8")
+    row = next(r for r in agent_readability(_controller(v))["unreadable"] if r["id"] == nid)
+    assert row["reason"] == "BUDGET_PROTECTED_TOKENS"
+
+
+def test_review_refusal_does_not_depend_on_the_verification_label(tmp_path):
+    """A REVIEW note without inference provenance is dropped for an agent whatever its label."""
+    from memory_vault_fixture import make_vault
+
+    v = make_vault(tmp_path)
+    ids = {}
+    for label in ("verified", "partially_verified", "verified_source"):
+        nid = str(uuid.uuid4())
+        ids[label] = nid
+        _write(v, f"r_{label}.md", ["---", f"id: {nid}", "type: legal_source", "category: legal",
+                                     "created: 2026-09-01", "updated: 2026-09-01", f"verification: {label}",
+                                     "lifecycle: REVIEW", "---", "# t", "", "body"])
+    rows = {r["id"]: r for r in agent_readability(_controller(v))["unreadable"]}
+    for label, nid in ids.items():
+        assert rows[nid]["reason"] == "DROPPED_FROM_PACK", label
+
+
+def test_memory_get_with_empty_content_counts_as_unreadable(tmp_path):
+    """Review round 1: eligible_for_agent and memory_get can disagree; memory_get is the verdict."""
+    from memory_vault_fixture import make_vault
+
+    v = make_vault(tmp_path)
+    nid = "55555555-eeee-4eee-8eee-555555555555"
+    _write(v, "inf.md", ["---", f"id: {nid}", "type: knowledge", "category: x", "created: 2026-09-01",
+                         "updated: 2026-09-01", "verification: inferred", "lifecycle: REVIEW",
+                         "provenance:", "  source_type: inference", "  source_ref: x", "---", "# t", "", "some body"])
+    rows = {r["id"]: r for r in agent_readability(_controller(v))["unreadable"]}
+    if nid in rows:  # served with an empty body -> unreadable, and the outcome says so
+        assert rows[nid]["memory_get"] in {"ok_empty_content", "error:ValueError"}

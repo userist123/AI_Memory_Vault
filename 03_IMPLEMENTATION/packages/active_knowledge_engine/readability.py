@@ -1,13 +1,25 @@
-"""AKE Loop A check: ACTIVE/REVIEW notes an agent can never read through ``memory_get``.
+"""AKE Loop A check: ACTIVE/REVIEW notes an agent cannot read through ``memory_get``.
 
-The verdict is the production predicate ``interfaces/vault_cli.eligible_for_agent`` (the one
-``memory_get`` and the vault routes apply; fail closed). For a refused note the reason is the
-exception ``MemoryController.cognitive_read`` raises, or ``WITHHELD`` when the route served it with
-the body withheld. Known cause (Milestone 2): ``ContextBudget.apply_degradation`` never truncates
-protected content (MUST/NEVER/SHALL ...), so a protected note over the 32 KiB hard limit always
-raises ``BudgetExceededError``.
+The verdict is ``memory_get`` itself (``interfaces/memory_access.get`` as AI_AGENT, the call behind
+the MCP tool): a note is readable when the call succeeds with a non-empty body. The vault-route
+predicate (``vault_cli.eligible_for_agent``) is recorded alongside, because the two can disagree.
 
-Read-only: ids, paths, byte sizes and exception type names; never note content.
+For an unreadable note the reason comes from ``MemoryController.cognitive_read``:
+
+- ``BUDGET_PROTECTED_TOKENS``  protected content (MUST/NEVER/SHALL ...) that cannot fit the token
+  hard limit of the context pack (``pack_builder.py``, ``BudgetExceededError("Protected context
+  cannot fit within hard budget")``; default 3000 tokens at 3 chars/token, about 9 KB);
+- ``BUDGET_HARD_BYTES``        protected content over the byte hard limit (``budget.py``,
+  ``apply_degradation`` never truncates protected content; default 32 KiB);
+- ``DROPPED_FROM_PACK``        the pack came back empty: an AI_AGENT reading a REVIEW note gets
+  ``allow_unverified`` only when its provenance is ``inference`` (``controller.py``), whatever the
+  verification label; ``memory_access`` then falls back only for an ``unverified`` REVIEW note;
+- ``BODY_WITHHELD``            the pack returned the note with ``model_egress`` False;
+- ``SERVED_EMPTY``             cognitive_read served it but memory_get returned an empty body;
+- an exception type name       any other refusal.
+
+Read-only: ids, paths, byte sizes, labels and reason codes; never note content. An exception
+message is classified by its fixed prefix only, never copied.
 """
 from __future__ import annotations
 
@@ -19,7 +31,7 @@ from cognitive_core.sleep_consolidation import collect_notes
 from memory_controller.authorizer import Principal
 
 IN_SCOPE = frozenset({"ACTIVE", "REVIEW"})
-#: lifecycle/validation/schema.py, "verification" enum
+#: lifecycle/validation/schema.py, "verification" enum (recorded, not the cause of a refusal)
 SCHEMA_VERIFICATION = frozenset({"verified", "partially_verified", "unverified", "inferred"})
 
 
@@ -30,7 +42,20 @@ def _verification(note: Dict[str, Any]) -> str:
     return "" if value is None else str(value)
 
 
-def _served(controller, note_id: str) -> bool:
+def _memory_get_outcome(controller, note_id: str) -> str:
+    from interfaces import memory_access
+
+    try:
+        record = memory_access.get(controller, note_id)
+    except Exception as exc:  # noqa: BLE001 - the refusal type is the finding
+        return f"error:{type(exc).__name__}"
+    body = record.get("content") if isinstance(record, dict) else None
+    if body is None and isinstance(record, dict):
+        body = (record.get("note") or {}).get("content") if isinstance(record.get("note"), dict) else None
+    return "ok" if body else "ok_empty_content"
+
+
+def _route_eligible(controller, note_id: str) -> bool:
     from interfaces.vault_cli import eligible_for_agent
 
     return eligible_for_agent(controller, note_id)
@@ -38,10 +63,21 @@ def _served(controller, note_id: str) -> bool:
 
 def _refusal_reason(controller, note_id: str) -> str:
     try:
-        controller.cognitive_read(Principal.AI_AGENT, note_id)
-    except Exception as exc:  # noqa: BLE001 - the exception type is the finding
+        pack = controller.cognitive_read(Principal.AI_AGENT, note_id)
+    except Exception as exc:  # noqa: BLE001
+        message = str(exc)
+        if type(exc).__name__ == "BudgetExceededError":
+            if message.startswith("Protected context cannot fit"):
+                return "BUDGET_PROTECTED_TOKENS"
+            if message.startswith("Context usage"):
+                return "BUDGET_HARD_BYTES"
         return type(exc).__name__
-    return "WITHHELD"
+    results = (pack or {}).get("results") or []
+    if not results:
+        return "DROPPED_FROM_PACK"
+    if results[0].get("model_egress") is False:
+        return "BODY_WITHHELD"
+    return "SERVED_EMPTY"
 
 
 def _relative_path(controller, note_id: str) -> str:
@@ -59,24 +95,32 @@ def _relative_path(controller, note_id: str) -> str:
 def agent_readability(controller) -> Dict[str, Any]:
     checked = 0
     unreadable = []
+    disagreements = 0
     for note in collect_notes(controller):
         if str(note.get("lifecycle") or "").upper() not in IN_SCOPE:
             continue
         note_id = str(note.get("id"))
         checked += 1
         try:
-            if _served(controller, note_id):
+            outcome = _memory_get_outcome(controller, note_id)
+            route_ok = _route_eligible(controller, note_id)
+            if (outcome == "ok") != route_ok:
+                disagreements += 1
+            if outcome == "ok":
                 continue
             reason = _refusal_reason(controller, note_id)
         except Exception as exc:  # noqa: BLE001 - a check that cannot run is a finding, not a crash
-            reason = f"CheckError:{type(exc).__name__}"
+            outcome, route_ok, reason = "unknown", None, f"CheckError:{type(exc).__name__}"
+        label = _verification(note)
         unreadable.append({
             "id": note_id,
             "lifecycle": str(note.get("lifecycle")),
             "path": _relative_path(controller, note_id),
             "content_bytes": len(str(note.get("content", "")).encode("utf-8")),
-            "verification": _verification(note),
-            "verification_in_schema": _verification(note) in SCHEMA_VERIFICATION or _verification(note) == "",
+            "verification": label,
+            "verification_in_schema": label in SCHEMA_VERIFICATION or label == "",
+            "memory_get": outcome,
+            "vault_route_eligible": route_ok,
             "reason": reason,
         })
     unreadable.sort(key=lambda r: (-r["content_bytes"], r["id"]))
@@ -88,5 +132,6 @@ def agent_readability(controller) -> Dict[str, Any]:
             "by_reason": dict(Counter(r["reason"] for r in unreadable)),
             "by_verification": dict(Counter(r["verification"] or "(none)" for r in unreadable)),
             "verification_outside_schema": sum(1 for r in unreadable if not r["verification_in_schema"]),
+            "memory_get_vs_vault_route_disagreements": disagreements,
         },
     }
