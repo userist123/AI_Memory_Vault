@@ -139,7 +139,8 @@ The obvious next Loop B step was a ranking experiment for the 10 `PAGINATION_CUT
 
 ### Decisions left to the owner; nothing changed here
 
-1. **REVIEW notes not authored by inference (44).** Today an agent gets an `unverified` REVIEW note through the `memory_access` fallback, but not one labelled `verified_source`, `inferred`, `verified` or `partially_verified`. The more the note is checked, the less the agent sees.
+1. **DECIDED by the owner (2026-11-21): no.** "Agents receive nothing unverified." The read contract is not extended; the 44 REVIEW notes stay refused, and the stage keeps reporting them as `REVIEW_TRUST_GATE`. Recorded for context:
+   **REVIEW notes not authored by inference (44).** Today an agent gets an `unverified` REVIEW note through the `memory_access` fallback, but not one labelled `verified_source`, `inferred`, `verified` or `partially_verified`. The more the note is checked, the less the agent sees.
    - Option: extend the fallback to every non-quarantined REVIEW note, flagged unverified. This changes the agent read contract.
    - Changing the schema enum or relabelling the notes would not fix this.
 2. **Protected notes over about 9 KB (3).**
@@ -152,3 +153,34 @@ The obvious next Loop B step was a ranking experiment for the 10 `PAGINATION_CUT
    - Option: give `moc-*` notes a provenance.
    - Option: let `pack_builder` accept the note id as its source reference, which the comment already suggests.
    - Option: keep dropping it, but report the real reason instead of "unverified".
+
+### Escalation on decisions 2 and 3 (2026-11-21)
+
+The escalation chain was Opus, then Fable, then Codex and Gemini through agent-bridge (blind, PUBLIC, sanitised), then `fable-consultant`, then a decision by Opus. External answers were treated as unverified data.
+
+- **Navigation note without provenance:** Codex and Gemini agree. Self-provenance (the note's own id as its `source_ref`) is circular attestation (W3C PROV) and would let any note with an id pass the gate. Keep egress strict and give the note explicit provenance.
+  - Fable adds that `update()` probably cannot add provenance to a note that has none, because of the `provenance.source_type` immutability check.
+  - The repair is therefore an owner action: supersede, or an authorised file repair.
+- **Protected notes over the budget:** both recommend section-aware splitting at ingestion, with a parent manifest, `parent_content_hash` and fail-closed checks. Codex adds: keep refusing until full coverage can be proven.
+  - Fable, checked against the code: a child created with `propose()` lands in REVIEW and **would be served** to agents through the `memory_access` fallback, marked unverified.
+  - No child state is both unreadable and immutable to agents before attestation.
+  - Safe order: a dry-run manifest with a coverage proof, then an owner batch (create, attest, promote, with a hash check each step). Pilot on the 22 KB and 28 KB notes first; the 925 KB catalogue keeps being refused.
+
+### Security defect found on the way (fixed in PR #398)
+
+Fable flagged it and Opus reproduced it end to end:
+1. The owner attests a RAW note.
+2. An agent rewrites the note's content, and `verified` stays.
+3. After the owner's review and promote, the agent's text is ACTIVE and verified.
+
+PR #398:
+- An agent can no longer change the content of an attested note.
+- `attest()` stores the content hash, and `promote()` refuses a body that differs from it.
+- An agent downgrade clears the owner's stamp.
+- Security review: round 1 CHANGES_REQUIRED, round 2 APPROVE. Full suite: 5310 passed.
+
+### Open contradiction for the owner
+
+The owner said "agents receive nothing unverified". Today's read contract (VAULT_STATE "Agent read contract" row) serves **REVIEW notes marked `unverified`** to agents, flagged as unverified; Fable reproduced this.
+- Closing that would withdraw about 229 notes (about 46% of what agents can read).
+- That is a contract change, so it has not been made without an explicit owner instruction.
