@@ -1821,3 +1821,11 @@
   Add-MpPreference to CFG-DEFENDER-EXCL - low-medium; E4 OS end-of-support + stale updates (dated lifecycle table; WindowsUpdateClient 19/20) - medium;
   E5 account flags (password not required / never expires / built-in admin enabled) - low; E6 unquoted service paths - low; E7 smoke test + event-log
   collectors - low; E8 BitLocker via Win32_EncryptableVolume - medium. Order E1, E2, E3, then E4-E6, E7, E8.
+- 2026-11-21 (claude, hg585) PLANNER #14 E1 DONE (vault-worker, low-medium, not Opus-reviewed: report text): Analysis/Data/owner_actions.json (exact rule
+  ids, prefixes "X-*" longest wins, fallback; embedded like other data) + OwnerActions.For (finding's own first RecommendedNextSteps wins); page one box
+  "Rezumat pentru proprietar" = all grouped mistakes Medium+ by severity, "<gravitate> · <titlu> → Ce faci: …", cap 15 + "… și încă N"; High findings
+  already in the box not repeated in "Ce este grav"; annex "Listă de verificare (Cum verifici tu)" at the end: ☐ + title + locator + all numbered steps (<=5
+  refs per group) + Ce faci + "Verificat de / Data"; Greșeli găsite gets an 8th label "Ce faci:". Audit-policy sentences use subcategory GUIDs (any
+  language). Tests App OwnerSummaryTests (8), Dfir OwnerActionsTests (3, coverage of emitted ids), MistakesSectionTests 8 labels; red 6/7 + 1/3. Suites
+  App 1508, UI 370 (1 skipped), Edition 45, Dfir 4081 / 36 / 0. RESIDUALS: ☐ glyph not seen visually; Sigma/YARA/IOC rule hits not in the box/annex;
+  sentences want a native review.

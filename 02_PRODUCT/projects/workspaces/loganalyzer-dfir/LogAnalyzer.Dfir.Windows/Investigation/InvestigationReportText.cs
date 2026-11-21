@@ -235,7 +235,52 @@ public static class InvestigationReportText
         foreach (var x in not) lines.Add("  • " + x);
         lines.Add($"Siguranță: încredere {ConfidenceWord(f.Confidence)}; verificarea automată: {StateLabels.Romanian(f.Verification.State)}" +
                   (f.Verification.State == StandardState.NotAssessed ? " (nu s-a pronunțat)" : "") + ".");
+        lines.Add("Ce faci: " + OwnerActions.For(f));
         return new MistakeBlock(f.FindingId, lines);
+    }
+
+    // ---- "Rezumat pentru proprietar" and the "Cum verifici tu" checklist (planner #14 E1) ----
+
+    public const string OwnerSummaryHeading = "Rezumat pentru proprietar";
+    public const string ChecklistHeading = "Listă de verificare (Cum verifici tu)";
+    public const int OwnerSummaryCap = 15;
+    public const string ChecklistBox = "☐";
+    public const string OwnerSummaryRule = "Toate greșelile de gravitate medie sau mai mare, câte o linie, cu ce faceți; lista cu pașii de verificare este în ultima anexă a raportului.";
+
+    /// <summary>The owner's list: the grouped mistakes of medium severity or higher, in the order of <see cref="GroupFindings"/> (severity, then first time seen).</summary>
+    public static List<FindingGroup> OwnerGroups(IEnumerable<Finding> mistakes) => GroupFindings(mistakes.Where(f => f.Severity >= Severity.Medium));
+
+    private static string SeverityWord(Severity s) => RoText.Capitalize(RoLabels.Severity(s).ToLowerInvariant());
+
+    private static string ShortTitle(FindingGroup g) =>
+        RoText.StripVolumes(g.Lead.Title) + (g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "");
+
+    /// <summary>"gravitate · titlu → Ce faci: propoziție", at most <see cref="OwnerSummaryCap"/> lines and then how many more the "Greșeli găsite" section holds.</summary>
+    public static List<string> OwnerSummaryLines(IReadOnlyList<FindingGroup> groups)
+    {
+        var l = groups.Take(OwnerSummaryCap).Select(g => $"{SeverityWord(g.Lead.Severity)} · {ShortTitle(g)} → Ce faci: {OwnerActions.For(g.Lead)}").ToList();
+        if (groups.Count > OwnerSummaryCap) l.Add($"… și încă {groups.Count - OwnerSummaryCap} în secțiunea {MistakesHeading}");
+        return l;
+    }
+
+    /// <summary>One printable, tick-able entry per group: the box and title, the locator, all verification steps numbered, and a line to sign.</summary>
+    public static List<IReadOnlyList<string>> ChecklistEntries(IReadOnlyList<FindingGroup> groups, Func<EvidenceRef, IReadOnlyList<LogAnalyzer.Dfir.Presentation.VerificationStep>> steps)
+    {
+        var entries = new List<IReadOnlyList<string>>();
+        foreach (var g in groups)
+        {
+            var refs = GroupEvidence(g);
+            var lines = new List<string> { $"{ChecklistBox} {SeverityWord(g.Lead.Severity)} · {ShortTitle(g)}" };
+            lines.Add("  Unde: " + (refs.Count > 0 ? $"{refs[0].EvidenceId} · {RoText.CleanPathsInText(refs[0].Locator)}" + (refs.Count > 1 ? $" (și încă {RoText.Count(refs.Count - 1, "loc", "locuri")} în probe)" : "") : "nespecificat în date"));
+            var how = refs.Take(5).SelectMany(e => steps(e)).Select(s => s.ToLine()).Distinct(StringComparer.Ordinal).ToList();
+            lines.Add("  Cum verifici tu:");
+            if (how.Count == 0) lines.Add("  1. Cereți unui specialist să verifice constatarea în elementul de probă original.");
+            for (int i = 0; i < how.Count; i++) lines.Add($"  {i + 1}. {how[i]}");
+            lines.Add("  Ce faci: " + OwnerActions.For(g.Lead));
+            lines.Add("  Verificat de: ______________________  Data: ____________");
+            entries.Add(lines);
+        }
+        return entries;
     }
 
     // ---- First-page summary ----

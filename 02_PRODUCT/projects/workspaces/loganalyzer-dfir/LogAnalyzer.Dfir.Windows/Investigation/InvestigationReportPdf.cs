@@ -81,6 +81,8 @@ public static class InvestigationReportPdf
         var mistakes = InvestigationReportText.Mistakes(others);
         var ruleMistakes = InvestigationReportText.RuleMistakes(r.Detections, r.RulesUsed);   // planner #11 A7: high-level rule matches count as mistakes too
         int mistakeTotal = mistakes.Count + ruleMistakes.Count;
+        var ownerGroups = InvestigationReportText.OwnerGroups(mistakes);
+        var ownerLines = InvestigationReportText.OwnerSummaryLines(ownerGroups);
         var timelineIndex = new Lazy<Dictionary<(string EvidenceId, string Locator), TimelineEvent>>(() => LogAnalyzer.Dfir.Integrity.EvidenceQuote.Index(r.Timeline));
         bool showMistakes = S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings);   // the line on page 1 exists only where the section is printed
         var printed = new List<string>();
@@ -130,10 +132,13 @@ public static class InvestigationReportPdf
                     sc.Spacing(3);
                     P(sc, "Concluzie pe scurt").Bold().FontSize(12).FontColor(Ink);
                     P(sc, summary.Verdict).Bold().FontSize(9);
-                    if (summary.Serious.Count > 0)
+                    // a grave finding that is also a mistake is listed once, in the owner's box below (same sentence plus what to do); the rest stays here
+                    var inBox = showMistakes ? ownerGroups.SelectMany(g => g.Members).Select(m => "; " + m.FindingId + ")").ToList() : [];
+                    var seriousHere = summary.Serious.Where(s => !inBox.Any(k => s.EndsWith(k, StringComparison.Ordinal))).ToList();
+                    if (seriousHere.Count > 0)
                     {
                         P(sc, "Ce este grav").Bold().FontSize(8.5f);
-                        foreach (var s in summary.Serious) P(sc, "• " + s).FontSize(8);
+                        foreach (var s in seriousHere) P(sc, "• " + s).FontSize(8);
                     }
                     P(sc, "Ce nu s-a putut verifica (surse lipsă sau incomplete)").Bold().FontSize(8.5f);
                     foreach (var s in summary.NotChecked) P(sc, "• " + s).FontSize(8);
@@ -144,6 +149,12 @@ public static class InvestigationReportPdf
                     P(sc, "Ce poate și ce nu poate dovedi acest raport").Bold().FontSize(8.5f);
                     P(sc, summary.CanProve).FontSize(8);
                     P(sc, summary.CannotProve).FontSize(8);
+                    if (showMistakes && ownerGroups.Count > 0)
+                    {
+                        // planner #14 E1: every mistake of medium severity or higher, not only the grave ones listed above
+                        P(sc, InvestigationReportText.OwnerSummaryHeading).Bold().FontSize(8.5f);
+                        foreach (var l in ownerLines) P(sc, "• " + l).FontSize(8);
+                    }
                     if (showMistakes)
                         P(sc, ruleMistakes.Count == 0 ? $"Greșeli găsite: {mistakeTotal} (vezi secțiunea „Greșeli găsite”)"
                             : $"Greșeli găsite: {mistakeTotal} (din care {RoText.Count(ruleMistakes.Count, "potrivire de reguli", "potriviri de reguli")}) — vezi secțiunea „Greșeli găsite”").Bold().FontSize(8.5f);
@@ -463,6 +474,25 @@ public static class InvestigationReportPdf
                 P(col, $"Cronologia completă: Analysis/timeline.csv · constatări: Analysis/findings.json · lanțul de custodie: Logs/chain_of_custody.csv (în {r.Case.Root}). " +
                        "„Indisponibil” înseamnă că sursa nu a putut fi citită, nu că activitatea nu a avut loc. O constatare marcată „indiciu – de confirmat” cere confirmarea analistului.")
                     .FontSize(7).Italic().FontColor(Muted);
+
+                // planner #14 E1: the printable checklist closes the report; same set and order as "Rezumat pentru proprietar"; printed through P, so masked like the rest
+                if (showMistakes && ownerGroups.Count > 0)
+                {
+                    col.Item().PageBreak();
+                    Head(InvestigationReportText.ChecklistHeading);
+                    P(col, "Printați această pagină, parcurgeți pașii pentru fiecare linie și bifați căsuța când ați verificat.").FontSize(7.5f).Italic().FontColor(Muted);
+                    var entries = InvestigationReportText.ChecklistEntries(ownerGroups, e => LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator))));
+                    foreach (var entry in entries)
+                        col.Item().ShowEntire().Border(0.5f).BorderColor(Line).Padding(5).Column(mc =>
+                        {
+                            mc.Spacing(1);
+                            for (int i = 0; i < entry.Count; i++)
+                            {
+                                var t = P(mc, entry[i]).FontSize(i == 0 ? 9 : 7.5f);
+                                if (i == 0) t.Bold();
+                            }
+                        });
+                }
             });
             LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal,
                 LogAnalyzer.Dfir.Reporting.MarkingText.Line(info.Scope?.Marking));

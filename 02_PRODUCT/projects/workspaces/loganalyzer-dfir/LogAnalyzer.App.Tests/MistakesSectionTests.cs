@@ -13,7 +13,7 @@ public sealed class MistakesSectionTests : IDisposable
     private readonly GapsTestKit _k = new();
     public void Dispose() { InvestigationReportPdf.TextObserver.Value = null; _k.Dispose(); }
 
-    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verifici tu:", "Ce NU dovedește:", "Siguranță:"];
+    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verifici tu:", "Ce NU dovedește:", "Siguranță:", "Ce faci:"];
 
     private static Finding F(string id, Severity sev, string title, int minute, Classification cls = Classification.Candidate, StandardState state = StandardState.NotAssessed,
                              bool alternatives = true, string user = "ana.pop") => new()
@@ -44,7 +44,7 @@ public sealed class MistakesSectionTests : IDisposable
     }
 
     [Fact]
-    public void Section_lists_only_qualifying_findings_in_severity_order_with_all_seven_labels_and_comes_before_the_findings_list()
+    public void Section_lists_only_qualifying_findings_in_severity_order_with_all_eight_labels_and_comes_before_the_findings_list()
     {
         var text = Print([
             F("F-0001", Severity.Medium, "Logon medie", 5),
