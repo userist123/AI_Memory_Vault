@@ -1,7 +1,7 @@
 # todo-claude-ake — Active Knowledge Engine
 
 - Task: AKE Milestone 0 (audit) + Milestone 1 (read-only shadow runner)
-- Branch: `claude/ake-m0-reality-audit` (local), base `origin/main` @ `aa42387f2`
+- Branch: `claude/ake-m0-reality-audit`, draft PR #396, base `origin/main` @ `aa42387f2`
 - Updated: 2026-11-21 (Claude Code)
 
 ## Done
