@@ -1,4 +1,6 @@
 import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
+import { MEP_SYSTEMS, runLength } from './mep';
+import type { MepSystem } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
@@ -311,6 +313,12 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   extra.push({ key: 'montaj-mobilier', label: 'Montaj mobilier', amount: s.furnitureAssembly, confidence: s.furnitureAssembly == null ? 'UNKNOWN' : 'MEDIUM', note: s.furnitureAssembly == null ? 'Depinde de ofertă (platformele de servicii arată intervale foarte largi); introdu valoarea primită.' : 'Valoare introdusă manual.' });
   // onorariul de proiectare NU mai e o linie a bugetului: are o singură sursă, contractul (core/contract.ts migratedFee preia
   // vechiul `design` de aici), și intră în total prin lanțul canonic (core/commercial.ts projectChain)
+  // traseele de instalații (core/mep.ts): lungimea măsurată pe sistem și diametru; țevile și tuburile nu sunt în catalog, deci prețul
+  // rămâne necunoscut (linie „neinclusă”), nu se inventează (CONSTITUTION art. 4)
+  const runAgg = new Map<string, { sys: MepSystem; d: number | null; len: number }>();
+  for (const r of floors(snap).flatMap(f => f.mepRuns ?? [])) { const k = `${r.system}|${r.diameterMm ?? ''}`, a = runAgg.get(k) ?? { sys: r.system, d: r.diameterMm ?? null, len: 0 }; a.len += runLength(r); runAgg.set(k, a); }
+  for (const [k, a] of [...runAgg].sort(([x], [y]) => x.localeCompare(y)))
+    extra.push({ key: `mep-${k}`, label: `Instalații: ${MEP_SYSTEMS[a.sys]?.label.ro ?? a.sys}${a.d ? ` Ø${a.d} mm` : ''} — ${formatQty(r2(a.len), 'ml', 'ro')}`, amount: null, confidence: 'UNKNOWN', note: 'Lungimea din traseele desenate; materialul, fitingurile și prețul le stabilește instalatorul.' });
   const known = extra.filter(e => e.amount != null), unknownLines = extra.filter(e => e.amount == null);
   const extrasTotal = r2(known.reduce((a, e) => a + (e.amount || 0), 0));
   const mk = (scen: 'low' | 'expected' | 'high') => { const lab = s.includeLabor ? laborTotals[scen] : 0; const subtotal = r2(Object.values(cats).reduce((a, v) => a + v, 0) + lab + extrasTotal);

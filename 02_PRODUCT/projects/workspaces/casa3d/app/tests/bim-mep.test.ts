@@ -104,3 +104,18 @@ test('descrierea planului (arbore, cititor de ecran): fundația la structură, t
     assert.match(svc.items[1]!.label, lang === 'ro' ? /diametru nedeclarat/ : /diameter not declared/);
   }
 });
+
+import catalogJson from '../data/catalog.v1.json';
+import materialsJson from '../data/materials.v1.json';
+import { newSnapshot } from '../core/project';
+import { computeBudget } from '../core/boq';
+import { excludedGroups } from '../core/budget-excluded';
+test('deviz: traseele apar ca linii fără preț, pe sistem și diametru, cu lungimea totală; totalul nu se schimbă', () => {
+  const cat: any = catalogJson, mc: any = materialsJson, s = newSnapshot(cat, 'D', 'demo', 'ro', { materials: mc }), before = computeBudget(s, cat, mc);
+  s.floor.mepRuns = [{ id: 'm1', system: 'water_cold', diameterMm: 20, points: [[0, 1, 0], [2, 1, 0]] }, { id: 'm2', system: 'water_cold', diameterMm: 20, points: [[0, 1, 1], [1.5, 1, 1]] }, { id: 'm3', system: 'drain', points: [[0, .1, 0], [3, .1, 0]] }];
+  const b = computeBudget(s, cat, mc), mep = b.unknownLines.filter(l => l.key.startsWith('mep-'));
+  assert.deepEqual(mep.map(l => l.label), ['Instalații: Canalizare — 3,00 ml', 'Instalații: Apă rece Ø20 mm — 3,50 ml']);
+  assert.ok(mep.every(l => l.amount === null && l.confidence === 'UNKNOWN'));
+  assert.equal(b.chosen.total, before.chosen.total, 'liniile fără preț nu schimbă totalul');
+  assert.ok(excludedGroups(b.unknownLines.map(u => u.label), b.unknownItems).some(g => g.kind === 'installations' && g.items.length === 2));
+});
