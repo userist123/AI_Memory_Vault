@@ -157,7 +157,16 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
         finally
         {
             try { File.WriteAllText(summaryPath, sb.ToString(), Encoding.UTF8); output.WriteLine("Summary: " + summaryPath); } catch (IOException) { }
-            try { if (Directory.Exists(caseRoot)) Directory.Delete(caseRoot, recursive: true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { output.WriteLine("Case folder not fully deleted: " + e.Message); }
+            // 2026-11-21: stored evidence is made read-only by the case, so a plain recursive delete failed and left ~300 MB of real hive copies per run in %TEMP%
+            try
+            {
+                if (Directory.Exists(caseRoot))
+                {
+                    foreach (var f in Directory.EnumerateFiles(caseRoot, "*", SearchOption.AllDirectories)) File.SetAttributes(f, FileAttributes.Normal);
+                    Directory.Delete(caseRoot, recursive: true);
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { output.WriteLine("Case folder not fully deleted: " + e.Message); }
         }
     }
 }
