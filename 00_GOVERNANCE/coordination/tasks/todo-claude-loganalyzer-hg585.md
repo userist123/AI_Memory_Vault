@@ -1812,3 +1812,12 @@
   present (not confirmed that /get /r emits it; else text, unknown language -> gap). Tests: SoftwareSubkeyHivesCollectorTests (6), PlannerD2Tests,
   ConfigurationHiveReaderTests +, UserHistoryTests +2, LocalSecurityStateTests (Quick profile). Suites: App 1500, UI 370 (1 skipped), Edition 45, Dfir
   4078 / 36 skipped / 0 failed.
+- 2026-11-21 (claude, hg585) PLANNER #14 (Plan agent at 27d22f457; owner filter): event-log mistakes are already covered (LOG-TAMPER, DEF-TAMPER/DETECTION,
+  ACCOUNT-*, CRED-BRUTEFORCE/SPRAY, REMOTE-RDP-PUBLIC, PERSIST-TASK/SERVICE, PS-SUSPICIOUS). Ranked: E1 page-one owner summary with ALL Medium+ mistakes and a
+  plain "Ce faci" per rule (rule->action data table) + printable "Cum verifici tu" checklist annex (Summarize uses High+ only; real run hid UAC/Defender/
+  audit-policy Medium findings) - low-medium; E2 more hive-based config rules (firewall profiles + policy override, RemoteRegistry Start=2, AutoAdminLogon
+  with DefaultPassword (password never quoted), LocalAccountTokenFilterPolicy, AlwaysInstallElevated, PSv2 engine, SMB server signing Low; Quick: outside
+  the 3 subkeys -> gap) - medium; E3 noise: docker hosts entries BenignKnown, Quick Assist presence Info, EXEC-USERPATH bulk Info, link PS-HISTORY
+  Add-MpPreference to CFG-DEFENDER-EXCL - low-medium; E4 OS end-of-support + stale updates (dated lifecycle table; WindowsUpdateClient 19/20) - medium;
+  E5 account flags (password not required / never expires / built-in admin enabled) - low; E6 unquoted service paths - low; E7 smoke test + event-log
+  collectors - low; E8 BitLocker via Win32_EncryptableVolume - medium. Order E1, E2, E3, then E4-E6, E7, E8.
