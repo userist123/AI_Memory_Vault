@@ -18,6 +18,7 @@ import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/type
 import { checkBrief } from '../core/brief';
 import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
+import { sanitizeIssues } from '../core/issues';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
 import { aiConfigured, aiModel, proposeWithClaude } from './ai';
@@ -72,7 +73,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -81,6 +82,9 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   const { underlay: rawUnderlay, ...rest } = s;
   if (JSON.stringify(rest).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
   if (rawUnderlay != null) s.underlay = checkUnderlay(rawUnderlay);
+  // statusurile constatărilor de coordonare (core/issues.ts): doar id-uri cf-…, statusuri cunoscute, justificare la acceptare
+  if (s.issues != null){ let v: Record<string, unknown>; try { v = sanitizeIssues(s.issues); } catch (e: any){ throw new HttpError(400, e?.message || 'Statusurile constatărilor sunt invalide.'); }
+    if (Object.keys(v).length) s.issues = v; else delete s.issues; }
   const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
   // etajele: același format ca parterul, cel mult MAX_LEVELS niveluri în total, id-uri unice pe toată casa
   if (s.levels != null){

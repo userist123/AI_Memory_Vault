@@ -97,6 +97,7 @@ import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core
 import ToolRail from './ToolRail';
 import DxfImportPanel from './DxfImportPanel';
 import MepPanel from './MepPanel';
+import CoordinationPanel from './CoordinationPanel';
 import { elementIndex } from '@/core/elements';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
@@ -838,6 +839,7 @@ export default function Editor({ id }: { id: string }){
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
             <DxfImportPanel floor={snap.floor} takenIds={elementIndex(house!).map(e => e.elementId)} say={say} onApply={walls => mutate(s => { s.floor.walls = walls; })} />
             <MepPanel snap={snap} takenIds={elementIndex(house!).map(e => e.elementId)} say={say} onChange={fn => mutate(s => fn(s.floor))} />
+            {catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} focusFeature={cladFocus?.room === selRoom.id ? cladFocus : null} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}

@@ -66,6 +66,9 @@ export interface FurniturePlacement { id: string; roomId: string; group: string;
 export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
 export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: Finish; ceiling?: Finish }>; wallFaces?: Record<string, Finish>; openings?: Record<string, Finish>; items?: Record<string, Finish> }
+export type IssueStatus = 'new' | 'reviewed' | 'accepted' | 'resolved' | 'false_positive';
+/** Statusul unei constatări: `note` = justificarea (obligatorie la accepted și false_positive), `by` = responsabilul. */
+export interface IssueRecord { status: IssueStatus; note?: string; by?: string; at: string }
 /** Sistemul unui traseu de instalații (core/mep.ts MEP_SYSTEMS dă disciplina, culoarea și eticheta). */
 export type MepSystem = 'water_cold' | 'water_hot' | 'drain' | 'hvac_supply' | 'hvac_return' | 'refrigerant' | 'electric';
 /** Traseu de instalații: puncte [x, y, z] în m (y = cota de la pardoseala nivelului), în sensul curgerii. Diametrul (mm), materialul
@@ -85,7 +88,9 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   /** variante A/B/C pe cameră (core/room-options.ts) */
   roomOptions?: Record<string, import('./room-options').RoomOption[]>;
   /** biblioteca de componente parametrice și modele importate ale proiectului/utilizatorului */
-  userLibrary?: import('./user-library').UserLibraryItem[] }
+  userLibrary?: import('./user-library').UserLibraryItem[];
+  /** statusul constatărilor de coordonare, pe id-ul lor stabil (core/issues.ts); lipsă = toate „new” */
+  issues?: Record<string, IssueRecord> }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }

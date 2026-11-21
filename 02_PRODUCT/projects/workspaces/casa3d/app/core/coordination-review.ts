@@ -7,6 +7,8 @@ import { roomCeilingDropCm } from './finishes';
 import { floors } from './levels';
 import { buildTechnicalSchedule } from './technical';
 import { resolve } from './catalog';
+import { detectClashes, solidsOf, CLASH_RULES, CLEARANCE_RULE, type ClashOptions } from './clash';
+import { mepIssues } from './mep';
 
 export type CoordinationSeverity = 'ERROR' | 'WARNING' | 'INFO' | 'UNKNOWN';
 
@@ -172,11 +174,20 @@ export interface CoordinationRun {
 }
 
 /** Rularea cu domeniul ei: revizia verificată, regulile rulate și cele nerulate, numărul pe severitate. */
-export function runCoordination(snap: Snapshot, cat: Catalog, opts: { revision?: number; mc?: MaterialsCatalog } = {}): CoordinationRun {
+export function runCoordination(snap: Snapshot, cat: Catalog, opts: { revision?: number; mc?: MaterialsCatalog; clash?: ClashOptions } = {}): CoordinationRun {
   const findings = reviewProjectCoordination(snap, cat, opts.mc);
-  const hasTech = !!snap.tech && snap.tech.length > 0;
-  const rulesChecked: string[] = [...COORDINATION_RULES, ...(hasTech ? TECHNICAL_RULES : [])];
-  const rulesNotChecked: string[] = hasTech ? [] : [...TECHNICAL_RULES];
+  const hasTech = !!snap.tech && snap.tech.length > 0, hasClearance = !!opts.clash?.clearances?.length;
+  // interferențele 3D (core/clash.ts) și proprietățile declarate ale traseelor (core/mep.ts), cu id-urile lor stabile
+  const seen = new Set(findings.map(f => f.id));
+  const push = (f: CoordinationFinding) => { if (!seen.has(f.id)) { seen.add(f.id); findings.push(f); } };
+  for (const c of detectClashes(snap, cat, opts.clash))
+    push({ id: c.id, code: c.type === 'hard' ? 'CLASH_HARD' : c.type === 'penetration' ? 'WALL_PENETRATION' : 'CLASH_CLEARANCE', severity: c.severity, refs: [...c.refs], message: c.message, rule: c.rule });
+  for (const id of solidsOf(snap, cat).skipped.map(x => x.id))
+    push({ id: findingId('CLASH_SIZE_UNKNOWN', 'casa3d.clash.inputs', [id]), code: 'CLASH_SIZE_UNKNOWN', severity: 'UNKNOWN', refs: [id], rule: 'casa3d.clash.inputs',
+      message: `Piesa ${id} nu are dimensiuni cunoscute și nu a intrat în verificarea interferențelor.` });
+  for (const fl of floors(snap)) for (const m of mepIssues(fl)) push({ id: findingId(m.code, 'casa3d.mep.declared-properties', m.refs), code: m.code, severity: m.severity, refs: m.refs, message: m.message, rule: 'casa3d.mep.declared-properties' });
+  const rulesChecked: string[] = [...COORDINATION_RULES, ...(hasTech ? TECHNICAL_RULES : []), ...CLASH_RULES, 'casa3d.clash.inputs', 'casa3d.mep.declared-properties', ...(hasClearance ? [CLEARANCE_RULE] : [])];
+  const rulesNotChecked: string[] = [...(hasTech ? [] : TECHNICAL_RULES), ...(hasClearance ? [] : [CLEARANCE_RULE])];
   const counts: Record<CoordinationSeverity, number> = { ERROR: 0, WARNING: 0, INFO: 0, UNKNOWN: 0 };
   for (const f of findings) counts[f.severity]++;
   const revision = opts.revision ?? 'draft';
