@@ -1,58 +1,71 @@
-# Casa3D BIM — Faza 0: inventar, gap analysis și plan
+# Casa3D BIM — inventar, stare și limite
 
 Ghidul aplicat: `docs/bim/GHID_BIM.md` (SHA-256 `0244b68be6bde79a9d13e733fe99cd4af5c415381aefe7a50c990cf4cc290b0b`).
-Bază constituțională: `CONSTITUTION.md` art. 14 (pista BIM, amendament 2026-11-21).
-Data inventarului: 2026-11-21, pe `origin/main` `aa42387f2`.
+Bază constituțională: `CONSTITUTION.md` art. 14 (pista BIM, amendament 2026-11-21). Adaptoare: `docs/bim/ADAPTERS.md`.
+Bază de pornire: `origin/main` `aa42387f2` (2026-11-19); branch `claude/casa3d-bim-faza0-1`.
 
-Legendă: **REAL** = implementat și acoperit de teste; **PARTIAL** = există, cu limitări numite; **UNKNOWN** = neimplementat sau neverificat.
+Legendă: **REAL** = implementat și acoperit de teste (și verificat în aplicație unde se spune); **PARTIAL** = există, cu limitele
+numite; **UNKNOWN** = neimplementat. Totul de mai jos e marcat *experimental* în interfață (art. 10).
 
-## 1. Ce există azi față de ghid
+## 1. Starea pe cerințele ghidului
 
-| Ghid | Stare | Unde | Limită / lipsă |
+| Ghid | Stare | Unde | Limite |
 |---|---|---|---|
-| Sistem de coordonate și unități (§2, §5) | REAL | `core/types.ts` (metri), `core/dxf.ts` (mm la export) | — |
-| Identitate stabilă a elementelor (§3.2) | REAL | `id` pe cameră, perete, gol, scară, stâlp, grindă, nișă, zonă, balustradă, piesă, punct tehnic; unicitatea e verificată de `duplicateElementIds` în `core/elements.ts` | — |
-| Disciplină și tip pe element (§3.2, §3.6) | REAL (din 2026-11-21) | `core/elements.ts` — `elementIndex`, `elementsOf` | derivat, nu salvat; disciplina vine din tipul elementului |
-| Proveniență pe element: sursă, metodă, confidence, stare (§3.2) | UNKNOWN | — | elementele de azi nu au sursă declarată; nu se completează cu valori implicite (art. 4) |
-| Versiuni, diff, rollback (§3.6, §7) | REAL | tabela `revisions` (`lib/schema.ts`), `core/diff.ts`, rutele `revisions/*` și `restore` | diff-ul acoperă structura și stratul tehnic din 2026-11-21; nu compară scări, nișe, pereți de sticlă, balustrade, zone |
-| Import plan raster + calibrare (§3.1) | PARTIAL | `core/underlay.ts` (scară din două puncte, blocare până la confirmare), `lib/repo.ts` `checkUnderlay` | imaginea e redusă la ≤ 2000 px / JPEG în browser; originalul și hash-ul lui nu se păstrează |
-| Import PDF vectorial, DXF/DWG, IFC (§3.1) | UNKNOWN | — | niciun parser în `package.json`; DWG cere licență (ODA cu plată, LibreDWG GPLv3) — de verificat la zi |
-| Interpretare automată a planului, OCR (§3.2) | UNKNOWN | — | art. 14: doar local, experimental |
-| Model arhitectural (§3.3) | REAL | pereți cu grosime și stare (existent/nou/demolat), goluri, niveluri, scări, tavane coborâte, nișe | acoperișul lipsește; „derivat / inferat / manual / aprobat” nu se distinge |
-| Structură (§3.4) | PARTIAL | `Column` (structural / ghenă / casetare), `Beam` | fără fundații, planșee structurale, pereți structurali marcați; fără dimensionare (corect, conform art. 12) |
-| Instalații (§3.5) | PARTIAL | `core/technical.ts` — puncte (priză, apă, scurgere, calorifer, AC) cu `circuitId`, `switchGroup`, `linkedIds` | puncte, nu trasee: fără conducte, tubulaturi, diametre, pante, conectivitate |
-| Model federat (§3.6) | REAL (din 2026-11-21) | `elementsOf(snap, disciplină)` peste un singur Snapshot | filtrul nu e încă expus în UI |
-| Clash detection hard / clearance (§3.7) | PARTIAL | `core/validate.ts` (suprapuneri în plan, zone de ușă, gabarite), `core/trade-checks.ts` | 2D/2,5D; fără verificare 3D între grinzi, tavane coborâte, ghene, corpuri tehnice și mobilier înalt |
-| Issue-uri de coordonare (§3.7) | PARTIAL | `core/coordination-review.ts` — id stabil `cf-xxxxxxxx`, deduplicare, `runCoordination` cu revizia, regulile rulate și nerulate | fără status persistat (`new/reviewed/accepted/resolved/false_positive`), responsabil, captură; nu e afișat în UI |
-| „Zero clashes” cu domeniul testat (§3.7) | REAL (din 2026-11-21) | `runCoordination(...).statement` | — |
-| Adaptor Blender (§4.1) | PARTIAL | `lib/renders.ts` → `tools/blender/casa3d_render.py` | sens unic (randare); id-ul elementului ajunge pe obiect (`c3d_id`) pentru stâlpi, grinzi, puncte tehnice, obiecte pe perete și mobilier; pereții și plăcile nu au încă id (planul vechi `pereti` nu îl poartă) |
-| Export (§4.2) | PARTIAL | `core/dxf.ts` (DXF R12, straturi), GLB din vederea 3D | fără IFC |
-| Audit și aprobare (§7) | PARTIAL | revizii numerotate, `changes` cu aprobare de client | fără jurnal per element al modificărilor automate |
+| Coordonate și unități explicite (§2, §5) | REAL | metri în model; mm în DXF; IFC în metri, X = x, Y = −z, Z = cota | — |
+| Identitate stabilă (§3.2) | REAL | id pe fiecare element; `core/elements.ts` `duplicateElementIds`; traseele și fundațiile unice pe toată casa (`checkSnapshot`) | camerele/pereții vechi verifică unicitatea doar între ei (regula existentă) |
+| Disciplină și tip (§3.2, §3.6) | REAL | `elementIndex`, `elementsOf` | derivate din tip, nesalvate |
+| Proveniență (§3.2) | PARTIAL | `Underlay.source` (SHA-256, nume, mărime, tip, dată); `Wall.origin` pentru pereții din DXF (metodă, amprentă, strat, grosime măsurată sau manuală) | elementele desenate în aplicație nu au proveniență declarată (nu se inventează una) |
+| Stări candidate / revizuit / aprobat (§3.2) | PARTIAL | importul DXF: candidați în panou, intră în proiect doar la aprobare | starea nu se salvează per element; în proiect intră doar ce e aprobat |
+| Versiuni, diff, rollback (§3.6, §7) | REAL | revizii, `core/diff.ts` (camere, pereți, structură, instalații, trasee, mobilier, cost, aspect), restore | scările, nișele, pereții de sticlă și zonele nu au contor separat în diff |
+| Import raster + scară (§3.1) | REAL | `core/underlay.ts`, calibrare din două puncte, amprenta originalului | imaginea de lucru e redusă la ≤ 2000 px |
+| Import DXF vectorial (§3.1) | REAL | `core/dxf-import.ts`, `DxfImportPanel.tsx`; unitatea obligatorie când lipsește; perechi de linii → pereți cu grosime măsurată | arce, blocuri, goluri și camere nu se recunosc; verificat în aplicație pe un DXF de test |
+| PDF vectorial, DWG, import IFC, OCR (§3.1–3.2) | UNKNOWN | — | vezi `ADAPTERS.md` „Neacoperit” |
+| Model arhitectural (§3.3) | REAL | pereți, goluri, niveluri, scări, tavane, nișe (existent) | acoperișul lipsește |
+| Structură (§3.4) | REAL ca reprezentare | stâlpi, grinzi, `Wall.structural`, `Floor.footings`; fără dimensionare (art. 12) | planșee structurale ca elemente separate: UNKNOWN |
+| Instalații (§3.5) | REAL ca reprezentare | `Floor.mepRuns` (7 sisteme), propunere ortogonală între puncte tehnice, diametru/material/pantă declarate sau necunoscute, verificări de pantă | fără fitinguri, fără conectivitate de rețea, fără dimensionare |
+| Model federat, filtre (§3.6, §6) | REAL | vederea 3D: federat / disciplină / revizie interferențe; filtre pe disciplină în panoul de coordonare | planul 2D nu are încă filtru pe disciplină |
+| Hard clash, clearance (§3.7) | REAL | `core/clash.ts`: pereți tăiați la goluri, stâlpi, grinzi, fundații, tavane false, mobilier, trasee; toleranță = suprapunerea ignorată; clearance doar cu distanțe definite de proiect | stâlpul rotund aproximat cu cutia; scările și corpurile tehnice (calorifer, AC) nu intră; ramificațiile în T ale aceluiași sistem apar ca avertisment |
+| Rule clash (§3.7) | PARTIAL | regulile existente (validatoare, puncte tehnice, finisaje, prețuri) + proprietățile nedeclarate ale traseelor | reguli definite de utilizator: UNKNOWN |
+| Issue-uri cu status, justificare, înainte/după, raport (§3.7) | REAL | `core/issues.ts`, `Snapshot.issues`, `CoordinationPanel.tsx`, raport Markdown | captura 3D per constatare: UNKNOWN |
+| „Zero” doar cu domeniul testat (§3.7) | REAL | fraza de raport numește regulile rulate și nerulate și limita asistivă | — |
+| Adaptor Blender (§4.1) | REAL | id pe obiect (`c3d_id`), colecții `Casa3D_<disciplină>`; verificat pe Blender 5.2 | sens unic (randare) |
+| DXF export (§4.2) | REAL | straturi `MEP_<SISTEM>`, `STRUCT_FOOTINGS`, `STRUCT_WALLS` | — |
+| IFC4 export (§4.2, §5) | REAL (experimental) | `core/ifc-export.ts`, `/api/projects/[id]/export.ifc`; validat cu IfcOpenShell | vezi `ADAPTERS.md` |
+| Registru de adaptoare / plugin API (faza 7) | REAL | `core/adapters.ts`, `docs/bim/ADAPTERS.md`, teste de compatibilitate | adaptoarele se adaugă în cod, nu se încarcă dinamic |
+| GIS, AI Orchestrator (§4.2, §5) | UNKNOWN | — | în afara produsului actual |
 
-## 2. Ce s-a schimbat în această fază
+## 2. Fișiere principale
 
-- `core/elements.ts` — indexul de elemente (id, disciplină, tip, nivel) și verificarea de unicitate.
-- `core/diff.ts` — `structure` (stâlpi, ghene, casetări, grinzi) și `tech` (strat tehnic); intră în `isEmpty`.
-- `components/RevisionDiff.tsx`, `lib/locales/{ro,en}.ts` — rândurile noi în comparația reviziilor.
-- `core/coordination-review.ts` — `id` stabil pe constatare, deduplicare, `findingId`, `runCoordination`, `COORDINATION_RULES`, `TECHNICAL_RULES`.
-- `components/viewer3d-engine.js`, `tools/blender/casa3d_render.py` — id-ul elementului în scena exportată și pe obiectul Blender.
-- `CONSTITUTION.md` — art. 14; `docs/bim/` — ghidul și acest inventar.
-- Teste: `tests/bim-core.test.ts`.
+`core/elements.ts`, `core/diff.ts`, `core/coordination-review.ts`, `core/dxf-import.ts`, `core/mep.ts`, `core/clash.ts`,
+`core/issues.ts`, `core/ifc-export.ts`, `core/adapters.ts`, `core/scene-ids.ts`; `components/DxfImportPanel.tsx`, `MepPanel.tsx`,
+`CoordinationPanel.tsx`, `Viewer3D.tsx`, `viewer3d-engine.js`, `PlanView.tsx`; `lib/repo.ts`, `lib/viewer-input.ts`, `lib/ifcExport.ts`;
+`tools/blender/casa3d_render.py`; testele `tests/bim-*.test.ts`.
 
-Toate schimbările sunt aditive: nicio cheie nouă în Snapshot, nicio migrare, revizii vechi neatinse.
+Câmpuri noi în model, toate opționale (proiectele vechi rămân neschimbate, verificat de testul golden din lotul 4):
+`Underlay.source`, `Wall.origin`, `Wall.structural`, `Floor.mepRuns`, `Floor.footings`, `Snapshot.issues`.
 
-## 3. Ordinea fazelor următoare (câte una pe sesiune, cu STOP GATE)
+## 3. Verificări făcute
 
-1. **Faza 1b — proveniență și sursă.** Hash SHA-256 al fișierului original la încărcarea planului (calculat în browser înainte de
-   reducere, salvat lângă underlay); câmpuri opționale `origin` (`source|inferred|manual|approved`) pe elementele create din import.
-   Acceptare: hash-ul se păstrează la salvare și revizie; elementele vechi rămân fără câmp.
-2. **Faza 2 — import vectorial.** DXF (linii/polilinii pe straturi) → pereți candidați cu `review_status: candidate`, revizie umană
-   obligatorie. Parserul se alege după verificarea licenței și rulează pe server cu limite de mărime (fișier neîncredere).
-3. **Faza 3 — Blender.** Id și pe pereți/plăci; colecții pe disciplină; test pe scena exportată.
-4. **Faza 4 — structură și instalații.** Trasee (segmente cu diametru/secțiune declarate sau `UNKNOWN`), fără dimensionare.
-5. **Faza 5 — coordonare 3D.** Hard clash și clearance cu teste analitice (cutii orientate) pe elementele 3D existente, toleranță
-   explicită, intersecții intenționate excluse prin regulă; status persistat pe id-ul `cf-…`; panou în UI.
-6. **Faza 6–7** — UI, livrabile, IFC export (spike separat), adaptoare.
+- `npx tsc --noEmit` și `npx vitest run` la fiecare fază (rezultatele sunt în mesajele de commit și în PR).
+- În aplicația pornită local (Playwright): import DXF (colțuri închise, proveniență salvată pe server), trasee și fundații,
+  verificarea coordonării și salvarea statusului (justificarea obligatorie refuză salvarea fără ea), vederile pe disciplină în 3D,
+  exportul IFC (200 pentru proprietar, 404 pentru alt proiect).
+- Blender 5.2: scena exportată → obiectele în colecțiile disciplinelor, cu `c3d_id`.
+- IfcOpenShell 0.9.0: schema IFC4 fără probleme; geometria construită pentru toate elementele cu volum.
+- Două revizii independente (Opus): defectele găsite sunt corectate în commit-uri separate; afirmația „importul DXF oglindește
+  planul” a fost verificată cu un test dus-întors și respinsă.
 
-Riscuri: un raport „0 constatări” citit drept conformitate (de aceea `statement` numește limita); regresie de performanță în vederea 3D
-la geometrie de instalații; parsere noi pe fișiere neîncredere.
+## 4. Cum se repetă verificarea IFC
+
+```powershell
+python -m venv $env:TEMP\ifc-venv; & $env:TEMP\ifc-venv\Scripts\python.exe -m pip install ifcopenshell
+# descarcă /api/projects/<id>/export.ifc, apoi:
+# import ifcopenshell, ifcopenshell.validate; f = ifcopenshell.open('casa.ifc'); log = ifcopenshell.validate.json_logger()
+# ifcopenshell.validate.validate(f, log); print(log.statements)   # listă goală = valid
+```
+
+## 5. Riscuri rămase
+
+- Un raport „0 constatări” citit ca o conformitate: fraza de raport și panoul spun explicit că verificarea e asistivă.
+- Performanța: verificarea rulează doar la cerere; cazul extrem (300 de trasee × 50 de puncte, 60 de pereți) durează ~1,6 s.
+- Parserul DXF primește fișiere neîncredere: rulează în browser, cu limite de mărime, de entități și de coordonate.

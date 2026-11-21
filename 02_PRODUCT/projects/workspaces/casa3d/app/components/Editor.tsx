@@ -1339,6 +1339,7 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
     <a className="docrow" href={`/p/${id}/print`} target="_blank" rel="noopener"><b>{t('docs.pack')}</b><small>{t('docs.packSub')}</small></a>
     <button className="docrow" onClick={onSchedule}><b>{t('docs.schedule')}</b><small>{t('docs.scheduleSub')}</small></button>
     <a className="docrow" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download><b>{t('docs.dxf')}</b><small>{t('docs.dxfSub')}</small></a>
+    <a className="docrow" href={`/api/projects/${id}/export.ifc`} download><b>{t('docs.ifc')}</b><small>{t('docs.ifcSub')}</small></a>
   </div>);
 }
 
