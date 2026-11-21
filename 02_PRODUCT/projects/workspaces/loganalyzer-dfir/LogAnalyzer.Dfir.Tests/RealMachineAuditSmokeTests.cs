@@ -59,7 +59,7 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
             // 2. the collectors, each on its own: one that throws is a failure of the test, one that is not available is recorded
             ICollector[] collectors = [new SoftwareHiveCollector(), new ExecutionArtifactsCollector(), new UserHistoryCollector(), new LiveStateCollector(), new LocalSecurityStateCollector(),
                 // planner #14 E7: the event-log channels (EVTX copies, each to a file of the case folder under %TEMP%, deleted at the end) and the Defender detection history, so the event-log rules run on real data
-                new EventLogCollector(), new DefenderDetectionHistoryCollector()];
+                new EventLogCollector(), new DefenderDetectionHistoryCollector(), new BitLockerCollector()];
             Line(); Line("== COLLECTORS ==");
             foreach (var c in collectors)
             {

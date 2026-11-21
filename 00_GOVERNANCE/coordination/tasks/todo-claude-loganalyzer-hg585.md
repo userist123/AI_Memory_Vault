@@ -1859,3 +1859,8 @@
   suspended noted; data volumes one Low); namespace missing / access denied -> gap; parser count 40. Tests Dfir OsLifecycleAndUpdatesTests (13), App
   BitLockerTests (8) + collector tests; red via mutations. Suites App 1524, UI 370 (1 skipped), Edition 45, Dfir 4127 / 36 / 0. RESIDUALS: ESU not read;
   WMI method-vs-property fallbacks unverified on a real PC until the smoke run; imported EVTX use import time as collection date.
+- 2026-11-21 (claude, hg585) REAL RUN with event logs (E7) + BitLocker (smoke test now also runs BitLockerCollector): EventLog 30 channels (Sysmon absent),
+  124,050 timeline rows, 267 findings. Real: CFG-DISK-UNENCRYPTED C: (Medium) and D:/E: (Low); OS build 26300 -> "build necunoscut" gap; no stale updates.
+  NOISE on real event logs -> planner #15 F1: DEF-DETECTION 49 High (repeats; includes the 2026-11-18 false positive on our own Dfir test DLL), PS-SUSPICIOUS
+  100 Medium (4104 script blocks of our own build/test scripts), FIREWALL-RULE-USERPATH 12 High, AIRGAP-* ~52 (air-gap posture rules on an Internet PC),
+  MEDIA-*. Results stay local (%TEMP%\la-real-audit-summary.txt).
