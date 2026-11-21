@@ -1872,3 +1872,9 @@
   the app already silences AIRGAP-* on Connected. Tests F1NoiseReductionTests (8; red 8/8). Suites Dfir 4135 / 36 / 0, App 1524, UI 370 (1 skipped),
   Edition 45. REAL RUN: 267 -> 105 findings (PS 100 -> 3, firewall 12 -> 2, AIRGAP 0); DEF-DETECTION still 49 (High 15, Medium 34) = distinct build
   folders -> next: group by (threat, file name) across folders.
+- 2026-11-21 (claude, hg585) PLANNER #15 F2 DONE (vault-worker, low): DEF-DETECTION per-path findings merged by (file name, sorted threat set): one finding
+  "… în <file> (N locații, M detecții, prima … ultima … UTC)", locations capped 20, evidence 50, severity = max, handled/unhandled counts, build-path
+  alternative only when all locations are build outputs; different threat sets stay separate. Tests F2DefenderGroupingTests (7; red 6/7). Suites Dfir
+  4142 / 36 / 0, App 1524, UI 370 (1 skipped), Edition 45. REAL RUN: 105 -> 76 findings, DEF-DETECTION 49 -> 20 (remaining = our own test DLL with
+  different threat sets per period, AMSI script content "builtin unalias…" = our test strings, and hosts PossibleHostsFileHijack 4 locations / 54
+  detections since 2026-11-20 - owner should check). Planner #15 done.

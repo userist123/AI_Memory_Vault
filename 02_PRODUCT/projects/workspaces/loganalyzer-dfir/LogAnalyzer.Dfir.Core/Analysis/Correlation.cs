@@ -308,6 +308,7 @@ public static class Correlation
         // A path in a build folder or in a Defender exclusion path gets an honest alternative explanation, never a lower severity by itself.
         var excludedPaths = events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 5007)).Select(e => ExcludedPathOf(F(e, "New Value", "NewValue")))
             .Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var defPaths = new List<(string Path, List<TimelineEvent> Events, List<string> Threats, int DetCount, (bool Resolved, string Text) Outcome, bool Build, Func<string, Finding> Make)>();
         foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 1116, 1117, 1006, 1007, 1015, 1118, 1119))
                                 .GroupBy(e => DefenderContainer(F(e, "Path")), StringComparer.OrdinalIgnoreCase))
         {
@@ -322,9 +323,9 @@ public static class Correlation
             var alt = new List<string>();
             if (buildPath) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
             var moreEv = ordered.Count - 50;
-            f.Add(new Finding
+            defPaths.Add((g.Key, ordered, threats, detCount, outcome, buildPath, id => new Finding
             {
-                FindingId = Id(), RuleId = "DEF-DETECTION",
+                FindingId = id, RuleId = "DEF-DETECTION",
                 Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}{span}",
                 Severity = outcome.Resolved ? Severity.Medium : Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
@@ -335,6 +336,43 @@ public static class Correlation
                               (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
                 ClassificationReason = "Înregistrare directă în jurnalul Defender." + (outcome.Resolved ? " Severitatea este Medium pentru că ultima acțiune a Defender pentru fiecare amenințare a fost carantină, ștergere sau permitere de către utilizator; arată că fișierul a fost tratat, nu că detecția a fost falsă." : ""),
                 SupportingEvidence = ordered.Take(50).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
+                AlternativeExplanations = alt,
+                RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
+            }));
+        }
+        // Planner #15 F2: the same file NAME with the same set of threats in many folders (build outputs, worktrees) is one finding; every location and
+        // every evidence reference is kept (capped lists carry a "și încă N" note). A different threat set stays a separate finding.
+        foreach (var grp in defPaths.GroupBy(d => WinPath.GetFileName(d.Path.TrimEnd('\\')).ToLowerInvariant() + "|" +
+                                                  string.Join("|", d.Threats.Select(t => t.ToLowerInvariant()).OrderBy(t => t, StringComparer.Ordinal))))
+        {
+            var items = grp.ToList();
+            if (items.Count == 1) { f.Add(items[0].Make(Id())); continue; }
+            var first = items[0];
+            var all = items.SelectMany(d => d.Events).OrderBy(e => e.Time.Utc).ThenBy(e => e.EventId, StringComparer.Ordinal).ToList();
+            var threats = first.Threats;
+            var name = WinPath.GetFileName(first.Path.TrimEnd('\\'));
+            int detTotal = items.Sum(d => d.DetCount), handled = items.Count(d => d.Outcome.Resolved), builds = items.Count(d => d.Build);
+            var threatText = threats.Count == 1 ? threats[0] : threats.Count is > 1 and <= 3 ? string.Join(", ", threats) : $"{threats.Count} amenințări";
+            var sev = items.Max(d => d.Outcome.Resolved ? Severity.Medium : Severity.High);
+            var locs = items.Select(d => d.Path).ToList();
+            var alt = new List<string>();
+            if (builds == items.Count) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
+            int moreLoc = locs.Count - 20, moreEv = all.Count - 50;
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "DEF-DETECTION",
+                Title = $"Microsoft Defender a detectat {threatText} în {name} ({locs.Count} locații, {detTotal} detecții, prima {all[0].Time.Utc:yyyy-MM-dd HH:mm}, ultima {all[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC)",
+                Severity = sev, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
+                FirstSeenUtc = all.Min(e => e.Time.Utc), LastSeenUtc = all.Max(e => e.Time.Utc), File = first.Path, User = F(first.Events[0], "Detection User"),
+                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {PlainPhrases.Q(threatText)} în {PlainPhrases.Q(name)}, în {locs.Count} locații diferite; în total {detTotal} detecții",
+                Description = $"Același fișier „{name}” cu aceeași amenințare ({threatText}) în {locs.Count} locații, {detTotal} detecții. Locații: {string.Join("; ", locs.Take(20))}" +
+                              (moreLoc > 0 ? $"; și încă {moreLoc} locații" : "") + "." +
+                              $" Tratate de Defender (carantină, ștergere sau permis de utilizator): {handled} din {locs.Count} locații; netratate: {locs.Count - handled}." +
+                              (builds == items.Count ? " Toate locațiile sunt foldere de compilare (bin\\Debug, bin\\Release, obj)." :
+                               builds > 0 ? $" {builds} din {locs.Count} locații sunt foldere de compilare; celelalte nu, deci explicația „fișier produs de compilare” nu se aplică tuturor." : "") +
+                              (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
+                ClassificationReason = "Înregistrări directe în jurnalul Defender, grupate după numele fișierului și amenințare." + (sev == Severity.Medium ? " Severitatea este Medium pentru că în fiecare locație ultima acțiune a Defender a fost carantină, ștergere sau permitere de către utilizator." : " Severitatea este cea mai mare dintre locații."),
+                SupportingEvidence = all.Take(50).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
                 AlternativeExplanations = alt,
                 RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
             });
