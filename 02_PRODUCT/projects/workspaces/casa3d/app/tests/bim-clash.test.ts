@@ -85,3 +85,30 @@ test('coordonarea include regulile de interferență și spune explicit că clea
   const withC = runCoordination(snap(f), cat, { revision: 3, clash: { clearances: [{ a: 'water_cold', b: 'electric', minM: .05 }] } });
   assert.ok(withC.rulesChecked.includes('casa3d.clash.clearance'));
 });
+
+// ---------- revizia independentă (fazele 2–5) ----------
+import { planToDxf } from '../core/dxf';
+import { parseDxf, wallCandidates } from '../core/dxf-import';
+import { SLAB } from '../core/levels';
+test('revizie: două trasee suprapuse care pornesc din același punct sunt raportate; îmbinarea simplă nu', () => {
+  const f = floor(); f.mepRuns = [{ id: 'a', system: 'water_cold', diameterMm: 50, points: [[1, 1, 1], [4, 1, 1]] }, { id: 'b', system: 'drain', diameterMm: 110, points: [[1, 1, 1], [4, 1, 1]] }];
+  assert.ok(ids(snap(f)).includes('hard:casa3d.clash.mep-mep:a+b'));
+  const g = floor(); g.mepRuns = [{ id: 'a', system: 'water_cold', diameterMm: 50, points: [[1, 1, 1], [2, 1, 1]] }, { id: 'b', system: 'water_cold', diameterMm: 50, points: [[2, 1, 1], [2, 1, 2]] }];
+  assert.equal(ids(snap(g)).some(x => x.includes('a+b')), false);
+});
+test('revizie: fundația e sub placă (−SLAB … −SLAB−adâncime), ca în vederea 3D', () => {
+  const f = floor(); f.footings = [{ id: 'fd', x: 5, z: 1, w: 1, d: 1, depth: .4 }];
+  f.mepRuns = [{ id: 'inSlab', system: 'drain', diameterMm: 20, points: [[4.5, -.08, 1], [5.5, -.08, 1]] }, { id: 'inFooting', system: 'drain', diameterMm: 20, points: [[4.5, -SLAB - .2, 1], [5.5, -SLAB - .2, 1]] }];
+  const got = ids(snap(f));
+  assert.equal(got.some(x => x.includes('inSlab')), false); assert.ok(got.includes('hard:casa3d.clash.mep-structure:fd+inFooting'));
+});
+test('revizie: DXF exportat și reimportat păstrează orientarea (fără oglindire)', () => {
+  const s = snap({ id: 'f0', name: 'P', ceilingHeight: 2.6, rooms: [{ id: 'r1', name: 'X', type: 'living', rect: { x0: 0, z0: 0, x1: 4, z1: 2 } }],
+    walls: [{ id: 'w1', a: [0, 0], b: [4, 0], thickness: .2, exterior: true, openings: [] }, { id: 'w2', a: [0, 0], b: [0, 2], thickness: .2, exterior: true, openings: [] }] });
+  const c = wallCandidates(parseDxf(planToDxf(s, cat, { lang: 'ro' })), { layers: ['WALLS'] });
+  const mid = (w: { a: [number, number]; b: [number, number] }) => [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2];
+  const along = c.find(w => Math.abs(w.a[1] - w.b[1]) < 1e-6 && Math.abs(Math.abs(w.a[0] - w.b[0]) - 4) < .3)!, side = c.find(w => Math.abs(w.a[0] - w.b[0]) < 1e-6 && Math.abs(Math.abs(w.a[1] - w.b[1]) - 2) < .3)!;
+  assert.ok(along && side, JSON.stringify(c));
+  // peretele lung e la z≈0, iar cel scurt se întinde spre z pozitiv (în jos pe ecran), ca în original
+  assert.ok(Math.abs(mid(along)[1]!) < .2, `${mid(along)}`); assert.ok(mid(side)[1]! > .5, `${mid(side)}`);
+});

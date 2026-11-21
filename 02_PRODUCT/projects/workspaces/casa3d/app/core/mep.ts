@@ -21,6 +21,8 @@ export const MEP_LIMITS = { maxRuns: 300, maxPoints: 50, minDiameterMm: 6, maxDi
 export const FOOTING_KINDS = ['pad', 'strip', 'raft'] as const;
 
 type P3 = [number, number, number];
+/** id-ul unui traseu sau al unei fundații: litere, cifre, -, _, :, . (ca la celelalte elemente, fără marcaj HTML) */
+export const ID_RE = /^[\w:.-]{1,64}$/;
 const bad = (m: string): never => { throw new PlanLimitError(m); };
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const short = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max) : '';
@@ -48,7 +50,7 @@ export function runLength(r: Pick<MepRun, 'points'>): number {
 
 /** Validarea unui traseu salvat: doar câmpurile modelului; geometria în limitele planului și sub tavanul nivelului. */
 export function sanitizeMepRun(r: any, ceiling: number): MepRun {
-  if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !r.id || r.id.length > 64) bad('Traseul de instalații nu are un id valid.');
+  if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !ID_RE.test(r.id)) bad('Traseul de instalații nu are un id valid.');
   if (!Object.prototype.hasOwnProperty.call(MEP_SYSTEMS, r.system)) bad('Sistemul traseului de instalații este invalid.');
   if (!Array.isArray(r.points) || r.points.length < 2 || r.points.length > MEP_LIMITS.maxPoints) bad(`Traseul trebuie să aibă între 2 și ${MEP_LIMITS.maxPoints} puncte.`);
   const points = (r.points as unknown[]).map(p => {
@@ -65,7 +67,7 @@ export function sanitizeMepRun(r: any, ceiling: number): MepRun {
 
 export function sanitizeFooting(f: any): Footing {
   const L = MEP_LIMITS.footing;
-  const ok = f && typeof f === 'object' && typeof f.id === 'string' && f.id && f.id.length <= 64 && num(f.x) && num(f.z) && Math.abs(f.x) <= PLAN_LIMITS.coordM && Math.abs(f.z) <= PLAN_LIMITS.coordM
+  const ok = f && typeof f === 'object' && typeof f.id === 'string' && ID_RE.test(f.id) && num(f.x) && num(f.z) && Math.abs(f.x) <= PLAN_LIMITS.coordM && Math.abs(f.z) <= PLAN_LIMITS.coordM
     && num(f.w) && f.w >= L.minM && f.w <= L.maxM && num(f.d) && f.d >= L.minM && f.d <= L.maxM && num(f.depth) && f.depth >= L.depthMinM && f.depth <= L.depthMaxM
     && (f.kind == null || (FOOTING_KINDS as readonly string[]).includes(f.kind));
   if (!ok) bad(`Fundația este invalidă (laturi ${L.minM}–${L.maxM} m, adâncime ${L.depthMinM}–${L.depthMaxM} m).`);

@@ -71,3 +71,20 @@ test('index și diff: traseele au disciplina sistemului, fundațiile și peretel
   const d = diffSnapshots(s, t, cat);
   assert.deepEqual(d.mep, { added: 0, removed: 0, changed: 1 }); assert.equal(d.structure.removed, 1); assert.equal(d.isEmpty, false);
 });
+
+// ---------- revizia independentă ----------
+import { checkSnapshot } from '../lib/repo';
+import { readFileSync } from 'node:fs';
+test('revizie: id-urile traseelor și fundațiilor au format sigur și sunt unice pe toată casa', () => {
+  assert.throws(() => sanitizeMepRun({ id: '<img src=x>', system: 'drain', points: [[0, 0, 0], [1, 0, 0]] }, 2.6), /id/);
+  assert.throws(() => sanitizeFooting({ id: 'a b', x: 0, z: 0, w: 1, d: 1, depth: .5 }), /fundați/i);
+  const s: Snapshot = { name: 'T', floor: floor(), placements: [], selections: {}, picked: [] };
+  s.floor.mepRuns = [{ id: 'w1', system: 'drain', points: [[0, .1, 0], [1, .1, 0]] }];
+  assert.throws(() => checkSnapshot(structuredClone(s)), /w1/);
+  s.floor.mepRuns = [{ id: 'mep-1', system: 'drain', points: [[0, .1, 0], [1, .1, 0]] }];
+  assert.equal(checkSnapshot(structuredClone(s)).floor.mepRuns!.length, 1);
+});
+test('revizie: fundația nu are dimensiuni precompletate în panou (art. 4)', () => {
+  const src = readFileSync(new URL('../components/MepPanel.tsx', import.meta.url), 'utf8');
+  assert.match(src, /useState\(\{ x: '', z: '', w: '', d: '', depth: '' \}\)/);
+});

@@ -14,7 +14,7 @@ export default function MepPanel({ snap, takenIds, say, onChange }: Props){
   const rooms = new Set(f.rooms.map(r => r.id)), pts = (snap.tech ?? []).filter(p => rooms.has(p.roomId));
   const [sys, setSys] = useState<MepSystem>('water_cold'), [a, setA] = useState(''), [b, setB] = useState(''), [hCm, setHCm] = useState('');
   const [dia, setDia] = useState(''), [mat, setMat] = useState(''), [slope, setSlope] = useState(''), [err, setErr] = useState('');
-  const [wall, setWall] = useState(''), [fd, setFd] = useState({ x: '', z: '', w: '80', d: '80', depth: '60' });
+  const [wall, setWall] = useState(''), [fd, setFd] = useState({ x: '', z: '', w: '', d: '', depth: '' })   // fără valori precompletate: dimensiunile fundației le dă utilizatorul (art. 4);
   const pa = pts.find(p => p.id === a), pb = pts.find(p => p.id === b), routeY = Number(hCm) / 100;
   const preview = useMemo(() => pa && pb && hCm !== '' && Number.isFinite(routeY) ? proposeRun(pa, pb, routeY) : null, [pa, pb, hCm, routeY]);
   const issues = mepIssues(f);
@@ -31,7 +31,7 @@ export default function MepPanel({ snap, takenIds, say, onChange }: Props){
   }
   function addFooting(){
     setErr(''); const v = { x: Number(fd.x), z: Number(fd.z), w: Number(fd.w) / 100, d: Number(fd.d) / 100, depth: Number(fd.depth) / 100 };
-    if (fd.x === '' || fd.z === '' || !Object.values(v).every(Number.isFinite) || v.w < .1 || v.d < .1 || v.depth < .1) { setErr(t('mep.footingBad')); return; }
+    if (Object.values(fd).some(v => v.trim() === '') || !Object.values(v).every(Number.isFinite) || v.w < .1 || v.d < .1 || v.depth < .1) { setErr(t('mep.footingBad')); return; }
     onChange(fl => { fl.footings = [...(fl.footings ?? []), { id: newId('fd'), ...v }]; }); say(t('mep.footingAdded'));
   }
   return (<div className="mep-panel">

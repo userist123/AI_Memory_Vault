@@ -185,6 +185,8 @@ export default function Editor({ id }: { id: string }){
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
   const snap = useMemo(() => house ? levelView(house, L) : null, [house, L]);
+  // id-urile tuturor elementelor casei (core/elements.ts): pentru id-urile noi din importul DXF și din panoul de instalații
+  const elementIds = useMemo(() => house ? elementIndex(house).map(e => e.elementId) : [], [house]);
   const health = useMemo(() => snap && catalog && mc ? evaluateProjectHealth(snap, catalog, mc) : null, [snap, catalog, mc]);
   const labAlternatives = useMemo(() => {
     const alts = [];
@@ -837,8 +839,8 @@ export default function Editor({ id }: { id: string }){
             <label className="f"><span>{t('editor.ceilingHeight', { u })}</span><input type="number" value={inField(snap.floor.ceilingHeight)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.ceilingHeight = r3(x / 100); }), 200)} /></label>
             {L > 0 ? <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('level.underlayGround')}</p> : <UnderlayPanel underlay={snap.underlay} calib={calib} say={say} onAdd={addUnderlay} onPatch={patchUnderlay} onRemove={() => { mutate(s => { delete s.underlay; }); setCalib(null); }}
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
-            <DxfImportPanel floor={snap.floor} takenIds={elementIndex(house!).map(e => e.elementId)} say={say} onApply={walls => mutate(s => { s.floor.walls = walls; })} />
-            <MepPanel snap={snap} takenIds={elementIndex(house!).map(e => e.elementId)} say={say} onChange={fn => mutate(s => fn(s.floor))} />
+            <DxfImportPanel floor={snap.floor} takenIds={elementIds} say={say} onApply={walls => mutate(s => { s.floor.walls = walls; })} />
+            <MepPanel snap={snap} takenIds={elementIds} say={say} onChange={fn => mutate(s => fn(s.floor))} />
             {catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}

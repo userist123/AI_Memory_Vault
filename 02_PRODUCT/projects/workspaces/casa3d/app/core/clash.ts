@@ -6,7 +6,7 @@
 // Limite cunoscute (raportate în docs/bim/FAZA0_INVENTAR.md): stâlpul rotund e aproximat cu cutia lui, rotația stâlpului și a
 // piesei de mobilier se ia ca în vederea 3D (multipli de 90°), scările și corpurile tehnice (calorifer, AC) nu intră în verificare.
 import type { Catalog, Floor, MepSystem, Snapshot } from './types';
-import { floors } from './levels';
+import { floors, SLAB } from './levels';
 import { footprintOf } from './validate';
 import { resolve } from './catalog';
 import { elementIndex, type Discipline } from './elements';
@@ -97,13 +97,15 @@ function levelSolids(f: Floor, s: Snapshot, cat: Catalog, skipped: { id: string;
     // ca în vederea 3D: bucăți pline între goluri, deasupra ușii, sub și deasupra ferestrei
     let q = 0; for (const o of [...w.openings].sort((x, y) => x.offset - y.offset)) {
       const s0 = Math.max(0, o.offset), s1 = Math.min(L, o.offset + o.width); put(q, s0, 0, H);
-      const y0 = o.kind === 'door' ? 0 : o.sill ?? .9, y1 = o.kind === 'door' ? Math.min(H, o.height ?? DOOR_HEIGHT) : Math.min(H, (o.sill ?? .9) + (o.height ?? 1.3));
+      // golul se oprește cu 5 cm sub tavan, ca în vederea 3D (buiandrugul minim)
+      const y0 = o.kind === 'door' ? 0 : o.sill ?? .9, y1 = o.kind === 'door' ? Math.min(H - .05, o.height ?? DOOR_HEIGHT) : Math.min(H - .05, (o.sill ?? .9) + (o.height ?? 1.3));
       put(s0, s1, 0, y0); put(s0, s1, y1, H); q = Math.max(q, s1); }
     put(q, L, 0, H);
   }
   for (const c of f.columns ?? []) if ((c.role ?? 'structural') === 'structural') solids.push({ id: c.id, kind: 'column', box: rectBox(c.x - c.w / 2, c.z - c.d / 2, c.x + c.w / 2, c.z + c.d / 2, 0, Math.min(H, c.height ?? H)) });
   for (const b of f.beams ?? []) { const bx = boxAlong(b.a, b.b, b.width, H - b.depth, H); if (bx) solids.push({ id: b.id, kind: 'beam', box: bx }); }
-  for (const x of f.footings ?? []) solids.push({ id: x.id, kind: 'footing', box: rectBox(x.x - x.w / 2, x.z - x.d / 2, x.x + x.w / 2, x.z + x.d / 2, -x.depth, 0) });
+  // fundația stă sub placa nivelului, ca în vederea 3D (viewer3d-engine.js: −SLAB − adâncime … −SLAB)
+  for (const x of f.footings ?? []) solids.push({ id: x.id, kind: 'footing', box: rectBox(x.x - x.w / 2, x.z - x.d / 2, x.x + x.w / 2, x.z + x.d / 2, -SLAB - x.depth, -SLAB) });
   for (const z of f.ceilingZones ?? []) { const y = H - z.dropCm / 100; solids.push({ id: z.id, kind: 'ceiling', box: rectBox(z.rect.x0, z.rect.z0, z.rect.x1, z.rect.z1, y - CEILING_BOARD_M, y) }); }
   for (const p of s.placements) { if (!rooms.has(p.roomId)) continue;
     const fp = footprintOf(cat, p), h = p.size ? p.size.h / 100 : resolve(cat, p.variantId)?.h ?? 0;
@@ -122,6 +124,24 @@ export function solidsOf(s: Snapshot, cat: Catalog): { levels: LevelSolids[]; sk
 
 // ---------- reguli ----------
 const STRUCT = new Set<Solid['kind']>(['structural_wall', 'column', 'beam', 'footing']);
+const segAabb = (r: RunSeg, m: number) => ({ x0: Math.min(r.a[0], r.b[0]) - r.r - m, x1: Math.max(r.a[0], r.b[0]) + r.r + m, y0: Math.min(r.a[1], r.b[1]) - r.r - m,
+  y1: Math.max(r.a[1], r.b[1]) + r.r + m, z0: Math.min(r.a[2], r.b[2]) - r.r - m, z1: Math.max(r.a[2], r.b[2]) + r.r + m });
+/** Cutia de încadrare a segmentului (cu raza și marja) atinge cercul circumscris cutiei în plan și intervalul ei vertical? */
+function nearBox(r: RunSeg, b: Box, m: number): boolean {
+  const s = segAabb(r, m), R = Math.hypot(b.hx, b.hz);
+  return s.x1 >= b.cx - R && s.x0 <= b.cx + R && s.z1 >= b.cz - R && s.z0 <= b.cz + R && s.y1 >= b.cy - b.hy && s.y0 <= b.cy + b.hy;
+}
+function near(A: RunSeg, B: RunSeg, m: number): boolean {
+  const a = segAabb(A, m), b = segAabb(B, 0);
+  return a.x1 >= b.x0 && a.x0 <= b.x1 && a.y1 >= b.y0 && a.y0 <= b.y1 && a.z1 >= b.z0 && a.z0 <= b.z1;
+}
+/** Segmentul fără porțiunea de lungime `len` de la capătul `p` (null dacă nu rămâne nimic). */
+function cut(r: RunSeg, p: Vec3, len: number): RunSeg {
+  if (!r.a) return r;
+  const L = Math.hypot(...sub(r.b, r.a)); if (L <= len) return { ...r, a: null as unknown as Vec3 };
+  const atA = Math.hypot(...sub(p, r.a)) <= Math.hypot(...sub(p, r.b)), t = len / L;
+  return atA ? { ...r, a: lerp(r.a, r.b, t), first: false } : { ...r, b: lerp(r.b, r.a, t), last: false };
+}
 const label = (t: ClashType) => t === 'hard' ? 'Interferență' : t === 'penetration' ? 'Străpungere' : 'Distanță insuficientă';
 
 /** Toate interferențele, pe niveluri, grupate pe (regulă, pereche de elemente) cu cea mai mare adâncime / cea mai mică distanță. */
@@ -142,6 +162,7 @@ export function detectClashes(s: Snapshot, cat: Catalog, o: ClashOptions = {}): 
   for (const L of levels) {
     // traseu × volum
     for (const r of L.runs) for (const so of L.solids) {
+      if (!nearBox(r, so.box, tol)) continue;   // preselecție pe cutia de încadrare (exactă: doar elimină perechile depărtate)
       // pătrunderea = raza minus distanța cu semn a axei; o suprapunere până la toleranță se ignoră (convenția uzuală)
       const c = segBoxClosest(r.a, r.b, so.box), pen = r.r - c.d, at = lerp(r.a, r.b, c.t);
       if (pen <= tol) continue;
@@ -151,12 +172,19 @@ export function detectClashes(s: Snapshot, cat: Catalog, o: ClashOptions = {}): 
       else if (so.kind === 'ceiling') add('hard', 'casa3d.clash.mep-ceiling', r.id, so.id, L.levelId, at, { depthM: pen }, 'WARNING');
     }
     // traseu × traseu (traseele legate cap la cap nu sunt interferență)
-    for (let i = 0; i < L.runs.length; i++) for (let j = i + 1; j < L.runs.length; j++) {
-      const A = L.runs[i]!, B = L.runs[j]!; if (A.id === B.id) continue;
+    // baleiere pe X: segmentele sortate după marginea stângă; perechea se compară doar dacă intervalele pe X se ating
+    const margin = (o.clearances?.length ? Math.max(...o.clearances.map(x => x.minM)) : 0) + tol;
+    const sorted = L.runs.map(r => ({ r, x0: Math.min(r.a[0], r.b[0]) - r.r, x1: Math.max(r.a[0], r.b[0]) + r.r })).sort((p, q) => p.x0 - q.x0 || p.r.id.localeCompare(q.r.id));
+    for (let i = 0; i < sorted.length; i++) for (let j = i + 1; j < sorted.length && sorted[j]!.x0 <= sorted[i]!.x1 + margin; j++) {
+      let A = sorted[i]!.r, B = sorted[j]!.r; if (A.id === B.id) continue;
+      if (B.id < A.id) [A, B] = [B, A];
+      if (!near(A, B, margin)) continue;
+      // îmbinare cap la cap: se exclude doar vecinătatea îmbinării (segmentele se scurtează acolo cu rA + rB + toleranța);
+      // două trasee care pornesc din același punct și merg suprapuse rămân interferență
+      const trim = A.r + B.r + tol, ends = (x: RunSeg) => [...(x.first ? [x.a] : []), ...(x.last ? [x.b] : [])];
+      for (const p of ends(A)) for (const q of ends(B)) if (Math.hypot(...sub(p, q)) <= trim) { A = cut(A, p, trim); B = cut(B, q, trim); }
+      if (!A.a || !B.a) continue;
       const c = segSegClosest(A.a, A.b, B.a, B.b), gap = c.d - A.r - B.r, at = lerp(A.a, A.b, c.s);
-      const ends = (x: RunSeg) => [...(x.first ? [x.a] : []), ...(x.last ? [x.b] : [])];
-      const joined = ends(A).some(p => ends(B).some(q => Math.hypot(...sub(p, q)) <= A.r + B.r + tol));
-      if (joined) continue;
       if (-gap > tol) { add('hard', 'casa3d.clash.mep-mep', A.id, B.id, L.levelId, at, { depthM: -gap }, 'WARNING'); continue; }
       for (const cr of o.clearances ?? []) if ((cr.a === A.system && cr.b === B.system) || (cr.a === B.system && cr.b === A.system))
         if (gap < cr.minM) add('clearance', CLEARANCE_RULE, A.id, B.id, L.levelId, at, { distanceM: gap }, 'WARNING');

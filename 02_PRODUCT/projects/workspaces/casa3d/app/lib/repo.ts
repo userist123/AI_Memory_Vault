@@ -19,6 +19,7 @@ import { checkBrief } from '../core/brief';
 import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
 import { sanitizeIssues } from '../core/issues';
+import { elementIndex } from '../core/elements';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
 import { aiConfigured, aiModel, proposeWithClaude } from './ai';
@@ -110,6 +111,9 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
     if (!f.stairs.length) delete f.stairs; }
   // stâlpi și ghene, grinzi, pereți de sticlă, nișe, adnotări, goluri de trecere, starea pereților, zone de pardoseală: limitele comune cu interfața (core/plan-limits.ts)
   for (const f of fls){ try { sanitizeFloorElements(f); } catch (e){ if (e instanceof PlanLimitError) throw new HttpError(400, e.message); throw e; } }
+  // traseele și fundațiile (core/mep.ts): id unic pe toată casa, ca interferențele și statusurile lor să numească un singur element
+  { const cnt = new Map<string, number>(); for (const el of elementIndex(s)) cnt.set(el.elementId, (cnt.get(el.elementId) ?? 0) + 1);
+    for (const f of fls) for (const x of [...(f.mepRuns ?? []), ...(f.footings ?? [])]) if ((cnt.get(x.id) ?? 0) > 1) throw new HttpError(400, `Id-ul ${x.id} este folosit de mai multe elemente.`); }
   for (const p of s.placements) if (!inBox(p.x) || !inBox(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
   // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
   const cm = (v: unknown) => num(v) && (v as number) >= SIZE_LIMITS_CM.min && (v as number) <= SIZE_LIMITS_CM.max;
