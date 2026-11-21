@@ -174,7 +174,7 @@ public static class EvidenceFingerprint
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
         if (t is "system_hive" or "amcache" or "ntuser_hive" or "usrclass_hive" or "software_hive" or "software_subkey_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
-        if (t is "live_snapshot" or "airgap_facts" or "local_accounts_json" or "software_subkey_absent" or "winlogon_autologon_json") return ["json"];
+        if (t is "live_snapshot" or "airgap_facts" or "local_accounts_json" or "software_subkey_absent" or "winlogon_autologon_json" or "windows_version_json" or "bitlocker_volumes_json") return ["json"];
         if (t == "auditpol_csv") return ["auditpol_csv"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];

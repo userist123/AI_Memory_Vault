@@ -20,6 +20,8 @@ public static class ConfigurationHiveReader
     public const string AbsentType = "software_subkey_absent";
     /// <summary>Evidence type of the small JSON with the Winlogon autologon facts (Quick profile): AutoAdminLogon, DefaultUserName and whether DefaultPassword is present. The password itself is never in it.</summary>
     public const string WinlogonType = "winlogon_autologon_json";
+    /// <summary>Planner #14 E4: evidence type of the small JSON with the Windows version values (Quick profile): ProductName, EditionID, DisplayVersion, CurrentBuild, UBR.</summary>
+    public const string VersionType = "windows_version_json";
     public const string SnapshotTimeSource = "Instantaneu la colectare";
 
     /// <summary>The subkey path below SOFTWARE of a subkey hive item (from OriginalPath, "HKLM\SOFTWARE\" prefix removed), or null when it does not name one.</summary>
@@ -37,9 +39,9 @@ public static class ConfigurationHiveReader
     /// full-path locator (SOFTWARE\Microsoft\...\EnableLUA, so the "reg query" of the manual verification stays right) and carries the evidence id and SHA-256 of the subkey file it
     /// was read from. A probe whose subkey was not saved (or not readable) is not recorded, so the audit reports it as a gap. An unreadable subkey file is skipped (its probes become gaps).
     /// </summary>
-    public static ConfigHive ReadSoftwareSubkeys(IReadOnlyList<(EvidenceItem Item, string FullPath)> subkeyHives, IReadOnlyList<(EvidenceItem Item, string FullPath)>? absentMarkers = null, (EvidenceItem Item, string FullPath)? winlogon = null)
+    public static ConfigHive ReadSoftwareSubkeys(IReadOnlyList<(EvidenceItem Item, string FullPath)> subkeyHives, IReadOnlyList<(EvidenceItem Item, string FullPath)>? absentMarkers = null, (EvidenceItem Item, string FullPath)? winlogon = null, (EvidenceItem Item, string FullPath)? windowsVersion = null)
     {
-        var first = subkeyHives.Count > 0 ? subkeyHives[0].Item : absentMarkers is { Count: > 0 } ? absentMarkers[0].Item : winlogon!.Value.Item;
+        var first = subkeyHives.Count > 0 ? subkeyHives[0].Item : absentMarkers is { Count: > 0 } ? absentMarkers[0].Item : winlogon?.Item ?? windowsVersion!.Value.Item;
         string origin = subkeyHives.All(x => x.Item.TemporalType == TemporalType.CurrentSnapshot) ? "" : (first.OriginalPath.Length > 0 ? first.OriginalPath : first.Source);
         var h = new ConfigHive { Hive = "SOFTWARE", EvidenceId = first.EvidenceId, Sha256 = first.Sha256, Origin = origin };
         // a subkey PROVEN absent (hashed marker, exists=false) has absent values: the rules'' default semantics, not a gap
@@ -52,6 +54,8 @@ public static class ConfigurationHiveReader
                 if (RelOf(lk, asub) is not null) h.Lists["SOFTWARE\\" + lk] = new ConfigNames(null, null, item.EvidenceId, item.Sha256);
         }
         if (winlogon is { } wl) ReadWinlogonJson(h, wl.Item, wl.FullPath);
+        if (windowsVersion is { } wv) ReadVersionJson(h, wv.Item, wv.FullPath);
+        h.CollectedUtc = subkeyHives.Select(x => x.Item.AcquiredAtUtc).Concat((absentMarkers ?? []).Select(x => x.Item.AcquiredAtUtc)).Concat(winlogon is { } w2 ? [w2.Item.AcquiredAtUtc] : []).Concat(windowsVersion is { } v2 ? [v2.Item.AcquiredAtUtc] : []).Min();
         foreach (var (item, path) in subkeyHives)
         {
             if (SubkeyOf(item) is not { } sub) continue;
@@ -82,6 +86,22 @@ public static class ConfigurationHiveReader
             }
         }
         return h;
+    }
+
+    /// <summary>The version JSON of the Quick profile gives the five CurrentVersion values the OS end-of-servicing rule needs. An unreadable or malformed file records nothing.</summary>
+    private static void ReadVersionJson(ConfigHive h, EvidenceItem item, string path)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+            var r = doc.RootElement;
+            if (r.ValueKind != System.Text.Json.JsonValueKind.Object || !r.TryGetProperty("CurrentBuild", out var cb) || cb.ValueKind != System.Text.Json.JsonValueKind.String) return;
+            string Str(string n) => r.TryGetProperty(n, out var e) && e.ValueKind == System.Text.Json.JsonValueKind.String ? e.GetString() ?? "" : "";
+            ConfigValue V(string? data) => new(data, null, item.EvidenceId, item.Sha256, SnapshotTimeSource);
+            foreach (var p in new[] { ConfigurationAudit.ProductName, ConfigurationAudit.EditionId, ConfigurationAudit.DisplayVersion, ConfigurationAudit.CurrentBuild, ConfigurationAudit.Ubr })
+                h.Values[p.Locator] = V(Str(p.Name) is { Length: > 0 } s ? s : null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
     }
 
     /// <summary>The Winlogon JSON of the Quick profile gives the three autologon probes; the password is only "(prezentă)" or "". An unreadable or malformed file records nothing (the audit reports the gap).</summary>
@@ -121,7 +141,9 @@ public static class ConfigurationHiveReader
         try
         {
             using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            return Read(new RawRegistry(fs), item.EvidenceId, item.Sha256, label, origin);
+            var hive = Read(new RawRegistry(fs), item.EvidenceId, item.Sha256, label, origin);
+            hive.CollectedUtc = item.AcquiredAtUtc;
+            return hive;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or NotSupportedException or OverflowException or IndexOutOfRangeException)
         {

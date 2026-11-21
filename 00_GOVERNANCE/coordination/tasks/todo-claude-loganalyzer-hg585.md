@@ -1849,3 +1849,13 @@
   admins, Microsoft no-forced-expiry note), CFG-BUILTIN-ADMIN-ENABLED (Medium, RID 500); net user step with localized-labels note. Tests Dfir
   E3NoiseTests (6), App LocalSecurityStateTests (+4); RemoteToolUpgradeTests Low -> Info for Quick Assist. Suites App 1515, UI 370 (1 skipped), Edition
   45, Dfir 4114 / 36 / 0. RESIDUALS: merge matches only the first 20 listed exclusions and a 300-char description; PasswordChangeable/Lockout unused.
+- 2026-11-21 (claude, hg585) PLANNER #14 E4 + E7 + E8 DONE (vault-worker, medium). E4: Analysis/WindowsLifecycle + Data/windows_lifecycle.json (tableDate
+  2026-11-21; builds 19041-19045, 22000, 22621, 22631, 26100, 26200 Home/Pro vs Enterprise/Education end-of-servicing dates; checked by the main session
+  against Microsoft's public lifecycle dates; LTSC/Server/unknown builds (e.g. Insider 26300) -> informational gap, no finding; compared with the
+  COLLECTION date): CFG-OS-EOL (High past end, Medium within 60 days); Quick saves a small windows_version_json. WindowsUpdateAudit CFG-UPDATES-STALE
+  (Medium): no WindowsUpdateClient 19 with a KB title for > 60 days; System log shorter than 60 days without 19 -> gap. E7: opt-in RealMachineAuditSmokeTests
+  also runs EventLogCollector + DefenderDetectionHistoryCollector with a "Reguli pe jurnale de evenimente" section. E8: BitLockerCollector (WMI
+  MicrosoftVolumeEncryption Win32_EncryptableVolume, no manage-bde) -> bitlocker_volumes_json; BitLockerAudit CFG-DISK-UNENCRYPTED (OS volume Medium,
+  suspended noted; data volumes one Low); namespace missing / access denied -> gap; parser count 40. Tests Dfir OsLifecycleAndUpdatesTests (13), App
+  BitLockerTests (8) + collector tests; red via mutations. Suites App 1524, UI 370 (1 skipped), Edition 45, Dfir 4127 / 36 / 0. RESIDUALS: ESU not read;
+  WMI method-vs-property fallbacks unverified on a real PC until the smoke run; imported EVTX use import time as collection date.

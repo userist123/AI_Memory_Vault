@@ -36,6 +36,7 @@ public static class ManualVerification
     private static readonly Regex Autorun = new(@"^Autoruns\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex AuditPol = new(@"^auditpol:\{?(?<g>[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})\}?$", RegexOptions.Compiled);
     private static readonly Regex LocalAccount = new(@"^LocalAccounts\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex BitLockerVolume = new(@"^BitLockerVolume\[(?<x>[A-Za-z]:)\]$", RegexOptions.Compiled);
     private static readonly Regex LocalAdmin = new(@"^LocalAdministrators\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex TextLine = new(@"(^|:)line=(?<n>\d+)$", RegexOptions.Compiled);
     private static readonly Regex Registry = new(@"^(?<hive>SYSTEM|SOFTWARE|NTUSER|UsrClass|Amcache\.hve)\\(?<rel>.+)$", RegexOptions.Compiled | RegexOptions.Singleline);
@@ -156,6 +157,20 @@ public static class ManualVerification
             AddHash(steps, stored, sha, item);
             return steps;
         }
+        // planner #14 E8: BitLocker / device encryption of one volume; every step only READS
+        if (BitLockerVolume.Match(loc) is { Success: true } bl)
+        {
+            string drive = bl.Groups["x"].Value.ToUpperInvariant();
+            steps.Add(new("PowerShell (ca administrator)", $"manage-bde -status {drive}",
+                "liniile „Protection Status” (în Windows în limba română „Stare protecție”) și „Conversion Status” (în română „Stare conversie”) cu valorile din citat: Protection Off = ProtectionStatus 0, Fully Decrypted = complet decriptat. Etichetele și valorile sunt localizate, deci în română se citesc în limba sistemului" + QuoteHint(reference), true));
+            steps.Add(new("PowerShell (ca administrator)", $"Get-BitLockerVolume -MountPoint {drive} | Format-List MountPoint,VolumeStatus,ProtectionStatus,EncryptionMethod",
+                "ProtectionStatus (Off / On) și VolumeStatus (FullyDecrypted / FullyEncrypted) cu citatul; numele proprietăților nu sunt localizate", true));
+            steps.Add(new("Setări Windows", "Setări → Confidențialitate și securitate → Criptarea dispozitivului (în engleză: Settings → Privacy & security → Device encryption); pe ediția Pro și mai sus: Panou de control → Criptarea unității BitLocker",
+                "starea „Activat” / „Dezactivat” pentru volumul din constatare; numele paginii depinde de limba și de ediția Windows, iar pe unele ediții pagina lipsește", false));
+            steps.Add(Snapshot("starea criptării discului"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
         if (LocalAdmin.Match(loc) is { Success: true } lm)
         {
             string member = lm.Groups["x"].Value;
@@ -226,6 +241,9 @@ public static class ManualVerification
             what = "verificați doar că valoarea există; nu o copiați pe hârtie și nu o fotografiați (comanda o afișează în clar pe ecran); constatarea nu conține parola";
         else if (rel.EndsWith(@"\Winlogon\AutoAdminLogon", StringComparison.OrdinalIgnoreCase))
             what = "valoarea AutoAdminLogon trebuie să fie 1; numele din DefaultUserName se verifică în aceeași cheie (reg query … /v DefaultUserName), iar existența parolei cu pasul pentru DefaultPassword" + quoteHint;
+        // planner #14 E4: the Windows version values (CFG-OS-EOL) are also visible in winver and in the lifecycle page of Microsoft
+        else if (rel.StartsWith(@"Microsoft\Windows NT\CurrentVersion\", StringComparison.OrdinalIgnoreCase) && Regex.IsMatch(rel, @"\\(CurrentBuild|EditionID|DisplayVersion|ProductName|UBR)$"))
+            what = "valoarea cu cea din constatare" + quoteHint + "; versiunea se vede și în winver (Win+R → winver; etichetele „Versiune” și „Compilare SO” sunt localizate), iar data de sfârșit a serviciului se compară cu pagina Microsoft Lifecycle a versiunii (tabelul aplicației are data din constatare și poate fi depășit)";
         string differs = "stația live poate fi diferită de cea de la colectare: o diferență nu infirmă copia din caz";
 
         if (live.Length > 0)
@@ -235,7 +253,7 @@ public static class ManualVerification
             steps.Add(new("PowerShell", $"sc.exe qc {Dq(svc.Groups[1].Value)}",
                 "linia BINARY_PATH_NAME trebuie să fie calea din constatare (cu sau fără ghilimele, după cum este scrisă); stația live poate fi diferită de cea de la colectare", true));
         // planner #14 E2: the Quick Winlogon evidence is a small JSON, not a hive: no "reg load"; the live query and the hash of the JSON are the steps
-        if (stored is not null && item?.SourceType != "winlogon_autologon_json")
+        if (stored is not null && item?.SourceType is not ("winlogon_autologon_json" or "windows_version_json"))
         {
             steps.Add(new("PowerShell", $"Copy-Item -LiteralPath {Sq(stored)} -Destination \"{WorkingCopy}\"; reg load {HiveKey} \"{WorkingCopy}\"",
                 "comanda trebuie să spună că operațiunea s-a terminat cu succes; se încarcă doar o copie de lucru a copiei din caz, nu originalul (rulează PowerShell ca administrator)", true));

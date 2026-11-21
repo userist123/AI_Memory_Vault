@@ -48,6 +48,7 @@ public static class FindingContract
         "ServicesParser" => "Instantaneul serviciilor",
         "AuditPolicyCsvParser" => "Politica de audit (auditpol)",
         "LocalAccountsParser" => "Conturile locale și administratorii locali",
+        "BitLockerVolumesParser" => "Starea criptării discului (BitLocker)",
         "ScheduledTaskParser" => "Definițiile activităților planificate",
         "UsbDevicesParser" => "Dispozitivele USB din registry",
         "SystemHiveExecutionParser" => "Registry-ul sistemului (SYSTEM)",

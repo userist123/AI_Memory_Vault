@@ -30,10 +30,10 @@ public sealed class SoftwareSubkeyHivesCollectorTests : IDisposable
         }, calls);
     }
 
-    private CollectorOutcome Collect(ToolRunFunc fn, bool elevated = true, Func<string, bool>? exists = null, Func<string, string?>? winlogon = null)
+    private CollectorOutcome Collect(ToolRunFunc fn, bool elevated = true, Func<string, bool>? exists = null, Func<string, string?>? winlogon = null, Func<string, string?>? version = null)
     {
         var ws = _ws = _k.Case();
-        return new SoftwareSubkeyHivesCollector(fn, exists ?? (_ => true), winlogon ?? (_ => null)).Collect(new CollectorContext { Case = ws, IsElevated = elevated }, default);
+        return new SoftwareSubkeyHivesCollector(fn, exists ?? (_ => true), winlogon ?? (_ => null), version ?? (n => n switch { "CurrentBuild" => "19045", "EditionID" => "Professional", "ProductName" => "Windows 10 Pro", "DisplayVersion" => "22H2", "UBR" => "5000", _ => null })).Collect(new CollectorContext { Case = ws, IsElevated = elevated }, default);
     }
 
     [Fact]
@@ -50,8 +50,10 @@ public sealed class SoftwareSubkeyHivesCollectorTests : IDisposable
         Assert.DoesNotContain(calls, c => c[1].Contains("Winlogon", StringComparison.OrdinalIgnoreCase));   // the Winlogon key can hold DefaultPassword in clear: never saved
         foreach (var c in calls) { Assert.Equal(4, c.Count); Assert.Equal("save", c[0]); Assert.Equal("/y", c[3]); }
         Assert.Equal(5, calls.Select(c => c[2]).Distinct().Count());
-        Assert.Equal(6, o.Evidence.Count);   // 5 subkey hives + the Winlogon autologon JSON
+        Assert.Equal(7, o.Evidence.Count);   // 5 subkey hives + the Winlogon autologon JSON + the Windows version JSON (planner #14 E4)
         Assert.Equal(SoftwareSubkeyHivesCollector.WinlogonSourceType, o.Evidence[5].SourceType);
+        Assert.Equal(SoftwareSubkeyHivesCollector.VersionSourceType, o.Evidence[6].SourceType);
+        o.Evidence.RemoveAt(6);
         o.Evidence.RemoveAt(5);
         Assert.All(o.Evidence, e => { Assert.Equal("software_subkey_hive", e.SourceType); Assert.Equal(TemporalType.CurrentSnapshot, e.TemporalType); Assert.False(string.IsNullOrEmpty(e.Sha256)); });
         Assert.Equal(calls.Select(c => c[1]), o.Evidence.Select(e => e.OriginalPath));
@@ -65,7 +67,7 @@ public sealed class SoftwareSubkeyHivesCollectorTests : IDisposable
     {
         var (fn, _) = Fake(key => key.EndsWith(@"\Policies\Microsoft\Windows Defender", StringComparison.Ordinal) ? 1 : 0);
         var o = Collect(fn);
-        Assert.Equal(5, o.Evidence.Count);
+        Assert.Equal(6, o.Evidence.Count);   // 4 subkey hives + the Winlogon JSON + the Windows version JSON
         Assert.Equal(EvidenceStatus.Success, o.Status);
         Assert.Contains(@"Policies\Microsoft\Windows Defender: exit 1", Assert.Single(o.Errors));
     }
@@ -201,5 +203,21 @@ public sealed class SoftwareSubkeyHivesCollectorTests : IDisposable
         var res2 = InvestigationPipeline.ConfigurationFindings(_ws!, () => "F-1");
         Assert.DoesNotContain(res2.Gaps, g => g.Artifact.Contains("Winlogon"));
         Assert.DoesNotContain(res2.Findings, x => x.RuleId == ConfigurationAudit.RuleAutologon);
+    }
+    [Fact]
+    public void The_Windows_version_json_reaches_CFG_OS_EOL_on_the_collection_date_and_an_unreadable_build_is_an_error()
+    {
+        var (fn, _) = Fake(_ => 0);
+        var o = Collect(fn);
+        var item = Assert.Single(o.Evidence, e => e.SourceType == SoftwareSubkeyHivesCollector.VersionSourceType);
+        Assert.Contains("CurrentVersion", item.OriginalPath);
+        var res = InvestigationPipeline.ConfigurationFindings(_ws!, () => "F-1");
+        var f = Assert.Single(res.Findings, x => x.RuleId == ConfigurationAudit.RuleOsEol);
+        Assert.Equal(LogAnalyzer.Dfir.Model.Severity.High, f.Severity);   // the build 19045 ended on 2025-10-14, the case is collected now
+        Assert.Contains(f.SupportingEvidence, e => e.EvidenceId == item.EvidenceId && e.Quote == "CurrentBuild = 19045" && e.TimeSource == ConfigurationHiveReader.SnapshotTimeSource);
+
+        var bad = Collect(Fake(_ => 0).Fn, version: _ => null);
+        Assert.DoesNotContain(bad.Evidence, e => e.SourceType == SoftwareSubkeyHivesCollector.VersionSourceType);
+        Assert.Contains(bad.Errors, e => e.Contains("CFG-OS-EOL"));
     }
 }

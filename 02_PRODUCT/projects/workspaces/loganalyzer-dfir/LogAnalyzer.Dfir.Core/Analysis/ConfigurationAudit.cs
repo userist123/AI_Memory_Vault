@@ -25,6 +25,8 @@ public sealed class ConfigHive
     /// <summary>Where the copy comes from, for a copy that is not the current state of the station ("" = the live save of this run).</summary>
     public string Origin { get; init; } = "";
     public string Error { get; init; } = "";
+    /// <summary>Planner #14 E4: when the copy was collected (the evidence's acquisition time); the OS end-of-servicing check compares with THIS date, not with today. Null = not known (the check then gives a gap).</summary>
+    public DateTimeOffset? CollectedUtc { get; set; }
     /// <summary>SYSTEM only: the control set the values were read from (the hive's Select\Current), for example ControlSet001.</summary>
     public string ControlSet { get; init; } = "ControlSet001";
     public Dictionary<string, ConfigValue> Values { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -54,7 +56,7 @@ public static class ConfigurationAudit
     public const string RuleUac = "CFG-UAC-OFF", RuleUacPrompt = "CFG-UAC-NOPROMPT", RuleSmb1 = "CFG-SMB1", RuleWdigest = "CFG-WDIGEST", RuleLsa = "CFG-LSA-PPL",
         RuleDefenderOff = "CFG-DEFENDER-OFF", RuleDefenderExcl = "CFG-DEFENDER-EXCL", RuleRdpNla = "CFG-RDP-NLA",
         RuleFirewallOff = "CFG-FIREWALL-OFF", RuleRemoteRegistry = "CFG-REMOTEREGISTRY", RuleAutologon = "CFG-AUTOLOGON", RuleTokenFilter = "CFG-LOCALACCOUNT-TOKENFILTER",
-        RuleAlwaysInstall = "CFG-ALWAYSINSTALLELEVATED", RuleSmbSigning = "CFG-SMB-SIGNING";
+        RuleAlwaysInstall = "CFG-ALWAYSINSTALLELEVATED", RuleSmbSigning = "CFG-SMB-SIGNING", RuleOsEol = "CFG-OS-EOL";
 
     /// <summary>What the reader stores instead of a secret value (the Winlogon DefaultPassword): the password itself is never read into the audit, only whether one exists.</summary>
     public const string SecretPresent = "(prezentă)";
@@ -76,6 +78,12 @@ public static class ConfigurationAudit
     public static readonly ConfigProbe AutoAdminLogon = new("SOFTWARE", Winlogon, "AutoAdminLogon");
     public static readonly ConfigProbe DefaultUserName = new("SOFTWARE", Winlogon, "DefaultUserName");
     public static readonly ConfigProbe DefaultPassword = new("SOFTWARE", Winlogon, "DefaultPassword");
+    private const string CurVer = @"Microsoft\Windows NT\CurrentVersion";
+    public static readonly ConfigProbe ProductName = new("SOFTWARE", CurVer, "ProductName");
+    public static readonly ConfigProbe EditionId = new("SOFTWARE", CurVer, "EditionID");
+    public static readonly ConfigProbe DisplayVersion = new("SOFTWARE", CurVer, "DisplayVersion");
+    public static readonly ConfigProbe CurrentBuild = new("SOFTWARE", CurVer, "CurrentBuild");
+    public static readonly ConfigProbe Ubr = new("SOFTWARE", CurVer, "UBR");
     public static readonly ConfigProbe TokenFilter = new("SOFTWARE", Sys, "LocalAccountTokenFilterPolicy");
     public static readonly ConfigProbe AlwaysInstall = new("SOFTWARE", @"Policies\Microsoft\Windows\Installer", "AlwaysInstallElevated");
     /// <summary>Firewall profiles: (name in both the local FirewallPolicy key and the policy key, readable label).</summary>
@@ -99,7 +107,7 @@ public static class ConfigurationAudit
     public static IReadOnlyList<ConfigProbe> Probes(string hive, string controlSet) => hive switch
     {
         "SOFTWARE" => [UacEnable, UacConsent, RtpLocal, RtpPolicy, AvPolicy, TokenFilter, AlwaysInstall, AutoAdminLogon, DefaultUserName, DefaultPassword,
-            .. FirewallProfiles.Select(x => FwPolicy(x.Name))],
+            ProductName, EditionId, DisplayVersion, CurrentBuild, Ubr, .. FirewallProfiles.Select(x => FwPolicy(x.Name))],
         "SYSTEM" => [Smb1(controlSet), WDigest(controlSet), Lsa(controlSet), RdpDeny(controlSet), RdpNla(controlSet), RemoteRegistry(controlSet), SmbSigning(controlSet),
             .. FirewallProfiles.Select(x => FwLocal(controlSet, x.Name))],
         _ => [],
@@ -123,7 +131,7 @@ public static class ConfigurationAudit
                     $@"reg query pe stație sau o copie nouă a hive-ului {h.Hive}", "Doar prin reachiziție"));
                 continue;
             }
-            if (h.Hive == "SOFTWARE") { SoftwareHive(h, host, nextId, res); SoftwareHiveHardening(h, host, nextId, res); }
+            if (h.Hive == "SOFTWARE") { SoftwareHive(h, host, nextId, res); SoftwareHiveHardening(h, host, nextId, res); OsLifecycle(h, host, nextId, res); }
             else if (h.Hive == "SYSTEM") { SystemHive(h, host, nextId, res); SystemHiveHardening(h, host, nextId, res); }
         }
         // the firewall verdict of a profile needs both hives (the local setting in SYSTEM, the policy override in SOFTWARE)
@@ -296,6 +304,67 @@ public static class ConfigurationAudit
                 [.. HklmLimit, @"Limitare: se citește doar HKLM; valoarea HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated aparține profilului fiecărui utilizator și nu este citită aici."]));
 
         Autologon(h, host, nextId, res);
+    }
+
+    /// <summary>
+    /// Planner #14 E4: CFG-OS-EOL. The build and edition from SOFTWARE\Microsoft\Windows NT\CurrentVersion are looked up in the DATED table (<see cref="WindowsLifecycle"/>) and compared with
+    /// the COLLECTION date: past the end of servicing = High, within the table's "near" window (60 days) = Medium, otherwise nothing. A build or edition that is not in the table is a
+    /// gap with the reason, never a finding. A case without these values at all (the Quick version JSON missing) is left to the collector's error.
+    /// </summary>
+    private static void OsLifecycle(ConfigHive h, string host, Func<string> nextId, ConfigAuditResult res)
+    {
+        if (!h.Values.TryGetValue(CurrentBuild.Locator, out var bv)) return;
+        string Val(ConfigProbe p) => h.Values.TryGetValue(p.Locator, out var v) ? v.Data ?? "" : "";
+        if (bv.Data is null) return;   // absent from a hive that was read: nothing to compare (the same "absent" semantics as the other values)
+        if (!int.TryParse(bv.Data, NumberStyles.None, CultureInfo.InvariantCulture, out int build))
+        {
+            res.Gaps.Add(Gap(h, CurrentBuild, $"valoarea nu a putut fi citită ca număr (conținut: „{bv.Data}”)"));
+            return;
+        }
+        if (h.CollectedUtc is not { } collected)
+        {
+            res.Gaps.Add(new EvidenceGap("Ciclu de viață Windows (CFG-OS-EOL)", EvidenceStatus.NotAvailable, "data colectării copiei nu este cunoscută, deci sfârșitul serviciului nu poate fi comparat cu ea",
+                "Versiunea Windows nu poate fi comparată cu tabelul de cicluri de viață", "Data colectării din indexul probelor", "Da, printr-o nouă colectare"));
+            return;
+        }
+        string edition = Val(EditionId), name = Val(ProductName), display = Val(DisplayVersion), ubr = Val(Ubr);
+        var life = WindowsLifecycle.Evaluate(build, edition, collected);
+        string tbl = $"tabelul de cicluri de viață are data {WindowsLifecycle.TableDate}";
+        if (life.State == LifecycleState.UnknownBuild)
+        {
+            res.Gaps.Add(new EvidenceGap($"Ciclu de viață Windows (compilarea {build})", EvidenceStatus.NotAvailable, "build necunoscut în tabel (posibil Insider/Canary)",
+                $"Sfârșitul serviciului nu poate fi comparat; lipsa unei constatări nu înseamnă că versiunea este în suport ({tbl})", "Pagina Microsoft Lifecycle a versiunii", "Da, prin actualizarea tabelului de date"));
+            return;
+        }
+        if (life.State == LifecycleState.UnknownEdition)
+        {
+            res.Gaps.Add(new EvidenceGap($"Ciclu de viață Windows ({life.Name}, EditionID = {(edition.Length > 0 ? edition : "lipsă")})", EvidenceStatus.NotAvailable,
+                "ediție cu ciclu de viață propriu sau necunoscută în tabel (de exemplu LTSC sau Server)", $"Sfârșitul serviciului nu poate fi comparat; lipsa unei constatări nu înseamnă că versiunea este în suport ({tbl})",
+                "Pagina Microsoft Lifecycle a produsului", "Da, prin actualizarea tabelului de date"));
+            return;
+        }
+        if (life.State == LifecycleState.Current) return;
+        string end = life.EndOfServicing!.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), coll = collected.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string label = $"{life.Name} (compilarea {build}{(ubr.Length > 0 ? "." + ubr : "")}, ediția {edition})";
+        bool past = life.State == LifecycleState.Past;
+        string when = past ? $"{-life.DaysToEnd} zile înaintea colectării" : $"{life.DaysToEnd} zile după colectare";
+        string facts = $"ProductName = {name}; EditionID = {edition}; DisplayVersion = {display}; CurrentBuild = {build}; UBR = {ubr}";
+        string src = bv.TimeSource is null ? $"din hive-ul {h.Hive} păstrat în caz" : "dintr-o citire doar-citire la colectare";
+        var evidence = new List<EvidenceRef>();
+        foreach (var p in new[] { ProductName, EditionId, DisplayVersion, CurrentBuild, Ubr })
+            if (h.Values.TryGetValue(p.Locator, out var v) && v.Data is not null)
+                evidence.Add(new(v.EvidenceId ?? h.EvidenceId, p.Locator, $"valoarea {p.Name} {src}", v.Sha256 ?? h.Sha256, $"{p.Name} = {v.Data}", v.TimeSource ?? TimeSource, Channel));
+        var times = bv.KeyLastWriteUtc is { } kw ? new List<DateTimeOffset> { kw } : [];
+        res.Findings.Add(Build(h, host, nextId, RuleOsEol, past ? Severity.High : Severity.Medium, Confidence.Medium,
+            past ? $"{label} a ieșit din suport la {end}, înainte de colectare ({coll})" : $"{label} iese din suport la {end}, la {life.DaysToEnd} zile după colectare ({coll})",
+            $"Registrul spune: {facts}. Conform tabelului de cicluri de viață ({tbl}), {life.Name}, familia de ediții {life.Family}, are sfârșitul serviciului la {end}; data colectării este {coll}, deci sfârșitul serviciului este {when}. " +
+            (past ? "După această dată Microsoft nu mai publică actualizări de securitate pentru versiunea respectivă, în afara programului ESU, care nu este citit aici." : "După această dată Microsoft nu va mai publica actualizări de securitate pentru versiunea respectivă, în afara programului ESU, care nu este citit aici."),
+            past ? $"Windows este într-o versiune ({life.Name}) care nu mai primește actualizări de securitate" : $"Windows este într-o versiune ({life.Name}) care nu va mai primi actualizări de securitate în curând",
+            past ? "gravitate ridicată: versiunea nu mai primește actualizări de securitate, deci defectele noi rămân deschise" : $"gravitate medie: sfârșitul serviciului este la cel mult {WindowsLifecycle.NearDays} de zile după colectare",
+            evidence, times,
+            ["Stația poate primi actualizări extinse (ESU) sau poate fi administrată de o organizație cu un alt contract; acest lucru nu este citit aici.", "Tabelul de cicluri de viață poate fi depășit: Microsoft poate schimba datele."],
+            [$"Tabelul de cicluri de viață are data {WindowsLifecycle.TableDate}; sursa lui: {WindowsLifecycle.Source}", $"Compararea se face cu data colectării ({coll}), nu cu data de azi.",
+             "Valoarea este starea din hive la colectare; nu arată când a fost instalată versiunea."]));
     }
 
     private static void Autologon(ConfigHive h, string host, Func<string> nextId, ConfigAuditResult res)

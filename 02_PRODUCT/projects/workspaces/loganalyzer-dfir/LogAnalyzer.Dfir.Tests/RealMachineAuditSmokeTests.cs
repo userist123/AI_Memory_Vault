@@ -57,7 +57,9 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
             Line($"Case folder (deleted at the end): {ws.Root}");
 
             // 2. the collectors, each on its own: one that throws is a failure of the test, one that is not available is recorded
-            ICollector[] collectors = [new SoftwareHiveCollector(), new ExecutionArtifactsCollector(), new UserHistoryCollector(), new LiveStateCollector(), new LocalSecurityStateCollector()];
+            ICollector[] collectors = [new SoftwareHiveCollector(), new ExecutionArtifactsCollector(), new UserHistoryCollector(), new LiveStateCollector(), new LocalSecurityStateCollector(),
+                // planner #14 E7: the event-log channels (EVTX copies, each to a file of the case folder under %TEMP%, deleted at the end) and the Defender detection history, so the event-log rules run on real data
+                new EventLogCollector(), new DefenderDetectionHistoryCollector()];
             Line(); Line("== COLLECTORS ==");
             foreach (var c in collectors)
             {
@@ -112,6 +114,27 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
                     Line($"      verify={(step is null ? "(none)" : One(step.ToLine(), 400))}");
                 }
             }
+
+            // 4b. planner #14 E7: the rules that read event logs (and the Defender detection history), counted per rule family; what they find on this PC is printed, never asserted
+            Line(); Line("== Reguli pe jurnale de evenimente ==");
+            var evtxIds = items.Where(i => i.SourceType == "evtx").Select(i => i.EvidenceId).ToHashSet(StringComparer.Ordinal);
+            var defenderIds = items.Where(i => i.SourceType == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName).Select(i => i.EvidenceId).ToHashSet(StringComparer.Ordinal);
+            var evtxRows = res.Timeline.Where(t => t.Source.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase)).ToList();
+            Line($"jurnale EVTX copiate: {evtxIds.Count}; rânduri de cronologie din jurnale: {evtxRows.Count}; surse de istoric Defender: {defenderIds.Count}");
+            foreach (var g in evtxRows.GroupBy(t => t.Source["EventLog:".Length..], StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(8))
+                Line($"   canal {g.Key}: {g.Count()} rânduri");
+            string EventFamily(string ruleId) => ruleId.Split('-', 2)[0];
+            var eventFindings = res.Findings.Where(f => f.SupportingEvidence.Any(e => evtxIds.Contains(e.EvidenceId) || defenderIds.Contains(e.EvidenceId))).ToList();
+            Line($"constatări care se sprijină pe jurnale de evenimente sau pe istoricul Defender: {eventFindings.Count} din {res.Findings.Count}");
+            foreach (var fam in eventFindings.GroupBy(f => EventFamily(f.RuleId), StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                Line($"-- familia {fam.Key}-*: {fam.Count()} constatare(a/ări)");
+                foreach (var rule in fam.GroupBy(f => f.RuleId, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal))
+                    Line($"   {rule.Key}: {rule.Count()} ({string.Join(", ", rule.GroupBy(f => f.Severity).OrderByDescending(g => g.Key).Select(g => $"{g.Key} {g.Count()}"))})");
+            }
+            var evtxGaps = res.Gaps.Where(g => g.Artifact.Contains("evtx", StringComparison.OrdinalIgnoreCase) || g.Artifact.Contains("EventLog", StringComparison.OrdinalIgnoreCase) || g.Reason.Contains("jurnal", StringComparison.OrdinalIgnoreCase)).ToList();
+            Line($"lacune legate de jurnale: {evtxGaps.Count}");
+            foreach (var g in evtxGaps.Take(10)) Line($"   {One(g.Artifact, 80)}: {One(g.Reason, 160)}");
 
             // 5. robust assertions
             Assert.All(res.Findings, f =>

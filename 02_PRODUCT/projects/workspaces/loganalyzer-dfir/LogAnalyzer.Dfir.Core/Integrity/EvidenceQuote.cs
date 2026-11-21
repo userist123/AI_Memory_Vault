@@ -23,7 +23,7 @@ public static class EvidenceQuote
     [
         "TargetUserName", "SubjectUserName", "TargetDomainName", "SubjectDomainName", "IpAddress", "WorkstationName", "LogonType",
         "ProcessName", "NewProcessName", "ParentProcessName", "Image", "CommandLine", "ServiceName", "ImagePath", "TaskName", "ObjectName",
-        "ValueName", "Name", "Command", "Data", "Value", "Key",
+        "ValueName", "Name", "Command", "Data", "Value", "Key", "updateTitle",
     ];
     private const int MaxFields = 10;
     private static readonly Regex TextLine = new(@"(^|:)line=\d+$", RegexOptions.Compiled);
@@ -33,7 +33,7 @@ public static class EvidenceQuote
     public static (string Quote, string TimeSource, string Channel) From(TimelineEvent row)
     {
         // planner #12 B3: the stored snapshots of the audit policy and the local accounts quote their raw line (CSV line / JSON object) and are a collection-time snapshot
-        if (row.Source is "auditpol" or "Conturi locale") return (Truncate(RawLine(row), MaxQuoteLength), SnapshotTime, row.Source);
+        if (row.Source is "auditpol" or "Conturi locale" or "BitLocker") return (Truncate(RawLine(row), MaxQuoteLength), SnapshotTime, row.Source);
         bool evtx = row.Source.StartsWith("EventLog:", StringComparison.Ordinal);
         bool text = !evtx && (TextLine.IsMatch(row.Locator) || row.Source.StartsWith("Artifact:", StringComparison.Ordinal) || row.Source == "PowerShellTranscript");
         string quote = text ? Truncate(RawLine(row), MaxQuoteLength) : Truncate(FieldsQuote(row), MaxQuoteLength);

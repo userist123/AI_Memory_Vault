@@ -147,7 +147,7 @@ public sealed class InvestigationPipeline
          // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
          // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
          new NtfsMetadataCollector(),
-         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SoftwareSubkeyHivesCollector(), new LocalSecurityStateCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SoftwareSubkeyHivesCollector(), new LocalSecurityStateCollector(), new BitLockerCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -308,6 +308,8 @@ public sealed class InvestigationPipeline
                 // the local accounts snapshot by the keys of its first JSON object
                 _ when EvidenceFingerprint.Detect(f) == "auditpol_csv" => LogAnalyzer.Dfir.Windows.Acquisition.LocalSecurityStateCollector.AuditSourceType,
                 _ when LogAnalyzer.Dfir.Windows.Parsers.LocalAccountsParser.LooksLikeAccountsJson(f) => LogAnalyzer.Dfir.Windows.Acquisition.LocalSecurityStateCollector.AccountsSourceType,
+                // planner #14 E8: the BitLocker snapshot, recognised by the "schema" key of its JSON
+                _ when LogAnalyzer.Dfir.Windows.Parsers.BitLockerVolumesParser.LooksLikeBitLockerJson(f) => LogAnalyzer.Dfir.Windows.Parsers.BitLockerVolumesParser.SourceTypeName,
                 // planner #11 A6: the PSReadLine history and the hosts file are plain text without a signature: the exact file name only (the parser reads any text)
                 _ when LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.IsHistoryFileName(Path.GetFileName(f)) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("hosts", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Network.HostsFileParser.SourceTypeName,
@@ -383,14 +385,15 @@ public sealed class InvestigationPipeline
         {
             var subs = new List<(EvidenceItem Item, string FullPath)>();
             var absent = new List<(EvidenceItem Item, string FullPath)>();
-            (EvidenceItem Item, string FullPath)? winlogon = null;
-            foreach (var item in ws.LoadEvidence().Where(e => (e.SourceType is ConfigurationHiveReader.SubkeyHiveType or ConfigurationHiveReader.AbsentType && ConfigurationHiveReader.SubkeyOf(e) is not null) || e.SourceType == ConfigurationHiveReader.WinlogonType))
+            (EvidenceItem Item, string FullPath)? winlogon = null, windowsVersion = null;
+            foreach (var item in ws.LoadEvidence().Where(e => (e.SourceType is ConfigurationHiveReader.SubkeyHiveType or ConfigurationHiveReader.AbsentType && ConfigurationHiveReader.SubkeyOf(e) is not null) || e.SourceType is ConfigurationHiveReader.WinlogonType or ConfigurationHiveReader.VersionType))
                 if (ws.TryFullPath(item.StoredPath, out var full) && File.Exists(full))
                 {
                     if (item.SourceType == ConfigurationHiveReader.WinlogonType) winlogon = (item, full);
+                    else if (item.SourceType == ConfigurationHiveReader.VersionType) windowsVersion = (item, full);
                     else (item.SourceType == ConfigurationHiveReader.AbsentType ? absent : subs).Add((item, full));
                 }
-            if (subs.Count + absent.Count > 0 || winlogon is not null) hives.Add(ConfigurationHiveReader.ReadSoftwareSubkeys(subs, absent, winlogon));
+            if (subs.Count + absent.Count > 0 || winlogon is not null || windowsVersion is not null) hives.Add(ConfigurationHiveReader.ReadSoftwareSubkeys(subs, absent, winlogon, windowsVersion));
         }
         var res = ConfigurationAudit.Evaluate(hives, ws.Info.Host, nextId);
         if (hives.Count > 0)
@@ -688,6 +691,16 @@ public sealed class InvestigationPipeline
         int lsNo = LiveStateAnalyzer.MaxFindingNo(found);
         var localSec = LocalSecurityAudit.Evaluate(r.Timeline, ws.Info.Host, () => $"F-{++lsNo:D4}");
         found.AddRange(localSec.Findings); r.Gaps.AddRange(localSec.Gaps);
+        // Planner #14 E8: BitLocker / device encryption of every volume from the stored WMI snapshot
+        int blNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var bitLocker = BitLockerAudit.Evaluate(r.Timeline, ws.Info.Host, () => $"F-{++blNo:D4}");
+        found.AddRange(bitLocker.Findings); r.Gaps.AddRange(bitLocker.Gaps);
+        // Planner #14 E4: no successful quality update for more than 60 days before the collection (System log, WindowsUpdateClient 19); a log shorter than 60 days is a gap
+        int updNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var systemEvidence = r.Timeline.Where(e => e.Source.Equals("EventLog:System", StringComparison.OrdinalIgnoreCase)).Select(e => e.EvidenceId).ToHashSet(StringComparer.Ordinal);
+        var collectedAt = ws.LoadEvidence().Where(e => systemEvidence.Contains(e.EvidenceId)).Select(e => e.AcquiredAtUtc).DefaultIfEmpty(ws.Info.CreatedAtUtc).Max();
+        var updates = WindowsUpdateAudit.Evaluate(r.Timeline, collectedAt, ws.Info.Host, () => $"F-{++updNo:D4}");
+        found.AddRange(updates.Findings); r.Gaps.AddRange(updates.Gaps);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {

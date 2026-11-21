@@ -31,15 +31,22 @@ public sealed class SoftwareSubkeyHivesCollector : ICollector
     public const string WinlogonSubkey = @"Microsoft\Windows NT\CurrentVersion\Winlogon";
     public const string WinlogonSourceType = "winlogon_autologon_json";
 
+    /// <summary>Planner #14 E4: the Windows version (ProductName, EditionID, DisplayVersion, CurrentBuild, UBR) for CFG-OS-EOL. The whole CurrentVersion key is NOT saved (it is big and holds more than the audit needs): the five values are read, read-only, into a small JSON.</summary>
+    public const string VersionSubkey = @"Microsoft\Windows NT\CurrentVersion";
+    public const string VersionSourceType = "windows_version_json";
+    public static readonly string[] VersionValues = ["ProductName", "EditionID", "DisplayVersion", "CurrentBuild", "UBR"];
+
     private readonly ToolRunFunc _run;
     private readonly Func<string, bool> _keyExists;
     private readonly Func<string, string?> _winlogonValue;
+    private readonly Func<string, string?> _versionValue;
     public SoftwareSubkeyHivesCollector() : this(null, null) { }
     /// <param name="keyExists">Read-only existence check of a key below HKLM\SOFTWARE (argument = the subkey path); by default the 64-bit registry view. Tests pass a fake.</param>
     /// <param name="winlogonValue">Read-only read of one value of the Winlogon key (argument = value name, null = absent); by default the 64-bit registry view. Only AutoAdminLogon, DefaultUserName and DefaultPassword are asked for; the DefaultPassword text is used for one emptiness test and dropped. Tests pass a fake.</param>
-    public SoftwareSubkeyHivesCollector(ToolRunFunc? run, Func<string, bool>? keyExists = null, Func<string, string?>? winlogonValue = null)
+    public SoftwareSubkeyHivesCollector(ToolRunFunc? run, Func<string, bool>? keyExists = null, Func<string, string?>? winlogonValue = null, Func<string, string?>? versionValue = null)
     {
         _winlogonValue = winlogonValue ?? DefaultWinlogonValue;
+        _versionValue = versionValue ?? DefaultVersionValue;
         _run = run ?? ((exe, args, logDir, label, timeout, ct) => ToolRunner.Run(exe, args, logDir, label, timeout, ct));
         _keyExists = keyExists ?? DefaultKeyExists;
     }
@@ -57,6 +64,14 @@ public sealed class SoftwareSubkeyHivesCollector : ICollector
         if (!OperatingSystem.IsWindows()) return null;
         using var baseKey = Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64);
         using var k = baseKey.OpenSubKey(@"SOFTWARE\" + WinlogonSubkey);
+        return k?.GetValue(name)?.ToString();
+    }
+
+    private static string? DefaultVersionValue(string name)
+    {
+        if (!OperatingSystem.IsWindows()) return null;
+        using var baseKey = Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64);
+        using var k = baseKey.OpenSubKey(@"SOFTWARE\" + VersionSubkey);
         return k?.GetValue(name)?.ToString();
     }
 
@@ -107,8 +122,31 @@ public sealed class SoftwareSubkeyHivesCollector : ICollector
         }
         bool anySubkey = o.Evidence.Count > 0;   // the status follows the subkey saves; the Winlogon JSON is an extra
         CollectWinlogon(ctx, o, WriteAbsent, ct);
+        CollectVersion(ctx, o, ct);
         o.Status = anySubkey ? EvidenceStatus.Success : EvidenceStatus.Failed;
         return o;
+    }
+
+    private void CollectVersion(CollectorContext ctx, CollectorOutcome o, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var key = @"HKLM\SOFTWARE\" + VersionSubkey;
+        try
+        {
+            var values = VersionValues.ToDictionary(n => n, n => _versionValue(n) ?? "");
+            if (values["CurrentBuild"].Length == 0) { o.Errors.Add("Versiunea Windows (CurrentBuild): valoarea nu a putut fi citită; CFG-OS-EOL nu poate fi evaluat"); return; }
+            var path = Path.Combine(ctx.Case.RawDir("Registry"), "SOFTWARE-WindowsVersion.json");
+            var payload = new Dictionary<string, object> { ["key"] = key };
+            foreach (var (n, v) in values) payload[n] = v;
+            payload["checkedUtc"] = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), new System.Text.UTF8Encoding(false));
+            o.Evidence.Add(ctx.Case.RegisterStored(path, key, @"Registry:SOFTWARE\" + VersionSubkey, VersionSourceType, TemporalType.CurrentSnapshot, Name, Version,
+                notes: "Citire doar-citire a valorilor ProductName, EditionID, DisplayVersion, CurrentBuild și UBR; cheia CurrentVersion nu este salvată cu reg save."));
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            o.Errors.Add($"Versiunea Windows: nu a putut fi citită ({ex.Message}); CFG-OS-EOL nu poate fi evaluat");
+        }
     }
 
     private void CollectWinlogon(CollectorContext ctx, CollectorOutcome o, Action<string, string> writeAbsent, CancellationToken ct)

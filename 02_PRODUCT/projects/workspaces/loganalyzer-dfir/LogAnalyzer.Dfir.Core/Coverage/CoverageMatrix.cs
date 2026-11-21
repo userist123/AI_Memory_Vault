@@ -92,6 +92,7 @@ public sealed class CoverageMatrix
         new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["UserArtifactsCollector", "SoftwareHiveCollector"], [], []),   // not ExecutionArtifactsCollector: it saves only SYSTEM + Amcache (lab WS02 2026-11-17: Standard showed a false "ran but produced no source"); the live SOFTWARE hive comes from SoftwareHiveCollector (Standard / Full)
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
         new("local_security", "Politica de audit, conturi locale și administratori locali (instantaneu)", ["AuditPolicyCsvParser", "LocalAccountsParser"], ["LocalSecurityStateCollector"], [], [], "auditpol cere drepturi de administrator; profilurile Rapid, Standard și Complet; starea la colectare, fără istoric"),
+        new("bitlocker", "Criptarea discului (BitLocker, instantaneu)", ["BitLockerVolumesParser"], ["BitLockerCollector"], [], [], "cere drepturi de administrator; lipsește pe ediția Home fără criptarea dispozitivului (atunci apare o lacună cu motivul); starea la colectare, fără istoric"),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
         new("usb", "Istoric dispozitive USB", ["UsbDevicesParser"], [], [], []),
