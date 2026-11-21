@@ -42,6 +42,8 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
   com?: CommercialInputs | null; projectId?: string; onFee?(): void }){
   const { t, lang, units } = usePrefs(), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), num = (v: number, d = 2) => formatNumber(v, lang, d), qn = (v: number, u: string) => fmtNum(v, lang, { decimals: qtyDecimals(u, v) }), unit = (u: string) => UNIT[u]?.startsWith('budget.') ? t(UNIT[u]!) : UNIT[u] ?? u;
   const b = useMemo(() => computeBudget(snap, catalog, mc, custom), [snap, catalog, mc, custom]);
+  // devizul pe categoriile cheltuielilor; null când nu există încă deviz (proiect gol): panoul arată doar totalul real
+  const expEstimate = useMemo(() => { const e = estimateOf(b); return Object.values(e).some(v => v > 0) ? e : null; }, [b]);
   const [open, setOpen] = useState<'mat' | 'lab' | 'mob' | null>(null), s = b.settings, c = b.chosen;
   const roomName = (id: string | null) => id ? snap.floor.rooms.find(r => r.id === id)?.name || '' : t('budget.wholeHouse');
   const numIn = (v: string) => v.trim() === '' ? null : Math.max(0, Number(v.replace(',', '.')) || 0);
@@ -93,7 +95,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : t('common.unknown')}</b><small>{roomName(i.roomId)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="btn" onClick={csv}>{t('budget.downloadCsv')}</button>
     <button className="btn" onClick={() => downloadSchedule(finishSchedule(snap, catalog, mc), t, cur, snap.name, i => i === 0 ? t('level.ground') : t('level.n', { n: i }))}>{t('sched.download')}</button>
-    {projectId && <ExpensesPanel id={projectId} cur={cur} estimate={estimateOf(b)} />}
+    {projectId && <ExpensesPanel id={projectId} cur={cur} estimate={expEstimate} />}
     <p className="prov">{t('budget.linksNote')} <a href="/despre-linkuri" target="_blank">{t('budget.howItWorks')}</a>.</p>
     <p className="prov">{t('budget.assumptions', { parquet: pc(WASTE.parquet), tile: pc(WASTE.floor_tile), baseboard: pc(WASTE.baseboard), paint: pc(WASTE.paint), coats: PAINT_COATS, bath: formatLength(BATH_TILE_HEIGHT, units, lang), splash: formatLength(BACKSPLASH_HEIGHT, units, lang), per: formatArea(LIGHTS_EXTRA_PER_M2, units, lang) })}</p>
   </div>);

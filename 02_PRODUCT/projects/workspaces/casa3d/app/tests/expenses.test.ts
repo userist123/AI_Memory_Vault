@@ -52,3 +52,17 @@ test('server: cheltuielile se adaugă, se listează și se șterg doar de propri
   assert.equal((await getExpenses(OWNER, id)).entries.length, 0);
   await assert.rejects(() => deleteExpense(OWNER, id, 'nu-e-uuid'), (e: any) => e.status === 404);
 });
+
+// ---------- estimateOf față de computeBudget ----------
+import catalogJson from '../data/catalog.v1.json';
+import materialsJson from '../data/materials.v1.json';
+import { newSnapshot } from '../core/project';
+import { computeBudget } from '../core/boq';
+import { estimateOf } from '../components/BudgetPanel';
+test('estimateOf: suma categoriilor = subtotalul devizului (fără rezervă); manopera exclusă dă 0 la manoperă', () => {
+  const cat: any = catalogJson, mc: any = materialsJson, s = newSnapshot(cat, 'Demo', 'demo', 'ro', { materials: mc });
+  const b = computeBudget(s, cat, mc), e = estimateOf(b), sum = Math.round(Object.values(e).reduce((a, v) => a + v, 0) * 100) / 100;
+  assert.equal(sum, b.chosen.subtotal); assert.equal(e.labor, b.chosen.labor);
+  const noLab = structuredClone(s); noLab.budget = { ...b.settings, includeLabor: false };
+  assert.equal(estimateOf(computeBudget(noLab, cat, mc)).labor, 0);
+});

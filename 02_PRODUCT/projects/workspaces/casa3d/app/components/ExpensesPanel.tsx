@@ -8,13 +8,14 @@ import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 
-const today = () => new Date().toISOString().slice(0, 10);
+// data locală (nu UTC): între miezul nopții și 02:00 ora României, UTC ar propune ziua de ieri
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 const BUDGET_CATS = new Set(['furniture', 'finishes', 'lighting', 'appliances', 'sanitary', 'textiles']);
 export default function ExpensesPanel({ id, cur, estimate }: { id: string; cur: string; estimate: Record<ExpenseCategory, number> | null }){
   const { t, lang } = usePrefs(), money = (v: number) => formatMoney(v, cur, lang);
   const [list, setList] = useState<Expense[] | null>(null), [busy, setBusy] = useState(false), [err, setErr] = useState(''), [all, setAll] = useState(false);
   const [f, setF] = useState({ date: today(), category: 'finishes' as ExpenseCategory, amount: '', supplier: '', doc: '', note: '' });
-  const load = () => fetch(`/api/projects/${id}/expenses`).then(r => r.ok ? r.json() : null).then(j => j && setList(j.entries)).catch(() => {});
+  const load = () => fetch(`/api/projects/${id}/expenses`).then(r => r.ok ? r.json() : Promise.reject(r)).then(j => setList(j.entries)).catch(() => setErr(t('exp.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
   const label = (c: ExpenseCategory) => BUDGET_CATS.has(c) ? t(`budget.cat.${c}`) : t(`exp.cat.${c}`);
   const amount = Number(f.amount.replace(/\s/g, '').replace(',', '.'));
