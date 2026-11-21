@@ -36,7 +36,9 @@ const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', roo
   // adnotările noi: Shift + litera uneltei înrudite (B text, Q cotă)
   leader: { key: 'b', shift: true }, level_mark: { key: 'q', shift: true },
   // lotul 3 de adnotări: cota unghiulară pe Shift+U (de la „unghi”) și norul de revizie pe Shift+N (de la „nor”); ambele erau libere
-  angle_dim: { key: 'u', shift: true }, rev_cloud: { key: 'n', shift: true } };
+  angle_dim: { key: 'u', shift: true }, rev_cloud: { key: 'n', shift: true },
+  // traseul de instalații desenat în plan: Shift+I, lângă punctele tehnice (I)
+  mep_run: { key: 'i', shift: true } };
 const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
@@ -108,13 +110,13 @@ export const toolShortcut = (tk: Tool): Shortcut => toolKey(tk);
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
 /** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
-export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing';
+export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'mep_run';
 const CONTEXT: Record<ContextKind, string[]> = {
   wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
   room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
   stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
   niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete'],
-  ceiling_zone: ['frame', 'delete'], railing: ['frame', 'delete']
+  ceiling_zone: ['frame', 'delete'], railing: ['frame', 'delete'], mep_run: ['frame', 'delete']
 };
 export const contextCommands = (kind: ContextKind): string[] => CONTEXT[kind];
 

@@ -42,7 +42,7 @@ describe('registrul de comenzi', () => {
     const pal = COMMANDS.find(c => c.id === 'palette')!; assert.equal(pal.dispatch, false); assert.ok(pal.shortcuts.some(s => shortcutMatches(s, ev('k', { ctrlKey: true }))));
   });
   test('100 % din unelte sunt în registru', () => {
-    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true, demolish: true, floor_zone: true, ceiling_zone: true, railing: true, pan: true, zoom_area: true, rug: true, style_copy: true, split: true, leader: true, level_mark: true, angle_dim: true, rev_cloud: true };
+    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true, demolish: true, floor_zone: true, ceiling_zone: true, railing: true, pan: true, zoom_area: true, rug: true, style_copy: true, split: true, leader: true, level_mark: true, angle_dim: true, rev_cloud: true, mep_run: true };
     assert.deepEqual([...TOOLS].sort(), Object.keys(all).sort());
     assert.deepEqual(COMMANDS.filter(c => c.id.startsWith('tool.')).map(c => c.id.slice(5)).sort(), [...TOOLS].sort());
     for (const tk of TOOLS){ const c = COMMANDS.find(x => x.id === `tool.${tk}`)!; assert.equal(c.tool, tk); assert.equal(c.label, `tool.${tk}`); assert.ok(toolShortcut(tk)); }
@@ -54,9 +54,11 @@ describe('registrul de comenzi', () => {
   // intră în `shifted`; pentru restul literelor Shift+literă rămâne fără comandă, exact ca înainte.
   // Schimbat conștient a treia oară (lotul 3 de adnotări): Cota unghiulară (Shift+U) și Norul de revizie (Shift+N) intră în
   // `shifted`; pentru restul literelor Shift+literă rămâne fără comandă, exact ca înainte.
-  test('tastele uneltelor: literă fără modificator, mare sau mică; cu Ctrl/⌘/Alt nimic; cu Shift doar cele nouă unelte noi; R rămâne rotire', () => {
+  // Schimbat conștient a patra oară (unealta Traseu instalații): Shift+I, lângă punctele tehnice (I), intră în `shifted`;
+  // pentru restul literelor Shift+literă rămâne fără comandă, exact ca înainte.
+  test('tastele uneltelor: literă fără modificator, mare sau mică; cu Ctrl/⌘/Alt nimic; cu Shift doar cele zece unelte noi; R rămâne rotire', () => {
     const map: Record<string, Tool> = { v: 'select', p: 'wall', c: 'room', u: 'door', o: 'window', j: 'passage', h: 'shaft', n: 'niche', k: 'clad', x: 'wall_item', q: 'dim', b: 'text', t: 'column', g: 'beam', l: 'glass_wall', e: 'stair', m: 'measure', i: 'tech' };
-    const shifted: Record<string, Tool> = { v: 'pan', m: 'zoom_area', x: 'rug', k: 'style_copy', c: 'split', b: 'leader', q: 'level_mark', u: 'angle_dim', n: 'rev_cloud' };
+    const shifted: Record<string, Tool> = { v: 'pan', m: 'zoom_area', x: 'rug', k: 'style_copy', c: 'split', b: 'leader', q: 'level_mark', u: 'angle_dim', n: 'rev_cloud', i: 'mep_run' };
     for (const [k, tk] of Object.entries(map)){
       assert.equal(matchCommand(ev(k)), `tool.${tk}`, k); assert.equal(matchCommand(ev(k.toUpperCase())), `tool.${tk}`, k.toUpperCase());
       for (const m of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]){ assert.equal(matchCommand(ev(k, m)), null, `${k} ${JSON.stringify(m)}`); assert.equal(matchCommand(ev(k.toUpperCase(), m)), null); }
@@ -103,7 +105,7 @@ describe('registrul de comenzi', () => {
 
 describe('meniul contextual din registru', () => {
   // toate tipurile de selecție ale planului: un tip nou fără meniu contextual nu mai compilează (tsc)
-  const ALL: Record<NonNullable<Sel>['kind'], true> = { wall: true, room: true, placement: true, stair: true, column: true, beam: true, glass_wall: true, opening: true, niche: true, wall_item: true, annotation: true, floor_zone: true, ceiling_zone: true, railing: true };
+  const ALL: Record<NonNullable<Sel>['kind'], true> = { wall: true, room: true, placement: true, stair: true, column: true, beam: true, glass_wall: true, opening: true, niche: true, wall_item: true, annotation: true, floor_zone: true, ceiling_zone: true, railing: true, mep_run: true };
   const KINDS = Object.keys(ALL) as NonNullable<Sel>['kind'][];
   test('fiecare tip de selecție are comenzi din registru, cu „șterge” la final', () => {
     for (const k of KINDS){ const ids = contextCommands(k);

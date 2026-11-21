@@ -25,7 +25,8 @@ import { formatLevelValue, dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGe
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText, cleanCloudLabel, stripPlanText } from '@/core/plan-limits';
 import type { AngleAnnotation, DimAnnotation } from '@/core/types';
 import { allFixturePoints } from '@/core/fixtures';
-import { MEP_SYSTEMS } from '@/core/mep';
+import { MEP_SYSTEMS, MEP_LIMITS } from '@/core/mep';
+import { appendRunPoint, dropLastRunPoint, orthoPoint } from '@/core/mep-draw';
 import { finishesOf } from '@/core/boq';
 import { cladTarget, featurePlanRect, featureMarks, materialOf } from '@/core/finishes';
 import type { MaterialsCatalog, WallFeature } from '@/core/types';
@@ -41,8 +42,8 @@ import { PLAN_LIMITS as LIM } from '@/core/plan-limits';
 import { railingHeight, railingKind } from '@/core/railings';
 import { roomRugs, rugSize, rugRectAt } from '@/core/textiles';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split' | 'leader' | 'level_mark' | 'angle_dim' | 'rev_cloud';
-export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split' | 'leader' | 'level_mark' | 'angle_dim' | 'rev_cloud' | 'mep_run';
+export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'mep_run'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 export type TextExtra = { leader?: [number, number]; symbol?: 'level' };
 /** uneltele care deschid câmpul de text de pe plan */
@@ -55,6 +56,9 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
   onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window' | 'passage'): void;
   onAddNiche?(wallId: string, offset: number, side: 1 | -1): void;
+  /** unealta „Traseu instalații”: culoarea sistemului ales și dacă se poate desena (cota traseului declarată); punctele sunt
+   *  cele din plan, în ordinea clicurilor. `mepSelectable`: traseele se pot alege cu clic (doar în etapa Instalații). */
+  mepDraw?: { color: string; ready: boolean }; onAddMepRun?(pts: [number, number][]): boolean | void; onMepNotReady?(): void; mepSelectable?: boolean;
   /** unealta „Placare”: latura camerei și porțiunea (m de la colțul x0/z0); fără `from`/`to` = toată latura */
   onAddClad?(roomId: string, side: WallFeature['side'], from?: number, to?: number): void;
   /** stratul de finisaje de perete (benzile placărilor cu marcajul lor), în etapele Finisaje și Planșe */
@@ -130,7 +134,10 @@ export default function PlanView(p: Props){
   const [cursor, setCursor] = useState<[number, number] | null>(null);
   const [rulerHover, setRulerHover] = useState<[number, number] | null>(null);
   // desenarea precisă (core/snap.ts): ce a prins magnetul și ultimul cursor brut (direcția pentru Enter)
-  const [hit, setHit] = useState<SnapResult | null>(null), raw = useRef<{ pt: [number, number]; free: boolean } | null>(null);
+  const [hit, setHit] = useState<SnapResult | null>(null), raw = useRef<{ pt: [number, number]; free: boolean; ortho?: boolean } | null>(null);
+  // traseul de instalații în lucru: punctele puse deja (ultimul = preview.a); ref-ul le ține la zi pentru tastatură
+  const [mepPts, setMepPtsRaw] = useState<[number, number][]>([]), mepRef = useRef<[number, number][]>([]), mepClick = useRef<{ at: number; x: number; y: number } | null>(null);
+  const setMepPts = (v: [number, number][]) => { mepRef.current = v; setMepPtsRaw(v); };
   const [aspect, setAspect] = useState(1), [calA, setCalA] = useState<[number, number] | null>(null);
   const ul = p.snap.underlay;
   useEffect(() => { if (!ul) return; const i = new Image(); i.onload = () => i.naturalWidth && setAspect(i.naturalHeight / i.naturalWidth); i.src = ul.dataUrl; }, [ul?.dataUrl]); // eslint-disable-line
@@ -154,7 +161,7 @@ export default function PlanView(p: Props){
   useEffect(() => { setLeaderTip(null); setAngleDraft(null); setCloudDraft(null); }, [p.tool]);
   // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
-  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setMenu(null); setDim(null); }, [p.tool]);
+  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setMenu(null); setDim(null); setMepPts([]); mepClick.current = null; }, [p.tool]);
   // meniul contextual (registru: contextCommands) și cota editată pe loc; ambele în coordonate de ecran
   const [menu, setMenu] = useState<{ x: number; y: number; kind: ContextKind } | null>(null), menuByKey = useRef(0);
   const [dim, setDim] = useState<{ wallId: string; text: string; orig: string; x: number; y: number; bad: boolean } | null>(null), dimClick = useRef<{ id: string; at: number } | null>(null);
@@ -244,7 +251,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setAngleDraft(null); setCloudDraft(null); setTyped(''); setZoomDraft(null); setMarquee(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setAngleDraft(null); setCloudDraft(null); setTyped(''); setZoomDraft(null); setMarquee(null); mepRef.current = []; setMepPtsRaw([]); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -263,6 +270,12 @@ export default function PlanView(p: Props){
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
     if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
     if (p.tool === 'shaft'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1], 'rect', 'shaft'); return; }
+    // traseul de instalații: clic = punct; al doilea clic pe același loc (dublu-clic) termină traseul. Fără cota declarată nu pornește
+    if (p.tool === 'mep_run'){ svg.current!.focus({ preventScroll: true }); if (!p.mepDraw?.ready){ p.onMepNotReady?.(); return; }
+      const lc = mepClick.current; mepClick.current = { at: e.timeStamp, x: e.clientX, y: e.clientY };
+      if (preview && lc && e.timeStamp - lc.at < 500 && Math.hypot(e.clientX - lc.x, e.clientY - lc.y) < 6){ finishMep(); return; }
+      const r = drawSnap(pt, preview?.a, e.shiftKey); raw.current = { pt, free: false, ortho: e.shiftKey };
+      if (!preview){ setTyped(''); setMepPts([r.p]); setPreview({ a: r.p, b: r.p }); setHit(r); } else addSegment(preview.a, r.p); return; }
     if (SEGMENT_TOOLS.includes(p.tool)){ const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); svg.current!.focus({ preventScroll: true }); if (!preview){ setTyped(''); raw.current = { pt: r.p, free: e.shiftKey }; setPreview({ a: r.p, b: r.p }); setHit(snapDraw(pt, { floor, anchor: r.p, free: e.shiftKey })); } else addSegment(preview.a, r.p); return; }
     if (p.tool === 'stair'){ const s = snapPoint(pt, floor); p.onAddStairAt?.(s[0], s[1]); return; }
     if (p.tool === 'dim'){ const s = snapPoint(pt, floor); svg.current!.focus({ preventScroll: true });
@@ -324,6 +337,8 @@ export default function PlanView(p: Props){
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
     // o piesă din grup: selecția rămâne, tragerea mută tot grupul; un clic fără tragere o alege doar pe ea (în up)
     else if (kind === 'placement' && inMulti(id)){ drag.current = { kind, id, start: pt, moved: false, orig: null, group }; }
+    // traseul de instalații se alege, dar nu se trage (punctele lui au și cotă; se editează în panou)
+    else if (kind === 'mep_run'){ p.onSelect({ kind: 'mep_run', id }); return; }
     else { p.onSelect({ kind: kind as any, id }); drag.current = { kind, id, start: pt, moved: false, orig: null }; }
     svg.current!.setPointerCapture(e.pointerId);
   }
@@ -336,7 +351,7 @@ export default function PlanView(p: Props){
     if (marquee){ setMarquee({ a: marquee.a, b: pt }); return; }
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
-    if (SEGMENT_TOOLS.includes(p.tool)){ raw.current = { pt, free: e.shiftKey }; const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); setHit(r); if (preview){ setPreview({ a: preview.a, b: r.p }); return; } }
+    if (SEGMENT_TOOLS.includes(p.tool)){ const mep = p.tool === 'mep_run'; raw.current = { pt, free: !mep && e.shiftKey, ortho: mep && e.shiftKey }; const r = drawSnap(pt, preview?.a, e.shiftKey); setHit(r); if (preview){ setPreview({ a: preview.a, b: r.p }); return; } }
     if (roomDraft){ setRoomDraft({ ...roomDraft, b: [snapG(pt[0]), snapG(pt[1])] }); return; }   // păstrează „pending” (camera clic-clic)
     const d = drag.current; if (!d) return;
     const dx = pt[0] - d.start[0], dz = pt[1] - d.start[1]; if (!d.moved && Math.hypot(dx, dz) < .03) return;
@@ -396,7 +411,22 @@ export default function PlanView(p: Props){
     else if (d?.group && e.type !== 'pointercancel') p.onSelect({ kind: 'placement', id: d.id });
   }
   // un segment terminat (perete, grindă, perete de sticlă) pornește următorul din capătul lui; sub 20 cm nu se adaugă
-  const addSegment = (a: [number, number], b: [number, number]) => { if (wallLength(a, b) >= .2){ if (p.tool === 'wall') p.onAddWall(a, b); else if (p.tool === 'beam') p.onAddBeam?.(a, b); else if (p.tool === 'railing') p.onAddRailing?.(a, b); else p.onAddGlassWall?.(a, b); }
+  // magnetul desenării: la traseul de instalații Shift blochează segmentul pe orizontală / verticală (core/mep-draw.ts);
+  // la celelalte unelte de segment Shift rămâne „fără magnet”
+  const drawSnap = (pt: [number, number], anchor: [number, number] | null | undefined, shift: boolean): SnapResult => p.tool !== 'mep_run' ? snapDraw(pt, { floor, anchor, free: shift })
+    : shift && anchor ? snapDraw(orthoPoint(anchor, pt), { floor: { walls: [] }, anchor, stepDeg: 90 }) : snapDraw(pt, { floor, anchor });
+  // traseul se salvează o singură dată, la final (un singur pas de anulare); sub două puncte desenul doar se închide
+  // salvarea refuzată (cota sau diametrul invalide) păstrează punctele desenate: omul corectează bara și termină din nou
+  const finishMep = (pts: [number, number][] = mepRef.current) => { mepClick.current = null; if (pts.length >= 2 && p.onAddMepRun?.(pts) === false) return; setMepPts([]); setPreview(null); setTyped(''); setHit(null); };
+  // Esc: ultimul punct pus dispare (segmentul lui e anulat); fără niciun punct rămas, desenul se închide
+  const undoMepPoint = () => { const n = dropLastRunPoint(mepRef.current), l = n[n.length - 1]; setMepPts(n); setTyped('');
+    if (!l){ setPreview(null); setHit(null); return; } const r = raw.current ? drawSnap(raw.current.pt, l, !!raw.current.ortho) : null; setPreview({ a: l, b: r ? r.p : l }); setHit(r); };
+  const addSegment = (a: [number, number], b: [number, number]) => {
+    if (p.tool === 'mep_run'){ const next = appendRunPoint(mepRef.current, b); if (next === mepRef.current) return; const l = next[next.length - 1]!;
+      // la numărul maxim de puncte al unui traseu, traseul se termină singur
+      if (next.length >= MEP_LIMITS.maxPoints){ finishMep(next); return; }
+      setMepPts(next); setPreview({ a: l, b: l }); setTyped(''); setHit(raw.current ? drawSnap(raw.current.pt, l, !!raw.current.ortho) : null); return; }
+    if (wallLength(a, b) >= .2){ if (p.tool === 'wall') p.onAddWall(a, b); else if (p.tool === 'beam') p.onAddBeam?.(a, b); else if (p.tool === 'railing') p.onAddRailing?.(a, b); else p.onAddGlassWall?.(a, b); }
     setPreview({ a: b, b }); setTyped(''); setHit(raw.current ? snapDraw(raw.current.pt, { floor, anchor: b, free: raw.current.free }) : null); };
 
   // Tab / Shift+Tab aleg camerele, piesele și scările pe rând (după ultimul, Tab iese din plan); restul tastelor merg la editor
@@ -424,6 +454,8 @@ export default function PlanView(p: Props){
     // cât timp se desenează, Delete și Backspace (și cu Ctrl/⌘, ⌘⌫ pe Mac) nu ajung la „șterge selecția” din editor
     if ((e.key === 'Backspace' || e.key === 'Delete') && (e.ctrlKey || e.metaKey || e.altKey)) return true;
     if (e.ctrlKey || e.metaKey || e.altKey) return false;
+    // traseul de instalații: Enter fără lungime tastată termină traseul; Esc scoate ultimul punct
+    if (p.tool === 'mep_run' && preview && !typed){ if (e.key === 'Enter'){ finishMep(); return true; } if (e.key === 'Escape'){ undoMepPoint(); return true; } }
     // cota: O comută aliniată / ortogonală; Enter cu o lungime pune al doilea punct, apoi Enter pune linia (decalajul tastat sau cel de la cursor)
     if (dimming && dimDraft){ if (e.key === 'o' || e.key === 'O'){ setDimDraft({ ...dimDraft, mode: dimDraft.mode === 'ortho' ? 'aligned' : 'ortho' }); return true; }
       if (e.key === 'Enter'){ const tv = typeof typedValue === 'number' ? typedValue : null;
@@ -434,7 +466,7 @@ export default function PlanView(p: Props){
       // segmentul păstrează direcția magnetului (pas de 15°; Shift = liberă); fără mișcare de mouse, spre dreapta
       if (segment && preview && typeof typedValue === 'number'){ const a = preview.a, free = !!raw.current?.free;
         const toward: [number, number] = wallLength(a, preview.b) > 1e-3 ? preview.b : raw.current && wallLength(a, raw.current.pt) > 1e-3 ? raw.current.pt : [a[0] + 1, a[1]];
-        addSegment(a, pointAtLength(a, toward, typedValue, 15, free)); }
+        addSegment(a, pointAtLength(a, toward, typedValue, raw.current?.ortho ? 90 : 15, free)); }
       else if (rectTool && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); if (p.tool === 'floor_zone') p.onAddZone?.(r); else if (p.tool === 'rev_cloud') openCloud(r); else if (p.tool === 'ceiling_zone') p.onAddCeilingZone?.(r); else p.onAddRoom(r); }
       return true; }
     if (e.key === 'Backspace' && typed){ setTyped(x => x.slice(0, -1)); return true; }
@@ -503,10 +535,11 @@ export default function PlanView(p: Props){
     'column.shape': !!p.onToggleColumnShape, rotate: !!p.onRotateSelected, duplicate: !!p.onDuplicateSelected, delete: !!p.onDeleteSelected } as Record<string, boolean>)[id] ?? true;
   // clic dreapta: în timpul desenării anulează segmentul; în Selecție alege obiectul de sub cursor și deschide meniul
   function contextMenu(e: React.MouseEvent){ e.preventDefault();
+    if (p.tool === 'mep_run' && preview){ finishMep(); return; }   // clic dreapta termină traseul (ce s-a desenat se păstrează)
     if (preview || roomDraft){ setPreview(null); setRoomDraft(null); setTyped(''); return; }
     if (p.tool !== 'select' || Date.now() - menuByKey.current < 600) return;
     const t0 = (e.target as Element).closest('[data-k]') as HTMLElement | null, k = t0?.dataset.k;
-    if (!t0 || !k || !['wall', 'room', 'placement', 'stair', 'column', 'beam', 'glass_wall', 'opening', 'niche', 'wall_item', 'annotation', 'floor_zone', 'ceiling_zone', 'railing'].includes(k)){ setMenu(null); return; }
+    if (!t0 || !k || !['wall', 'room', 'placement', 'stair', 'column', 'beam', 'glass_wall', 'opening', 'niche', 'wall_item', 'annotation', 'floor_zone', 'ceiling_zone', 'railing', 'mep_run'].includes(k)){ setMenu(null); return; }
     const s: Sel = k === 'opening' ? { kind: 'opening', id: t0.dataset.id!, wallId: t0.dataset.w! } : { kind: k as Exclude<ContextKind, 'opening'>, id: t0.dataset.id! };
     // clic dreapta pe o piesă din grup: grupul rămâne (meniul oferă și alinierea / distribuirea)
     if (!(s.kind === 'placement' && inMulti(s.id))) p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
@@ -678,6 +711,10 @@ export default function PlanView(p: Props){
     {(floor.mepRuns || []).map(r => <polyline key={`halo-${r.id}`} points={r.points.map(p => `${p[0]},${p[2]}`).join(' ')} fill="none" stroke="#FFFDF8" strokeWidth={Math.max(fs * .22, (r.diameterMm ?? 0) / 1000) + fs * .18} strokeLinejoin="round" strokeLinecap="round" strokeOpacity={.9} pointerEvents="none" />)}
     {(floor.mepRuns || []).map(r => <polyline key={r.id} data-k="mep" data-id={r.id} points={r.points.map(p => `${p[0]},${p[2]}`).join(' ')} fill="none" stroke={MEP_SYSTEMS[r.system]?.color ?? '#555'} strokeWidth={Math.max(fs * .22, (r.diameterMm ?? 0) / 1000)} strokeDasharray={r.diameterMm ? undefined : `${fs * .6} ${fs * .35}`} strokeLinejoin="round" strokeOpacity={.85} pointerEvents="none">
       <title>{MEP_SYSTEMS[r.system]?.label[lang === 'en' ? 'en' : 'ro']} · {r.diameterMm ? `Ø${r.diameterMm} mm` : t('bim.diameterUnknown')}{r.material ? ` · ${r.material}` : ''}</title></polyline>)}
+    {/* zona de apucare a traseului (mai lată decât linia) și conturul celui ales; doar cu unealta Selecție, în etapa Instalații */}
+    {p.mepSelectable && p.tool === 'select' && (floor.mepRuns || []).map(r => { const pts = r.points.map(q => `${q[0]},${q[2]}`).join(' '), w = Math.max(fs * .22, (r.diameterMm ?? 0) / 1000);
+      return (<g key={`pick-${r.id}`}>{isSel('mep_run', r.id) && <polyline data-mep-selected={r.id} points={pts} fill="none" stroke="#1D4ED8" strokeWidth={w + fs * .2} strokeOpacity={.35} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+        <polyline data-k="mep_run" data-id={r.id} points={pts} fill="none" stroke="transparent" strokeWidth={Math.max(fs * .9, w)} strokeLinejoin="round" pointerEvents="stroke" style={{ cursor: 'pointer' }} /></g>); })}
     {/* Balustrade: linie dublă (sticlă: albastră, metal: gri închis) cu stâlpii; zona de apucare e mai lată decât desenul */}
     {(floor.railings || []).map(rl => { const on = isSel('railing', rl.id), L = wallLength(rl.a, rl.b); if (L < .01) return null; const nx = -(rl.b[1] - rl.a[1]) / L * .03, nz = (rl.b[0] - rl.a[0]) / L * .03, glass = railingKind(rl) === 'glass', ink = on ? '#8B6A45' : glass ? '#2563EB' : '#3a352f', n = Math.max(1, Math.ceil(L / 1.2 - 1e-9));
       return (<g key={rl.id} data-k="railing" data-id={rl.id} data-railing={railingKind(rl)} style={{ cursor: 'pointer' }}><title>{t('tool.railing')} · {t(`railing.kind.${railingKind(rl)}`)} ({wl(L)} · h {Math.round(railingHeight(rl) * 100)})</title>
@@ -739,7 +776,8 @@ export default function PlanView(p: Props){
         <circle cx={cx} cy={cz} r={hitR} fill="transparent" />
         <rect x={cx - (v ? th : len) / 2} y={cz - (v ? len : th) / 2} width={v ? th : len} height={v ? len : th} rx={th / 2} fill="#fff" stroke="#7A5A36" strokeWidth={.03} /></g>); }))}
     {/* segmentul în lucru la grosimea lui reală și cu același capăt pătrat ca rezultatul: colțul în L / T arată cum va fi */}
-    {preview && segment && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={SEGMENT_THICKNESS[p.tool as keyof typeof SEGMENT_THICKNESS]} strokeLinecap="square" strokeOpacity={.55} pointerEvents="none" />}
+    {preview && p.tool === 'mep_run' && <polyline data-mep-draft={mepPts.length} points={[...mepPts, preview.b].map(q => `${q[0]},${q[1]}`).join(' ')} fill="none" stroke={p.mepDraw?.color ?? '#555'} strokeWidth={fs * .22} strokeLinejoin="round" strokeOpacity={.75} pointerEvents="none" />}
+    {preview && segment && p.tool !== 'mep_run' && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={SEGMENT_THICKNESS[p.tool as keyof typeof SEGMENT_THICKNESS]} strokeLinecap="square" strokeOpacity={.55} pointerEvents="none" />}
     {segment && <DrawHud preview={preview} hit={hit} typed={typed} fs={fs} label={m => formatLength(m, units, lang)} invalid={!!typed && typedValue == null} />}
     {typing && rectTool && roomDraft && (() => { const at = roomDraft.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
       return <g className="typed-chip" aria-hidden="true" transform={`translate(${at[0] + fs * .8} ${at[1] + fs * .8})`}>
@@ -886,7 +924,7 @@ export default function PlanView(p: Props){
       onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter'){ e.preventDefault(); applyDim(); } else if (e.key === 'Escape'){ e.preventDefault(); setDim(null); svg.current?.focus({ preventScroll: true }); } }} />}</>);
 }
 
-const SEGMENT_TOOLS: Tool[] = ['wall', 'beam', 'glass_wall', 'railing'];
+const SEGMENT_TOOLS: Tool[] = ['wall', 'beam', 'glass_wall', 'railing', 'mep_run'];
 /** Centrul etichetei de cotă a peretelui: la mijloc, decalată spre normala din stânga, în afara grosimii. */
 function dimLabelAt(w: Wall, fs: number): [number, number] {
   const L = wallLength(w.a, w.b), nx = -(w.b[1] - w.a[1]) / L, nz = (w.b[0] - w.a[0]) / L, off = w.thickness / 2 + fs * .9;

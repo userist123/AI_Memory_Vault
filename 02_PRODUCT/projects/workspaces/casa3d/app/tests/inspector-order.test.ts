@@ -22,7 +22,7 @@ describe('ordinea câmpurilor din inspector', () => {
   test('fiecare tip de selecție are blocul lui, o singură dată', () => {
     const kinds = [...SRC.matchAll(MARK)].map(m => m[1]).filter(k => k !== 'end');
     expect(new Set(kinds).size).toBe(kinds.length);
-    expect([...kinds].sort()).toEqual(['annotation', 'beam', 'ceiling_zone', 'column', 'floor_zone', 'glass_wall', 'niche', 'opening', 'placement', 'railing', 'room', 'stair', 'wall', 'wall_item']);
+    expect([...kinds].sort()).toEqual(['annotation', 'beam', 'ceiling_zone', 'column', 'floor_zone', 'glass_wall', 'mep_run', 'niche', 'opening', 'placement', 'railing', 'room', 'stair', 'wall', 'wall_item']);
   });
   test('cheile fixe există în ro și en', () => {
     for (const [k, keys] of Object.entries(blocks())) for (const key of keys) if (!key.includes('${'))
@@ -105,6 +105,18 @@ describe('ordinea câmpurilor din inspector', () => {
           "tool.glass_wall",
           "editor.thickness",
           "glassWall.mullions",
+          "common.delete",
+        ],
+        "mep_run": [
+          "tool.mep_run",
+          "bim.diameterUnknown",
+          "mep.system",
+          "mep.diameter",
+          "mep.undeclared",
+          "mep.material",
+          "mep.undeclared",
+          "mep.slope",
+          "mep.undeclared",
           "common.delete",
         ],
         "niche": [

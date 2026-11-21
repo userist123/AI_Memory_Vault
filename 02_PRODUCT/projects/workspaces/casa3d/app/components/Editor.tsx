@@ -85,6 +85,7 @@ import CommandPalette, { type Command } from './CommandPalette';
 import MenuBar, { buildMenus } from './MenuBar';
 import NorthPanel from './NorthPanel';
 import ArrayDialog from './ArrayDialog';
+import { arrayTech } from '@/core/tech-array';
 import './theme-pro.gen.css';
 import './theme-pro.css';
 import { isPaletteShortcut } from '@/lib/fuzzy';
@@ -104,7 +105,9 @@ import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText, cleanCloudLab
 import ToolRail from './ToolRail';
 import DxfImportPanel from './DxfImportPanel';
 import MepPanel from './MepPanel';
-import { MEP_SYSTEMS } from '@/core/mep';
+import { MEP_SYSTEMS, MEP_LIMITS, runLength } from '@/core/mep';
+import { runFromPlanPoints, nextRunId, optionalNumber } from '@/core/mep-draw';
+import type { MepRun, MepSystem } from '@/core/types';
 import CoordinationPanel from './CoordinationPanel';
 import { elementIndex } from '@/core/elements';
 import { dimGeometry, moveAnnotation, angleGeometry, formatAngle } from '@/core/annotations';
@@ -149,7 +152,8 @@ const ICON: Record<Tool, string> = {
   split: 'M4 5h16v14H4zM12 2v3M12 8v2M12 12v2M12 16v2M12 19v3',
   stair: 'M4 19h4v-3h4v-3h4v-3h4V7h-3v3h-4v3H8v3H4z',
   measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2',
-  tech: 'M13 2L4 14h7l-1 8 9-12h-7z'
+  tech: 'M13 2L4 14h7l-1 8 9-12h-7z',
+  mep_run: 'M3 7h9v10h9M3 4.5v5M21 14.5v5'
 };
 const TOOL_LABEL: Record<Tool, string> = {
   select: 'tool.select',
@@ -182,7 +186,8 @@ const TOOL_LABEL: Record<Tool, string> = {
   split: 'tool.split',
   stair: 'tool.stair',
   measure: 'tool.measure',
-  tech: 'tool.tech'
+  tech: 'tool.tech',
+  mep_run: 'tool.mep_run'
 };
 
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
@@ -192,7 +197,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'concept', view: 'split', tools: ['select', 'pan', 'zoom_area', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'pan', 'zoom_area', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure'] },
-  { id: 'mep', view: '2d', tools: ['select', 'pan', 'zoom_area', 'tech', 'shaft', 'measure'] },
+  { id: 'mep', view: '2d', tools: ['select', 'pan', 'zoom_area', 'tech', 'mep_run', 'shaft', 'measure'] },
   { id: 'docs', view: '2d', tools: ['select', 'pan', 'zoom_area', 'measure', 'dim', 'text', 'leader', 'level_mark', 'angle_dim', 'rev_cloud'] },
   { id: 'quote', view: '2d', tools: ['select', 'pan', 'zoom_area'] },
   { id: 'present', view: '3d', tools: ['select', 'pan', 'zoom_area'] },
@@ -208,6 +213,8 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { setStyleSrc(null); }, [tool]);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
+  // unealta „Traseu instalații”: sistemul (același implicit ca în panou), cota traseului și diametrul; cota și diametrul pornesc goale (art. 4)
+  const [mepSys, setMepSys] = useState<MepSystem>('water_cold'), [mepH, setMepH] = useState(''), [mepDia, setMepDia] = useState('');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const [showLab, setShowLab] = useState(false), [showHealth, setShowHealth] = useState(false), [activeImpact, setActiveImpact] = useState<DesignImpact | null>(null);
   const paletteOpenRef = useRef(false), hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), dragMark = useRef<HistoryMark | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
@@ -379,6 +386,7 @@ export default function Editor({ id }: { id: string }){
     if (sel.kind === 'floor_zone'){ s.floor.zones = (s.floor.zones || []).filter(x => x.id !== sel.id); if (!s.floor.zones.length) delete s.floor.zones; }
     if (sel.kind === 'ceiling_zone'){ s.floor.ceilingZones = (s.floor.ceilingZones || []).filter(x => x.id !== sel.id); if (!s.floor.ceilingZones.length) delete s.floor.ceilingZones; }
     if (sel.kind === 'railing'){ s.floor.railings = (s.floor.railings || []).filter(x => x.id !== sel.id); if (!s.floor.railings.length) delete s.floor.railings; }
+    if (sel.kind === 'mep_run'){ s.floor.mepRuns = (s.floor.mepRuns || []).filter(x => x.id !== sel.id); if (!s.floor.mepRuns.length) delete s.floor.mepRuns; }
     if (sel.kind === 'stair'){ s.floor.stairs = (s.floor.stairs || []).filter(x => x.id !== sel.id); if (!s.floor.stairs.length) delete s.floor.stairs; }
     if (sel.kind === 'column'){ s.floor.columns = (s.floor.columns || []).filter(x => x.id !== sel.id); if (!s.floor.columns.length) delete s.floor.columns; }
     if (sel.kind === 'beam'){ s.floor.beams = (s.floor.beams || []).filter(x => x.id !== sel.id); if (!s.floor.beams.length) delete s.floor.beams; }
@@ -392,7 +400,8 @@ export default function Editor({ id }: { id: string }){
   const rotate = (pid: string) => { if (!snap || !catalog) return; const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
     const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss, discard: () => hist.current.discardLast() }); };
   // ---- niveluri și scări ----
-  const goLevel = (i: number) => { setLvl(i); setSel(null); setPreview(null); setCalib(null); };
+  // un traseu început pe alt nivel nu se continuă aici: schimbarea nivelului închide desenul (unealta revine la Selectează)
+  const goLevel = (i: number) => { setLvl(i); setSel(null); setPreview(null); setCalib(null); if (tool === 'mep_run') setTool('select'); };
   const levelName = (i: number) => i === 0 ? t('level.ground') : (house && floors(house)[i]?.name) || t('level.n', { n: i });
   const onAddLevel = () => { if (!house) return; const n = floors(house).length; if (n >= MAX_LEVELS){ say(t('level.max', { n: MAX_LEVELS })); return; }
     commitHouse(addLevel(house, { name: t('level.n', { n }) })); goLevel(n); };
@@ -415,7 +424,11 @@ export default function Editor({ id }: { id: string }){
   const groupNudge = (dxCm: number, dzCm: number) => { if (snap && catalog) groupDone(nudgeGroup(snap, catalog, group, dxCm, dzCm), 'editor.positionRefused', false); };   // ca la o singură piesă: săgețile nu deschid avertismente
   const groupRotate = () => { if (snap && catalog) groupDone(rotateGroup(snap, catalog, group), 'editor.rotateNoFit'); };
   // „Repetă în rând”: copii ale grupului (sau ale piesei) la pas egal, într-un singur pas de anulare; copiile devin noul grup
-  const [arrayOpen, setArrayOpen] = useState(false);
+  const [arrayOpen, setArrayOpen] = useState(false), [techArrayId, setTechArrayId] = useState<string | null>(null);
+  // același dialog pentru punctele tehnice (spoturi, prize): core/tech-array.ts, totul sau nimic, un singur pas de anulare
+  const techArray = (count: number, sx: number, sz: number) => { const id = techArrayId; setTechArrayId(null); if (!snap || !id) return;
+    const r = arrayTech(snap, [id], count, sx, sz, house?.tech?.length); if (!r.ok){ say(t(r.key === 'edit.arrayBad' ? 'array.bad' : r.key)); return; }
+    mutate(s => { s.tech = r.tech; }); setShowTech(true); say(t('tech.arrayDone', { n: r.ids.length })); };
   const groupArray = (count: number, sx: number, sz: number) => { setArrayOpen(false); if (!snap || !catalog || !group.length) return;
     const r = arrayGroup(snap, catalog, group, count, sx, sz, () => uid()); if (!r.ok && r.key === 'edit.arrayBad'){ say(t('array.bad')); return; }
     if (groupDone(r, 'editor.positionRefused')){ setGroup(r.ids); say(t('array.done', { n: r.ids.length })); } };
@@ -645,6 +658,17 @@ export default function Editor({ id }: { id: string }){
   // balustrada nouă: metal, 1 m; unealta rămâne activă (clic-clic în lanț, ca grinda și peretele de sticlă)
   const onAddRailing = (a: [number, number], b: [number, number]) => { if (full(snap.floor.railings?.length, PLAN_LIMITS.railing.max)) return;
     const rid = `bal-${uid().slice(0, 8)}`; mutate(s => { s.floor.railings = [...(s.floor.railings || []), { id: rid, a, b }]; }); say(t('railing.added', { len: formatLength(wallLength(a, b), units, lang) })); };
+  // traseul desenat în plan: aceeași cale de salvare ca în panou (Floor.mepRuns), o singură modificare = un singur pas de anulare
+  const mepHeightCm = optionalNumber(mepH), mepDiaMm = optionalNumber(mepDia);
+  const mepHeightOk = mepHeightCm != null && mepHeightCm >= 0 && mepHeightCm <= (snap?.floor.ceilingHeight ?? 0) * 100 + 1e-6;   // toleranță: 2,55 × 100 = 254,99999…
+  const mepDiaOk = mepDiaMm == null || (mepDiaMm >= MEP_LIMITS.minDiameterMm && mepDiaMm <= MEP_LIMITS.maxDiameterMm);
+  const onMepNotReady = () => say(mepH.trim() === '' ? t('mepRun.needHeight') : !mepHeightOk ? t('mep.heightRange', { h: Math.round(snap.floor.ceilingHeight * 100) }) : t('mep.diaRange'));
+  // întoarce false când traseul nu s-a salvat: planul păstrează punctele desenate, ca omul să corecteze și să reîncerce
+  const onAddMepRun = (pts: [number, number][]): boolean => { if (full(snap.floor.mepRuns?.length, MEP_LIMITS.maxRuns)) return false;
+    const res = runFromPlanPoints({ id: nextRunId(elementIds), system: mepSys, points: pts, heightM: mepHeightCm == null ? null : mepHeightCm / 100, ceilingM: snap.floor.ceilingHeight, diameterMm: mepDiaMm });
+    if ('error' in res){ say(res.error === 'height' ? t('mep.heightRange', { h: Math.round(snap.floor.ceilingHeight * 100) }) : res.error === 'diameter' ? t('mep.diaRange') : t('mepRun.tooShort')); return false; }
+    const run = res.run; mutate(s => { s.floor.mepRuns = [...(s.floor.mepRuns ?? []), run]; }); say(t('mep.added', { m: formatLength(runLength(run), units, lang) })); return true; };
+  const patchMepRun = (rid: string, fn: (r: MepRun) => void) => mutate(s => { const r = s.floor.mepRuns?.find(x => x.id === rid); if (r) fn(r); });
   const patchRailing = (rid: string, fn: (r: Railing) => void) => mutate(s => { const r = s.floor.railings?.find(x => x.id === rid); if (r) fn(r); });
   const patchTech = (tid: string, fn: (p: TechPoint) => void) => mutate(s => { const p = s.tech?.find(x => x.id === tid); if (p) fn(p); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
@@ -671,8 +695,9 @@ export default function Editor({ id }: { id: string }){
   const toggleWide = () => setWideSide(w => { try { localStorage.setItem('casa3d.sideWide', w ? '0' : '1'); } catch { /* stocare blocată */ } return !w; });
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
-  // traseele și fundațiile (pista BIM) nu sunt selectabile în plan: se editează în etapa Instalații, unde sunt listate
-  const bimItem = (i: MirrorItem) => { if (i.kind !== 'footing' && i.kind !== 'mep_run') return false; setSel(null); setStage('mep'); return true; };
+  // fundațiile (pista BIM) nu sunt selectabile în plan: se editează în etapa Instalații, unde sunt listate;
+  // traseele se aleg tot acolo (clic în plan sau din Structură) și își arată sistemul în panou
+  const bimItem = (i: MirrorItem) => { if (i.kind !== 'footing' && i.kind !== 'mep_run') return false; setStage('mep'); setSel(i.kind === 'mep_run' ? { kind: 'mep_run', id: i.id } : null); return true; };
   const pickMirror = (i: MirrorItem) => { if (bimItem(i)) return; const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const pickOutline = (lv: number, i: MirrorItem, fr: boolean) => { if (lv !== L) goLevel(lv); setTool('select'); if (bimItem(i)) return;
     const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); if (fr) setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
@@ -702,7 +727,8 @@ export default function Editor({ id }: { id: string }){
   const selZone = sel?.kind === 'floor_zone' ? snap.floor.zones?.find(z => z.id === sel.id) : undefined;
   const selCeilingZone = sel?.kind === 'ceiling_zone' ? snap.floor.ceilingZones?.find(z => z.id === sel.id) : undefined;
   const selRailing = sel?.kind === 'railing' ? snap.floor.railings?.find(r => r.id === sel.id) : undefined;
-  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selCeilingZone ? t('tool.ceiling_zone') : selRailing ? t('tool.railing') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.kind === 'angle' ? 'tool.angle_dim' : selAnn.kind === 'cloud' ? 'tool.rev_cloud' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text') : '';
+  const selMepRun = sel?.kind === 'mep_run' ? snap.floor.mepRuns?.find(r => r.id === sel.id) : undefined;
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selCeilingZone ? t('tool.ceiling_zone') : selRailing ? t('tool.railing') : selMepRun ? t('tool.mep_run') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : selAnn.kind === 'angle' ? 'tool.angle_dim' : selAnn.kind === 'cloud' ? 'tool.rev_cloud' : selAnn.symbol === 'level' ? 'tool.level_mark' : selAnn.leader ? 'tool.leader' : 'tool.text') : '';
   // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
   const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
     return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
@@ -712,7 +738,7 @@ export default function Editor({ id }: { id: string }){
     say(t('editor.noFreeSpot')); };
   // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
   const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
-  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selZone || selCeilingZone ? roomStage || stage === 'concept' : selRailing ? roomStage : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
+  const showSel = !!(selMepRun ? stage === 'mep' : selAnn ? stage === 'survey' || stage === 'docs' : selZone || selCeilingZone ? roomStage || stage === 'concept' : selRailing ? roomStage : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
   // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
@@ -765,6 +791,7 @@ export default function Editor({ id }: { id: string }){
   const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
   return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''} ${theme === 'pro' ? 'theme-pro' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
+    {techArrayId && <ArrayDialog pieces={1} onApply={techArray} onClose={() => setTechArrayId(null)} />}
     {arrayOpen && group.length > 0 && <ArrayDialog pieces={group.length} onApply={groupArray} onClose={() => setArrayOpen(false)} />}
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
     {!compact && <MenuBar menus={buildMenus(commands, k => t(k))} ariaLabel={t('menu.aria')} />}
@@ -847,7 +874,8 @@ export default function Editor({ id }: { id: string }){
           onTechAt={(x, z) => { if (!snap || preview) return;
             // plafoanele serverului: toate punctele (600), caloriferele cu corp (100), unitățile de aer condiționat (40)
             if (full(snap.tech?.length, MAX_TECH_POINTS) || (techKind === 'radiator' && full(techBodyCount(house?.tech, 'radiator'), PLAN_LIMITS.radiator.max)) || (techKind === 'hvac_split' && full(techBodyCount(house?.tech, 'hvac_split'), PLAN_LIMITS.hvac.max))) return;
-            const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
+            if ((house?.tech?.length ?? 0) >= MAX_TECH_POINTS){ say(t('tech.arrayTooMany')); return; }   // plafonul serverului e pe toată casa
+      const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
           key={(preview ? 'p' + preview.v.tier : 'live') + L}
           voids={voids}
           snap={preview ? shown(preview.v.candidate) : snap}
@@ -874,6 +902,7 @@ export default function Editor({ id }: { id: string }){
           onAddZone={preview ? undefined : onAddZone}
           onAddCeilingZone={preview ? undefined : onAddCeilingZone}
           onAddRailing={preview ? undefined : onAddRailing}
+          mepDraw={preview ? undefined : { color: MEP_SYSTEMS[mepSys].color, ready: mepHeightOk && mepDiaOk }} onAddMepRun={preview ? undefined : onAddMepRun} onMepNotReady={onMepNotReady} mepSelectable={!preview && stage === 'mep'}
           onAddRugAt={preview ? undefined : onAddRugAt}
           onStylePick={preview ? undefined : onStylePick}
           onSplitRoomAt={preview ? undefined : onSplitRoomAt}
@@ -895,6 +924,11 @@ export default function Editor({ id }: { id: string }){
             {WALL_ITEM_KINDS.map(k => <option key={k} value={k}>{t(`wallItem.kind.${k}`)}</option>)}</select></label></div>}
           {!preview && tool === 'clad' && <div className="toolopts" role="group" aria-label={t('tool.clad')}><label>{t('fin.kind')} <select value={cladKind} onChange={e => setCladKind(e.target.value as WallFeatureKind)}>
             {CLAD_KINDS.filter(k => mc?.materials.some(m => m.category === FEATURE_CATEGORY[k])).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label></div>}
+          {/* bara uneltei Traseu instalații: sistemul, cota traseului (obligatorie, fără valoare precompletată) și diametrul (opțional) */}
+          {!preview && tool === 'mep_run' && <div className="toolopts" role="group" aria-label={t('tool.mep_run')} data-toolopts="mep_run">
+            <label>{t('mep.system')} <select value={mepSys} onChange={e => setMepSys(e.target.value as MepSystem)}>{(Object.keys(MEP_SYSTEMS) as MepSystem[]).map(k => <option key={k} value={k}>{MEP_SYSTEMS[k].label[lang === 'en' ? 'en' : 'ro']}</option>)}</select></label>
+            <label>{t('mepRun.height')} <input type="number" required aria-invalid={mepH.trim() !== '' && !mepHeightOk} min={0} max={Math.round(snap.floor.ceilingHeight * 100)} value={mepH} onChange={e => setMepH(e.target.value)} style={{ width: 76, minHeight: 32 }} /></label>
+            <label>{t('mep.diameter')} <input type="number" aria-invalid={!mepDiaOk} min={MEP_LIMITS.minDiameterMm} max={MEP_LIMITS.maxDiameterMm} value={mepDia} placeholder={t('mep.undeclared')} onChange={e => setMepDia(e.target.value)} style={{ width: 96, minHeight: 32 }} /></label></div>}
           {/* legenda pistei BIM în plan (etapa Instalații): culoarea fiecărui sistem prezent, linia punctată = diametru nedeclarat */}
           {!preview && stage === 'mep' && (() => { const runs = snap.floor.mepRuns ?? [], systems = [...new Set(runs.map(r => r.system))], hasStruct = snap.floor.walls.some(w => w.structural), hasFd = (snap.floor.footings ?? []).length > 0; if (!systems.length && !hasStruct && !hasFd) return null;
             return (<details className="plan-legend" open><summary>{t('bim.legend')}</summary><ul>{systems.map(s => <li key={s}><i className="bim-swatch" style={{ background: MEP_SYSTEMS[s].color, display: 'inline-block', marginRight: 6, verticalAlign: '-1px' }} aria-hidden />{MEP_SYSTEMS[s].label[lang === 'en' ? 'en' : 'ro']}</li>)}
@@ -904,7 +938,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : tool === 'mep_run' ? t('editor.hintMepRun') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -1164,6 +1198,26 @@ export default function Editor({ id }: { id: string }){
               <p className="prov" style={{ margin: 0 }}>{t('railing.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
+          {/* inspector:mep_run */}
+          {selMepRun && stage === 'mep' && (() => { const r = selMepRun;
+            // câmpurile se aplică la ieșirea din câmp (sau Enter): o valoare în afara limitelor modelului nu se salvează
+            const onEnter = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') e.currentTarget.blur(); };
+            const setOpt = (el: HTMLInputElement, key: 'diameterMm' | 'slopePct', min: number, max: number, bad: string) => { const v = optionalNumber(el.value);
+              if (v == null){ if (r[key] != null) patchMepRun(r.id, q => { delete q[key]; }); return; }
+              if (!(v >= min && v <= max)){ el.value = r[key] != null ? String(r[key]) : ''; say(t(bad)); return; }
+              if (v !== r[key]) patchMepRun(r.id, q => { q[key] = v; }); };
+            return (<div style={{ display: 'grid', gap: 8 }} data-panel="mep_run">
+              <h3>{t('tool.mep_run')}</h3>
+              <div className="prov">{formatLength(runLength(r), units, lang)} · {r.diameterMm ? `Ø${r.diameterMm} mm` : t('bim.diameterUnknown')}</div>
+              <label className="f"><span>{t('mep.system')}</span><select value={r.system} onChange={e => patchMepRun(r.id, q => { q.system = e.target.value as MepSystem; })}>
+                {(Object.keys(MEP_SYSTEMS) as MepSystem[]).map(k => <option key={k} value={k}>{MEP_SYSTEMS[k].label[lang === 'en' ? 'en' : 'ro']}</option>)}</select></label>
+              <div className="grid2">
+                <label className="f"><span>{t('mep.diameter')}</span><input key={`d-${r.id}-${r.diameterMm ?? ''}`} type="number" min={MEP_LIMITS.minDiameterMm} max={MEP_LIMITS.maxDiameterMm} defaultValue={r.diameterMm ?? ''} placeholder={t('mep.undeclared')} onKeyDown={onEnter} onBlur={e => setOpt(e.currentTarget, 'diameterMm', MEP_LIMITS.minDiameterMm, MEP_LIMITS.maxDiameterMm, 'mep.diaRange')} /></label>
+                <label className="f"><span>{t('mep.material')}</span><input key={`m-${r.id}-${r.material ?? ''}`} maxLength={MEP_LIMITS.materialMax} defaultValue={r.material ?? ''} placeholder={t('mep.undeclared')} onKeyDown={onEnter} onBlur={e => { const v = e.currentTarget.value.trim().slice(0, MEP_LIMITS.materialMax); if (v !== (r.material ?? '')) patchMepRun(r.id, q => { if (v) q.material = v; else delete q.material; }); }} /></label>
+              </div>
+              {r.system === 'drain' && <label className="f"><span>{t('mep.slope')}</span><input key={`s-${r.id}-${r.slopePct ?? ''}`} type="number" min={0} max={MEP_LIMITS.maxSlopePct} step={.5} defaultValue={r.slopePct ?? ''} placeholder={t('mep.undeclared')} onKeyDown={onEnter} onBlur={e => setOpt(e.currentTarget, 'slopePct', 0, MEP_LIMITS.maxSlopePct, 'mep.slopeRange')} /></label>}
+              <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+            </div>); })()}
           {/* inspector:wall_item */}
           {selWallItem && (stage === 'concept' || stage === 'finishes' || stage === 'ffe') && (() => { const WL = PLAN_LIMITS.wallItem, it = selWallItem, wl = snap.floor.walls.find(w => w.id === it.wallId), L = wl ? wallLength(wl.a, wl.b) : PLAN_LIMITS.coordM, H = snap.floor.ceilingHeight;
             const cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) => (v: string) => num(v, x => patchWallItem(it.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
@@ -1255,7 +1309,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
-          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+          onArray={id => setTechArrayId(id)} onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {/* pista BIM (docs/bim): traseele, structura și coordonarea țin de etapa Instalații, lângă stratul tehnic din care pornesc traseele */}
         {stage === 'mep' && !showSel && <MepPanel snap={snap} takenIds={elementIds} say={say} onChange={fn => mutate(s => fn(s.floor))} isGround={L === 0} />}
         {stage === 'mep' && !showSel && catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}

@@ -20,7 +20,7 @@ const KINDS = Object.keys(TECH_KINDS) as TechKind[];
 
 /** `onPatch`: mărimile și tipul caloriferului (cm în câmpuri, m în model, aduse în limitele serverului); `issues`: avertismentele punctelor (aer condiționat). */
 /** `mc` + `cur`: produsele cu preț verificat (calorifer cu panouri, port-prosop, aparat split) și moneda, pentru alegerea din rând. */
-export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete, onDraw, onPatch, issues, mc, cur }: { onDraw?(): void; snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void;
+export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete, onDraw, onPatch, onArray, issues, mc, cur }: { onDraw?(): void; onArray?(id: string): void; snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void;
   onPatch?(id: string, patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'>>): void; issues?: { text: string; severity: string }[]; mc?: MaterialsCatalog | null; cur?: string }){
   const { t, lang } = usePrefs(), pts = snap.tech || [], c = techCounts(pts), label = (k: TechKind) => TECH_KINDS[k].label[lang === 'en' ? 'en' : 'ro'];
   const used = KINDS.filter(k => c.total[k]);
@@ -42,6 +42,7 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
       <div className="list">{snap.floor.rooms.map(r => { const rp = pts.filter(p => p.roomId === r.id); if (!rp.length) return null;
         return <details key={r.id}><summary>{r.name} · {rp.length}</summary>{rp.map(p => <div key={p.id} className="row"><span><i className="techdot" style={{ background: TECH_SYMBOL[p.kind].color }}>{TECH_SYMBOL[p.kind].letter}</i> {label(p.kind)}{p.reason && p.reason !== 'manual' ? ` · ${p.reason}` : ''}</span>
           <button className="btn" onClick={() => onDelete(p.id)}>{t('tech.delete')}</button>
+          {onArray && p.kind !== 'radiator' && p.kind !== 'hvac_split' && <button className="btn sm" title={t('tech.arrayTitle')} onClick={() => onArray(p.id)}>{t('array.cmd')}</button>}
           {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} room={r.name} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
           {onPatch && p.kind === 'hvac_split' && mc && <ProductField p={p} category="hvac_split" label={t('hvac.product')} aria={t('hvac.productAria', { room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
     </>}

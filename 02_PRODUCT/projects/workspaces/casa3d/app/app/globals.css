@@ -1559,3 +1559,7 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 
 /* repetarea în rând (components/ArrayDialog.tsx) */
 .array-dlg{min-width:min(420px,92vw)} .array-grid{display:grid;gap:10px} .array-grid label{display:grid;gap:3px} .array-grid fieldset{border:0;padding:0;margin:0;display:grid;gap:4px} .array-dirs{display:flex;gap:6px} .array-dirs .btn[aria-pressed=true]{outline:2px solid var(--accent)} .array-radio{display:flex!important;align-items:center;gap:6px}
+
+/* bara de opțiuni a uneltei nu acoperă butoanele de zoom din dreapta-sus ale planului */
+.planwrap .toolopts{max-width:calc(100% - 190px);flex-wrap:wrap}
+
