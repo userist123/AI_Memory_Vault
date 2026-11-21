@@ -1,6 +1,6 @@
 // Ajutoare pure pentru editarea camerelor din plan (runda 9): o editare fără efect nu lasă un pas de anulare, iar mânerul
 // de latură al camerei alese stă pe porțiunea liberă cea mai lungă a laturii, nu peste o ușă sau o fereastră.
-import type { Floor, RoomRect } from './types';
+import type { Floor, Room, RoomFinishes, RoomRect } from './types';
 import { r3, wallLength } from './geometry';
 import { resizeRoom } from './room-resize';
 import type { EdgeKey } from './room-neighbours';
@@ -152,3 +152,23 @@ export function mergeRooms(floor: Floor, roomAId: string, roomBId: string): Floo
     walls,
   };
 }
+
+/** Câmpurile pe care le copiază „Pipeta de finisaje”: pardoseala cu montajul ei, vopseaua pereților, plinta și tavanul. */
+export const STYLE_COPY_FIELDS = ['floor', 'floorLayout', 'wallPaint', 'baseboard', 'ceiling'] as const;
+/**
+ * Finisajele camerei țintă cu cele cinci câmpuri de stil luate de la sursă; restul (faianță, placări, textile, covoare,
+ * lumini, bucătărie, baie) rămâne al țintei. Un câmp opțional care lipsește la sursă dispare și la țintă. Nu modifică argumentele.
+ */
+export function copyRoomFinishes(src: RoomFinishes, dst: RoomFinishes): RoomFinishes {
+  const out: Record<string, unknown> = { ...dst };
+  for (const k of STYLE_COPY_FIELDS){ const v = src[k]; if (v === undefined) delete out[k]; else out[k] = structuredClone(v); }
+  return out as unknown as RoomFinishes;
+}
+
+/** Axa implicită a uneltei „Împarte camera”: peretele nou e perpendicular pe latura mai lungă (`flip` = Shift o schimbă). */
+export function splitAxisFor(rect: RoomRect, flip = false): 'x' | 'z' {
+  const wide = rect.x1 - rect.x0 >= rect.z1 - rect.z0;
+  return wide !== flip ? 'x' : 'z';
+}
+/** splitRoom lucrează doar pe dreptunghi: o cameră cu contur propriu (`boundary`) ar rămâne cu conturul vechi peste jumătatea ei. */
+export const canSplitRoom = (room: Pick<Room, 'boundary'>): boolean => !room.boundary?.length;

@@ -166,4 +166,35 @@ describe('bara din stânga', () => {
     assert.deepEqual(railSlots(docs, true).map(s => 'tool' in s ? s.tool : s.group), docs);
     assert.deepEqual(railSlots(['select', 'clad', 'wall_item', 'floor_zone', 'measure'], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'decor', 'measure']);
   });
+  test('grupa Vizualizare (Mână, Zoom pe zonă) are minFold 2: se strânge într-un loc și sub prag; celelalte grupe de doi rămân desfăcute', () => {
+    const view = TOOL_GROUPS.find(g => g.id === 'view')!; assert.deepEqual(view.tools, ['pan', 'zoom_area']); assert.equal(view.minFold, 2);
+    assert.ok(TOOL_GROUPS.filter(g => g.id !== 'view').every(g => g.minFold === undefined));
+    const names = (tools: Tool[], grouped = true) => railSlots(tools, grouped).map(s => 'tool' in s ? s.tool : s.group);
+    // Planșe: Vizualizare se strânge (minFold 2), dar nu se numără la pragul FLAT_MAX: Cotă, Text, Măsoară rămân butoane separate
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'dim', 'text', 'measure']), ['select', 'view', 'dim', 'text', 'measure']);
+    // cu o unealtă în plus peste prag, grupa de trei se strânge ca înainte
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall', 'dim', 'text', 'measure']), ['select', 'view', 'wall', 'notes']);
+    // o grupă fără minFold cu doi membri rămâne desfăcută sub prag (Mobilier: Pe perete + Covor)
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure']), ['select', 'view', 'wall_item', 'rug', 'measure']);
+    // un singur membru al grupei în etapă: buton simplu; etapele cu cel mult 4 unelte rămân plate; telefonul la fel
+    assert.deepEqual(names(['select', 'pan', 'wall', 'room', 'measure']), ['select', 'pan', 'wall', 'room', 'measure']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area']), ['select', 'pan', 'zoom_area']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'measure', 'dim', 'text'], false), ['select', 'pan', 'zoom_area', 'measure', 'dim', 'text']);
+  });
+  test('locurile din bară pe etape cu uneltele noi (ordinea din ICON, components/Editor.tsx)', () => {
+    const names = (tools: Tool[]) => railSlots(tools, true).map(s => 'tool' in s ? s.tool : s.group);
+    const survey: Tool[] = ['select', 'pan', 'zoom_area', 'wall', 'room', 'door', 'window', 'passage', 'shaft', 'niche', 'dim', 'text', 'column', 'beam', 'glass_wall', 'railing', 'demolish', 'split', 'stair', 'measure'];
+    assert.deepEqual(names(survey), ['select', 'view', 'wall', 'room', 'openings', 'structure', 'notes', 'stair']);
+    assert.deepEqual(railSlots(survey, true).flatMap(s => 'tool' in s ? [s.tool] : s.tools).sort(), [...survey].sort());
+    // Mobilier, Planșe, Deviz / Prezentare
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure']), ['select', 'view', 'wall_item', 'rug', 'measure']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'dim', 'text', 'measure']), ['select', 'view', 'dim', 'text', 'measure']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area']), ['select', 'pan', 'zoom_area']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'niche', 'wall_item', 'column', 'glass_wall', 'measure']), ['select', 'view', 'niche', 'wall_item', 'column', 'glass_wall', 'measure']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy', 'measure']), ['select', 'view', 'decor', 'measure']);
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'shaft', 'measure', 'tech']), ['select', 'view', 'shaft', 'measure', 'tech']);
+    assert.ok(TOOL_GROUPS.find(g => g.id === 'structure')!.tools.includes('split'));
+    for (const lang of ['ro', 'en'] as const){ const tr = translator(lang); for (const g of TOOL_GROUPS) assert.notEqual(tr(`toolGroup.${g.id}`), `toolGroup.${g.id}`, `${lang} ${g.id}`); }
+    assert.equal(translator('ro')('toolGroup.view'), 'Vizualizare'); assert.equal(translator('en')('toolGroup.view'), 'View');
+  });
 });

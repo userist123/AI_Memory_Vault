@@ -4,7 +4,7 @@ import type { Catalog, Floor, Snapshot, Severity, Wall } from '@/core/types';
 import { footprintOf } from '@/core/validate';
 import { resolve } from '@/core/catalog';
 import { r3, snapPoint, wallLength } from '@/core/geometry';
-import { roomArea, roomBoundaryPath, roomCentroid, transformBoundary } from '@/core/room-geometry';
+import { roomArea, roomBoundaryPath, roomCentroid, transformBoundary, pointInRoom } from '@/core/room-geometry';
 import { measure } from '@/core/edit-ops';
 import { formatArea, formatLength } from '@/core/format';
 import { snapDraw, pointAtLength, SEGMENT_THICKNESS, type SnapResult } from '@/core/snap';
@@ -31,7 +31,7 @@ import type { MaterialsCatalog, WallFeature } from '@/core/types';
 import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
 import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
-import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
+import { edgeHandleAt, edgeHandlePoint, splitAxisFor, canSplitRoom } from '@/core/room-edit';
 import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
@@ -40,7 +40,7 @@ import { PLAN_LIMITS as LIM } from '@/core/plan-limits';
 import { railingHeight, railingKind } from '@/core/railings';
 import { roomRugs, rugSize, rugRectAt } from '@/core/textiles';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing';
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
@@ -76,6 +76,12 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onToggleColumnShape?(): void;
   onAutoFurnishRoom?(roomId: string): void;
   onSplitRoom?(roomId: string, axis: 'x' | 'z'): void;
+  /** unealta „Împarte camera”: clic în cameră, peretele nou la poziția clicului (`at` = x pentru axa x, z pentru axa z) */
+  onSplitRoomAt?(roomId: string, axis: 'x' | 'z', at: number): void;
+  /** unealta „Covor”: clic în plan, covorul cu centrul la punctul clicului; `roomId` = null când clicul e în afara camerelor */
+  onAddRugAt?(roomId: string | null, x: number, z: number): void;
+  /** unealta „Pipetă de finisaje”: camera pe care s-a dat clic (editorul ține sursa); null = clic în afara camerelor */
+  onStylePick?(roomId: string | null): void;
   /** lungimea tastată pe cota peretelui; false = refuzată (editorul anunță motivul), câmpul rămâne deschis */
   onSetWallLength?(wallId: string, m: number): boolean;
   calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void;
@@ -188,6 +194,14 @@ export default function PlanView(p: Props){
     return null;
   }, [p.tool, p.sel, p.snap, p.catalog, floor, units, lang]);
   const drag = useRef<any>(null), pan = useRef<any>(null);
+  // uneltele de navigare: Mâna (cursor grab / grabbing cât se trage) și Zoom pe zonă (dreptunghiul tras, în coordonatele planului)
+  const [panning, setPanning] = useState(false), [zoomDraft, setZoomDraft] = useState<{ a: [number, number]; b: [number, number] } | null>(null);
+  // „Împarte camera”: Shift ținut la ultima mișcare schimbă axa peretelui nou
+  const [splitFlip, setSplitFlip] = useState(false);
+  useEffect(() => { setZoomDraft(null); setPanning(false); pan.current = null; }, [p.tool]);
+  // camera de sub un punct (conturul propriu, dacă are; altfel dreptunghiul); ultima desenată e deasupra
+  const roomAt = (pt: [number, number]) => [...floor.rooms].reverse().find(r => pointInRoom(r, pt[0], pt[1])) ?? null;
+  const splitAt = (pt: [number, number], flip: boolean) => { const room = roomAt(pt); if (!room) return null; const axis = splitAxisFor(room.rect, flip); return { room, axis, at: snapG(axis === 'x' ? pt[0] : pt[1]) }; };
   // atingeri: două degete = zoom și deplasare; un deget pe un loc gol (la selecție) = deplasare, atingere scurtă = deselectare
   const touches = useRef(new Map<number, Pt>()), pinch = useRef<{ vb: typeof vb; ctm: { a: number; d: number; e: number; f: number }; mid: Pt; dist: number } | null>(null);
   const startPinch = () => { const [a, b] = [...touches.current.values()] as [Pt, Pt], m = svg.current!.getScreenCTM()!;
@@ -202,7 +216,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setTyped(''); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setTyped(''); setZoomDraft(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -212,8 +226,11 @@ export default function PlanView(p: Props){
     const ae = document.activeElement as HTMLElement | null; if (ae?.tagName === 'INPUT' && !ae.classList.contains('plan-dim-input')) ae.blur();
     if (e.pointerType === 'touch'){ touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); svg.current!.setPointerCapture(e.pointerId);
       if (touches.current.size === 2){ startPinch(); return; } if (touches.current.size > 2 || pinch.current) return; }
-    if (e.button === 1 || (e.button === 0 && e.altKey)){ pan.current = { x: e.clientX, y: e.clientY, vb }; (e.target as Element).setPointerCapture?.(e.pointerId); return; }
+    // Mâna: tragerea cu butonul stâng mută vederea, exact ca Alt+tragere / butonul din mijloc; nu atinge proiectul (fără onEdit)
+    if (e.button === 1 || (e.button === 0 && (e.altKey || p.tool === 'pan'))){ pan.current = { x: e.clientX, y: e.clientY, vb }; if (p.tool === 'pan') setPanning(true); (e.target as Element).setPointerCapture?.(e.pointerId); return; }
     if (e.button !== 0) return; const pt = toWorld(e);
+    // Zoom pe zonă: dreptunghiul tras devine vederea la eliberare (up); doar vederea se schimbă
+    if (p.tool === 'zoom_area'){ setZoomDraft({ a: pt, b: pt }); svg.current!.setPointerCapture(e.pointerId); return; }
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
     if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
@@ -229,6 +246,9 @@ export default function PlanView(p: Props){
     if (p.tool === 'text'){ e.preventDefault(); const par = svg.current!.parentElement!.getBoundingClientRect(); setTextVal(''); setTextDraft({ at: [r3(pt[0]), r3(pt[1])], left: e.clientX - par.left, top: e.clientY - par.top }); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'demolish'){ const w = nearestWall(pt); if (w) p.onToggleDemolish?.(w.id); return; }
+    if (p.tool === 'rug'){ p.onAddRugAt?.(roomAt(pt)?.id ?? null, Math.round(pt[0] * 100) / 100, Math.round(pt[1] * 100) / 100); return; }
+    if (p.tool === 'style_copy'){ p.onStylePick?.(roomAt(pt)?.id ?? null); return; }
+    if (p.tool === 'split'){ const h = splitAt(pt, e.shiftKey); if (h) p.onSplitRoomAt?.(h.room.id, h.axis, h.at); return; }
     if (p.tool === 'room' || p.tool === 'floor_zone' || p.tool === 'ceiling_zone'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
@@ -260,6 +280,8 @@ export default function PlanView(p: Props){
     if (e.pointerType === 'touch' && touches.current.has(e.pointerId)){ touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pinch.current){ if (touches.current.size >= 2){ const [a, b] = [...touches.current.values()] as [Pt, Pt], g = pinch.current; setVb(pinchViewBox(g.vb, g.ctm, g.mid, g.dist, midpoint(a, b), distance(a, b))); } return; } }
     const pt = toWorld(e); setCursor(pt);
+    if (p.tool === 'split' && splitFlip !== e.shiftKey) setSplitFlip(e.shiftKey);
+    if (zoomDraft){ setZoomDraft({ a: zoomDraft.a, b: pt }); return; }
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
     if (SEGMENT_TOOLS.includes(p.tool)){ raw.current = { pt, free: e.shiftKey }; const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); setHit(r); if (preview){ setPreview({ a: preview.a, b: r.p }); return; } }
@@ -301,7 +323,11 @@ export default function PlanView(p: Props){
   }
   function up(e: React.PointerEvent){
     if (e.pointerType === 'touch'){ touches.current.delete(e.pointerId); if (pinch.current){ if (touches.current.size < 2) pinch.current = null; return; } }
-    if (pan.current){ pan.current = null; return; }
+    if (pan.current){ pan.current = null; setPanning(false); return; }
+    // Zoom pe zonă: sub 10 cm pe ambele laturi e un clic, nu o zonă (vederea rămâne); un gest întrerupt nu schimbă vederea
+    if (zoomDraft){ const { a, b } = zoomDraft, el = svg.current; setZoomDraft(null);
+      if (e.type !== 'pointercancel' && (Math.abs(b[0] - a[0]) >= .1 || Math.abs(b[1] - a[1]) >= .1)) setVb(frameViewBox({ x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) }, el && el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1.5));
+      return; }
     if (roomDraft && !roomDraft.pending){ const { a, b } = roomDraft;
       if (Math.abs(b[0] - a[0]) < .6 && Math.abs(b[1] - a[1]) < .6){ setRoomDraft({ a, b, pending: true }); return; }   // clic fără tragere: așteaptă al doilea clic
       finishRoom(a, b); return; }
@@ -352,6 +378,8 @@ export default function PlanView(p: Props){
     if (typedKey(e)){ e.preventDefault(); e.stopPropagation(); return; }
     // Esc în timpul desenării anulează desenul (ascultătorii de pe window), chiar dacă e ceva selectat: nu deselectează întâi
     if (e.key === 'Escape' && typing) return;
+    // uneltele noi (pipetă, covor, împărțire, navigare): Esc ajunge la editor și revine la Selecție, nu doar deselectează
+    if (e.key === 'Escape' && (p.tool === 'style_copy' || p.tool === 'rug' || p.tool === 'split' || p.tool === 'pan' || p.tool === 'zoom_area')) return;
     // Shift+F10 / tasta Menu: meniul contextual al selecției, la centrul ei pe ecran
     if ((e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) && !typing && p.tool === 'select' && p.sel){ e.preventDefault(); e.stopPropagation();
       const box = selectionBox(p.snap, p.catalog, p.sel), at = box ? toScreen([(box.x0 + box.x1) / 2, (box.z0 + box.z1) / 2]) : null;
@@ -403,7 +431,7 @@ export default function PlanView(p: Props){
     p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={contextMenu}
-    style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
+    style={{ cursor: p.tool === 'select' ? 'default' : p.tool === 'pan' ? (panning ? 'grabbing' : 'grab') : p.tool === 'zoom_area' ? 'zoom-in' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern>
       {/* hașura ghenei: diagonale subțiri la 6 cm */}
       <pattern id="shaft-hatch" width=".06" height=".06" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V.06" stroke="#5E636B" strokeWidth=".008" /></pattern>
@@ -608,6 +636,10 @@ export default function PlanView(p: Props){
       return <g className="typed-chip" aria-hidden="true" transform={`translate(${at[0] + fs * .8} ${at[1] + fs * .8})`}>
         <rect width={w} height={fs * 1.9} rx={fs * .45} fill={bad ? '#FCEBEA' : '#fff'} stroke={bad ? '#B3261E' : '#7A5A36'} strokeWidth={fs * .08} />
         <text x={fs * .6} y={fs * 1.3} fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={typed ? (bad ? '#B3261E' : '#1A141C') : '#7A6F66'}>{typed || t('plan.typeHint')}</text></g>; })()}
+    {/* Zoom pe zonă: dreptunghiul tras; Împarte camera: peretele nou, punctat, la cursor (camerele cu contur propriu nu se pot împărți) */}
+    {zoomDraft && <rect data-zoom-area="" x={Math.min(zoomDraft.a[0], zoomDraft.b[0])} y={Math.min(zoomDraft.a[1], zoomDraft.b[1])} width={Math.abs(zoomDraft.b[0] - zoomDraft.a[0])} height={Math.abs(zoomDraft.b[1] - zoomDraft.a[1])} fill="#6E8798" fillOpacity={.1} stroke="#6E8798" strokeWidth={vb.w / 500} strokeDasharray={`${vb.w / 120} ${vb.w / 200}`} pointerEvents="none" />}
+    {p.tool === 'split' && cursor && (() => { const h = splitAt(cursor, splitFlip); if (!h || !canSplitRoom(h.room)) return null; const r = h.room.rect;
+      return <line data-split-preview={h.axis} x1={h.axis === 'x' ? h.at : r.x0} y1={h.axis === 'x' ? r.z0 : h.at} x2={h.axis === 'x' ? h.at : r.x1} y2={h.axis === 'x' ? r.z1 : h.at} stroke="#8B6A45" strokeWidth={.03} strokeDasharray=".1 .07" pointerEvents="none" />; })()}
     {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#6E8798" fillOpacity={.12} stroke="#6E8798" strokeWidth={.02} strokeDasharray=".08 .05" />}
     {allFixturePoints(p.snap, p.catalog, floor.rooms, finishesOf).map((f, i) => { const r = fs * .45, c = '#8A5A00';
       // simbolurile de pe planul de iluminat: pendul = cerc cu cruce, aplică = semicerc lipit de perete, șină = linie cu spoturi

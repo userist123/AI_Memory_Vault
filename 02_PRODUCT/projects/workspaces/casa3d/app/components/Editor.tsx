@@ -74,7 +74,8 @@ import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stai
 import Icon from './Icon';
 import { askConfirm, askPrompt } from '@/lib/dialog';
 import { RoomResizeError } from '@/core/room-resize';
-import { planRoomResize, sameState, splitRoom, mergeRooms } from '@/core/room-edit';
+import { planRoomResize, sameState, splitRoom, mergeRooms, copyRoomFinishes, canSplitRoom } from '@/core/room-edit';
+import { RUG_EXTRA_MAX } from '@/core/textiles';
 import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
 import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
@@ -115,6 +116,9 @@ const CLAD_KINDS: WallFeatureKind[] = ['slats', 'panel', 'frames', 'wallpaper', 
 const ROOM_TYPES = [['living', 'roomType.living'], ['dormitor', 'roomType.dormitor'], ['bucatarie', 'roomType.bucatarie'], ['baie', 'roomType.baie'], ['hol', 'roomType.hol']];
 const ICON: Record<Tool, string> = {
   select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z',
+  // navigarea stă imediat după Selecție (ordinea cheilor = ordinea din bară)
+  pan: 'M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3',
+  zoom_area: 'M4 4h12v12H4zM16 16l5 5M7 10h6M10 7v6',
   wall: 'M3 12h18M3 9v6M21 9v6',
   room: 'M4 4h16v16H4z',
   door: 'M5 21V4h9v17M5 21h14M12 12h.01',
@@ -126,6 +130,8 @@ const ICON: Record<Tool, string> = {
   wall_item: 'M4 5h16v12H4zM7 14l3-4 3 3 2-2 2 3M8 20h8',
   floor_zone: 'M4 4h16v16H4zM4 12h8v8M6 20l6-6M4 16l4-4',
   ceiling_zone: 'M3 4h18M6 4v4h12V4M6 8l1 2M18 8l-1 2M7 10h10M8 14h2M12 14h2M16 14h0M5 20h14',
+  rug: 'M5 6h14v12H5zM8 9h8v6H8zM5 3v3M9 3v3M13 3v3M17 3v3M7 18v3M11 18v3M15 18v3M19 18v3',
+  style_copy: 'M4 20l2-5 8-8 3 3-8 8zM13 6l2-2 5 5-2 2M4 20h4',
   dim: 'M3 8v8M21 8v8M3 12h18M6 10l-2 2 2 2M18 10l2 2-2 2',
   text: 'M5 5h14M12 5v14M9 19h6',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
@@ -133,12 +139,15 @@ const ICON: Record<Tool, string> = {
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
   railing: 'M3 8h18M3 20h18M4 8v12M20 8v12M8 8v12M12 8v12M16 8v12',
   demolish: 'M3 8h7M14 8h7M3 16h18M8 4l8 16M16 4L8 20',
+  split: 'M4 5h16v14H4zM12 2v3M12 8v2M12 12v2M12 16v2M12 19v3',
   stair: 'M4 19h4v-3h4v-3h4v-3h4V7h-3v3h-4v3H8v3H4z',
   measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2',
   tech: 'M13 2L4 14h7l-1 8 9-12h-7z'
 };
 const TOOL_LABEL: Record<Tool, string> = {
   select: 'tool.select',
+  pan: 'tool.pan',
+  zoom_area: 'tool.zoom_area',
   wall: 'tool.wall',
   room: 'tool.room',
   door: 'tool.door',
@@ -150,6 +159,8 @@ const TOOL_LABEL: Record<Tool, string> = {
   wall_item: 'tool.wall_item',
   floor_zone: 'tool.floor_zone',
   ceiling_zone: 'tool.ceiling_zone',
+  rug: 'tool.rug',
+  style_copy: 'tool.style_copy',
   dim: 'tool.dim',
   text: 'tool.text',
   column: 'tool.column',
@@ -157,6 +168,7 @@ const TOOL_LABEL: Record<Tool, string> = {
   glass_wall: 'tool.glass_wall',
   railing: 'tool.railing',
   demolish: 'tool.demolish',
+  split: 'tool.split',
   stair: 'tool.stair',
   measure: 'tool.measure',
   tech: 'tool.tech'
@@ -165,14 +177,14 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'stair', 'measure', 'dim', 'text'] },
-  { id: 'concept', view: 'split', tools: ['select', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
-  { id: 'finishes', view: 'split', tools: ['select', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'measure'] },
-  { id: 'ffe', view: 'split', tools: ['select', 'wall_item', 'measure'] },
-  { id: 'mep', view: '2d', tools: ['select', 'tech', 'shaft', 'measure'] },
-  { id: 'docs', view: '2d', tools: ['select', 'measure', 'dim', 'text'] },
-  { id: 'quote', view: '2d', tools: ['select'] },
-  { id: 'present', view: '3d', tools: ['select'] },
+  { id: 'survey', view: '2d', tools: ['select', 'pan', 'zoom_area', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split', 'stair', 'measure', 'dim', 'text'] },
+  { id: 'concept', view: 'split', tools: ['select', 'pan', 'zoom_area', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
+  { id: 'finishes', view: 'split', tools: ['select', 'pan', 'zoom_area', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy', 'measure'] },
+  { id: 'ffe', view: 'split', tools: ['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure'] },
+  { id: 'mep', view: '2d', tools: ['select', 'pan', 'zoom_area', 'tech', 'shaft', 'measure'] },
+  { id: 'docs', view: '2d', tools: ['select', 'pan', 'zoom_area', 'measure', 'dim', 'text'] },
+  { id: 'quote', view: '2d', tools: ['select', 'pan', 'zoom_area'] },
+  { id: 'present', view: '3d', tools: ['select', 'pan', 'zoom_area'] },
   { id: 'orders', view: '2d', tools: [], page: true },
   { id: 'site', view: '2d', tools: [], page: true }
 ];
@@ -180,6 +192,9 @@ export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [frame, setFrame] = useState<{ sel: Sel; n: number; at: number } | null>(null), [wideSide, setWideSide] = useState(false), [hoverPid, setHoverPid] = useState<string | null>(null), [frame3d, setFrame3d] = useState<{ id: string; n: number; at: number } | null>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
+  // „Pipeta de finisaje”: camera-sursă aleasă cu primul clic; orice schimbare de unealtă (și Escape) o uită
+  const [styleSrc, setStyleSrc] = useState<string | null>(null);
+  useEffect(() => { setStyleSrc(null); }, [tool]);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
@@ -564,6 +579,24 @@ export default function Editor({ id }: { id: string }){
     if (!room){ say(t('czone.noRoom')); return; } const c = intersect(room.rect, r); if (!c || c.x1 - c.x0 < PLAN_LIMITS.ceilingZone.minM || c.z1 - c.z0 < PLAN_LIMITS.ceilingZone.minM){ say(t('czone.tooSmall')); return; }
     const zid = `tavan-${uid().slice(0, 8)}`, z: CeilingZone = { id: zid, roomId: room.id, rect: { x0: r3(c.x0), z0: r3(c.z0), x1: r3(c.x1), z1: r3(c.z1) }, dropCm: PLAN_DEFAULTS.ceilingZone.dropCm };
     mutate(s => { s.floor.ceilingZones = [...(s.floor.ceilingZones || []), z]; }); setSel({ kind: 'ceiling_zone', id: zid }); setTool('select'); say(t('czone.added', { room: room.name })); };
+  // unealta „Covor”: un covor în plus (ca „+ Încă un covor” din panoul Finisaje), cu centrul la punctul clicului; un singur pas de anulare
+  const onAddRugAt = (roomId: string | null, x: number, z: number) => { const room = snap.floor.rooms.find(q => q.id === roomId);
+    if (!room){ say(t('rug.noRoom')); return; } const mat = mc.materials.find(m => m.category === 'rug')?.id; if (!mat){ say(t('fin.noProduct')); return; }
+    if ((finishesOf(snap, room).rugs?.length ?? 0) >= RUG_EXTRA_MAX){ say(t('rug.full', { max: RUG_EXTRA_MAX, room: room.name })); return; }
+    mutate(s => { const f = finishesOf(s, room); s.finishes = { ...(s.finishes || {}), [room.id]: { ...f, rugs: [...(f.rugs ?? []), { material: mat, x, z }] } }; });
+    setSel({ kind: 'room', id: room.id }); say(t('rug.added', { room: room.name })); };
+  // unealta „Pipetă de finisaje”: primul clic alege sursa, următoarele aplică pe țintă pardoseala, montajul, vopseaua, plinta și tavanul
+  const onStylePick = (roomId: string | null) => { const room = snap.floor.rooms.find(q => q.id === roomId); if (!room){ say(t('styleCopy.noRoom')); return; }
+    const src = snap.floor.rooms.find(q => q.id === styleSrc); if (!src){ setStyleSrc(room.id); say(t('styleCopy.source', { room: room.name })); return; }
+    if (src.id === room.id){ say(t('styleCopy.sameRoom')); return; }
+    const cur = finishesOf(snap, room), next = copyRoomFinishes(finishesOf(snap, src), cur); if (sameState(cur, next)){ say(t('styleCopy.same', { room: room.name })); return; }
+    mutate(s => { s.finishes = { ...(s.finishes || {}), [room.id]: next }; }); say(t('styleCopy.applied', { from: src.name, room: room.name })); };
+  // unealta „Împarte camera”: peretele nou la poziția clicului; camera cu contur propriu (boundary) nu e suportată de splitRoom
+  const onSplitRoomAt = (roomId: string, axis: 'x' | 'z', at: number) => { const r = snap.floor.rooms.find(x => x.id === roomId); if (!r) return;
+    if (!canSplitRoom(r)){ say(t('split.boundary')); return; }
+    const lo = axis === 'x' ? r.rect.x0 : r.rect.z0, hi = axis === 'x' ? r.rect.x1 : r.rect.z1; if (at - lo < .6 - 1e-6 || hi - at < .6 - 1e-6){ say(t('split.tooSmall')); return; }
+    try { const nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, r.id, axis, at, { id: nid, name: `${r.name} B`, type: r.type }, newWallId()); mutate(s => { s.floor = nf; }); say(t('split.done', { room: r.name })); }
+    catch (e: any){ say(e?.message || t('split.tooSmall')); } };
   const patchCeilingZone = (zid: string, fn: (z: CeilingZone) => void) => mutate(s => { const z = s.floor.ceilingZones?.find(x => x.id === zid); if (z) fn(z); });
   // balustrada nouă: metal, 1 m; unealta rămâne activă (clic-clic în lanț, ca grinda și peretele de sticlă)
   const onAddRailing = (a: [number, number], b: [number, number]) => { if (full(snap.floor.railings?.length, PLAN_LIMITS.railing.max)) return;
@@ -792,6 +825,9 @@ export default function Editor({ id }: { id: string }){
           onAddZone={preview ? undefined : onAddZone}
           onAddCeilingZone={preview ? undefined : onAddCeilingZone}
           onAddRailing={preview ? undefined : onAddRailing}
+          onAddRugAt={preview ? undefined : onAddRugAt}
+          onStylePick={preview ? undefined : onStylePick}
+          onSplitRoomAt={preview ? undefined : onSplitRoomAt}
           onAddBeam={preview ? undefined : onAddBeam}
           onAddGlassWall={preview ? undefined : onAddGlassWall}
           onAddStairAt={preview ? undefined : onAddStairAt}
@@ -819,7 +855,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}

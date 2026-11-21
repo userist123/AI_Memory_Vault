@@ -1,9 +1,9 @@
 // Runda 9: o redimensionare sau o tragere fără efect nu lasă pas de anulare; mânerul laturii nu stă peste o ușă.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { edgeHandleAt, edgeHasFreeSpan, edgeHandlePoint, planRoomResize, sameState } from '../core/room-edit';
+import { edgeHandleAt, edgeHasFreeSpan, edgeHandlePoint, planRoomResize, sameState, copyRoomFinishes, STYLE_COPY_FIELDS, splitAxisFor, canSplitRoom, splitRoom } from '../core/room-edit';
 import { History } from '../core/history';
-import type { Floor, Room, RoomRect, Wall } from '../core/types';
+import type { Floor, Room, RoomFinishes, RoomRect, Wall } from '../core/types';
 
 let n = 0; const id = () => `nou-${++n}`;
 const room = (rid: string, rect: RoomRect): Room => ({ id: rid, name: rid, type: 'living', rect });
@@ -93,3 +93,37 @@ test('WARNING revert: anularea unei mutări cu avertisment elimină pasul redund
   assert.equal(h.canRedo, true, 'stiva Redo dinaintea tragerii revocate e restaurată');
 });
 
+test('copyRoomFinishes: copiază doar pardoseala, montajul, vopseaua, plinta și tavanul; restul rămâne al țintei', () => {
+  const src: RoomFinishes = { floor: 'parchet-a', floorLayout: { pattern: 'herringbone', angle: 90 }, wallPaint: 'vopsea-a', baseboard: 'plinta-a', ceiling: { type: 'cove', coveCm: 12, led: 'led-a' },
+    wallTile: 'faianta-a', light: 'lampa-a', lights: 4, rug: { material: 'covor-a' }, rugs: [{ material: 'covor-a2', x: 1, z: 1 }], wallFeatures: [{ side: 'N', kind: 'slats', material: 'riflaj-a' }] };
+  const dst: RoomFinishes = { floor: 'gresie-b', wallPaint: 'vopsea-b', wallTile: 'faianta-b', baseboard: null, light: 'lampa-b', lights: 2, rug: { material: 'covor-b', x: 2, z: 2 },
+    windows: [{ openingId: 'f1', curtain: 'draperie-b' }], bath: { metal: 'black' } };
+  const before = structuredClone({ src, dst }), out = copyRoomFinishes(src, dst);
+  assert.deepEqual(STYLE_COPY_FIELDS, ['floor', 'floorLayout', 'wallPaint', 'baseboard', 'ceiling']);
+  for (const k of STYLE_COPY_FIELDS) assert.deepEqual(out[k], src[k], k);
+  // tot ce nu e în listă vine de la țintă, neatins (inclusiv câmpurile pe care sursa le are și ținta nu)
+  assert.equal(out.wallTile, 'faianta-b'); assert.equal(out.light, 'lampa-b'); assert.equal(out.lights, 2); assert.deepEqual(out.rug, { material: 'covor-b', x: 2, z: 2 });
+  assert.deepEqual(out.windows, dst.windows); assert.deepEqual(out.bath, dst.bath); assert.ok(!('rugs' in out)); assert.ok(!('wallFeatures' in out));
+  assert.deepEqual(Object.keys(out).sort(), [...new Set([...Object.keys(dst), ...STYLE_COPY_FIELDS])].sort());
+  // pur: argumentele rămân la fel, iar rezultatul nu împarte obiecte cu sursa
+  assert.deepEqual({ src, dst }, before); assert.notEqual(out.floorLayout, src.floorLayout); assert.notEqual(out.ceiling, src.ceiling);
+});
+test('copyRoomFinishes: un câmp opțional care lipsește la sursă dispare la țintă; plinta null se copiază ca null; a doua aplicare nu schimbă nimic', () => {
+  const src: RoomFinishes = { floor: 'gresie-a', wallPaint: 'vopsea-a', baseboard: null, light: 'lampa-a' };
+  const dst: RoomFinishes = { floor: 'parchet-b', floorLayout: { pattern: 'brick' }, wallPaint: 'vopsea-b', baseboard: 'plinta-b', ceiling: { type: 'drop', dropCm: 10 }, light: 'lampa-b' };
+  const out = copyRoomFinishes(src, dst);
+  assert.deepEqual(out, { floor: 'gresie-a', wallPaint: 'vopsea-a', baseboard: null, light: 'lampa-b' });
+  assert.ok(sameState(copyRoomFinishes(src, out), out));
+});
+test('împarte camera: axa implicită e perpendiculară pe latura mai lungă, Shift o schimbă; conturul propriu se refuză', () => {
+  assert.equal(splitAxisFor({ x0: 0, z0: 0, x1: 5, z1: 3 }), 'x'); assert.equal(splitAxisFor({ x0: 0, z0: 0, x1: 5, z1: 3 }, true), 'z');
+  assert.equal(splitAxisFor({ x0: 0, z0: 0, x1: 3, z1: 5 }), 'z'); assert.equal(splitAxisFor({ x0: 0, z0: 0, x1: 3, z1: 5 }, true), 'x');
+  assert.equal(splitAxisFor({ x0: 0, z0: 0, x1: 4, z1: 4 }), 'x');
+  assert.ok(canSplitRoom(room('A', { x0: 0, z0: 0, x1: 4, z1: 3 }))); assert.ok(canSplitRoom({ boundary: [] }));
+  assert.ok(!canSplitRoom({ boundary: [[0, 0], [4, 0], [4, 3], [2, 3], [2, 1.5], [0, 1.5]] }));
+  // la poziția clicului: peretele nou pe x = 1,25, cele două camere acoperă exact dreptunghiul vechi; sub 60 cm se refuză
+  const f = splitRoom(pair(), 'A', 'x', 1.25, { id: 'A2', name: 'A B', type: 'living' }, 'w-nou');
+  assert.deepEqual(f.rooms.find(r => r.id === 'A')!.rect, { x0: 0, z0: 0, x1: 1.25, z1: 3 }); assert.deepEqual(f.rooms.find(r => r.id === 'A2')!.rect, { x0: 1.25, z0: 0, x1: 4, z1: 3 });
+  assert.deepEqual(f.walls.find(w => w.id === 'w-nou')!.a, [1.25, 0]); assert.deepEqual(f.walls.find(w => w.id === 'w-nou')!.b, [1.25, 3]);
+  assert.throws(() => splitRoom(pair(), 'A', 'x', .3, { id: 'A2', name: 'A B', type: 'living' }, 'w-nou'));
+});
