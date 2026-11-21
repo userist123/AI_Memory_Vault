@@ -1797,7 +1797,17 @@ class MemoryController:
                         raise PermissionError('AI_AGENT cannot update ACTIVE notes: content and structural fields are immutable to AI agents')
                 if note['lifecycle'] != Lifecycle.ACTIVE:
                     if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
-                        pass
+                        # An owner attestation covers the content the owner read. attest() works on
+                        # any lifecycle, so without this an agent could rewrite an attested note
+                        # that review/promote then carries into ACTIVE as verified
+                        # (20_TESTS/test_attested_note_content_binding.py). Same allowance as on an
+                        # ACTIVE note.
+                        if str(note.get('verification') or 'unverified') not in {'unverified', 'inferred'}:
+                            disallowed = set(updates.keys()) - {'relations', 'confidence', 'verification', 'valid_until'}
+                            if disallowed:
+                                raise PermissionError(
+                                    'AI_AGENT cannot change the content of an attested note: only relations, '
+                                    f'confidence, verification and valid_until (attempted: {sorted(disallowed)})')
                     else:
                         raise ValueError('Updates not permitted for this lifecycle and principal')
 
