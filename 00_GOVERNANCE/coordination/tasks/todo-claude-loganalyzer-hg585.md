@@ -1829,3 +1829,14 @@
   language). Tests App OwnerSummaryTests (8), Dfir OwnerActionsTests (3, coverage of emitted ids), MistakesSectionTests 8 labels; red 6/7 + 1/3. Suites
   App 1508, UI 370 (1 skipped), Edition 45, Dfir 4081 / 36 / 0. RESIDUALS: ☐ glyph not seen visually; Sigma/YARA/IOC rule hits not in the box/annex;
   sentences want a native review.
+- 2026-11-21 (claude, hg585) PLANNER #14 E2 + E6 DONE (vault-worker + main-session-requested Quick autologon fix; medium): ConfigurationAudit rules
+  CFG-FIREWALL-OFF (High; policy SOFTWARE\Policies\Microsoft\WindowsFirewall wins over SYSTEM FirewallPolicy, source named), CFG-REMOTEREGISTRY (Medium,
+  Start=2), CFG-AUTOLOGON (High with stored DefaultPassword / Medium without; quote "DefaultPassword = (prezentă, nu se afișează)"; the password value is
+  never read into findings/timeline/PDF - test), CFG-LOCALACCOUNT-TOKENFILTER (Medium), CFG-ALWAYSINSTALLELEVATED (High; HKCU not read), CFG-SMB-SIGNING
+  (Low; 24H2 default noted); CFG-PSV2 NOT done (key layout unsure). Quick: + Installer policy and WindowsFirewall policy subkeys (absent markers); Winlogon
+  is NOT reg-saved (the file would hold the password in clear): a read-only JSON winlogon_autologon_json {AutoAdminLogon, DefaultUserName,
+  DefaultPasswordPresent} is hashed evidence instead. E6 SVC-UNQUOTED-PATH (Medium, T1574.009) in Correlation over Service rows (Start 2/3; quoted,
+  \??\, \SystemRoot\, System32 drivers, space only after .exe excluded); ManualVerification `sc.exe qc` (plain `sc` is a PowerShell alias). owner_actions +
+  RuleContracts + ItemMeaning T1574.009. Tests Dfir ConfigurationHardeningTests (22), UnquotedServicePathTests (7), App + collector tests; red 3 + 1.
+  Suites App 1511, UI 370 (1 skipped), Edition 45, Dfir 4108 / 36 / 0. RESIDUAL: Standard/Full save the full SOFTWARE hive, which contains DefaultPassword
+  (pre-existing; not read by the app) - owner should know the case file holds it if autologon is configured.

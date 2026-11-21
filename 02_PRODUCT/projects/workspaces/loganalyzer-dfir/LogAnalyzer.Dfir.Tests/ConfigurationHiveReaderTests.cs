@@ -70,7 +70,8 @@ public sealed class ConfigurationHiveReaderTests
 
     // ---- planner #13 D1: SOFTWARE subkey hives (Quick profile). reg save of a subkey makes the subkey the ROOT of the file. ----
 
-    private const string UacSub = @"Microsoft\Windows\CurrentVersion\Policies\System", DefSub = @"Microsoft\Windows Defender", PolSub = @"Policies\Microsoft\Windows Defender";
+    private const string UacSub = @"Microsoft\Windows\CurrentVersion\Policies\System", DefSub = @"Microsoft\Windows Defender", PolSub = @"Policies\Microsoft\Windows Defender",
+        InstSub = @"Policies\Microsoft\Windows\Installer", FwSub = @"Policies\Microsoft\WindowsFirewall";
 
     private static string Save(string dir, string name, RegfBuilder.Key root)
     {
@@ -103,6 +104,8 @@ public sealed class ConfigurationHiveReaderTests
                 (SubkeyItem("E-0010", UacSub, "s10"), Save(dir, "uac", uac)),
                 (SubkeyItem("E-0011", DefSub, "s11"), Save(dir, "def", def)),
                 (SubkeyItem("E-0012", PolSub, "s12"), Save(dir, "pol", pol)),
+                (SubkeyItem("E-0014", InstSub, "s14"), Save(dir, "inst", new RegfBuilder.Key("ROOT", SyntheticCorpus.HiveWritten))),
+                (SubkeyItem("E-0015", FwSub, "s15"), Save(dir, "fw", new RegfBuilder.Key("ROOT", SyntheticCorpus.HiveWritten))),
             ]);
             Assert.Equal("SOFTWARE", h.Hive);
             Assert.Equal("", h.Origin);
@@ -120,7 +123,8 @@ public sealed class ConfigurationHiveReaderTests
             Assert.Equal("E-0011", x.SupportingEvidence.Single().EvidenceId);
             Assert.Contains(@"căi: C:\Tools", x.Description);
             Assert.Equal(new DateTimeOffset(SyntheticCorpus.HiveWritten), res.Findings[0].FirstSeenUtc);
-            Assert.Empty(res.Gaps);   // the policy hive is empty: its keys are absent (not gaps); every probe was read
+            // the policy hives are empty: their keys are absent (not gaps); the only gap left is the Winlogon key, which Quick never saves (it can hold DefaultPassword)
+            Assert.Equal(@"Setare SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon", Assert.Single(res.Gaps).Artifact);
         }
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
@@ -194,10 +198,12 @@ public sealed class ConfigurationHiveReaderTests
             File.WriteAllText(markerPath, "{\"key\":\"policy\",\"exists\":false}");   // the collector writes the escaped key here; the reader only needs exists=false
             var marker = SubkeyItem("E-0013", PolSub, "s13");
             marker = new EvidenceItem { EvidenceId = marker.EvidenceId, CaseId = "C", Source = marker.Source, SourceType = ConfigurationHiveReader.AbsentType, OriginalPath = marker.OriginalPath, Sha256 = "s13", TemporalType = TemporalType.CurrentSnapshot };
-            var hives = new[] { (SubkeyItem("E-0010", UacSub, "s10"), Save(dir, "uac", uac)), (SubkeyItem("E-0011", DefSub, "s11"), Save(dir, "def", def)) };
+            var empty = new RegfBuilder.Key("ROOT", SyntheticCorpus.HiveWritten);
+            var hives = new[] { (SubkeyItem("E-0010", UacSub, "s10"), Save(dir, "uac", uac)), (SubkeyItem("E-0011", DefSub, "s11"), Save(dir, "def", def)),
+                                (SubkeyItem("E-0014", InstSub, "s14"), Save(dir, "inst", empty)), (SubkeyItem("E-0015", FwSub, "s15"), Save(dir, "fw", empty)) };
 
             var withMarker = Evaluate(ConfigurationHiveReader.ReadSoftwareSubkeys(hives, [(marker, markerPath)]));
-            Assert.Empty(withMarker.Gaps);   // no gap for the policy key
+            Assert.Equal(@"Setare SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon", Assert.Single(withMarker.Gaps).Artifact);   // no gap for the policy key; only the Winlogon one (never saved in Quick)
             Assert.Equal([ConfigurationAudit.RuleUac, ConfigurationAudit.RuleDefenderExcl], withMarker.Findings.Select(f => f.RuleId));
 
             var withoutMarker = Evaluate(ConfigurationHiveReader.ReadSoftwareSubkeys(hives));

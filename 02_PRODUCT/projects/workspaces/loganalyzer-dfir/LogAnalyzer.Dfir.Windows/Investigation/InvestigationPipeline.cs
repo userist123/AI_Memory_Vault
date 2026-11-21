@@ -383,9 +383,14 @@ public sealed class InvestigationPipeline
         {
             var subs = new List<(EvidenceItem Item, string FullPath)>();
             var absent = new List<(EvidenceItem Item, string FullPath)>();
-            foreach (var item in ws.LoadEvidence().Where(e => e.SourceType is ConfigurationHiveReader.SubkeyHiveType or ConfigurationHiveReader.AbsentType && ConfigurationHiveReader.SubkeyOf(e) is not null))
-                if (ws.TryFullPath(item.StoredPath, out var full) && File.Exists(full)) (item.SourceType == ConfigurationHiveReader.AbsentType ? absent : subs).Add((item, full));
-            if (subs.Count + absent.Count > 0) hives.Add(ConfigurationHiveReader.ReadSoftwareSubkeys(subs, absent));
+            (EvidenceItem Item, string FullPath)? winlogon = null;
+            foreach (var item in ws.LoadEvidence().Where(e => (e.SourceType is ConfigurationHiveReader.SubkeyHiveType or ConfigurationHiveReader.AbsentType && ConfigurationHiveReader.SubkeyOf(e) is not null) || e.SourceType == ConfigurationHiveReader.WinlogonType))
+                if (ws.TryFullPath(item.StoredPath, out var full) && File.Exists(full))
+                {
+                    if (item.SourceType == ConfigurationHiveReader.WinlogonType) winlogon = (item, full);
+                    else (item.SourceType == ConfigurationHiveReader.AbsentType ? absent : subs).Add((item, full));
+                }
+            if (subs.Count + absent.Count > 0 || winlogon is not null) hives.Add(ConfigurationHiveReader.ReadSoftwareSubkeys(subs, absent, winlogon));
         }
         var res = ConfigurationAudit.Evaluate(hives, ws.Info.Host, nextId);
         if (hives.Count > 0)

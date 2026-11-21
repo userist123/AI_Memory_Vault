@@ -642,6 +642,18 @@ public static class RuleContracts
             ["Security 4732 (adăugarea în grup), dacă a fost auditat.", "Justificarea fiecărui cont."],
             ["Verificați dacă fiecare cont are nevoie de drepturi de administrator.", "Rulați „Get-LocalGroupMember -SID S-1-5-32-544” (numele grupului este localizat; „net localgroup Administrators” funcționează doar cu numele local)."]),
         C("CFG-RDP-NLA", "Remote Desktop este pornit și nu cere autentificare la nivel de rețea (fDenyTSConnections = 0, UserAuthentication = 0).", "Verificați regulile firewall pentru portul 3389 și politica de grup Terminal Services."),
+        // Planner #14 E2: more configuration rules from the same stored hives.
+        C("CFG-FIREWALL-OFF", "Registrul arată Windows Firewall oprit (EnableFirewall = 0) pentru unul sau mai multe profiluri; o valoare din politică are prioritate față de cea locală și constatarea spune care a decis.", "Verificați starea efectivă cu Get-NetFirewallProfile și dacă un alt produs de securitate preia rolul firewall-ului."),
+        C("CFG-REMOTEREGISTRY", "Serviciul Registru la distanță (RemoteRegistry) este configurat să pornească automat (Start = 2).", "Verificați starea serviciului cu Get-Service RemoteRegistry și dacă un produs de administrare îl cere."),
+        C("CFG-AUTOLOGON", "Logarea automată este pornită (AutoAdminLogon = 1); parola din DefaultPassword nu este afișată niciodată, doar existența ei. Fără DefaultPassword nevidă: logare automată fără parolă stocată în registru (parola poate fi în LSA secrets).", "Verificați doar că valoarea DefaultPassword există; nu o copiați și nu o notați."),
+        C("CFG-LOCALACCOUNT-TOKENFILTER", "Filtrarea jetonului conturilor locale este oprită (LocalAccountTokenFilterPolicy = 1): conturile locale de administrator se conectează prin rețea cu drepturi depline.", "Verificați dacă o unealtă de administrare la distanță cere setarea și cine a creat-o."),
+        C("CFG-ALWAYSINSTALLELEVATED", "Politica Windows Installer din HKLM cere instalarea cu drepturi ridicate (AlwaysInstallElevated = 1); pentru exploatare este nevoie și de valoarea din HKCU, care nu este citită aici.", "Verificați și HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer\\AlwaysInstallElevated în profilul fiecărui utilizator."),
+        C("CFG-SMB-SIGNING", "Serverul SMB nu cere semnarea mesajelor (RequireSecuritySignature = 0); Windows 11 24H2 o cere implicit, la versiuni mai vechi valoarea implicită diferă.", "Verificați cu Get-SmbServerConfiguration | Select RequireSecuritySignature, EnableSecuritySignature."),
+        // Planner #14 E6: unquoted service path from the services of the SYSTEM hive.
+        R("SVC-UNQUOTED-PATH", Corr, SemanticType.Configuration, "Un serviciu pornit automat sau manual are în ImagePath o cale cu spațiu, fără ghilimele, iar spațiul este înainte de „.exe”: Windows încearcă mai întâi căile mai scurte (de exemplu C:\\Program.exe), deci un fișier pus de cineva într-un folder din cale ar putea fi pornit în locul serviciului.",
+            ["Arată configurația din hive, nu că o cale mai scurtă a fost creată sau că serviciul a pornit.", "Exploatarea cere ca un utilizator să poată scrie în folderul din cale; drepturile pe foldere (ACL) nu sunt citite aici."],
+            ["Drepturile de scriere pe folderele din cale (icacls), existența unui fișier pe calea scurtă, semnătura binarului."],
+            ["Rulați sc qc \"<serviciu>\" și comparați BINARY_PATH_NAME cu citatul.", "Verificați cu icacls dacă utilizatorii obișnuiți pot scrie în folderele din cale."]),
     ];
 
     private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);

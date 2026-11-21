@@ -264,6 +264,22 @@ public static class Correlation
     }
 
     /// <summary>True when the executable of a command line (not its arguments) is in a user-writable location.</summary>
+    /// <summary>Planner #14 E6: an ImagePath that is not quoted, has a space, whose part before the first ".exe" contains a space, and that is not an NT / SystemRoot / System32 driver path.</summary>
+    public static bool IsUnquotedServicePath(string imagePath)
+    {
+        var p = (imagePath ?? "").Trim();
+        if (p.Length == 0 || p[0] == '"' || !p.Contains(' ')) return false;
+        if (p.StartsWith(@"\??\", StringComparison.Ordinal) || p.StartsWith(@"\SystemRoot\", StringComparison.OrdinalIgnoreCase) || p.StartsWith(@"System32\", StringComparison.OrdinalIgnoreCase)) return false;
+        int exe = p.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+        return exe > 0 && p[..exe].Contains(' ');
+    }
+
+    private static string UnquotedCandidate(string image)
+    {
+        int sp = image.IndexOf(' ');
+        return sp > 0 ? image[..sp] + ".exe" : image;
+    }
+
     public static bool IsUserWritableCommand(string command) => IsUserWritable(CommandExecutable(command));
 
     public static bool IsUserWritable(string path)
@@ -593,6 +609,25 @@ public static class Correlation
                 MissingEvidence = ["Instalarea (System 7045) și pornirile (7036), semnătura binarului."],
                 ContradictingEvidence = F(e, "StartMode").Equals("Disabled", StringComparison.OrdinalIgnoreCase)
                     ? ["Serviciul este dezactivat (Start=4): în această stare nu pornește singur."] : [],
+            });
+        }
+
+        // Planner #14 E6: services whose ImagePath has a space, no quotes, and the space is before ".exe" (the service control manager tries the shorter paths first). Facts from the configuration only.
+        foreach (var e in events.Where(e => e.Source == "Service" && F(e, "StartValue") is "2" or "3" && IsUnquotedServicePath(F(e, "ImagePath"))))
+        {
+            var image = F(e, "ImagePath").Trim();
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "SVC-UNQUOTED-PATH", Title = $"Serviciu cu calea programului cu spațiu și fără ghilimele: {e.Service}",
+                Severity = Severity.Medium, Category = "Configurație", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1574.009", FirstSeenUtc = e.Time.Utc, File = e.Path, User = e.User, SemanticType = SemanticType.Configuration,
+                PlainWhat = $"Serviciul {PlainPhrases.Q(e.Service)} are calea programului scrisă cu spații și fără ghilimele, deci Windows poate încerca mai întâi o cale mai scurtă din ea",
+                Description = $"{e.Service} ({F(e, "ServiceType")}, {F(e, "StartMode")}) are ImagePath = {image}. Calea conține spațiu înainte de „.exe” și nu este între ghilimele: Windows încearcă pe rând căile mai scurte (de exemplu {UnquotedCandidate(image)}) înainte de cea întreagă.",
+                ClassificationReason = "Valoarea ImagePath din hive-ul SYSTEM este citită direct; regula se bazează doar pe forma căii (spațiu, fără ghilimele, serviciu pornit automat sau manual). Arată configurația, nu o rulare și nu un fișier plantat.",
+                SupportingEvidence = [new EvidenceRef(e.EvidenceId, e.Locator, "configurație serviciu (ImagePath)", e.SourceSha256, $"ImagePath = {image}", "Registry LastWrite (cheie)", "Registry")],
+                AlternativeExplanations = ["Multe programe vechi sau instalate de mână își scriu calea așa, fără intenție rea.", "Dacă un utilizator obișnuit nu poate scrie în folderele din cale, calea nu poate fi folosită pentru ridicarea drepturilor."],
+                MissingEvidence = ["Drepturile de scriere pe folderele din cale (icacls) și existența unui fișier pe una dintre căile scurte; semnătura binarului."],
+                Limitations = ["Se arată doar configurația din hive la colectare; drepturile pe foldere (ACL-urile live) nu sunt verificate aici.", "Ora este ultima scriere a cheii serviciului, nu momentul instalării."],
             });
         }
 

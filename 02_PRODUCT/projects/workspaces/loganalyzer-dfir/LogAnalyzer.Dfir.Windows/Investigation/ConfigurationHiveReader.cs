@@ -18,6 +18,9 @@ public static class ConfigurationHiveReader
     public const string SubkeyHiveType = "software_subkey_hive";
     /// <summary>Evidence type of the JSON marker that proves a SOFTWARE subkey does not exist on the station ({"key":..., "exists":false, "checkedUtc":...}); OriginalPath = the key.</summary>
     public const string AbsentType = "software_subkey_absent";
+    /// <summary>Evidence type of the small JSON with the Winlogon autologon facts (Quick profile): AutoAdminLogon, DefaultUserName and whether DefaultPassword is present. The password itself is never in it.</summary>
+    public const string WinlogonType = "winlogon_autologon_json";
+    public const string SnapshotTimeSource = "Instantaneu la colectare";
 
     /// <summary>The subkey path below SOFTWARE of a subkey hive item (from OriginalPath, "HKLM\SOFTWARE\" prefix removed), or null when it does not name one.</summary>
     public static string? SubkeyOf(EvidenceItem item)
@@ -34,9 +37,9 @@ public static class ConfigurationHiveReader
     /// full-path locator (SOFTWARE\Microsoft\...\EnableLUA, so the "reg query" of the manual verification stays right) and carries the evidence id and SHA-256 of the subkey file it
     /// was read from. A probe whose subkey was not saved (or not readable) is not recorded, so the audit reports it as a gap. An unreadable subkey file is skipped (its probes become gaps).
     /// </summary>
-    public static ConfigHive ReadSoftwareSubkeys(IReadOnlyList<(EvidenceItem Item, string FullPath)> subkeyHives, IReadOnlyList<(EvidenceItem Item, string FullPath)>? absentMarkers = null)
+    public static ConfigHive ReadSoftwareSubkeys(IReadOnlyList<(EvidenceItem Item, string FullPath)> subkeyHives, IReadOnlyList<(EvidenceItem Item, string FullPath)>? absentMarkers = null, (EvidenceItem Item, string FullPath)? winlogon = null)
     {
-        var first = subkeyHives.Count > 0 ? subkeyHives[0].Item : absentMarkers![0].Item;
+        var first = subkeyHives.Count > 0 ? subkeyHives[0].Item : absentMarkers is { Count: > 0 } ? absentMarkers[0].Item : winlogon!.Value.Item;
         string origin = subkeyHives.All(x => x.Item.TemporalType == TemporalType.CurrentSnapshot) ? "" : (first.OriginalPath.Length > 0 ? first.OriginalPath : first.Source);
         var h = new ConfigHive { Hive = "SOFTWARE", EvidenceId = first.EvidenceId, Sha256 = first.Sha256, Origin = origin };
         // a subkey PROVEN absent (hashed marker, exists=false) has absent values: the rules'' default semantics, not a gap
@@ -48,6 +51,7 @@ public static class ConfigurationHiveReader
             foreach (var lk in ConfigurationAudit.ListKeys("SOFTWARE"))
                 if (RelOf(lk, asub) is not null) h.Lists["SOFTWARE\\" + lk] = new ConfigNames(null, null, item.EvidenceId, item.Sha256);
         }
+        if (winlogon is { } wl) ReadWinlogonJson(h, wl.Item, wl.FullPath);
         foreach (var (item, path) in subkeyHives)
         {
             if (SubkeyOf(item) is not { } sub) continue;
@@ -62,7 +66,7 @@ public static class ConfigurationHiveReader
                     if (Rel(p.Key, sub) is not { } rel) continue;
                     var key = reg.OpenKey(rel);
                     var v = key?.Value(p.Name);
-                    h.Values[p.Locator] = new ConfigValue(v?.AsText, key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)), item.EvidenceId, item.Sha256);
+                    h.Values[p.Locator] = new ConfigValue(ConfigurationAudit.ProbeText(p, v?.AsText), key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)), item.EvidenceId, item.Sha256);
                 }
                 foreach (var lk in ConfigurationAudit.ListKeys("SOFTWARE"))
                 {
@@ -78,6 +82,23 @@ public static class ConfigurationHiveReader
             }
         }
         return h;
+    }
+
+    /// <summary>The Winlogon JSON of the Quick profile gives the three autologon probes; the password is only "(prezentă)" or "". An unreadable or malformed file records nothing (the audit reports the gap).</summary>
+    private static void ReadWinlogonJson(ConfigHive h, EvidenceItem item, string path)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+            var r = doc.RootElement;
+            if (r.ValueKind != System.Text.Json.JsonValueKind.Object || !r.TryGetProperty("DefaultPasswordPresent", out var pp) || pp.ValueKind is not (System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False)) return;
+            string Str(string n) => r.TryGetProperty(n, out var e) && e.ValueKind == System.Text.Json.JsonValueKind.String ? e.GetString() ?? "" : "";
+            ConfigValue V(string? data) => new(data, null, item.EvidenceId, item.Sha256, SnapshotTimeSource);
+            h.Values[ConfigurationAudit.AutoAdminLogon.Locator] = V(Str("AutoAdminLogon") is { Length: > 0 } a ? a : null);
+            h.Values[ConfigurationAudit.DefaultUserName.Locator] = V(Str("DefaultUserName") is { Length: > 0 } u ? u : null);
+            h.Values[ConfigurationAudit.DefaultPassword.Locator] = V(pp.GetBoolean() ? ConfigurationAudit.SecretPresent : "");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
     }
 
     private static string? RelOf(string key, string sub) =>
@@ -122,7 +143,7 @@ public static class ConfigurationHiveReader
             var key = reg.OpenKey(p.Key);
             var v = key?.Value(p.Name);
             // a value that is not text or a number (binary, empty) is passed as its text ("" when it has none): the rule turns it into a gap
-            h.Values[p.Locator] = new ConfigValue(v is null ? null : v.AsText, key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)));
+            h.Values[p.Locator] = new ConfigValue(ConfigurationAudit.ProbeText(p, v is null ? null : v.AsText), key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)));
         }
         foreach (var lk in ConfigurationAudit.ListKeys(label))
         {

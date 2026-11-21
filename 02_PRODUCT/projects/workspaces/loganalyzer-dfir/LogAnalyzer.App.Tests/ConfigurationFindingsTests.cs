@@ -25,6 +25,7 @@ public sealed class ConfigurationFindingsTests : IDisposable
         V(ConfigurationAudit.RtpLocal, rtpLocal); V(ConfigurationAudit.RtpPolicy, rtpPolicy); V(ConfigurationAudit.AvPolicy, av);
         foreach (var key in ConfigurationAudit.ListKeys("SOFTWARE"))
             h.Lists["SOFTWARE\\" + key] = new ConfigNames(excl is not null && excl.TryGetValue(key, out var n) ? n : null, Written);
+        foreach (var p in ConfigurationAudit.Probes("SOFTWARE", "ControlSet001")) h.Values.TryAdd(p.Locator, new ConfigValue(null, Written));   // planner #14 E2 probes: absent unless a test sets them
         return h;
     }
 
@@ -34,6 +35,7 @@ public sealed class ConfigurationFindingsTests : IDisposable
         void V(ConfigProbe p, string? d) => h.Values[p.Locator] = new ConfigValue(d, Written);
         V(ConfigurationAudit.Smb1(cs), smb1); V(ConfigurationAudit.WDigest(cs), wdigest); V(ConfigurationAudit.Lsa(cs), ppl);
         V(ConfigurationAudit.RdpDeny(cs), deny); V(ConfigurationAudit.RdpNla(cs), nla);
+        foreach (var p in ConfigurationAudit.Probes("SYSTEM", cs)) h.Values.TryAdd(p.Locator, new ConfigValue(null, Written));   // planner #14 E2 probes: absent unless a test sets them
         return h;
     }
 
@@ -188,5 +190,25 @@ public sealed class ConfigurationFindingsTests : IDisposable
         Assert.Contains("(canal: Registry)", sec);
         Assert.Contains(@"reg query ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v EnableLUA", sec);
         Assert.Contains("Greșeli găsite: 2 (", text);
+    }
+    [Fact]
+    public void The_autologon_password_appears_nowhere_in_the_findings_or_the_pdf_text()
+    {
+        const string pwd = "Zx9-Secret-Passw0rd!";
+        var h = SoftwareHive();
+        void V(ConfigProbe p, string? raw) => h.Values[p.Locator] = new ConfigValue(ConfigurationAudit.ProbeText(p, raw), Written);   // what the reader stores
+        V(ConfigurationAudit.AutoAdminLogon, "1"); V(ConfigurationAudit.DefaultUserName, "kiosk"); V(ConfigurationAudit.DefaultPassword, pwd);
+        var res = Run(h);
+        var f = Assert.Single(res.Findings, x => x.RuleId == ConfigurationAudit.RuleAutologon);
+        Assert.Equal("AutoAdminLogon = 1; DefaultUserName = kiosk; DefaultPassword = (prezentă, nu se afișează)", f.SupportingEvidence[0].Quote);
+        Assert.DoesNotContain(pwd, System.Text.Json.JsonSerializer.Serialize(res));
+
+        var r = new InvestigationResult { Case = _k.Case(_k.File("a.bin", "alpha")) };
+        r.Findings.AddRange(FindingContract.Enrich(res.Findings, new FindingContractContext { NowUtc = Written, Zone = TimeZoneInfo.Utc }));
+        string text = "";
+        InvestigationReportPdf.TextObserver.Value = t => text = t;
+        InvestigationReportPdf.Write(r, Path.Combine(_k.Dir, Guid.NewGuid().ToString("N") + ".pdf"), "investigator");
+        Assert.Contains("DefaultPassword = (prezentă, nu se afișează)", text);
+        Assert.DoesNotContain(pwd, text);
     }
 }

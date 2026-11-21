@@ -221,11 +221,21 @@ public static class ManualVerification
             return $"reg query {Dq(path[..cut])} /v {(value.Any(char.IsWhiteSpace) ? Dq(value) : DqIfNeeded(value))}";
         }
         string what = tail is not null ? $"valoarea de sub SID-ul din {tail} trebuie să existe și să aibă conținutul din constatare" : "datele valorii (sau ale cheii) trebuie să fie cele din constatare" + quoteHint;
+        // planner #14 E2: the Winlogon DefaultPassword is a secret and the command prints it on screen: the step says to check only that the value exists
+        if (rel.EndsWith(@"\Winlogon\DefaultPassword", StringComparison.OrdinalIgnoreCase))
+            what = "verificați doar că valoarea există; nu o copiați pe hârtie și nu o fotografiați (comanda o afișează în clar pe ecran); constatarea nu conține parola";
+        else if (rel.EndsWith(@"\Winlogon\AutoAdminLogon", StringComparison.OrdinalIgnoreCase))
+            what = "valoarea AutoAdminLogon trebuie să fie 1; numele din DefaultUserName se verifică în aceeași cheie (reg query … /v DefaultUserName), iar existența parolei cu pasul pentru DefaultPassword" + quoteHint;
         string differs = "stația live poate fi diferită de cea de la colectare: o diferență nu infirmă copia din caz";
 
         if (live.Length > 0)
             steps.Add(new("PowerShell", QueryOf(live, tail), $"{what}; {differs}" + (hive is "NTUSER" or "UsrClass" ? "; HKCU este al utilizatorului cu care ești conectat, deci se potrivește doar dacă este contul din constatare" : ""), true));
-        if (stored is not null)
+        // planner #14 E6: a service key (SYSTEM\ControlSetNNN\Services\<name>) is also checked with the service control manager, which shows the path as Windows will use it
+        if (hive == "SYSTEM" && Regex.Match(rel, @"^ControlSet\d{3}\\Services\\([^\\]+)$") is { Success: true } svc)
+            steps.Add(new("PowerShell", $"sc.exe qc {Dq(svc.Groups[1].Value)}",
+                "linia BINARY_PATH_NAME trebuie să fie calea din constatare (cu sau fără ghilimele, după cum este scrisă); stația live poate fi diferită de cea de la colectare", true));
+        // planner #14 E2: the Quick Winlogon evidence is a small JSON, not a hive: no "reg load"; the live query and the hash of the JSON are the steps
+        if (stored is not null && item?.SourceType != "winlogon_autologon_json")
         {
             steps.Add(new("PowerShell", $"Copy-Item -LiteralPath {Sq(stored)} -Destination \"{WorkingCopy}\"; reg load {HiveKey} \"{WorkingCopy}\"",
                 "comanda trebuie să spună că operațiunea s-a terminat cu succes; se încarcă doar o copie de lucru a copiei din caz, nu originalul (rulează PowerShell ca administrator)", true));
