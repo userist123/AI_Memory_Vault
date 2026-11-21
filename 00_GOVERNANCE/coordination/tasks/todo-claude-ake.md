@@ -12,8 +12,11 @@
 - VAULT_STATE.md: two rows (AKE runner, closed_loop_learning)
 - Real-vault dry run: 498 notes, 6 overlap cases, no tracked file changed, second run reused
 
-## Next (Milestone 2)
-- Loop B: held-out v2 + loss funnel as an AKE stage (PAGINATION_CUT reranker hypothesis)
+## Done (Milestone 2)
+- Loop B stage retrieval_quality + compare (exact McNemar); baseline heldout v2 AI_AGENT k=5: 2/29
+
+## Next
+- Loop B: explain NEVER_CANDIDATE 17/29 (agent path vs VaultIndex candidate generator, R016 0.69)
 - Decide the 100-note consolidation cap (covers ~20% of eligible notes per run)
 - Reuse book_to_memory eval-integrity modules (leakage, paired stats, raters)
 

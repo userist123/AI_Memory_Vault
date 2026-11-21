@@ -2,11 +2,16 @@
 
 Milestone 1 supports the dry run only. Exit codes: 0 = COMPLETED, 3 = COMPLETED_WITH_SKIPS
 (storage could not read some note files; listed in the record), 1 = FAILED or STALE_SNAPSHOT,
-2 = usage (no --dry-run).
+2 = usage (no --dry-run) or missing HMAC secret when a benchmark runs.
+
+``python -m active_knowledge_engine compare BASELINE.json CANDIDATE.json`` compares the
+retrieval_quality stage of two job records (exact McNemar). Exit codes: 0 = NO_CHANGE,
+IMPROVED or INCONCLUSIVE, 4 = REGRESSED, 2 = NOT_COMPARABLE.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -25,7 +30,21 @@ def main(argv=None) -> int:
     run.add_argument("--dormant-days", type=int, default=60)
     run.add_argument("--stale-review-days", type=int, default=14)
     run.add_argument("--max-items", type=int, default=None)
+    run.add_argument("--benchmark", default=None,
+                     help="frozen benchmark JSON with a .sha256 sidecar; default: held-out v2 under the vault root, if present")
+    run.add_argument("--no-benchmark", action="store_true", help="skip the retrieval_quality stage")
+    run.add_argument("--k", type=int, default=5, help="agent page size (production memory_search default: 5)")
+    cmp = sub.add_parser("compare", help="paired comparison of two job records")
+    cmp.add_argument("baseline")
+    cmp.add_argument("candidate")
     args = parser.parse_args(argv)
+
+    if args.command == "compare":
+        from .compare import compare_records
+
+        result = compare_records(*(json.loads(open(p, encoding="utf-8").read()) for p in (args.baseline, args.candidate)))
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return {"NOT_COMPARABLE": 2, "REGRESSED": 4}.get(result["verdict"], 0)
 
     if not args.dry_run:
         print("only --dry-run is supported in AKE Milestone 1 (no memory writes)", file=sys.stderr)
@@ -42,17 +61,33 @@ def main(argv=None) -> int:
     from .runner import AKEShadowRunner, JobStatus
 
     vault = Path(args.vault_root).resolve()
+    benchmark = None
+    if not args.no_benchmark:
+        default = vault / "07_EVALUATION" / "heldout_retrieval_benchmark_v2" / "heldout.json"
+        benchmark = Path(args.benchmark) if args.benchmark else (default if default.is_file() else None)
+    if benchmark is not None:
+        # search() signs pagination tokens: same secret source as the MCP server and recall_cli
+        try:
+            vault_runtime.ensure_secret_in_env()
+        except (vault_runtime.VaultSecretMissing, vault_runtime.VaultSecretInvalid) as exc:
+            print(f"HMAC secret unavailable for the retrieval stage: {exc}", file=sys.stderr)
+            return 2
     out = Path(args.output_dir) if args.output_dir else vault / "08_OBSERVABILITY" / "active_knowledge_engine"
     controller = MemoryController(storage=FileStorageEngine(str(vault)))
     runner = AKEShadowRunner(controller, output_dir=out, vault_root=vault, dormant_days=args.dormant_days,
-                             stale_review_days=args.stale_review_days, max_items=args.max_items)
+                             stale_review_days=args.stale_review_days, max_items=args.max_items,
+                             benchmark_path=benchmark, k=args.k)
     record = runner.run(trigger=args.trigger)
     print(f"record={runner.output_dir / (record['job_id'] + '.json')}")
     print(f"status={record['status']} reused={record['reused_existing_record']} "
           f"skipped={record['storage']['skipped_count']}")
     for stage in record["stages"]:
-        count = stage.get("output", {}).get("case_count")
-        print(f"stage={stage['name']} status={stage['status']}" + (f" cases={count}" if count is not None else ""))
+        out = stage.get("output", {})
+        extra = f" cases={out['case_count']}" if "case_count" in out else ""
+        if stage["name"] == "retrieval_quality" and "summary" in out:
+            s = out["summary"]
+            extra = f" hits={s['hits']}/{s['n_measurable']} k={s['k']} misses={s['miss_classes']}"
+        print(f"stage={stage['name']} status={stage['status']}{extra}")
     return {JobStatus.COMPLETED.value: 0, JobStatus.COMPLETED_WITH_SKIPS.value: 3}.get(record["status"], 1)
 
 

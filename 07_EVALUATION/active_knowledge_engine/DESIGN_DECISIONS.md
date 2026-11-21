@@ -40,3 +40,32 @@ After review round 1 the run reports `COMPLETED_WITH_SKIPS` (exit 3): **387 `.md
 
 - the 100-note consolidation cap (`_DEFAULT_MAX_ITEMS_PER_RUN` in `sleep_consolidation.py`) means one run covers ~20% of the eligible notes; rotating or raising the cap is a Milestone 2 decision
 - Loop B (held-out v2 + loss funnel), Loop D (b2m harness), LLM analysts, scheduling, proposals
+
+## Milestone 2 — Loop B, retrieval quality (2026-11-21)
+
+Decisions taken under the same standing instruction:
+
+| Decision | Choice | Why |
+|---|---|---|
+| Benchmark | frozen held-out v2 (`heldout.json`), verified against its `.sha256` before any case runs; dev set not used for evaluation | v1 is invalid; held-out stays held-out |
+| Operating point | `MemoryController.search(AI_AGENT, query, page_size=5)`, the call behind `memory_search` | measure what an agent gets, not the owner view |
+| Miss taxonomy | `PAGINATION_CUT`, `FILTERED`, `NEVER_CANDIDATE`, `GOLD_NOT_IN_STORAGE`, `ABSTAIN_UNMEASURABLE` | separates a structural zero from a retrieval failure |
+| Comparison | exact McNemar on paired per-case hits; alpha 0.05 (convention, recorded in each result); refuses another digest, k or principal | no improvement claimed without a paired test on the same frozen set |
+| Thresholds | **none chosen** for "how much better is enough" | the owner's decision (handoff §9.2) |
+| Record content | case ids, classes, ranks; never query text or note content | held-out queries stay out of logs and prompts |
+
+### Baseline (real vault, 2026-11-21)
+
+`baselines/heldout_v2_ai_agent_k5.json`: **2/29 hits at k=5** (6.9%, Wilson 95% CI 1.9-22.0%), MRR@5 0.026.
+Misses: 17 `NEVER_CANDIDATE`, 10 `PAGINATION_CUT`, 0 `FILTERED`, 0 `GOLD_NOT_IN_STORAGE` (all 29 gold notes are in storage).
+By class: exact identifier 1/5, synonym 1/4, paraphrase 0/4, lexical trap 0/4, one-hop graph 0/12.
+Corroborated by R016 graph-off context recall, 2/29 (HUMAN, page 10).
+
+What this says, and what it does not:
+- The agent operating point retrieves almost nothing from held-out v2. The dominant loss here is
+  `NEVER_CANDIDATE` (17/29), not `PAGINATION_CUT` (10/29). The loss funnel's 71.6% `PAGINATION_CUT`
+  was measured on benchmark v3 (130 cases): a different population, so it is not contradicted.
+- R016 reports candidate recall 0.69 with a controller built on `VaultIndex`; the production agent path
+  (FileStorageEngine, no index) finds 12/29 as candidates. Why the two candidate generators differ is the
+  first open question for Loop B; nothing is changed here.
+- 29 measurable cases cannot resolve small effects: a change must flip several cases to be distinguishable.

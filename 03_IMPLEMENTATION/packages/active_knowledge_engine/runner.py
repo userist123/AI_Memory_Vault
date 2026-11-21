@@ -2,8 +2,9 @@
 
 Read-only by construction:
 - the only things it reads are the notes, through the controller's storage (``collect_notes``);
-- the stages are the production ``SleepConsolidator`` (which runs ``ConflictDetector``) and the
-  non-mutating ``ConflictReviewWorkflow``;
+- the stages are the production ``SleepConsolidator`` (which runs ``ConflictDetector``), the
+  non-mutating ``ConflictReviewWorkflow`` and, when a frozen benchmark is given, ``retrieval_quality``
+  (``MemoryController.search`` as AI_AGENT, read path only);
 - the only thing it writes is its own job record, and only outside the canonical content tree
   (a vault-relative output must sit under ``08_OBSERVABILITY/``).
 
@@ -25,6 +26,8 @@ from typing import Any, Dict, List, Optional
 
 from cognitive_core.conflict_review import ConflictReviewWorkflow
 from cognitive_core.sleep_consolidation import SleepConsolidator, collect_notes
+
+from .retrieval_quality import AGENT_PAGE_SIZE, canonical_digest, evaluate, load_frozen_benchmark
 
 SCHEMA_VERSION = "ake.job/1"
 ELIGIBLE_LIFECYCLES = frozenset({"ACTIVE", "VERIFIED", "REVIEW"})
@@ -101,7 +104,8 @@ def _error(exc: BaseException) -> str:
 
 class AKEShadowRunner:
     def __init__(self, controller, *, output_dir, vault_root, dormant_days: int = 60,
-                 stale_review_days: int = 14, max_items: Optional[int] = None):
+                 stale_review_days: int = 14, max_items: Optional[int] = None,
+                 benchmark_path=None, k: int = AGENT_PAGE_SIZE):
         self.controller = controller
         self.vault_root = Path(vault_root).resolve()
         self.output_dir = Path(output_dir).resolve()
@@ -109,6 +113,8 @@ class AKEShadowRunner:
         self.dormant_days = dormant_days
         self.stale_review_days = stale_review_days
         self.max_items = max_items
+        self.benchmark_path = Path(benchmark_path).resolve() if benchmark_path else None
+        self.k = k
 
     def _check_output_location(self) -> None:
         try:
@@ -123,12 +129,23 @@ class AKEShadowRunner:
     def _config(self, as_of: str) -> Dict[str, Any]:
         return {
             "schema_version": SCHEMA_VERSION,
-            "stages": list(STAGES),
+            "stages": list(STAGES) + (["retrieval_quality"] if self.benchmark_path else []),
             "dormant_days": self.dormant_days,
             "stale_review_days": self.stale_review_days,
             "max_items": self.max_items,
             "as_of_utc_date": as_of,
+            "benchmark": self.benchmark_path.name if self.benchmark_path else None,
+            "benchmark_sha256": self._benchmark_digest(),
+            "k": self.k,
         }
+
+    def _benchmark_digest(self) -> Optional[str]:
+        if not self.benchmark_path:
+            return None
+        try:
+            return canonical_digest(self.benchmark_path)
+        except OSError:
+            return None
 
     def run(self, *, trigger: str = "manual") -> Dict[str, Any]:
         if trigger not in TRIGGERS:
@@ -242,6 +259,19 @@ class AKEShadowRunner:
             except Exception as exc:
                 review.update(status="FAILED", error=_error(exc))
         stages.append(review)
+
+        if self.benchmark_path:
+            quality: Dict[str, Any] = {"name": "retrieval_quality", "component": "memory/controller.py::search (AI_AGENT)"}
+            try:
+                bench = load_frozen_benchmark(self.benchmark_path)
+                result = evaluate(self.controller, bench["cases"], k=self.k)
+                quality.update(status="COMPLETED", output={
+                    "benchmark": {"name": bench["name"], "file": bench["path"], "digest": bench["digest"]},
+                    **result,
+                })
+            except Exception as exc:
+                quality.update(status="FAILED", error=_error(exc))
+            stages.append(quality)
         return stages
 
     def _write(self, path: Path, record: Dict[str, Any]) -> None:
