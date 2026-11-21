@@ -9,7 +9,8 @@ Registrul: `core/adapters.ts` (`ADAPTERS`, `EXTERNAL_ADAPTERS`). Teste de compat
 2. **Importul nu scrie direct în proiect.** Un adaptor de import întoarce *candidați* cu proveniență (metodă, amprenta fișierului,
    strat/pagină, încredere). Utilizatorul îi aprobă; aplicarea trece prin `checkSnapshot`. Valorile lipsă rămân lipsă (art. 4).
 3. **Exportul e determinist.** Aceleași intrări → același text (data vine din parametri). Id-urile stabile se păstrează acolo unde
-   formatul permite (IFC: GlobalId derivat din id-ul elementului).
+   formatul permite (IFC: GlobalId derivat din id-ul proiectului și al elementului, în spații de nume separate; redenumirea
+   proiectului nu îl schimbă).
 4. **Fidelitatea e declarată.** Fiecare adaptor listează ce păstrează (`preserves`) și ce pierde (`loses`).
 5. **Licența și locul de rulare sunt declarate** (`implementation`, `runsIn`). Planurile nu se trimit în cloud (art. 14).
    O dependență nouă se adaugă doar după verificarea licenței, versiunii și a condițiilor de utilizare (ghidul §4.2, §10.8).
@@ -43,7 +44,8 @@ Testele din `tests/bim-adapters.test.ts` rulează automat orice adaptor de expor
 ## Verificare independentă a IFC
 
 Exportul IFC a fost deschis cu IfcOpenShell 0.9.0 (LGPL-3.0; instalat doar într-un mediu Python temporar pentru verificare,
-nu e dependență a produsului): `ifcopenshell.validate` fără nicio problemă de schemă, geometria construită pentru toate
+nu e dependență a produsului): `ifcopenshell.validate` cu regulile EXPRESS fără nicio problemă (enumerările `IfcSpace`
+verificate separat, fiindcă cititorul acceptă tăcut o valoare greșită), GlobalId-uri unice, geometria construită pentru toate
 elementele cu volum (proiectul de test: 12/12; proiectul demo din aplicație: 42/42), axa traseelor fără diametru construită
 ca curbă. Scriptul de verificare nu face parte din repository; pașii sunt în `FAZA0_INVENTAR.md` §4.
 

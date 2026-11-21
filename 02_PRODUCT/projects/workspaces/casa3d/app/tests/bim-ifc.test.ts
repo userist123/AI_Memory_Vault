@@ -46,3 +46,20 @@ test('IFC4: un singur set Casa3D_Element pe element (peretele structural are Loa
   const rels = [...t.matchAll(/IFCRELDEFINESBYPROPERTIES\('[^']+',\$,\$,\$,\((#\d+)\)/g)].map(m => m[1]);
   assert.equal(new Set(rels).size, rels.length, 'fiecare element are o singură relație de proprietăți');
 });
+
+// ---------- revizia finală ----------
+test('revizie: IfcSpace are CompositionType .ELEMENT. și PredefinedType .INTERNAL.; camerele, ușile și ferestrele au Casa3D_Element', () => {
+  const t = snapshotToIfc(ifcSnap(), cat, META).text;
+  assert.match(t, /IFCSPACE\('[^']{22}',\$,'Living',\$,\$,#\d+,#\d+,\$,\.ELEMENT\.,\.INTERNAL\.,\$\)/);
+  for (const id of ['r1', 'o1', 'o2']) assert.match(t, new RegExp(`IFCIDENTIFIER\\('${id}'\\)`), id);
+});
+test('revizie: id-uri care seamănă cu obiectele exportului sau se repetă între tipuri nu dau GlobalId duplicate', () => {
+  const s = ifcSnap(); s.floor.footings!.push({ id: 'site', x: 1, z: 1, w: 1, d: 1, depth: .5 }); s.floor.mepRuns![1]!.id = 'building';
+  s.floor.rooms[0]!.id = 'w2'; s.floor.walls[0]!.openings[1]!.id = 'o1';
+  const t = snapshotToIfc(s, cat, META).text, g = [...t.matchAll(/^#\d+=IFC\w+\('([0-9A-Za-z_$]{22})'/gm)].map(m => m[1]);
+  assert.equal(new Set(g).size, g.length);
+});
+test('revizie: GlobalId pleacă de la id-ul proiectului, deci redenumirea nu îl schimbă', () => {
+  const guid = (name: string) => { const s = ifcSnap(); s.name = name; return /IFCWALL\('([^']{22})'/.exec(snapshotToIfc(s, cat, { ...META, projectId: 'p-123' }).text)![1]; };
+  assert.equal(guid('Casa veche'), guid('Casa nouă'));
+});

@@ -51,8 +51,10 @@ Câmpuri noi în model, toate opționale (proiectele vechi rămân neschimbate, 
   verificarea coordonării și salvarea statusului (justificarea obligatorie refuză salvarea fără ea), vederile pe disciplină în 3D,
   exportul IFC (200 pentru proprietar, 404 pentru alt proiect).
 - Blender 5.2: scena exportată → obiectele în colecțiile disciplinelor, cu `c3d_id`.
-- IfcOpenShell 0.9.0: schema IFC4 fără probleme; geometria construită pentru toate elementele cu volum.
-- Două revizii independente (Opus): defectele găsite sunt corectate în commit-uri separate; afirmația „importul DXF oglindește
+- IfcOpenShell 0.9.0: schema IFC4 și regulile EXPRESS fără probleme; enumerările IfcSpace verificate; GlobalId unice
+  (162/162 pe proiectul demo); geometria construită pentru toate elementele cu volum (42/42).
+- Trei revizii independente (Opus): defectele găsite sunt corectate în commit-uri separate (între ele: argumentele IfcSpace
+  inversate, pe care validatorul nu le prinde, și coliziuni de GlobalId); afirmația „importul DXF oglindește
   planul” a fost verificată cu un test dus-întors și respinsă.
 
 ## 4. Cum se repetă verificarea IFC

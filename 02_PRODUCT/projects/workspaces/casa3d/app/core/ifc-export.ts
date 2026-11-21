@@ -37,12 +37,16 @@ const RUN_ENTITY: Record<MepSystem, { type: string; predefined: string }> = {
 
 export interface IfcExportResult { text: string; counts: Record<string, number>; skipped: { id: string; reason: string }[] }
 
-export function snapshotToIfc(s: Snapshot, cat: Catalog, meta: { fileName: string; timestamp: string }): IfcExportResult {
+export function snapshotToIfc(s: Snapshot, cat: Catalog, meta: { fileName: string; timestamp: string; projectId?: string }): IfcExportResult {
   const lines: string[] = []; let n = 0;
   const e = (body: string) => { n++; lines.push(`#${n}=${body};`); return `#${n}`; };
   const counts: Record<string, number> = {}, skipped: { id: string; reason: string }[] = [];
   const count = (t: string) => { counts[t] = (counts[t] ?? 0) + 1; };
-  const key = (id: string) => ifcGuid(`${s.name}|${id}`), list = (xs: string[]) => `(${xs.join(',')})`;
+  // GlobalId: din id-ul proiectului (numele doar dacă id-ul lipsește), în spații de nume separate: `sys|…` pentru obiectele
+  // exportului (proiect, teren, relații), `el|<tip>|<id>` pentru elemente; un id repetat primește un sufix determinist
+  const P = meta.projectId ?? s.name, used = new Set<string>(), list = (xs: string[]) => `(${xs.join(',')})`;
+  const key = (k: string) => ifcGuid(`${P}|sys|${k}`);
+  const elKey = (type: string, id: string) => { let g = ifcGuid(`${P}|el|${type}|${id}`); for (let k = 2; used.has(g); k++) g = ifcGuid(`${P}|el|${type}|${id}|${k}`); used.add(g); return g; };
   const pt3 = (x: number, y: number, z: number) => e(`IFCCARTESIANPOINT((${real(x)},${real(y)},${real(z)}))`);
   const pt2 = (x: number, y: number) => e(`IFCCARTESIANPOINT((${real(x)},${real(y)}))`);
   const dir3 = (x: number, y: number, z: number) => e(`IFCDIRECTION((${real(x)},${real(y)},${real(z)}))`);
@@ -64,10 +68,10 @@ export function snapshotToIfc(s: Snapshot, cat: Catalog, meta: { fileName: strin
   const rectSolid = (len: number, width: number, height: number, cx = 0, cy = 0) =>
     e(`IFCEXTRUDEDAREASOLID(${e(`IFCRECTANGLEPROFILEDEF(.AREA.,$,${e(`IFCAXIS2PLACEMENT2D(${pt2(cx, cy)},$)`)},${real(len)},${real(width)})`)},${ax3(pt3(0, 0, 0))},${dir3(0, 0, 1)},${real(height)})`);
   /** element cu placement propriu: (x, y) în planul IFC, z = baza, direcția axei locale x = (ux, uy) */
-  const props = (elId: string, id: string, extra: string[]) => {
+  const props = (elId: string, guid: string, id: string, extra: string[]) => {
     const p = [e(`IFCPROPERTYSINGLEVALUE('ElementId',$,IFCIDENTIFIER(${stepString(id)}),$)`), ...extra];
-    const ps = e(`IFCPROPERTYSET('${key('pset|' + id)}',$,'Casa3D_Element',$,${list(p)})`);
-    e(`IFCRELDEFINESBYPROPERTIES('${key('rel-pset|' + id)}',$,$,$,(${elId}),${ps})`);
+    const ps = e(`IFCPROPERTYSET('${key('pset|' + guid)}',$,'Casa3D_Element',$,${list(p)})`);
+    e(`IFCRELDEFINESBYPROPERTIES('${key('rel-pset|' + guid)}',$,$,$,(${elId}),${ps})`);
   };
   const disc = new Map(elementIndex(s).map(x => [x.elementId, x.discipline]));
   const label = (name: string, v: string) => e(`IFCPROPERTYSINGLEVALUE('${name}',$,IFCLABEL(${stepString(v)}),$)`);
@@ -78,27 +82,28 @@ export function snapshotToIfc(s: Snapshot, cat: Catalog, meta: { fileName: strin
     const stPl = place(bldPl, 0, 0, elev), storey = e(`IFCBUILDINGSTOREY('${key('storey|' + f.id)}',$,${stepString(f.name || (li === 0 ? 'Parter' : `Nivel ${li}`))},$,$,${stPl},$,$,.ELEMENT.,${real(elev)})`);
     count('IFCBUILDINGSTOREY'); const contained: string[] = [], spaces: string[] = [];
     const elem = (type: string, id: string, name: string, x: number, y: number, z: number, ux: number, uy: number, rep: string | null, predefined = '.NOTDEFINED.', extra: string[] = []) => {
-      const pl = place(stPl, x, y, z, ux, uy), el = e(`${type}('${key(id)}',$,${stepString(name)},$,$,${pl},${rep ?? '$'},${stepString(id)},${predefined})`);
-      count(type); contained.push(el); props(el, id, [label('Discipline', disc.get(id) ?? 'architecture'), ...extra]); return { el, pl };
+      const g = elKey(type, id), pl = place(stPl, x, y, z, ux, uy), el = e(`${type}('${g}',$,${stepString(name)},$,$,${pl},${rep ?? '$'},${stepString(id)},${predefined})`);
+      count(type); contained.push(el); props(el, g, id, [label('Discipline', disc.get(id) ?? 'architecture'), ...extra]); return { el, pl };
     };
     // camere
     for (const r of f.rooms) { const poly = (r.boundary && r.boundary.length >= 3 ? r.boundary : [[r.rect.x0, r.rect.z0], [r.rect.x1, r.rect.z0], [r.rect.x1, r.rect.z1], [r.rect.x0, r.rect.z1]]) as [number, number][];
       const pts = [...poly, poly[0]!].map(([x, z]) => pt2(x, -z)), prof = e(`IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,$,${e(`IFCPOLYLINE(${list(pts)})`)})`);
       const solid = e(`IFCEXTRUDEDAREASOLID(${prof},${ax3(pt3(0, 0, 0))},${dir3(0, 0, 1)},${real(H)})`);
-      const sp = e(`IFCSPACE('${key(r.id)}',$,${stepString(r.name)},$,$,${place(stPl, 0, 0, 0)},${shape([solid])},${stepString(r.id)},.INTERNAL.,.SPACE.,$)`);
-      count('IFCSPACE'); spaces.push(sp); }
+      // IFC4 IfcSpace: …, LongName, CompositionType (.ELEMENT.), PredefinedType (.INTERNAL.), ElevationWithFlooring
+      const sg = elKey('IFCSPACE', r.id), sp = e(`IFCSPACE('${sg}',$,${stepString(r.name)},$,$,${place(stPl, 0, 0, 0)},${shape([solid])},$,.ELEMENT.,.INTERNAL.,$)`);
+      count('IFCSPACE'); spaces.push(sp); props(sp, sg, r.id, [label('Discipline', 'architecture')]); }
     // pereți și goluri
     for (const w of f.walls) { if (w.status === 'demolish') continue; const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]); if (L < 1e-6) continue;
       const ux = (w.b[0] - w.a[0]) / L, uy = -(w.b[1] - w.a[1]) / L;
       const { el, pl } = elem('IFCWALL', w.id, w.structural ? 'Perete structural' : 'Perete', w.a[0], -w.a[1], 0, ux, uy, shape([rectSolid(L, w.thickness, H, L / 2, 0)]), '.STANDARD.',
         w.structural ? [e(`IFCPROPERTYSINGLEVALUE('LoadBearing',$,IFCBOOLEAN(.T.),$)`)] : []);   // în același set: un singur Casa3D_Element pe element
-      for (const o of w.openings) { const door = o.kind === 'door', y0 = door ? 0 : o.sill ?? .9, h = door ? Math.min(H, o.height ?? DOOR_HEIGHT) : Math.min(H - y0, o.height ?? 1.3);
-        const opPl = e(`IFCLOCALPLACEMENT(${pl},${ax3(pt3(0, 0, y0))})`);
-        const op = e(`IFCOPENINGELEMENT('${key('void|' + o.id)}',$,'Gol',$,$,${opPl},${shape([rectSolid(o.width, w.thickness + .1, h, o.offset + o.width / 2, 0)])},$,.OPENING.)`);
-        e(`IFCRELVOIDSELEMENT('${key('rel-void|' + o.id)}',$,$,$,${el},${op})`); count('IFCOPENINGELEMENT');
-        const fill = door ? e(`IFCDOOR('${key(o.id)}',$,'Usa',$,$,${opPl},$,${stepString(o.id)},${real(h)},${real(o.width)},.DOOR.,$,$)`)
-          : e(`IFCWINDOW('${key(o.id)}',$,'Fereastra',$,$,${opPl},$,${stepString(o.id)},${real(h)},${real(o.width)},.WINDOW.,$,$)`);
-        count(door ? 'IFCDOOR' : 'IFCWINDOW'); contained.push(fill); e(`IFCRELFILLSELEMENT('${key('rel-fill|' + o.id)}',$,$,$,${op},${fill})`); } }
+      for (const o of w.openings) { const door = o.kind === 'door', y0 = door ? 0 : o.sill ?? .9, h = door ? Math.min(H - .05, o.height ?? DOOR_HEIGHT) : Math.min(H - .05 - y0, o.height ?? 1.3);   // buiandrug de 5 cm, ca în vederea 3D
+        const fg = elKey(door ? 'IFCDOOR' : 'IFCWINDOW', o.id), opPl = e(`IFCLOCALPLACEMENT(${pl},${ax3(pt3(0, 0, y0))})`);
+        const op = e(`IFCOPENINGELEMENT('${key(`void|${fg}`)}',$,'Gol',$,$,${opPl},${shape([rectSolid(o.width, w.thickness + .1, h, o.offset + o.width / 2, 0)])},$,.OPENING.)`);
+        e(`IFCRELVOIDSELEMENT('${key(`rel-void|${fg}`)}',$,$,$,${el},${op})`); count('IFCOPENINGELEMENT');
+        const fill = door ? e(`IFCDOOR('${fg}',$,'Usa',$,$,${opPl},$,${stepString(o.id)},${real(h)},${real(o.width)},.DOOR.,$,$)`)
+          : e(`IFCWINDOW('${fg}',$,'Fereastra',$,$,${opPl},$,${stepString(o.id)},${real(h)},${real(o.width)},.WINDOW.,$,$)`);
+        count(door ? 'IFCDOOR' : 'IFCWINDOW'); contained.push(fill); props(fill, fg, o.id, [label('Discipline', 'architecture')]); e(`IFCRELFILLSELEMENT('${key(`rel-fill|${fg}`)}',$,$,$,${op},${fill})`); } }
     // structură
     for (const c of f.columns ?? []) { if ((c.role ?? 'structural') !== 'structural') continue; const h = Math.min(H, c.height ?? H);
       const rep = c.shape === 'round' ? shape([e(`IFCEXTRUDEDAREASOLID(${e(`IFCCIRCLEPROFILEDEF(.AREA.,$,${e(`IFCAXIS2PLACEMENT2D(${pt2(0, 0)},$)`)},${real(c.w / 2)})`)},${ax3(pt3(0, 0, 0))},${dir3(0, 0, 1)},${real(h)})`)]) : shape([rectSolid(c.w, c.d, h)]);
@@ -123,9 +128,9 @@ export function snapshotToIfc(s: Snapshot, cat: Catalog, meta: { fileName: strin
           items.push(e(`IFCEXTRUDEDAREASOLID(${e(`IFCCIRCLEPROFILEDEF(.AREA.,$,${e(`IFCAXIS2PLACEMENT2D(${pt2(0, 0)},$)`)},${real(rad)})`)},${pos},${dir3(0, 0, 1)},${real(L)})`)); }
         rep = shape(items); }
       else rep = shape([e(`IFCPOLYLINE(${list(r.points.map(p => pt3(p[0], -p[2], p[1])))})`)], 'Axis', 'Curve3D', axisCtx);
-      const pl = place(stPl, 0, 0, 0), el = e(`${T.type}('${key(r.id)}',$,${stepString(r.system)},$,$,${pl},${rep},${stepString(r.id)},${T.predefined})`);
+      const rg = elKey(T.type, r.id), pl = place(stPl, 0, 0, 0), el = e(`${T.type}('${rg}',$,${stepString(r.system)},$,$,${pl},${rep},${stepString(r.id)},${T.predefined})`);
       count(T.type); contained.push(el);
-      props(el, r.id, [label('Discipline', disc.get(r.id) ?? 'plumbing'), label('System', r.system),
+      props(el, rg, r.id, [label('Discipline', disc.get(r.id) ?? 'plumbing'), label('System', r.system),
         ...(r.diameterMm ? [e(`IFCPROPERTYSINGLEVALUE('NominalDiameterMm',$,IFCPOSITIVELENGTHMEASURE(${real(r.diameterMm / 1000)}),$)`)] : [label('NominalDiameter', 'UNKNOWN')]),
         ...(r.material ? [label('Material', r.material)] : []), ...(r.slopePct != null ? [e(`IFCPROPERTYSINGLEVALUE('SlopePct',$,IFCREAL(${real(r.slopePct)}),$)`)] : [])]); }
     if (spaces.length) e(`IFCRELAGGREGATES('${key('agg-storey|' + f.id)}',$,$,$,${storey},${list(spaces)})`);
