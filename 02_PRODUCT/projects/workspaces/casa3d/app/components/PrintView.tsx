@@ -26,7 +26,7 @@ import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
 import { nicheGeometry } from '@/core/niches';
-import { dimGeometry, textHeight } from '@/core/annotations';
+import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt } from '@/core/annotations';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { localizeSnapshotRoomNames } from '@/core/templates';
@@ -51,7 +51,11 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
     {(f.columns ?? []).filter(c => c.role === 'shaft' || c.role === 'boxing').map(c => <g key={c.id} stroke="#333" strokeWidth={fs(0.2)} fill="#f4f1ea"><rect x={c.x - c.w / 2} y={c.z - c.d / 2} width={c.w} height={c.d} />
       {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
     {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
-    {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text') return <text key={an.id} x={an.at[0]} y={an.at[1]} fontSize={textHeight(an)} fill="#222" transform={an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined}>{an.text}</text>;
+    {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text'){ const ta = textAnchorAt(an), lg = leaderGeometry(an), rot = an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined;
+        // săgeata cu notă (linie + vârf plin) și simbolul cotei de nivel (triunghi), apoi textul
+        return <g key={an.id}>{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="#222" strokeWidth={fs(0.15)} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill="#222" /></>}
+          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).tri.map(q => q.join(' ')).join('L')}Z`} fill="none" stroke="#222" strokeWidth={fs(0.15)} transform={rot} />}
+          <text x={ta[0]} y={ta[1]} fontSize={textHeight(an)} fill="#222" textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} transform={rot}>{an.text}</text></g>; }
       const g = dimGeometry(an), [nx, nz] = g.n, s = Math.sign(an.offset) || 1, tk = fs(1.2), m = [g.mid[0] + nx * s * fs(2), g.mid[1] + nz * s * fs(2)];
       return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)}><line x1={an.a[0]} y1={an.a[1]} x2={g.p1[0]} y2={g.p1[1]} /><line x1={an.b[0]} y1={an.b[1]} x2={g.p2[0]} y2={g.p2[1]} /><line x1={g.p1[0]} y1={g.p1[1]} x2={g.p2[0]} y2={g.p2[1]} />
         {[g.p1, g.p2].map((q, k) => <line key={k} x1={q[0] - (g.u[0] + nx) * tk / 2} y1={q[1] - (g.u[1] + nz) * tk / 2} x2={q[0] + (g.u[0] + nx) * tk / 2} y2={q[1] + (g.u[1] + nz) * tk / 2} />)}

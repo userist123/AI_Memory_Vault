@@ -33,6 +33,8 @@ describe('ordinea câmpurilor din inspector', () => {
       {
         "annotation": [
           "tool.dim",
+          "tool.level_mark",
+          "tool.leader",
           "tool.text",
           "dim.offset",
           "dim.mode",

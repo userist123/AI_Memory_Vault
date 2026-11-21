@@ -89,7 +89,7 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   if (runs.length) groups.push({ id: 'services', title: t('mirror.services'), items: runs });
   // cotele și textele planșei, în ordinea citirii
   const notes = [...(f.annotations ?? [])].sort((a, b) => { const [ax, az] = annotationCenter(a), [bx, bz] = annotationCenter(b); return ord({ x: ax, z: az, id: a.id }, { x: bx, z: bz, id: b.id }); })
-    .map((a): MirrorItem => ({ kind: 'annotation', id: a.id, label: a.kind === 'dim' ? t(a.mode === 'ortho' ? 'mirror.dimOrtho' : 'mirror.dim', { len: L(dimGeometry(a).value) }) : t('mirror.text', { text: a.text }) }));
+    .map((a): MirrorItem => ({ kind: 'annotation', id: a.id, label: a.kind === 'dim' ? t(a.mode === 'ortho' ? 'mirror.dimOrtho' : 'mirror.dim', { len: L(dimGeometry(a).value) }) : t(a.symbol === 'level' ? 'mirror.level' : a.leader ? 'mirror.leader' : 'mirror.text', { text: a.text }) }));
   if (notes.length) groups.push({ id: 'notes', title: t('mirror.notes'), items: notes });
   return groups;
 }

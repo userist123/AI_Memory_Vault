@@ -190,7 +190,10 @@ export function sanitizeAnnotation(a: any): Annotation | null {
     if (a.rotation != null && !num(a.rotation)) bad('Rotația textului este invalidă.');
     if (typeof a.text !== 'string') bad('Textul de pe plan este invalid.');
     const text = cleanPlanText(a.text); if (!text) return null;
-    return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}) }; }
+    // câmpurile opționale ale săgeții cu notă și ale cotei de nivel: vârful = două numere finite în pătratul planului, simbolul
+    // doar 'level'; o valoare stricată se elimină (adnotarea rămâne text simplu), nu blochează salvarea
+    return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}),
+      ...(pt(a.leader) ? { leader: [a.leader[0], a.leader[1]] as [number, number] } : {}), ...(a.symbol === 'level' ? { symbol: 'level' as const } : {}) }; }
   return bad('Tipul adnotării este invalid.');
 }
 /** Curăță pe loc stâlpii, grinzile, pereții de sticlă, nișele și adnotările unui nivel: doar câmpurile modelului, limite

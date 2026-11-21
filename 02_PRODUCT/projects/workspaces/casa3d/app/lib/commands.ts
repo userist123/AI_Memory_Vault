@@ -32,7 +32,9 @@ export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; met
 const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', demolish: 'y', floor_zone: 'z', stair: 'e', measure: 'm', tech: 'i',
   ceiling_zone: { key: 'z', shift: true }, railing: { key: 'y', shift: true },
   // navigarea și uneltele de decor / împărțire: Shift + litera uneltei înrudite (V selecție, M măsoară, X pe perete, K placare, C cameră)
-  pan: { key: 'v', shift: true }, zoom_area: { key: 'm', shift: true }, rug: { key: 'x', shift: true }, style_copy: { key: 'k', shift: true }, split: { key: 'c', shift: true } };
+  pan: { key: 'v', shift: true }, zoom_area: { key: 'm', shift: true }, rug: { key: 'x', shift: true }, style_copy: { key: 'k', shift: true }, split: { key: 'c', shift: true },
+  // adnotările noi: Shift + litera uneltei înrudite (B text, Q cotă)
+  leader: { key: 'b', shift: true }, level_mark: { key: 'q', shift: true } };
 const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 

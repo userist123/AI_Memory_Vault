@@ -20,7 +20,7 @@ import { doorSwing } from '@/core/doors';
 import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
 import { wallItemGeometry, wallItemDepth } from '@/core/wall-items';
-import { dimGeometry, dimOffsetAt, dimOk, textHeight } from '@/core/annotations';
+import { dimGeometry, dimOffsetAt, dimOk, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, moveAnnotation } from '@/core/annotations';
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
 import type { DimAnnotation } from '@/core/types';
 import { allFixturePoints } from '@/core/fixtures';
@@ -40,9 +40,12 @@ import { PLAN_LIMITS as LIM } from '@/core/plan-limits';
 import { railingHeight, railingKind } from '@/core/railings';
 import { roomRugs, rugSize, rugRectAt } from '@/core/textiles';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split';
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'pan' | 'zoom_area' | 'rug' | 'style_copy' | 'split' | 'leader' | 'level_mark';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
+export type TextExtra = { leader?: [number, number]; symbol?: 'level' };
+/** uneltele care deschid câmpul de text de pe plan */
+const TEXT_TOOLS: Tool[] = ['text', 'leader', 'level_mark'];
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
   frame?: { sel: Sel; n: number; at: number };
@@ -58,7 +61,8 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** unealta „Pe perete”: clic lângă perete, pe fața pe care stă obiectul; `showWallItems` = false le ascunde (Releveu) */
   onAddWallItem?(wallId: string, offset: number, side: 1 | -1): void; showWallItems?: boolean;
   onAddDim?(a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho'): void;
-  onAddText?(at: [number, number], text: string): void;
+  /** `extra`: vârful săgeții („Săgeată cu notă”) sau simbolul cotei de nivel; lipsă = text simplu */
+  onAddText?(at: [number, number], text: string, extra?: TextExtra): void;
   /** unealta „Demolare”: clic pe perete comută starea lui (existent ↔ de demolat) */
   onToggleDemolish?(wallId: string): void;
   /** unealta „Zonă pardoseală”: dreptunghiul tras (sau clic-clic / dimensiuni tastate), ca la cameră */
@@ -126,8 +130,11 @@ export default function PlanView(p: Props){
   useEffect(() => { setCladDraft(null); }, [p.tool]);
   const [dimDraft, setDimDraft] = useState<{ a: [number, number]; b?: [number, number]; mode: 'aligned' | 'ortho' } | null>(null);
   // textul în lucru: caseta de editare stă peste plan, la locul clicului (Enter confirmă, Esc renunță)
-  const [textDraft, setTextDraft] = useState<{ at: [number, number]; left: number; top: number } | null>(null), [textVal, setTextVal] = useState(''), textInput = useRef<HTMLInputElement>(null), textClosed = useRef(false);
+  const [textDraft, setTextDraft] = useState<{ at: [number, number]; left: number; top: number; extra?: TextExtra } | null>(null), [textVal, setTextVal] = useState(''), textInput = useRef<HTMLInputElement>(null), textClosed = useRef(false);
   useEffect(() => { if (textDraft) textInput.current?.focus(); }, [textDraft]);
+  // „Săgeată cu notă”: primul clic = vârful săgeții (pe obiectul adnotat); al doilea deschide câmpul de text în locul notei
+  const [leaderTip, setLeaderTip] = useState<[number, number] | null>(null);
+  useEffect(() => { setLeaderTip(null); }, [p.tool]);
   // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
   useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setMenu(null); setDim(null); }, [p.tool]);
@@ -216,7 +223,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setTyped(''); setZoomDraft(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCladDraft(null); setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setLeaderTip(null); setTyped(''); setZoomDraft(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -242,8 +249,14 @@ export default function PlanView(p: Props){
       else if (!dimDraft.b){ if (dimOk(dimDraft.a, s, dimDraft.mode)){ setDimDraft({ ...dimDraft, b: s }); setTyped(''); } }
       else finishDim(dimOffsetAt(dimDraft.a, dimDraft.b, dimDraft.mode, pt)); return; }
     // preventDefault oprește blur-ul inputului: un text deja tastat se plasează aici (clicul nu-l pierde), apoi unealta revine la selecție
-    if (p.tool === 'text' && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; p.onAddText?.(textDraft.at, cleanPlanText(textVal)); setTextDraft(null); svg.current?.focus(); return; }
-    if (p.tool === 'text'){ e.preventDefault(); const par = svg.current!.parentElement!.getBoundingClientRect(); setTextVal(''); setTextDraft({ at: [r3(pt[0]), r3(pt[1])], left: e.clientX - par.left, top: e.clientY - par.top }); return; }
+    if (TEXT_TOOLS.includes(p.tool) && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; p.onAddText?.(textDraft.at, cleanPlanText(textVal), textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); return; }
+    // săgeata cu notă: primul clic e vârful; fără text tastat, un clic nou mută doar locul notei (vârful rămâne)
+    if (p.tool === 'leader' && !leaderTip){ e.preventDefault(); setTextDraft(null); setLeaderTip([r3(pt[0]), r3(pt[1])]); svg.current!.focus({ preventScroll: true }); return; }
+    // câmpul pornește gol și la cota de nivel: valoarea o tastează omul (nimic precompletat)
+    if (TEXT_TOOLS.includes(p.tool)){ e.preventDefault(); const par = svg.current!.parentElement!.getBoundingClientRect(); setTextVal('');
+      // un vârf sub 2 cm de notă nu s-ar vedea: nota rămâne text simplu, fără o săgeată invizibilă
+      const extra: TextExtra | undefined = p.tool === 'leader' && leaderTip && Math.hypot(leaderTip[0] - pt[0], leaderTip[1] - pt[1]) >= .02 ? { leader: leaderTip } : p.tool === 'level_mark' ? { symbol: 'level' } : undefined;
+      setTextDraft({ at: [r3(pt[0]), r3(pt[1])], left: e.clientX - par.left, top: e.clientY - par.top, ...(extra ? { extra } : {}) }); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'demolish'){ const w = nearestWall(pt); if (w) p.onToggleDemolish?.(w.id); return; }
     if (p.tool === 'rug'){ p.onAddRugAt?.(roomAt(pt)?.id ?? null, Math.round(pt[0] * 100) / 100, Math.round(pt[1] * 100) / 100); return; }
@@ -271,6 +284,8 @@ export default function PlanView(p: Props){
       if (last && last.id === id && e.timeStamp - last.at < 500){ dimClick.current = null; p.onSelect({ kind: 'wall', id }); setTimeout(() => openDim(id), 0); return; } }
     if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
     if (kind === 'handle'){ drag.current = { kind, wallId: t.dataset.w, end: t.dataset.end, start: pt, moved: false }; }
+    // vârful săgeții cu notă: se trage separat de text; selecția rămâne pe adnotare, iar up / cancelDrag trimit 'end'
+    else if (kind === 'leadertip'){ drag.current = { kind, id, start: pt, moved: false, orig: null }; }
     else if (kind === 'redge'){ drag.current = { kind, id, edge: t.dataset.edge, start: pt, moved: false, orig: null }; }
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
     else { p.onSelect({ kind: kind as any, id }); drag.current = { kind, id, start: pt, moved: false, orig: null }; }
@@ -313,8 +328,9 @@ export default function PlanView(p: Props){
         b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; }
       else if (d.kind === 'handle'){ const b = s.floor.walls.find(x => x.id === d.wallId)!; const other = d.end === 'a' ? b.b : b.a; const np = snapDraw(pt, { floor: { walls: s.floor.walls.filter(w => w.id !== d.wallId) }, anchor: other, free: e.shiftKey }).p;
         if (d.end === 'a') b.a = np; else b.b = np; }
-      else if (d.kind === 'annotation'){ const a = o.floor.annotations?.find(x => x.id === d.id), b = s.floor.annotations?.find(x => x.id === d.id), ddx = snapG(dx), ddz = snapG(dz), mv = (q: [number, number]): [number, number] => [r3(q[0] + ddx), r3(q[1] + ddz)];
-        if (a?.kind === 'dim' && b?.kind === 'dim'){ b.a = mv(a.a); b.b = mv(a.b); } else if (a?.kind === 'text' && b?.kind === 'text') b.at = mv(a.at); }
+      // adnotarea se mută întreagă: cota cu ambele capete, textul cu vârful săgeții lui (core/annotations.ts)
+      else if (d.kind === 'annotation'){ const a = o.floor.annotations?.find(x => x.id === d.id), b = s.floor.annotations?.find(x => x.id === d.id); if (a && b) moveAnnotation(b, a, snapG(dx), snapG(dz)); }
+      else if (d.kind === 'leadertip'){ const b = s.floor.annotations?.find(x => x.id === d.id); if (b?.kind === 'text' && b.leader) b.leader = [r3(pt[0]), r3(pt[1])]; }
       else if (d.kind === 'wall_item'){ const it = s.floor.wallItems?.find(x => x.id === d.id), g = it && wallItemGeometry(s.floor, it); if (it && g){ const sAlong = (pt[0] - g.wall.a[0]) * g.ux + (pt[1] - g.wall.a[1]) * g.uz; it.offset = r3(Math.max(it.width / 2, Math.min(g.L - it.width / 2, snapG(sAlong)))); } }
       else if (d.kind === 'niche'){ const n = s.floor.niches?.find(x => x.id === d.id), g = n && nicheGeometry(s.floor, n); if (n && g){ const sAlong = (pt[0] - g.wall.a[0]) * g.ux + (pt[1] - g.wall.a[1]) * g.uz; n.offset = r3(Math.max(0, Math.min(g.L - n.width, snapG(sAlong - n.width / 2)))); } }
       else if (d.kind === 'opening'){ const w = s.floor.walls.find(x => x.id === d.wallId)!, op = w.openings.find(x => x.id === d.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
@@ -542,9 +558,20 @@ export default function PlanView(p: Props){
         <text x={lx} y={lz + fs * .22} textAnchor="middle" fontSize={fs * .55} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={ink} stroke="#FFFDF8" strokeWidth={fs * .12} paintOrder="stroke" pointerEvents="none">{t(`wallItem.code.${it.kind}`)}</text></g>); })}
     {/* Cote persistente și texte de pe planșă */}
     {(floor.annotations || []).map(an => { const on = isSel('annotation', an.id), ink = on ? '#8B6A45' : DIM;
-      if (an.kind === 'text') return (<text key={an.id} data-k="annotation" data-id={an.id} x={an.at[0]} y={an.at[1]} fontSize={textHeight(an)} transform={an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined} fontFamily="Instrument Sans, Segoe UI, sans-serif"
-        fill={on ? '#8B6A45' : '#1A141C'} stroke={HALO} strokeWidth={textHeight(an) * .18} paintOrder="stroke" textDecoration={on ? 'underline' : undefined} style={{ cursor: 'move' }}>{an.text}</text>);
+      if (an.kind === 'text'){ const h = textHeight(an), ta = textAnchorAt(an), lg = leaderGeometry(an), rot = an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined, col = on ? '#8B6A45' : '#1A141C';
+        // săgeata cu notă (linie + vârf plin, cu o zonă de prindere mai lată) și simbolul cotei de nivel fac parte din aceeași adnotare
+        return (<g key={an.id} data-k="annotation" data-id={an.id} style={{ cursor: 'move' }}>
+          {lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="transparent" strokeWidth={Math.max(h * .6, fs * .5)} />
+            <line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke={col} strokeWidth={h * .08} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill={col} /></>}
+          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).tri.map(q => q.join(' ')).join('L')}Z`} fill={HALO} stroke={col} strokeWidth={h * .08} strokeLinejoin="round" transform={rot} />}
+          <text x={ta[0]} y={ta[1]} fontSize={h} transform={rot} textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} fontFamily="Instrument Sans, Segoe UI, sans-serif"
+            fill={col} stroke={HALO} strokeWidth={h * .18} paintOrder="stroke" textDecoration={on ? 'underline' : undefined}>{an.text}</text>
+          {on && an.leader && <circle data-k="leadertip" data-id={an.id} cx={an.leader[0]} cy={an.leader[1]} r={fs * .45} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }}><title>{t('leader.tipHint')}</title></circle>}</g>); }
       return <DimMark key={an.id} d={an} fs={fs} ink={ink} label={wl(dimGeometry(an).value)} hit={{ 'data-k': 'annotation', 'data-id': an.id }} />; })}
+    {/* săgeata cu notă în lucru: de la vârful ales până la cursor, apoi până la locul notei */}
+    {(() => { const d = textDraft?.extra?.leader ? { at: textDraft.at, leader: textDraft.extra.leader } : p.tool === 'leader' && leaderTip ? { at: cursor ?? leaderTip, leader: leaderTip } : null, lg = d && leaderGeometry(d);
+      return d && (<g pointerEvents="none">{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke={DIM} strokeWidth={fs * .07} strokeDasharray=".08 .05" /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill={DIM} /></>}
+        <circle cx={d.leader[0]} cy={d.leader[1]} r={fs * .2} fill={DIM} /></g>); })()}
     {dimDraft && (() => { const c = cursor ?? dimDraft.a;
       if (!dimDraft.b){ const L = wallLength(dimDraft.a, c); return (<g pointerEvents="none"><line x1={dimDraft.a[0]} y1={dimDraft.a[1]} x2={c[0]} y2={c[1]} stroke={DIM} strokeWidth={fs * .07} strokeDasharray=".08 .05" /><circle cx={dimDraft.a[0]} cy={dimDraft.a[1]} r={fs * .25} fill={DIM} />
         <text x={(dimDraft.a[0] + c[0]) / 2} y={(dimDraft.a[1] + c[1]) / 2 - fs * .5} textAnchor="middle" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={DIM} stroke={HALO} strokeWidth={fs * .22} paintOrder="stroke">{typed ? `${typed}▏` : formatLength(L, units, lang)}</text></g>); }
@@ -752,14 +779,14 @@ export default function PlanView(p: Props){
     })()}
     {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
   </svg>
-    {textDraft && <input ref={textInput} className="plan-text-input" style={{ position: 'absolute', left: textDraft.left, top: textDraft.top, zIndex: 3 }} aria-label={t('text.inputAria')} placeholder={t('text.placeholder')}
+    {textDraft && <input ref={textInput} className="plan-text-input" style={{ position: 'absolute', left: textDraft.left, top: textDraft.top, zIndex: 3 }} aria-label={t(textDraft.extra?.symbol ? 'level.inputAria' : 'text.inputAria')} placeholder={t(textDraft.extra?.symbol ? 'level.placeholder' : 'text.placeholder')}
       maxLength={PLAN_LIMITS.annotation.textMax} value={textVal} onChange={e => setTextVal(e.target.value)}
       // clic în afară păstrează textul tastat (ca Enter); după Enter / Escape focusul revine pe plan, nu pe <body>
       // (textClosed: focus() pe plan declanșează sincron blur-ul inputului, care altfel ar adăuga textul a doua oară)
       onFocus={() => { textClosed.current = false; }}
-      onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); }}
+      onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); }}
       onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); textClosed.current = true;
-        const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); svg.current?.focus(); }} />}
+        const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) p.onAddText?.(textDraft.at, v, textDraft.extra); setTextDraft(null); setLeaderTip(null); svg.current?.focus(); }} />}
     {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}

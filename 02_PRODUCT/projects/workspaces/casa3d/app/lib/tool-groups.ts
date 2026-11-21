@@ -2,14 +2,16 @@
 import type { Tool } from '@/components/PlanView';
 
 /** `minFold`: de la câți membri în etapă se strânge grupa sub pragul GROUP_OVER (lipsă = GROUP_MIN_FOLD). */
-export const TOOL_GROUPS: { id: 'view' | 'openings' | 'structure' | 'notes' | 'decor'; tools: Tool[]; minFold?: number }[] = [
+export const TOOL_GROUPS: { id: 'view' | 'openings' | 'structure' | 'notes' | 'decor'; tools: Tool[]; minFold?: number; onlyCrowded?: boolean }[] = [
   // navigarea (Mână, Zoom pe zonă) e în toate etapele cu plan: un singur loc, chiar dacă are doar doi membri
   { id: 'view', tools: ['pan', 'zoom_area'], minFold: 2 },
   { id: 'openings', tools: ['door', 'window', 'passage', 'niche'] },
   // „Demolare” (starea peretelui) stă cu structura: nu adaugă un loc nou în bara Releveului
   // balustrada (lotul 4) intră tot aici: Releveul rămâne cu 7 locuri
   { id: 'structure', tools: ['column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'split'] },
-  { id: 'notes', tools: ['measure', 'dim', 'text'] },
+  // săgeata cu notă și cota de nivel sunt tot adnotări: intră la coadă, fără un loc nou în bară
+  // onlyCrowded: adnotările se strâng doar în etapele aglomerate (Releveu); în Planșe, unde sunt uneltele principale, rămân butoane separate
+  { id: 'notes', tools: ['measure', 'dim', 'text', 'leader', 'level_mark'], onlyCrowded: true },
   // decorul (Finisaje, Concept, Mobilier): placarea pe porțiune, obiectele de pe perete și zona de pardoseală
   // tavanul fals pe zonă (lotul 4) intră în aceeași grupă: Finisaje rămâne cu 3 locuri
   { id: 'decor', tools: ['clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy'] },
@@ -31,7 +33,7 @@ export function railSlots(tools: Tool[], grouped: boolean): Slot[] {
   const flat = tools.filter(tk => TOOL_GROUPS.find(x => x.tools.includes(tk))?.minFold === undefined).length <= FLAT_MAX;
   const many = tools.length > GROUP_OVER, out: Slot[] = [], seen = new Set<string>();
   for (const tk of tools){ const g = TOOL_GROUPS.find(x => x.tools.includes(tk)), members = g ? g.tools.filter(x => tools.includes(x)) : [];
-    if (!g || members.length < (g.minFold !== undefined ? (many ? Math.min(2, g.minFold) : g.minFold) : flat ? Infinity : many ? 2 : GROUP_MIN_FOLD)){ out.push({ tool: tk }); continue; }
+    if (!g || (g.onlyCrowded && !many) || members.length < (g.minFold !== undefined ? (many ? Math.min(2, g.minFold) : g.minFold) : flat ? Infinity : many ? 2 : GROUP_MIN_FOLD)){ out.push({ tool: tk }); continue; }
     if (!seen.has(g.id)){ seen.add(g.id); out.push({ group: g.id, tools: members }); } }
   return out;
 }

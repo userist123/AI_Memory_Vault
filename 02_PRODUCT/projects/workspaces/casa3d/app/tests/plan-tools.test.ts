@@ -172,8 +172,8 @@ describe('bara din stânga', () => {
     const names = (tools: Tool[], grouped = true) => railSlots(tools, grouped).map(s => 'tool' in s ? s.tool : s.group);
     // Planșe: Vizualizare se strânge (minFold 2), dar nu se numără la pragul FLAT_MAX: Cotă, Text, Măsoară rămân butoane separate
     assert.deepEqual(names(['select', 'pan', 'zoom_area', 'dim', 'text', 'measure']), ['select', 'view', 'dim', 'text', 'measure']);
-    // cu o unealtă în plus peste prag, grupa de trei se strânge ca înainte
-    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall', 'dim', 'text', 'measure']), ['select', 'view', 'wall', 'notes']);
+    // Cote și texte se strâng doar în etapele aglomerate (peste GROUP_OVER), nu și cu o unealtă în plus peste FLAT_MAX
+    assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall', 'dim', 'text', 'measure']), ['select', 'view', 'wall', 'dim', 'text', 'measure']);
     // o grupă fără minFold cu doi membri rămâne desfăcută sub prag (Mobilier: Pe perete + Covor)
     assert.deepEqual(names(['select', 'pan', 'zoom_area', 'wall_item', 'rug', 'measure']), ['select', 'view', 'wall_item', 'rug', 'measure']);
     // un singur membru al grupei în etapă: buton simplu; etapele cu cel mult 4 unelte rămân plate; telefonul la fel

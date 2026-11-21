@@ -38,7 +38,9 @@ export interface GlassWall { id: string; a: [number, number]; b: [number, number
 export interface Niche { id: string; wallId: string; offset: number; width: number; height: number; depth: number; elevation: number; side?: 1 | -1; finish?: 'tile' | 'paint' | 'led' }
 /** Adnotări de planșă: cotă persistentă (aliniată sau ortogonală, linia la `offset` m de segmentul a–b) și text liber. */
 export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b: [number, number]; offset: number; mode?: 'aligned' | 'ortho' }
-export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number }
+/** Text liber pe plan. `leader` = vârful săgeții (m), pentru „Săgeată cu notă”: linia pleacă din `at`. `symbol: 'level'` = cotă de
+ *  nivel: triunghiul are vârful în `at`, iar `text` este valoarea tastată (ex. „+0,00”). Ambele sunt opționale. */
+export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number; leader?: [number, number]; symbol?: 'level' }
 export type Annotation = DimAnnotation | TextAnnotation;
 /** Obiect pe perete (tablou, oglindă, raft, TV): pe fața `side` a peretelui `wallId` (ca nișa); `offset` = centrul, de la capătul `a`
  *  al peretelui; `elevation` = centrul, de la pardoseală; dimensiuni în m (`depth` lipsă = implicitul tipului). `product` = id din

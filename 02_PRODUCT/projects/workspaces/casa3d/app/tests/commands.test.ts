@@ -42,7 +42,7 @@ describe('registrul de comenzi', () => {
     const pal = COMMANDS.find(c => c.id === 'palette')!; assert.equal(pal.dispatch, false); assert.ok(pal.shortcuts.some(s => shortcutMatches(s, ev('k', { ctrlKey: true }))));
   });
   test('100 % din unelte sunt în registru', () => {
-    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true, demolish: true, floor_zone: true, ceiling_zone: true, railing: true, pan: true, zoom_area: true, rug: true, style_copy: true, split: true };
+    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true, demolish: true, floor_zone: true, ceiling_zone: true, railing: true, pan: true, zoom_area: true, rug: true, style_copy: true, split: true, leader: true, level_mark: true };
     assert.deepEqual([...TOOLS].sort(), Object.keys(all).sort());
     assert.deepEqual(COMMANDS.filter(c => c.id.startsWith('tool.')).map(c => c.id.slice(5)).sort(), [...TOOLS].sort());
     for (const tk of TOOLS){ const c = COMMANDS.find(x => x.id === `tool.${tk}`)!; assert.equal(c.tool, tk); assert.equal(c.label, `tool.${tk}`); assert.ok(toolShortcut(tk)); }
@@ -50,9 +50,11 @@ describe('registrul de comenzi', () => {
   // Schimbat conștient (unelte noi în bară): literele s-au terminat, deci Mâna, Zoom pe zonă, Covorul, Pipeta de finisaje și
   // Împarte camera stau pe Shift + litera uneltei înrudite. Înainte testul cerea ca Shift+literă să nu facă nimic pentru toate
   // literele; acum cere asta pentru toate în afară de cele cinci din `shifted`, unde cere exact unealta nouă. Ctrl/⌘/Alt: tot nimic.
-  test('tastele uneltelor: literă fără modificator, mare sau mică; cu Ctrl/⌘/Alt nimic; cu Shift doar cele cinci unelte noi; R rămâne rotire', () => {
+  // Schimbat conștient din nou (lotul 2 de unelte): Săgeata cu notă (Shift+B, lângă Text) și Cota de nivel (Shift+Q, lângă Cotă)
+  // intră în `shifted`; pentru restul literelor Shift+literă rămâne fără comandă, exact ca înainte.
+  test('tastele uneltelor: literă fără modificator, mare sau mică; cu Ctrl/⌘/Alt nimic; cu Shift doar cele șapte unelte noi; R rămâne rotire', () => {
     const map: Record<string, Tool> = { v: 'select', p: 'wall', c: 'room', u: 'door', o: 'window', j: 'passage', h: 'shaft', n: 'niche', k: 'clad', x: 'wall_item', q: 'dim', b: 'text', t: 'column', g: 'beam', l: 'glass_wall', e: 'stair', m: 'measure', i: 'tech' };
-    const shifted: Record<string, Tool> = { v: 'pan', m: 'zoom_area', x: 'rug', k: 'style_copy', c: 'split' };
+    const shifted: Record<string, Tool> = { v: 'pan', m: 'zoom_area', x: 'rug', k: 'style_copy', c: 'split', b: 'leader', q: 'level_mark' };
     for (const [k, tk] of Object.entries(map)){
       assert.equal(matchCommand(ev(k)), `tool.${tk}`, k); assert.equal(matchCommand(ev(k.toUpperCase())), `tool.${tk}`, k.toUpperCase());
       for (const m of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]){ assert.equal(matchCommand(ev(k, m)), null, `${k} ${JSON.stringify(m)}`); assert.equal(matchCommand(ev(k.toUpperCase(), m)), null); }
