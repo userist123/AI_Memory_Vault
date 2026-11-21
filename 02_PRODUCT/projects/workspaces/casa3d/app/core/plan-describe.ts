@@ -12,9 +12,10 @@ import type { WallItem } from './types';
 import { annotationCenter, dimGeometry } from './annotations';
 import { activeOpenings } from './renovation';
 import { railingHeight, railingKind } from './railings';
+import { MEP_SYSTEMS, runLength } from './mep';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string; wallId?: string; parent?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'footing' | 'mep_run'; id: string; wallId?: string; parent?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -67,7 +68,7 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   for (const wl of [...f.walls].sort((a, b) => ord({ ...mid(a), id: a.id }, { ...mid(b), id: b.id }))){
     const rooms = roomsAlongWall(snap, wl), where = rooms.length ? rooms.join(', ') : t('mirror.noRoom');
     // starea peretelui (nou / de demolat) la finalul descrierii; peretele existent rămâne ca înainte
-    struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) + (wl.status === 'new' || wl.status === 'demolish' ? ` · ${t(`wallStatus.${wl.status}`)}` : '') });
+    struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) + (wl.status === 'new' || wl.status === 'demolish' ? ` · ${t(`wallStatus.${wl.status}`)}` : '') + (wl.structural ? ` · ${t('mirror.structuralSuffix')}` : '') });
     for (const op of [...activeOpenings(wl)].sort((a, b) => a.offset - b.offset))
       { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, parent: wl.id, label: t(op.kind === 'door' ? (op.passage ? 'mirror.passage' : op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) + (op.kind === 'door' && !op.passage && (op.doorType && op.doorType !== 'swing' || op.flush) ? ` · ${[op.doorType && op.doorType !== 'swing' ? t(`door.type.${op.doorType}`) : '', op.flush ? t('door.flushShort') : ''].filter(Boolean).join(', ')}` : '') }); }
     // nișele peretelui, după poziție, cu camera în care dau
@@ -81,7 +82,11 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   for (const g of f.glassWalls ?? []) struct.push({ kind: 'glass_wall', id: g.id, label: t('mirror.glass', { len: L(len(g)) }) });
   for (const b of f.railings ?? []) struct.push({ kind: 'railing', id: b.id, label: t('mirror.railing', { kind: t(`railing.kind.${railingKind(b)}`), len: L(len(b)), h: L(railingHeight(b)) }) });
   for (const s of f.stairs ?? []) struct.push({ kind: 'stair', id: s.id, label: t('mirror.stair', { w: L(s.width), len: L(s.length) }) });
+  // pista BIM: fundațiile la structură; traseele de instalații într-un grup propriu, cu sistemul, lungimea și diametrul declarat
+  for (const x of f.footings ?? []) struct.push({ kind: 'footing', id: x.id, label: t('mirror.footing', { w: L(x.w), d: L(x.d), depth: L(x.depth) }) });
   if (struct.length) groups.push({ id: 'structure', title: t('mirror.structure'), items: struct });
+  const runs = (f.mepRuns ?? []).map((r): MirrorItem => ({ kind: 'mep_run', id: r.id, label: t('mirror.run', { system: MEP_SYSTEMS[r.system]?.label[lang] ?? r.system, len: L(runLength(r)), dia: r.diameterMm ? `Ø${r.diameterMm} mm` : t('bim.diameterUnknown') }) }));
+  if (runs.length) groups.push({ id: 'services', title: t('mirror.services'), items: runs });
   // cotele și textele planșei, în ordinea citirii
   const notes = [...(f.annotations ?? [])].sort((a, b) => { const [ax, az] = annotationCenter(a), [bx, bz] = annotationCenter(b); return ord({ x: ax, z: az, id: a.id }, { x: bx, z: bz, id: b.id }); })
     .map((a): MirrorItem => ({ kind: 'annotation', id: a.id, label: a.kind === 'dim' ? t(a.mode === 'ortho' ? 'mirror.dimOrtho' : 'mirror.dim', { len: L(dimGeometry(a).value) }) : t('mirror.text', { text: a.text }) }));

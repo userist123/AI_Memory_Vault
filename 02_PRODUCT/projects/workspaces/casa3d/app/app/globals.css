@@ -787,6 +787,12 @@ select,textarea{font-size:var(--fs-sm)}
 .view3d{container-type:inline-size}
 @container (max-width:720px){ .v3lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} .v3bar .btn{padding:0 10px} .v3bar select.btn{max-width:180px;flex:1 1 120px} }
 .v3bar select.btn{min-width:120px}
+/* „Plan + 3D” la 1280 px: fiecare panou are ~290 px. Bara 3D nu mai iese din ecran (trece pe două rânduri), indiciul 3D nu mai
+   intră sub butoanele de navigare, iar în planul îngust indiciile de tastatură (lungi, pe 3 rânduri) se ascund și legenda coboară */
+@container (max-width:460px){ .v3bar{flex-wrap:wrap} .v3bar select.btn{min-width:0;max-width:none;flex:1 1 96px} .view3d .hintbar{display:none} }
+.view3d .hintbar{max-width:calc(100% - 170px)}
+.planwrap{container-type:inline-size}
+@container (max-width:520px){ .planwrap .hintbar{display:none} .planwrap .plan-legend{bottom:10px} }
 /* câmpurile din panou și din sarcini: aceeași înălțime ca restul controalelor (36 px, 44 px pe ecran tactil) */
 .side input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=hidden]):not([type=button]):not([type=submit]),
 .side select,.tasks input:not([type=checkbox]),.tasks select,.task-add input,.task-add select,.client-link input,.timep-add input,.timep-add select{min-height:max(var(--h-md),var(--hit))}
@@ -1124,6 +1130,23 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .ws .side .btn:hover:not(:disabled){background:#F0E6DD;border-color:#7B6274;color:#1A131C}
 .ws .side .btn.primary,.ws .side .btn.primary:hover:not(:disabled),.ws .side a.btn.primary{background:#C63C29;border-color:#C63C29;color:#FFF8F1;font-weight:650}
 .ws .side .btn.primary:hover:not(:disabled),.ws .side a.btn.primary:hover:not(:disabled){background:#A82F1F;border-color:#A82F1F;color:#FFFFFF}
+/* paginile cu fundal deschis din spațiul de lucru (Șantier, Comenzi…): tema studio face --bg închis, iar .btn.primary își lua
+   textul din --bg → text închis pe buton închis, ilizibil. Aceleași culori ca butonul principal din panoul lateral. */
+.ws .pagebody .btn.primary:not(:disabled),.ws .pagebody a.btn.primary,.ws .pagebody .empty-state .btn:not(:disabled){background:#C63C29;border-color:#C63C29;color:#FFF8F1;font-weight:650}
+.ws .pagebody .btn.primary:hover:not(:disabled),.ws .pagebody a.btn.primary:hover,.ws .pagebody .empty-state .btn:hover:not(:disabled){background:#A82F1F;border-color:#A82F1F;color:#FFFFFF}
+/* panourile pistei BIM (import DXF, instalații, coordonare): grile care se strâng pe o coloană, liste cu text care se rupe */
+.bim-panel{display:grid;gap:8px;min-width:0}
+.bim-panel .prov{margin:0}
+.bim-panel fieldset{display:grid;gap:8px;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
+.bim-panel select,.bim-panel input{min-width:0;max-width:100%}
+.bim-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px 8px}
+.bim-list,.bim-issues{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.bim-list li{display:flex;align-items:center;gap:8px;min-width:0}
+.bim-li-text{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.bim-swatch{flex:0 0 auto;width:12px;height:12px;border-radius:3px}
+.coord-rule{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.coord-item-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:4px;margin-top:4px}
+.coord-item-head{overflow-wrap:anywhere}
 .ws .side .btn.danger{border-color:#D9B3AD;background:#FFF7F4;color:#9A2C22}
 .ws .side .var,.ws .side .docrow,.ws .side .roomrow,.ws .side .vcard,.ws .side .r,.ws .side .trow{border-color:#E0D4CA;background:#FFFCF6;color:#2A202A;border-radius:18px 18px 18px 5px}
 .ws .side .var:hover,.ws .side .docrow:hover,.ws .side .roomrow:hover{border-color:#D99B8F;background:#FFF7F1}

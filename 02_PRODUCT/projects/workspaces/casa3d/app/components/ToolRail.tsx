@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Tool } from './PlanView';
 import { railSlots } from '@/lib/tool-groups';
 
-interface Props { tools: Tool[]; active: Tool; grouped: boolean; icon: Record<Tool, string>; label(tk: Tool): string; title(tk: Tool): string; keys(tk: Tool): string; groupLabel(id: string): string; onPick(tk: Tool): void; ariaLabel: string }
+interface Props { tools: Tool[]; active: Tool; grouped: boolean; icon: Record<Tool, string>; label(tk: Tool): string; title(tk: Tool): string; keys(tk: Tool): string; groupLabel(id: string): string; /** textul vizibil sub pictogramă, mai scurt (bara are ~44 px); lipsă = groupLabel */ groupShort?(id: string): string; onPick(tk: Tool): void; ariaLabel: string }
 export default function ToolRail(p: Props){
   const [open, setOpen] = useState<string | null>(null), [last, setLast] = useState<Record<string, Tool>>({}), box = useRef<HTMLElement>(null);
   // un clic în afara grupei deschise o închide
@@ -23,7 +23,7 @@ export default function ToolRail(p: Props){
       return (<div key={s.group} className="toolgroup" data-group={s.group} onKeyDown={e => { if (e.key === 'Escape' && isOpen){ e.preventDefault(); e.stopPropagation(); close(true); } }}
         onBlur={e => { if (isOpen && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(null); }}>
         <button type="button" className={on ? 'is-active' : undefined} aria-expanded={isOpen} aria-controls={menu} aria-label={`${p.groupLabel(s.group)} · ${p.label(shown)}`} title={p.groupLabel(s.group)} onClick={() => setOpen(isOpen ? null : s.group)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={p.icon[shown]} /></svg>{p.groupLabel(s.group)}<span className="tg-caret" aria-hidden="true">▸</span></button>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={p.icon[shown]} /></svg>{(p.groupShort ?? p.groupLabel)(s.group)}<span className="tg-caret" aria-hidden="true">▸</span></button>
         {isOpen && <div id={menu} className="toolgroup-menu" role="group" aria-label={p.groupLabel(s.group)}>
           {s.tools.map(tk => btn(tk, () => { setLast(l => ({ ...l, [s.group]: tk })); close(true); }))}</div>}
       </div>); })}

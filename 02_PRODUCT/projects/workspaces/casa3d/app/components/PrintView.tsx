@@ -102,7 +102,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
       viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
       const snap = data.p.draft, out: Record<string, string> = {};
-      for (let i = 0; i < floors(snap).length; i++){ const v = levelView(snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(snap, i) }); viewer.setState(plan, items);
+      for (let i = 0; i < floors(snap).length; i++){ const v = levelView(snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(snap, i), services: false }); viewer.setState(plan, items);
         await nextFrame(); await nextFrame(); if (!alive) return;
         if (i === 0){ const ov = viewer.renderView(undefined, 1200, 800); if (!ov) throw new Error('no image'); out.overview = ov; }
         for (const r of v.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1200, 800); if (u) out[r.id] = u; } }

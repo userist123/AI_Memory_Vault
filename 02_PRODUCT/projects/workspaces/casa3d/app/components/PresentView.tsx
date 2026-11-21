@@ -74,7 +74,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     e.queued.add(tag); setQueued(n => n + 1);
     e.chain = e.chain.then(async () => { try { if (g !== e.gen || goodEnough(e.done[key], w)) return; const v = await ensureViewer(); if (!v || g !== e.gen) return;
         const L = levelOf[key] ?? 0;
-        if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc }); v.setState(plan, items); e.level = L;
+        if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc, services: false }); v.setState(plan, items); e.level = L;
           await nextFrame(); await nextFrame(); if (g !== e.gen) return; }
         const url = key === 'overview' ? v.renderView(undefined, size.w, size.h) : v.renderView({ roomId: key }, size.w, size.h);
         if (url && g === e.gen){ e.done[key] = w; setImages(m => ({ ...m, [key]: { url, w } })); } }

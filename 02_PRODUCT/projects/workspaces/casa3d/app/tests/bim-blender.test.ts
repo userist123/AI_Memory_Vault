@@ -38,3 +38,12 @@ test('un perete importat din DXF își păstrează proveniența la salvare; una 
   (s.floor.walls[0] as any).origin = { method: 'dxf', sha256: 'nu', layer: 'x', thickness: 'source' };
   assert.throws(() => checkSnapshot(structuredClone(s)));
 });
+test('vederile pentru client (prezentare, print, imagini de link) nu primesc traseele și fundațiile; editorul da', () => {
+  const s = newSnapshot(cat, 'T', 'studio');
+  s.floor.mepRuns = [{ id: 'm1', system: 'water_cold', diameterMm: 20, points: [[1, 1, 1], [2, 1, 1]] }]; s.floor.footings = [{ id: 'fd1', x: 1, z: 1, w: 1, d: 1, depth: .5 }];
+  const ed = viewerInput(s, cat).plan as any, client = viewerInput(s, cat, undefined, { services: false }).plan as any;
+  assert.equal(ed.trasee.length, 1); assert.equal(ed.fundatii.length, 1);
+  assert.equal('trasee' in client, false); assert.equal('fundatii' in client, false);
+  for (const f of ['components/PresentView.tsx', 'components/PrintView.tsx', 'lib/share-images.ts'])
+    assert.match(readFileSync(new URL(`../${f}`, import.meta.url), 'utf8'), /services: false/, f);
+});

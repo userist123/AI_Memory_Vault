@@ -586,8 +586,10 @@ export default function Editor({ id }: { id: string }){
   const toggleWide = () => setWideSide(w => { try { localStorage.setItem('casa3d.sideWide', w ? '0' : '1'); } catch { /* stocare blocată */ } return !w; });
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
-  const pickMirror = (i: MirrorItem) => { const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
-  const pickOutline = (lv: number, i: MirrorItem, fr: boolean) => { if (lv !== L) goLevel(lv); setTool('select');
+  // traseele și fundațiile (pista BIM) nu sunt selectabile în plan: se editează în etapa Instalații, unde sunt listate
+  const bimItem = (i: MirrorItem) => { if (i.kind !== 'footing' && i.kind !== 'mep_run') return false; setSel(null); setStage('mep'); return true; };
+  const pickMirror = (i: MirrorItem) => { if (bimItem(i)) return; const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
+  const pickOutline = (lv: number, i: MirrorItem, fr: boolean) => { if (lv !== L) goLevel(lv); setTool('select'); if (bimItem(i)) return;
     const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); if (fr) setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameIn3d = (pid: string) => { if (view === '2d') setView(compact ? '3d' : 'split'); setFrame3d(f => ({ id: pid, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
@@ -738,7 +740,7 @@ export default function Editor({ id }: { id: string }){
     <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && !studio && wideSide ? "wide-side" : ""} ${studio ? 'ws-studio' : ''} ${olShown ? 'has-outliner' : ''}`}
       style={studio ? { '--ol-w': `${olShown ? fit.left : 0}px`, '--in-w': `${focused ? 0 : fit.right}px` } as React.CSSProperties : undefined}>
       <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
-        title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
+        title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} groupShort={g => { const k = `toolGroupShort.${g}`, s = t(k); return s === k ? t(`toolGroup.${g}`) : s; }} onPick={setTool} />
       {olShown && <div className="ol-pane">{outlinerEl(() => saveWs({ ...wsLay, outliner: false }))}
         <PanelSplitter side="left" width={fit.left} label={t('ws.resizeLeft')} onChange={w => setWsLay(x => ({ ...x, left: w }))} onCommit={w => saveWs({ ...wsLay, left: w })} /></div>}
       {studio && !focused && !wsLay.outliner && <button type="button" className="btn ghost icon-btn ol-show" aria-label={t('outliner.show')} title={t('outliner.show')} onClick={() => saveWs({ ...wsLay, outliner: true })}><Icon name="chevronRight" size={16} /></button>}
@@ -840,8 +842,6 @@ export default function Editor({ id }: { id: string }){
             {L > 0 ? <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('level.underlayGround')}</p> : <UnderlayPanel underlay={snap.underlay} calib={calib} say={say} onAdd={addUnderlay} onPatch={patchUnderlay} onRemove={() => { mutate(s => { delete s.underlay; }); setCalib(null); }}
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
             <DxfImportPanel floor={snap.floor} takenIds={elementIds} say={say} onApply={walls => mutate(s => { s.floor.walls = walls; })} />
-            <MepPanel snap={snap} takenIds={elementIds} say={say} onChange={fn => mutate(s => fn(s.floor))} />
-            {catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} focusFeature={cladFocus?.room === selRoom.id ? cladFocus : null} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
@@ -1148,6 +1148,9 @@ export default function Editor({ id }: { id: string }){
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
           onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+        {/* pista BIM (docs/bim): traseele, structura și coordonarea țin de etapa Instalații, lângă stratul tehnic din care pornesc traseele */}
+        {stage === 'mep' && !showSel && <MepPanel snap={snap} takenIds={elementIds} say={say} onChange={fn => mutate(s => fn(s.floor))} isGround={L === 0} />}
+        {stage === 'mep' && !showSel && catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
