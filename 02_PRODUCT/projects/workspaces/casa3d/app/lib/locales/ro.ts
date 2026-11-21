@@ -760,4 +760,5 @@ export const ro: Dict = {
   "outliner.aria": "Structura proiectului", "outliner.title": "Structură", "outliner.hide": "Ascunde structura", "outliner.show": "Arată structura",
   "outliner.empty": "Planul e gol. Desenează o cameră sau un perete.",
   "outliner.keys": "Săgețile sus și jos trec prin arbore, dreapta și stânga deschid și închid, Enter alege și încadrează, Escape revine în plan",
+  "menu.file": "Fișier", "menu.edit": "Editare", "menu.view": "Vizualizare", "menu.stages": "Etape", "menu.tools": "Unelte", "menu.settings": "Setări", "menu.help": "Ajutor", "menu.aria": "Meniul editorului", "menu.themeClassic": "Tema clasică (crem)", "menu.themePro": "Tema pro (gri închis)",
 };

@@ -80,6 +80,9 @@ import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
 import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShares } from '@/core/stage-progress';
 import CommandPalette, { type Command } from './CommandPalette';
+import MenuBar, { buildMenus } from './MenuBar';
+import './theme-pro.gen.css';
+import './theme-pro.css';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
 import { setWallLength, WallEditError } from '@/core/wall-edit';
@@ -392,7 +395,7 @@ export default function Editor({ id }: { id: string }){
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
-    if (el.closest?.('.plan-mirror,.outliner')) return;
+    if (e.defaultPrevented || el.closest?.('.plan-mirror,.outliner,.menubar')) return;   // bara de meniuri își tratează singură tastele
     if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[aria-modal=true]'), paletteOpen: paletteOpenRef.current })) return;
     // scurtăturile vin din registru (lib/commands.ts); Ctrl/⌘K rămâne la paletă (isPaletteShortcut)
     const cid = matchCommand(e); if (!cid) return;
@@ -482,6 +485,10 @@ export default function Editor({ id }: { id: string }){
     document.querySelector<SVGSVGElement>('svg.plan')?.focus(); }, [focus, wsLay.outliner]); // eslint-disable-line react-hooks/exhaustive-deps
   const toggleFocus = () => setFocus(f => !f);
   const saveWs = (n: WorkspaceState) => { setWsLay(n); try { localStorage.setItem(WS_KEY, serializeWorkspace(n)); } catch { /* stocare blocată: rămâne pe sesiune */ } };
+  // tema spațiului de lucru: „pro” (întunecată, compactă, cu bara de meniuri, ca în programele profesionale) sau „clasică”; implicit pro
+  const [theme, setThemeState] = useState<'pro' | 'classic'>('pro');
+  useEffect(() => { try { if (localStorage.getItem('casa3d.theme') === 'classic') setThemeState('classic'); } catch { /* stocare blocată */ } }, []);
+  const setTheme = (x: 'pro' | 'classic') => { setThemeState(x); try { localStorage.setItem('casa3d.theme', x); } catch { /* stocare blocată */ } };
   const setLayoutMode = (m: LayoutMode) => { setMode(m); setFocus(false); try { localStorage.setItem(MODE_KEY, m); } catch { /* stocare blocată */ } say(t(m === 'classic' ? 'ws.classicOn' : 'ws.studioOn')); };
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
   const outline = useMemo(() => house && catalog && (mode === 'studio' || compact) ? buildOutliner(floors(house).map((_, i) => ({ name: levelName(i), groups: i === L ? mirror : describePlan(levelView(house, i), catalog, { t, units, lang }) }))) : [],
@@ -651,6 +658,8 @@ export default function Editor({ id }: { id: string }){
     { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: hint('redo'), disabled: !hist.current.canRedo, run: redo },
     { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
     { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: hint('help'), run: () => setHelp(true) },
+    { id: 'palette', group: t('cmdk.group.actions'), label: t('cmdk.open'), hint: hint('palette'), run: () => setCmdOpen(true) },
+    { id: 'theme', group: t('cmdk.group.settings'), label: theme === 'pro' ? t('menu.themeClassic') : t('menu.themePro'), keywords: ['theme', 'dark', 'tema'], run: () => setTheme(theme === 'pro' ? 'classic' : 'pro') },
     ...(!compact && mode === 'studio' && !stageDef.page ? [{ id: 'ws.focus', group: t('cmdk.group.settings'), label: focus ? t('ws.focusExit') : t('ws.focus'), hint: hint('ws.focus'), keywords: ['focus', 'zen'], run: toggleFocus },
       { id: 'ws.outliner', group: t('cmdk.group.settings'), label: t('ws.outliner'), keywords: [t('outliner.title'), 'outliner'], run: () => saveWs({ ...wsLay, outliner: !wsLay.outliner }) }] : []),
     ...(!compact ? [{ id: 'ws.classic', group: t('cmdk.group.settings'), label: mode === 'studio' ? t('ws.classic') : t('ws.studio'), keywords: ['layout'], run: () => setLayoutMode(mode === 'studio' ? 'classic' : 'studio') }] : []),
@@ -674,9 +683,10 @@ export default function Editor({ id }: { id: string }){
   // layoutul nou pe ecran lat; pe telefon foaia de jos comută Structură / Panou; Focus ascunde panourile și bara etapelor
   const studio = !compact && mode === 'studio' && !stageDef.page, focused = studio && focus, olShown = studio && !focused && wsLay.outliner, fit = fitToViewport(wsLay, vw, olShown);
   const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
-  return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
+  return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''} ${theme === 'pro' ? 'theme-pro' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
+    {!compact && <MenuBar menus={buildMenus(commands, k => t(k))} ariaLabel={t('menu.aria')} />}
     <header className="topbar studio-topbar">
       <a className="btn ghost icon-btn" href="/" aria-label={t('home.projects')} title={t('home.projects')}><Icon name="back" /><span className="lbl">{t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />

@@ -760,4 +760,5 @@ export const en: Dict = {
   "outliner.aria": "Project structure", "outliner.title": "Structure", "outliner.hide": "Hide structure", "outliner.show": "Show structure",
   "outliner.empty": "The plan is empty. Draw a room or a wall.",
   "outliner.keys": "Up and down arrows move through the tree, right and left open and close, Enter selects and frames, Escape returns to the plan",
+  "menu.file": "File", "menu.edit": "Edit", "menu.view": "View", "menu.stages": "Stages", "menu.tools": "Tools", "menu.settings": "Settings", "menu.help": "Help", "menu.aria": "Editor menu", "menu.themeClassic": "Classic theme (cream)", "menu.themePro": "Pro theme (dark grey)",
 };
