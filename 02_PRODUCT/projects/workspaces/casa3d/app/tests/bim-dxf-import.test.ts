@@ -76,3 +76,12 @@ test('sanitizeWallOrigin: păstrează doar proveniența validă', () => {
   assert.throws(() => sanitizeWallOrigin(bad), /proveniența/i);
   const none: any = {}; sanitizeWallOrigin(none); assert.equal('origin' in none, false);
 });
+test('wallCandidates: o cameră desenată cu fețe interioare și exterioare dă patru axe care se întâlnesc în colțuri', () => {
+  const L = (x1: number, y1: number, x2: number, y2: number) => line('PERETI', x1, y1, x2, y2);
+  const p = parseDxf(dxf(4, L(0, 0, 4000, 0), L(-250, -250, 4250, -250), L(4000, 0, 4000, 3000), L(4250, -250, 4250, 3250),
+    L(4000, 3000, 0, 3000), L(4250, 3250, -250, 3250), L(0, 3000, 0, 0), L(-250, 3250, -250, -250)));
+  const c = wallCandidates(p, { unit: 'mm' });
+  assert.equal(c.length, 4); for (const w of c) assert.equal(w.thickness, .25);
+  const ends = c.flatMap(w => [w.a, w.b]).map(q => q.join(','));
+  for (const corner of ['-0.125,0.125', '4.125,0.125', '4.125,-3.125', '-0.125,-3.125']) assert.equal(ends.filter(e => e === corner).length, 2, `colțul ${corner}`);
+});

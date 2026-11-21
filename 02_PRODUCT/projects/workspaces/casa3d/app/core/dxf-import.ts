@@ -100,9 +100,11 @@ export function wallCandidates(p: DxfParse, o: CandidateOptions = {}): WallCandi
     const nx = -A.uz, nz = A.ux, d = Math.abs((B.a[0] - A.a[0]) * nx + (B.a[1] - A.a[1]) * nz);
     if (d < DXF_LIMITS.minThicknessM || d > DXF_LIMITS.maxThicknessM) continue;
     const proj = (q: [number, number]) => (q[0] - A.a[0]) * A.ux + (q[1] - A.a[1]) * A.uz;
-    const t0 = Math.max(0, Math.min(proj(B.a), proj(B.b))), t1 = Math.min(A.len, Math.max(proj(B.a), proj(B.b)));
-    if (t1 - t0 < 0.8 * Math.min(A.len, B.len)) continue;
-    pairs.push({ i, j, d, t0, t1 });
+    const b0 = Math.min(proj(B.a), proj(B.b)), b1 = Math.max(proj(B.a), proj(B.b));
+    if (Math.min(A.len, b1) - Math.max(0, b0) < 0.8 * Math.min(A.len, B.len)) continue;
+    // capetele axei = media capetelor celor două fețe: la un colț (fața interioară mai scurtă, cea exterioară mai lungă cu o
+    // grosime) axele pereților vecini se întâlnesc exact în colț; două linii egale dau capetele lor
+    pairs.push({ i, j, d, t0: b0 / 2, t1: (A.len + b1) / 2 });
   }
   pairs.sort((x, y) => x.d - y.d);
   const used = new Set<number>(), out: WallCandidate[] = [];

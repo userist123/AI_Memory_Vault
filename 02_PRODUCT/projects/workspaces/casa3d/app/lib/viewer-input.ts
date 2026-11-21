@@ -35,6 +35,8 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const rise = snap.floor.ceilingHeight + SLAB;
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;
+  // id-ul peretelui (plan.pereti are același index ca snap.floor.walls): ajunge pe cutiile peretelui și în scena pentru Blender
+  plan.pereti.forEach((pw: any, i: number) => { const id = snap.floor.walls[i]?.id; if (id) pw.id = id; });
   // finisajele de designer ale fiecărei camere (modul de așezare, placări, tavan), doar când avem catalogul de materiale
   if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (!r) return; const f = finishesOf(snap, r), tv = textileVisual(mc, snap.floor, r, f);
     c.fin = { ...roomVisual(mc, f, r.type, r, snap.floor), rug: tv.rug, ...(tv.rugs ? { rugs: tv.rugs } : {}) };
