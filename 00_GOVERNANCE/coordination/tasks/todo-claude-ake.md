@@ -1,24 +1,22 @@
 # todo-claude-ake — Active Knowledge Engine
 
-- Task: AKE Milestone 0 (audit) + Milestone 1 (read-only shadow runner)
-- Branch: `claude/ake-m0-reality-audit`, draft PR #396, base `origin/main` @ `aa42387f2`
+- Task: AKE Milestones 0-2 (audit, read-only shadow runner, Loop B retrieval quality)
+- Branch: `claude/ake-m0-reality-audit`, draft PR #396; secret-scan fix also in draft PR #397
 - Updated: 2026-11-21 (Claude Code)
 
 ## Done
 - M0 audit: `07_EVALUATION/active_knowledge_engine/REPOSITORY_REALITY_AUDIT.md` (verdict PARTIAL)
 - Decisions (owner delegated, recommended options): `07_EVALUATION/active_knowledge_engine/DESIGN_DECISIONS.md`
-- M1: `03_IMPLEMENTATION/packages/active_knowledge_engine/` + `20_TESTS/test_ake_shadow_runner.py`
-- Guard: `test_vault_state_accuracy.py::test_closed_loop_learning_direct_write_path_stays_unwired` (proved to fail when wired)
-- VAULT_STATE.md: two rows (AKE runner, closed_loop_learning)
-- Real-vault dry run: 498 notes, 6 overlap cases, no tracked file changed, second run reused
-
-## Done (Milestone 2)
-- Loop B stage retrieval_quality + compare (exact McNemar); baseline heldout v2 AI_AGENT k=5: 2/29
+- M1: `03_IMPLEMENTATION/packages/active_knowledge_engine/` (runner, CLI), guard for closed_loop_learning
+- M2: `retrieval_quality.py`, `compare.py`, baseline `07_EVALUATION/active_knowledge_engine/baselines/heldout_v2_ai_agent_k5.json`
+  - 2/29 hits at k=5; 13 gold policy-excluded (11 no lifecycle, 2 raw); memory_get refuses 20/29 gold
+- Full suite 5350 passed, 0 failed (local, Python 3.14); two review rounds per milestone
 
 ## Next
-- Loop B: explain NEVER_CANDIDATE 17/29 (agent path vs VaultIndex candidate generator, R016 0.69)
-- Decide the 100-note consolidation cap (covers ~20% of eligible notes per run)
-- Reuse book_to_memory eval-integrity modules (leakage, paired stats, raters)
+- Owner decisions: lifecycle for the 11 `core` gold notes; cognitive_read BudgetExceededError on large ACTIVE notes;
+  Loop B improvement threshold; consolidation cap (100 notes per run)
+- Loop B experiment: PAGINATION_CUT 10/16 eligible -> reranker hypothesis, measured with `compare` against the baseline
+- Milestone 3 (proposal-only learning) after the owner reviews PR #396
 
 ## Blockers
-- None
+- PR CI: `enforce` (gitleaks history) needed the #397 fingerprint; cherry-picked onto this branch
