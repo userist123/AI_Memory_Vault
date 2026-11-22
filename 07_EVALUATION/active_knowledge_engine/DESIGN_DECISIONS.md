@@ -225,3 +225,19 @@ A first run marked the catalogue UNSPLITTABLE for a false reason. The body start
 **Next steps are owner actions, as planned.** For each child: create it, re-hash it against `content_sha256`, attest it with `expected_content_sha256`, then promote it. After that, attest the manifest and supersede the parent.
 - Pilot on Continuity_Handoff (4 children) first.
 - The catalogue (159 children) needs a batch tool. It should run only after the pilot is verified.
+
+### Step 2 built, not run: the owner tool `apply-split` (2026-11-22)
+
+`active_knowledge_engine/split_apply.py` (CLI `apply-split --manifest PLAN.json [--execute]`) is the owner's step. It is built and tested but **was not run on the real vault**: creating and attesting notes is the owner's authority.
+- It runs only as HUMAN/ADMIN. `--execute` also needs an interactive terminal (stdin and stdout; on Windows NUL reports `isatty()`) and the parent id typed back.
+- It re-checks the manifest against the parent as it is now. A stale or tampered manifest is refused before any write.
+- For each child, in order, it:
+  1. creates the child **RAW** (never served to agents before attestation), with a `part_of` relation and a deterministic UUID;
+  2. attests it with `expected_content_sha256` (PR #398), so a body swapped in between is refused;
+  3. reviews and promotes it;
+  4. reads it back through `memory_get` as an AI_AGENT and requires the exact slice.
+- The first failure stops the run and names the child. A re-run skips children already applied, and a conflicting id stops the run. The parent is never modified.
+
+It depends on PR #398 and is on the stacked branch `claude/ake-split-apply`. Dry run on the real Continuity_Handoff manifest: 4 children listed, nothing written.
+
+**Owner pilot:** `python -m active_knowledge_engine split-plan --note-id 8c7d5c90-9c29-450b-b5a9-e2b2024db502`, then `apply-split --manifest <plan> --execute` in your own terminal. Supersede or keep the parent afterwards; that is a separate owner decision.

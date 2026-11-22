@@ -7,6 +7,10 @@ Milestone 1 supports the dry run only. Exit codes: 0 = COMPLETED, 3 = COMPLETED_
 ``python -m active_knowledge_engine split-plan --note-id ID`` writes a dry-run split manifest
 (exit 0 = PLANNED; 1 = NEEDS_PROVENANCE, UNSPLITTABLE, DOES_NOT_FIT or COVERAGE_FAILED).
 
+``python -m active_knowledge_engine apply-split --manifest PLAN.json [--execute]`` is the OWNER
+step for a PLANNED split: without --execute it validates and lists; with --execute it needs an
+interactive terminal and the parent id typed back (exit 0 = APPLIED, 1 = FAILED, 2 = refused).
+
 ``python -m active_knowledge_engine compare BASELINE.json CANDIDATE.json`` compares the
 retrieval_quality stage of two job records (exact McNemar). Exit codes: 0 = NO_CHANGE,
 IMPROVED or INCONCLUSIVE, 4 = REGRESSED, 2 = NOT_COMPARABLE.
@@ -40,6 +44,11 @@ def main(argv=None) -> int:
     sp = sub.add_parser("split-plan", help="dry-run split manifest for a note too large for the agent pack")
     sp.add_argument("--note-id", required=True)
     sp.add_argument("--vault-root", default=str(REPO_ROOT))
+    ap = sub.add_parser("apply-split", help="OWNER: create, attest and promote the children of a PLANNED split")
+    ap.add_argument("--manifest", required=True)
+    ap.add_argument("--vault-root", default=str(REPO_ROOT))
+    ap.add_argument("--execute", action="store_true",
+                    help="really apply (needs an interactive terminal and the parent id typed back)")
     cmp = sub.add_parser("compare", help="paired comparison of two job records")
     cmp.add_argument("baseline")
     cmp.add_argument("candidate")
@@ -66,6 +75,45 @@ def main(argv=None) -> int:
         if plan["status"] == "UNSPLITTABLE":
             print(f"blocking_line={plan['blocking_line']}")
         return 0 if plan["status"] == "PLANNED" else 1
+
+    if args.command == "apply-split":
+        from interfaces import vault_runtime
+        vault_runtime.configure_runtime_dirs()
+        from memory_controller.authorizer import Principal
+        from memory_controller.controller import MemoryController
+        from memory_controller.storage.file_engine import FileStorageEngine
+
+        from .split_apply import ManifestError, _check_manifest, apply_split
+
+        manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
+        controller = MemoryController(storage=FileStorageEngine(str(Path(args.vault_root).resolve())))
+        try:
+            _parent, _body, children = _check_manifest(controller, manifest)
+        except ManifestError as exc:
+            print(f"refused: {exc}", file=sys.stderr)
+            return 2
+        if not args.execute:
+            print(f"DRY RUN: {len(children)} children of {manifest['parent_id']} would be created RAW, "
+                  "attested with their manifest hash, reviewed, promoted and read back. Nothing written.")
+            for ch in children:
+                print(f"  {ch['index']:03d} {ch['child_id_proposed']} lines {ch['line_start']}-{ch['line_end']} "
+                      f"sha256 {ch['content_sha256'][:12]}")
+            return 0
+        # both ends must be a terminal: on Windows the NUL device reports isatty() on stdin
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            print("refused: --execute is an owner action and needs an interactive terminal", file=sys.stderr)
+            return 2
+
+        def confirm(parent_id: str, count: int) -> bool:
+            try:
+                typed = input(f"Owner: type the parent id to create and attest {count} children of it: ").strip()
+            except EOFError:
+                return False
+            return typed == parent_id
+
+        result = apply_split(controller, manifest, principal=Principal.HUMAN, confirm=confirm)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return {"APPLIED": 0, "FAILED": 1}.get(result["status"], 2)
 
     if args.command == "compare":
         from .compare import compare_records
