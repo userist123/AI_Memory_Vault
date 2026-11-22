@@ -586,3 +586,63 @@ def test_r1_p1_registered_hook_commands_run_python_isolated(tmp_path):
             if "cost-router/hook_" in h["command"]]
     assert len(cmds) == 7
     assert all('"$py" -I "' in c for c in cmds), cmds
+
+
+# ---- review round 1, item 4: --verify covers config.json, agents.pinned.json and the exact hook command -------------
+
+def _verify(home: Path, *args):
+    inst = _installed_skill(home) / "install.py"
+    r = _run(inst, ["--home", str(home), "--verify", "--json", *args], home=home, cwd=home)
+    return r, json.loads(r.stdout)
+
+
+def test_r1_p6_verify_detects_a_tampered_config_json_and_lists_the_roots(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    r, rep = _verify(home)
+    assert r.returncode == 0 and rep["ok"] is True
+    assert rep["pinned_vault_roots"] == [os.path.normcase(os.path.realpath(ROOT))]
+    cfg = _installed_skill(home) / "config.json"
+    data = json.loads(cfg.read_text(encoding="utf-8"))
+    data["vault_roots"].append(os.path.normcase(os.path.realpath(tmp_path)))  # an attacker pins a directory
+    cfg.write_text(json.dumps(data), encoding="utf-8")
+    r, rep = _verify(home)
+    assert r.returncode == 1 and rep["ok"] is False and rep["config_ok"] is False
+    assert os.path.normcase(os.path.realpath(tmp_path)) in rep["pinned_vault_roots"]
+    # also from a trusted checkout
+    r, rep = _verify(home, "--source-root", str(ROOT))
+    assert r.returncode == 1 and rep["config_ok"] is False
+
+
+def test_r1_p6_verify_detects_tampered_pins_and_privileged_agent_files(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    pins = _installed_skill(home) / "agents.pinned.json"
+    good = pins.read_text(encoding="utf-8")
+    data = json.loads(good)
+    data["fable-consultant.md"] = "0" * 64
+    pins.write_text(json.dumps(data), encoding="utf-8")
+    r, rep = _verify(home)
+    assert r.returncode == 1 and rep["agents_pinned_ok"] is False
+    pins.write_text(good, encoding="utf-8")
+    assert _verify(home)[0].returncode == 0
+    agent = home / ".claude" / "agents" / "fable-consultant.md"
+    agent.write_bytes(agent.read_bytes() + b"\nextra instruction\n")
+    r, rep = _verify(home)
+    assert r.returncode == 1 and "fable-consultant.md" in rep["agents_differing"]
+
+
+def test_r1_p6_require_hooks_needs_the_exact_installed_command(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    assert _verify(home, "--require-hooks")[0].returncode == 0
+    settings = home / ".claude" / "settings.json"
+    text = settings.read_text(encoding="utf-8")
+    inst_posix = (_installed_skill(home)).as_posix()
+    assert inst_posix in text
+    settings.write_text(text.replace(inst_posix, "/elsewhere/project/.claude/skills/cost-router"), encoding="utf-8")
+    r, rep = _verify(home, "--require-hooks")
+    assert r.returncode == 1 and rep["hooks_registered"] is False and rep["agent_hook_on_failure_block"] is False

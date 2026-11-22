@@ -341,7 +341,8 @@ def _context_installed(home: Path) -> bool:
 _IGNORE = ("__pycache__", "chat")
 CONFIG_NAME = "config.json"  # machine-local pinned vault roots, written by install(), never part of a source
 PINNED_AGENTS = "agents.pinned.json"  # sha256 of the SOURCE agent files: the trust root of privileged definitions
-_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME, PINNED_AGENTS}  # written by install(), not part of the source manifest
+PIN_RECORD = "pins.sha256.json"  # sha256 of config.json and agents.pinned.json as install() wrote them (for --verify)
+_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME, PINNED_AGENTS, PIN_RECORD}  # written by install(), not part of the source manifest
 
 
 def _file_sha(path: Path) -> str:
@@ -434,19 +435,60 @@ def hook_status(home: Path) -> dict:
     hooks = hooks if isinstance(hooks, dict) else {}
     found: dict[str, bool] = {}
     on_failure_block = False
+    installed = home / ".claude" / "skills" / "cost-router"
     for event, script, matcher in HOOK_SPECS:
         ok = False
+        expected = hook_entry(installed, script, matcher)["hooks"][0]["command"]  # the exact command of the INSTALLED copy
         for entry in hooks.get(event) or []:
             if not isinstance(entry, dict) or entry.get("matcher") != matcher:
                 continue
             for h in entry.get("hooks") or []:
-                if isinstance(h, dict) and f"cost-router/{script}" in str(h.get("command", "")).replace("\\", "/"):
+                if isinstance(h, dict) and h.get("command") == expected:
                     ok = True
                     if script == "hook_agent_model.py" and h.get("onFailure") == "block":
                         on_failure_block = True
         found[script] = ok
     return {"hooks": found, "hooks_registered": all(found.values()),
             "agent_hook_on_failure_block": on_failure_block}
+
+
+def _json_dict(path: Path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def pins_status(skill_dir: Path, agents_dir: Path, agents_src: Path | None) -> dict:
+    """Read-only checks of the trust data install() writes: config.json (pinned vault roots) and agents.pinned.json
+    must be the files install() recorded (pins.sha256.json); the privileged agent files in ~/.claude/agents must be the
+    pinned ones; with a known source, the pins must equal the source agents. Other (non-privileged) agent files may be
+    edited by the owner and are only listed."""
+    record = _json_dict(skill_dir / PIN_RECORD) or {}
+    def sha_of(name):
+        try:
+            return _file_sha(skill_dir / name)
+        except OSError:
+            return None
+    config_ok = bool(record) and record.get(CONFIG_NAME) == sha_of(CONFIG_NAME) is not None
+    pinned = _json_dict(skill_dir / PINNED_AGENTS)
+    agents_pinned_ok = bool(record) and pinned is not None and record.get(PINNED_AGENTS) == sha_of(PINNED_AGENTS)
+    differing, edited = [], []
+    for name, want in sorted((pinned or {}).items()):
+        try:
+            same = _file_sha(agents_dir / name) == want
+        except OSError:
+            same = False
+        if not same:
+            (differing if Path(name).stem in PRIVILEGED_AGENTS else edited).append(name)
+    if agents_src is not None and pinned is not None:
+        source = {p.name: _file_sha(p) for p in sorted(agents_src.glob("*.md"))}
+        if source != pinned:
+            agents_pinned_ok = False
+    return {"pins_recorded": bool(record), "config_ok": config_ok, "agents_pinned_ok": agents_pinned_ok,
+            "agents_differing": differing, "agents_edited": edited,
+            "pins_ok": bool(record) and config_ok and agents_pinned_ok and not differing}
 
 
 def verify(home: Path, source_root: Path | None = None) -> dict:
@@ -461,13 +503,16 @@ def verify(home: Path, source_root: Path | None = None) -> dict:
             "lib/claude_model_router.py": source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
             "policy.json": source_root / "04_CONFIG" / "claude_model_routing.json"})
         head = _repo_head(source_root)
+        agents_src = source_root / ".claude" / "agents"
     elif _is_installed_layout():
         layout = "installed"
         want = None
         head = "unknown"
+        agents_src = None
     else:
         want = source_manifest()
         head = _repo_head()
+        agents_src = AGENTS_SRC
     have_all = manifest(skill_dir) if skill_dir.is_dir() else {}
     if want is None:  # integrity only: the installed tree is its own reference, VERSION line 2 is the check
         want = {k: v for k, v in have_all.items()}
@@ -486,12 +531,13 @@ def verify(home: Path, source_root: Path | None = None) -> dict:
             version_problem = f"line 1 is not a git ref or 'unknown': {version[0][:40]!r}"
         elif len(version) < 2 or version[1].strip() != manifest_hash(have_all):
             version_problem = "line 2 does not match the manifest hash of the installed tree"
-    return {"ok": bool(version) and not (missing or extra or differing or version_problem),
+    pins = pins_status(skill_dir, home / ".claude" / "agents", agents_src)
+    return {"ok": bool(version) and not (missing or extra or differing or version_problem) and pins["pins_ok"],
             "installed_dir": str(skill_dir),
             "missing": missing, "extra": extra, "differing": differing,
             "installed_version": version, "source_version": [head, manifest_hash(want)],
             "version_missing": not version, "version_problem": version_problem, "layout": layout,
-            "pinned_vault_roots": read_pinned_roots(skill_dir),
+            "pinned_vault_roots": read_pinned_roots(skill_dir), **pins,
             **hook_status(home)}
 
 
@@ -587,6 +633,8 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     # agent) with these hashes: a project .claude/agents/<name>.md is searched before ~/.claude/agents
     (staging / PINNED_AGENTS).write_text(
         json.dumps({src.name: _sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
+    (staging / PIN_RECORD).write_text(
+        json.dumps({n: _file_sha(staging / n) for n in (CONFIG_NAME, PINNED_AGENTS)}, indent=2) + "\n", encoding="utf-8")
     try:
         _swap_in(staging, skill_dir)
     finally:
@@ -694,6 +742,13 @@ def main(argv=None) -> int:
                 for rel in r[key]:
                     print(f"{key}: {rel}")
             print("installed VERSION: " + (" / ".join(r["installed_version"]) or "MISSING"))
+            print("pinned vault roots (config.json): " + (", ".join(r["pinned_vault_roots"]) or "none"))
+            if not r["pins_ok"]:
+                print("PINS problem: config.json ok=%s, agents.pinned.json ok=%s, recorded=%s, privileged agent files "
+                      "differing: %s" % (r["config_ok"], r["agents_pinned_ok"], r["pins_recorded"],
+                                         ", ".join(r["agents_differing"]) or "none"))
+            if r["agents_edited"]:
+                print("agent files edited here (not privileged, informational): " + ", ".join(r["agents_edited"]))
             if r["version_problem"]:
                 print("VERSION problem: " + r["version_problem"])
             print("source VERSION:    " + " / ".join(r["source_version"]) + f"  (layout: {r['layout']})")
