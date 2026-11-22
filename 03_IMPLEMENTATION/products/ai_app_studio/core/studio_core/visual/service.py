@@ -280,10 +280,13 @@ class VisualService:
                               source: str | None = None) -> Capture:
         if sys.platform != "win32":
             raise CaptureFailed("desktop capture is implemented for Windows only")
+        try:  # AAS: computer_use is not vendored; refuse before the operation so no `ok` row is audited
+            from ..computer_use.windows import capture_bitmap
+        except ImportError as e:
+            raise Unavailable("desktop capture is not available in AI App Studio (computer_use not vendored)") from e
         self.studio.operation(actor, "visual.capture_screen", "visual.capture_desktop",
                               {"windowHandle": window_handle, "region": region}, lambda c: {"policy": "ok"},
                               project_id=project_id)
-        from ..computer_use.windows import capture_bitmap
         png, info = await asyncio.to_thread(capture_bitmap, window_handle, region)
         vp = {"width": info["width"], "height": info["height"]}
         rev = self.studio.get_revision(project_id) if project_id else None

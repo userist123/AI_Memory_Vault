@@ -462,7 +462,8 @@ class Studio:
             data = out.read_bytes()
             with zipfile.ZipFile(out) as z:
                 names = z.namelist()
-            ctx.verification = "verified" if all(r in names for r in pub.required) else "failed"
+            # AAS seam: an empty requirement never counts as verified
+            ctx.verification = "verified" if pub.required and all(r in names for r in pub.required) else "failed"
             return {"projectId": p.id, "revision": p.revision, "path": str(out), "files": names, "skipped": skipped,
                     "sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
         return self.operation(actor, "project.export", "project.export", {"projectId": project_id}, _do,
@@ -522,11 +523,9 @@ class Studio:
                             f"write {path}", change)
 
     def delete_file(self, actor: Actor, project_id: str, base_revision: int, path: str) -> dict[str, Any]:
-        kind = self.kind
-
         def change(s: Session, p: Project) -> dict[str, Any]:
             files = dict((p.settings or {}).get("files", {}))
-            kind.validate(path)  # AAS seam: path-only check
+            self.kind.validate(path)  # AAS seam: path-only check, kind resolved inside the operation (audited)
             if path not in files:
                 raise NotFound("file not found", path=path)
             del files[path]

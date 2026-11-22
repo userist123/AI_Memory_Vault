@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -97,3 +98,40 @@ def test_missing_listed_file_fails(copy: Path) -> None:
     (copy / TARGET).unlink()
     r = run(copy)
     assert r.returncode == 1 and "listed but missing" in r.stderr
+
+
+def _outside_pkg(tmp_path: Path) -> Path:
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "evil.py").write_text("import os\n", encoding="utf-8")
+    return outside
+
+
+def test_symlinked_dir_with_unlisted_code_fails(copy: Path, tmp_path: Path) -> None:
+    link = copy / "core/studio_core/linked"
+    try:
+        os.symlink(_outside_pkg(tmp_path), link, target_is_directory=True)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"cannot create a directory symlink here: {e}")
+    r = run(copy)
+    assert r.returncode == 1 and "core/studio_core/linked: symlink/junction" in r.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="junctions are Windows-only")
+def test_junction_with_unlisted_code_fails(copy: Path, tmp_path: Path) -> None:
+    link = copy / "tests/vendored/linked"
+    r0 = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(_outside_pkg(tmp_path))],  # noqa: S603,S607
+                        capture_output=True, check=False)
+    assert r0.returncode == 0, r0.stderr
+    r = run(copy)
+    assert r.returncode == 1 and "tests/vendored/linked: symlink/junction" in r.stderr
+
+
+def test_symlinked_file_fails(copy: Path, tmp_path: Path) -> None:
+    link = copy / "core/studio_core/evil.py"
+    try:
+        os.symlink(_outside_pkg(tmp_path) / "evil.py", link)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"cannot create a file symlink here: {e}")
+    r = run(copy)
+    assert r.returncode == 1 and "core/studio_core/evil.py: symlink/junction" in r.stderr

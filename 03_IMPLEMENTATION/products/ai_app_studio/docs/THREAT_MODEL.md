@@ -61,6 +61,9 @@ New (v2): R-EXT — an external Claude Code session's own shell runs as the owne
 backend's memory (owner token), and via wsl.exe (<owner-user> = docker group + passwordless `sudo -n runuser`) act as root
 in the distro, including the owner's adb 5037 and s9emu. Mitigations in DESIGN.md sec. 6.2; accepted until the owner
 chooses the kvm-group option (DESIGN.md sec. 9 item 3).
+Manifest trust (S1): CI runs `scripts/check_vendored.py` without the AWS repository, so it trusts the
+upstream_sha256 values recorded in VENDORED.json; only `check_vendored.py --upstream-repo <AWS repo>` on the owner PC
+re-derives them from 25b3eab (also recorded as `residuals` in VENDORED.json; regenerate with scripts/gen_vendored.py).
 
 ## Review round 1 (Opus vault-reviewer, 2026-11-22) — verdict PARTIAL, implementation blocked
 Verified environment facts: WSL networking `nat` (wslinfo), WSL 2.6.3. Owner's adb server listens on WSL

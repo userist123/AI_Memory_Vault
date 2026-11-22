@@ -351,7 +351,7 @@ Accepted residual, recorded in THREAT_MODEL.md.
 | ui | ubuntu (vitest) | activity rendering, gap/replay client, approval region isolation |
 | docker-build | ubuntu (docker) | P1b, P2a, P2c, P2d, P2e, P7a, P8b, P8d, PM2b, PB7a, PB7b |
 | runner | windows, manual dispatch (needs Claude login) | P5e live, PM4a live |
-| local-gate (owner PC, `tests/local_gate/run.ps1`, receipt with sha256 committed) | WSL2 + KVM | P4a (WSL part), P4d live, P7c, P9a, P9b, P10b, P10c, PM1a, PM2a, PM3d, PM5a, window-in-netns check |
+| local-gate (owner PC, `tests/local_gate/run.ps1`, receipt with sha256 committed) | WSL2 + KVM | P4a (WSL part), P4d live, P7c, P9a, P9b, P10b, P10c, PM1a, PM2a, PM3d, PM5a, window-in-netns check, `uv run python scripts/check_vendored.py --upstream-repo <AWS repo>` (upstream hashes vs 25b3eab; CI only trusts the manifest) |
 GitHub runners have no KVM-in-WSL2, so device probes run in the local gate; release requires a receipt not older
 than the release commit's device_host/ and wsl/ changes.
 

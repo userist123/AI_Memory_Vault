@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +29,26 @@ REQUIRED = ("path", "upstream_path", "upstream_commit", "upstream_sha256", "loca
 
 def sha256_file(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def _is_link(p: Path) -> bool:
+    """Symlink (file or dir) or Windows junction/mount point."""
+    if p.is_symlink() or p.is_junction():
+        return True
+    try:  # other reparse points (e.g. junctions created by tools Path.is_junction misses)
+        return bool(getattr(os.lstat(p), "st_file_attributes", 0) & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
+    except OSError:
+        return False
+
+
+def _walk(base: Path) -> list[Path]:
+    """Every entry under base, without following any link."""
+    out: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(base, followlinks=False):
+        d = Path(dirpath)
+        out.extend(d / n for n in dirnames)  # links to dirs appear here and are not descended into
+        out.extend(d / n for n in filenames)
+    return sorted(out)
 
 
 def check(root: Path, upstream_repo: Path | None = None) -> list[str]:
@@ -87,12 +108,18 @@ def check(root: Path, upstream_repo: Path | None = None) -> list[str]:
             errors.append(f"local_files: entry needs path and reason: {e!r}")
     for tree in GUARDED_TREES:
         base = root / tree
+        if _is_link(base):
+            errors.append(f"{tree}: guarded tree is a symlink/junction")
+            continue
         if not base.is_dir():
             continue
-        for p in sorted(base.rglob("*")):
+        for p in _walk(base):
+            rel = p.relative_to(root).as_posix()
+            if _is_link(p):  # never followed: a link could hide unlisted code outside the tree
+                errors.append(f"{rel}: symlink/junction in vendored tree {tree}")
+                continue
             if not p.is_file() or IGNORED_PARTS & set(p.relative_to(root).parts):
                 continue
-            rel = p.relative_to(root).as_posix()
             if rel not in listed and rel not in owned:
                 errors.append(f"{rel}: unlisted file in vendored tree {tree}")
     for rel in sorted(owned - {None}):

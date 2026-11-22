@@ -4,13 +4,16 @@ website-only AWS tests exercised via components/templates (see VENDORED.json "dr
 from __future__ import annotations
 
 import ast
+import asyncio
 import json
 import os
 import shutil
 import subprocess
+import sys
 import zipfile
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -213,6 +216,54 @@ def test_export_verification_fails_when_required_file_missing(st: Studio, null_k
     with st.session() as s:
         row = s.execute(select(ToolExecution).where(ToolExecution.tool == "project.export")).scalar_one()
     assert row.verification == "failed"
+
+
+@pytest.mark.parametrize("required", [(), ("",), ["index.html"], None])
+def test_publication_requires_a_non_empty_requirement(required: Any) -> None:
+    with pytest.raises(ValueError):
+        Publication(root="site", required=required)
+
+
+def test_export_with_an_empty_requirement_is_never_verified(st: Studio, null_kind: NullKind,
+                                                           monkeypatch: pytest.MonkeyPatch) -> None:
+    # a kind that bypasses Publication's own check still cannot get a `verified` export
+    pid = st.create_project(HUMAN, "ExportEmpty")["id"]
+    monkeypatch.setattr(null_kind, "publish",
+                        lambda project, ws: SimpleNamespace(root="site", required=(), exclude=frozenset()))
+    out = st.export_project(HUMAN, pid)
+    assert "index.html" in out["files"]  # the archive is produced, only the verdict is withheld
+    with st.session() as s:
+        rows = s.execute(select(ToolExecution).where(ToolExecution.tool == "project.export")).scalars().all()
+    assert [r.verification for r in rows] == ["failed"]
+
+
+def test_delete_file_with_an_unregistered_kind_is_audited_and_unavailable(st: Studio, null_kind: NullKind) -> None:
+    pid = st.create_project(HUMAN, "KindGone")["id"]
+    st.write_file(HUMAN, pid, 1, "a.txt", "kept")
+    project_kind.unregister(null_kind.name)
+    with pytest.raises(Unavailable):
+        st.delete_file(AGENT, pid, 2, "a.txt")
+    with st.session() as s:
+        rows = s.execute(select(ToolExecution).where(ToolExecution.tool == "code.delete_file")).scalars().all()
+        p = s.get(Project, pid)
+        assert p is not None and p.revision == 2 and "a.txt" in (p.settings or {})["files"]
+    assert [r.status for r in rows] == ["error"]  # audited; the project stayed at revision 2
+
+
+def test_desktop_capture_without_computer_use_is_unavailable_and_not_audited_ok(
+        st: Studio, monkeypatch: pytest.MonkeyPatch) -> None:
+    from studio_core.visual import service as visual_service
+
+    monkeypatch.setattr(visual_service, "sys", SimpleNamespace(platform="win32"))  # reach the import on any OS
+    monkeypatch.setitem(sys.modules, "studio_core.computer_use", None)  # importing it raises ImportError
+    monkeypatch.setitem(sys.modules, "studio_core.computer_use.windows", None)
+    vs = visual_service.VisualService(st)
+    with pytest.raises(Unavailable):
+        asyncio.run(vs.capture_desktop(AGENT))
+    with st.session() as s:
+        rows = s.execute(select(ToolExecution).where(
+            ToolExecution.tool.in_(("visual.capture_desktop", "visual.capture_screen")))).scalars().all()
+    assert [r for r in rows if r.status == "ok"] == []
 
 
 @pytest.mark.skipif(os.name != "nt", reason="junctions are Windows-only")

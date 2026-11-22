@@ -33,8 +33,13 @@ class Publication:
     the export is ``verified`` only when every name in ``required`` (archive-relative) is present."""
 
     root: str
-    required: tuple[str, ...] = ()
+    required: tuple[str, ...]
     exclude: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.required, tuple) or not self.required or not all(
+                isinstance(r, str) and r for r in self.required):
+            raise ValueError("Publication.required must be a non-empty tuple of non-empty names")
 
 
 @runtime_checkable
@@ -53,7 +58,11 @@ class ProjectKind(Protocol):
         ...
 
     def build(self, project: dict[str, Any], snapshot: dict[str, Any], ws: Workspace) -> None:
-        """Materialise a revision snapshot into the workspace (runs inside the revision transaction)."""
+        """Materialise a revision snapshot into the workspace (runs inside the revision transaction).
+
+        The snapshot is UNTRUSTED input: restore_revision, restore_from_git and recover_from_git replay settings
+        (including code files) from stored revisions or a git commit without calling ``validate`` again, so build
+        must re-check every path/content it writes (or call ``validate`` itself) and never trust snapshot data."""
         ...
 
     def publish(self, project: dict[str, Any], ws: Workspace) -> Publication:
