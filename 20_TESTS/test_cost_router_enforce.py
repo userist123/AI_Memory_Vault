@@ -110,7 +110,7 @@ def test_project_hooks_stay_silent_when_the_user_install_is_registered(tmp_path)
     user_hook = home / ".claude" / "skills" / "cost-router" / "hook_prompt_route.py"
     answer = json.loads(_run([user_hook], prompt, home=home).stdout)  # user copy answers, compact line
     assert answer == {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
-                                             "additionalContext": "cost-router: explore -> Explore subagent, haiku"}}
+                                             "additionalContext": "cost-router: explore -> Explore subagent, haiku spec=explore"}}  # M6: the registry names the specialist
     assert _agent({"prompt": "find which files import X"}, home) is None   # project agent hook shadowed
     user_agent = home / ".claude" / "skills" / "cost-router" / "hook_agent_model.py"
     r = _run([user_agent], json.dumps({"tool_name": "Agent", "tool_input": {"prompt": "find which files import X"}}), home=home)

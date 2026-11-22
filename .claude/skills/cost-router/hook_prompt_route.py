@@ -172,13 +172,23 @@ def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bo
         pass
 
 
-def _route_changed(data: dict, d, risky: bool, same_tier: bool = False) -> bool:
+def pick_specialist(prompt: str, d):
+    """Advisory specialist hint from the compiled registry (lib/specialists.py); None on any failure (fail open).
+    It never feeds the route state, the tier, the tools or the Fable guard."""
+    try:
+        from specialists import select  # noqa: E402
+        return select(prompt, d.task_class)
+    except Exception:
+        return None
+
+
+def _route_changed(data: dict, d, risky: bool, same_tier: bool = False, spec: str = "") -> bool:
     """True when the route line must be printed: first prompt of the session, a changed (class, model, subagent),
     risk >= high. Records the signature. COST_ROUTER_VERBOSE_ROUTE=1 never reaches here (always prints)."""
     try:
         import route_state  # noqa: E402
         sid = data.get("session_id")
-        sig = f"{d.task_class}|{d.model}|{d.subagent}" + ("|same" if same_tier else "")
+        sig = f"{d.task_class}|{d.model}|{d.subagent}" + ("|same" if same_tier else "") + (f"|{spec}" if spec else "")
         if not sid:
             return True
         same = route_state.last_route_sig(sid) == sig
@@ -241,16 +251,23 @@ def main() -> int:
         return 0
     same_tier = not direct_requested(prompt) and is_same_tier(resolve_model(data), d)
     persist(data, prompt, d, same_tier=same_tier)
+    sel = pick_specialist(prompt, d)
+    try:
+        from specialists import spec_token  # noqa: E402
+        spec = spec_token(sel)
+    except Exception:
+        spec = ""
     if os.environ.get("COST_ROUTER_VERBOSE_ROUTE", "").strip() != "1":  # compact is the default (<=120 chars)
         target = f"{d.subagent} subagent" if d.subagent else "main"
         lang_code = owner_language().split()[0][:8] if owner_language() else ""
         suffix = f" lang={lang_code}" if lang_code else ""
         risk = f" risk={_risk_of(d)}" if _risk_of(d) else ""
+        tail = (" " + spec if spec else "") + suffix  # the spec hint is never the part that gets cut
         if same_tier:
-            line = f"cost-router: {d.task_class} same tier ({d.model}): direct work ok"[:120 - len(suffix)] + suffix
+            line = f"cost-router: {d.task_class} same tier ({d.model}): direct work ok"[:120 - len(tail)] + tail
         else:
-            line = f"cost-router: {d.task_class} -> {target}, {d.model}{risk}"[:120 - len(suffix)] + suffix
-        if not _route_changed(data, d, bool(risk), same_tier):  # same route as the previous prompt: say nothing (state is saved)
+            line = f"cost-router: {d.task_class} -> {target}, {d.model}{risk}"[:120 - len(tail)] + tail
+        if not _route_changed(data, d, bool(risk), same_tier, spec):  # same route as the previous prompt: say nothing (state is saved)
             if warning:
                 _emit(warning)
             return 0
@@ -269,6 +286,11 @@ def main() -> int:
                 f" to {d.model}. Keep only its conclusion in this session.")
         if not direct_requested(prompt):
             ctx += " Enforced: after 3 direct tool calls the main session must delegate (unless the Agent gate itself refused the spawn)."
+    if sel:
+        kind = {"agent": "agent", "overlay": "overlay skill"}.get(sel["kind"], "skill")
+        ctx += (f" Specialist hint (advisory, from the registry): {sel['id']} ({kind})"
+                + (f" + overlay {sel['overlay']}" if sel.get("overlay") else "")
+                + f". Acceptance: {sel['acceptance']}")
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:
         try:
             from local_llm import probe  # noqa: E402

@@ -324,6 +324,18 @@ Residual: `pins.sha256.json` and `config.json` are not authenticated. An attacke
 both together (and could replace the hooks themselves anyway), so `--verify` detects accidental drift and project-level
 tampering, not a same-user attacker with write access to `~/.claude`.
 
+## 4D. Specialist registry (which agent or skill gets the task)
+
+Small metadata, never frontmatter: `route.meta.json` per skill (shipped under `registry_src/skills/<id>/`, installed next
+to the skills) and `roles/<id>.json` per agent. `lib/registry_compile.py` (stdlib, run by `install.py`, never in a hook)
+validates schema v1 (unknown key, duplicate id, a trigger that looks like a regex, tools or model that disagree with the
+agent file: all errors; `*.bak-*` dirs skipped) and writes `registry.json` (<= 8 KB, sha256 of every sidecar and artifact,
+deterministic). `--verify` recompiles it. `lib/specialists.py` picks at most one id (plus an overlay) for the prompt by
+folded literal trigger match, then task-class fit, then priority; the hook prints ` spec=<id>` and, in the long form,
+the specialist's acceptance check. The hint is advisory: prompt text can only select an id of the closed set, never
+changes the route state, tier, tools or authority, and a missing or corrupt registry means no hint (fail open, the Fable
+guard is separate). Not a gate: the route class and the hooks of section 4A stay binding.
+
 ## 5. Report shape (end of task)
 
 Outcome first, then evidence (commands, exit codes, counts), then what was not verified, then the
