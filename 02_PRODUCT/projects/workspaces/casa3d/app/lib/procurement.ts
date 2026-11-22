@@ -3,6 +3,7 @@ import { getDb } from './db';
 import type { Snapshot } from '../core/types';
 import { HttpError, getProject, getCatalog, getMaterials } from './repo';
 import { listCustomItems } from './custom-items';
+import { fxUsage } from '../core/fx';
 import { procurementLines, procurementRows, bySupplier, procurementSummary, checkOrderState, isLineKey, type OrderState } from '../core/procurement';
 
 async function states(projectId: string): Promise<Record<string, OrderState>> {
@@ -21,7 +22,8 @@ export async function ordersUpdatedAt(id: string): Promise<string | null> {
 }
 export async function getOrders(owner: string, id: string, today = new Date().toISOString().slice(0, 10)){
   const p = await getProject(owner, id), rows = await projectRows(id, p.draft, today, p.meta.startDate);
-  return { rows, groups: bySupplier(rows), summary: procurementSummary(rows) };
+  // `fx`: monedele străine ale produselor la comandă, cele fără curs (liniile lor nu se adună) și cursurile proiectului
+  return { rows, groups: bySupplier(rows), summary: procurementSummary(rows), fx: { ...fxUsage(rows, p.draft.fx), rates: p.draft.fx ?? {} }, draftRev: p.draftRev };
 }
 export async function setOrderState(owner: string, id: string, key: unknown, state: unknown){
   const p = await getProject(owner, id); if (!isLineKey(key)) throw new HttpError(400, 'Linie necunoscută.');

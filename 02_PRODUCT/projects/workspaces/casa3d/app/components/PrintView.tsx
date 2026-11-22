@@ -13,7 +13,8 @@ import { wallElevations } from '@/core/drawings';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
-import { planSymbol, symbolAngle } from '@/core/plan-symbols';
+import { planSymbol } from '@/core/plan-symbols';
+import { symbolTransform } from '@/core/mirror';
 import { pricedOffer, resolve, furnitureTotal } from '@/core/catalog';
 import { roomLook, normalizeHex } from '@/core/appearance';
 import { roomWorks } from '@/core/room-works';
@@ -26,32 +27,55 @@ import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
 import { nicheGeometry } from '@/core/niches';
-import { dimGeometry, textHeight } from '@/core/annotations';
+import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, textAnchor, textAnchorAt, angleGeometry, angleArcPath, angleLabelAt, formatAngle, cloudPath, cloudLabelAt, CLOUD_LABEL_M } from '@/core/annotations';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { localizeSnapshotRoomNames } from '@/core/templates';
+import { phaseSheets, phaseView, type Phase } from '@/core/phase-views';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const MARGIN = 0.5;   // m în jurul planului pentru cote
 
-type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[] };
+type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[];
+  /** planșa pe faze (core/phase-views.ts): pe „demolări” peretele de demolat se desenează la grosimea lui, hașurat roșu, cu golurile lui */
+  phase?: Phase };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
-export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
+/** Săgeata de nord pe planșă: apare doar când orientarea e declarată (core/north.ts); rotită cu unghiul nordului față de sus. */
+export function NorthArrow({ deg, label }: { deg: number; label: string }){
+  return (<svg role="img" aria-label={label} width="15mm" height="15mm" viewBox="-8 -8 16 16" overflow="visible" className="north-arrow">
+    <circle r={5.4} fill="none" stroke="#333" strokeWidth={0.25} />
+    <g transform={`rotate(${deg})`}><path d="M0 -4.6 L2 2.6 L0 1.4 Z" fill="#333" /><path d="M0 -4.6 L-2 2.6 L0 1.4 Z" fill="#fff" stroke="#333" strokeWidth={0.25} />
+      <text y={-5.9} fontSize={2.6} textAnchor="middle" fontWeight={700} transform={`rotate(${-deg} 0 -5.9)`}>N</text></g>
+  </svg>);
+}
+export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [], phase }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
     {f.rooms.map(r => <rect key={r.id} x={r.rect.x0} y={r.rect.z0} width={r.rect.x1 - r.rect.x0} height={r.rect.z1 - r.rect.z0} fill={roomId && r.id !== roomId ? '#f6f4ef' : ROOM_FILL[r.type] || '#f3f1ec'} stroke="#c9c4b8" strokeWidth={fs(0.2)} />)}
     {/* starea peretelui: nou = hașurat (linii la 45°), de demolat = contur punctat; existent = plin, ca înainte */}
-    {f.walls.map(w => w.status === 'demolish' ? <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
+    {f.walls.map(w => w.status === 'demolish' && phase === 'demolition' ? <g key={w.id}><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeOpacity={.16} strokeWidth={w.thickness} /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={w.thickness} strokeDasharray=".03 .06" /></g>
+      : w.status === 'demolish' ? <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
       : w.status === 'new' ? <g key={w.id}><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#fff" strokeWidth={w.thickness * .7} strokeDasharray=".03 .03" /></g>
       : <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
     {(f.zones ?? []).filter(z => !roomId || z.roomId === roomId).map(z => <rect key={z.id} x={z.rect.x0} y={z.rect.z0} width={z.rect.x1 - z.rect.x0} height={z.rect.z1 - z.rect.z0} fill="#e7dccb" fillOpacity={.6} stroke="#8B6A45" strokeWidth={fs(0.15)} />)}
-    {f.walls.filter(w => w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
-      return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeWidth={w.thickness + 0.02} />); })}
+    {f.walls.filter(w => phase === 'demolition' || w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
+      return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeOpacity={w.status === 'demolish' ? .55 : undefined} strokeWidth={w.thickness + 0.02} />); })}
     {(f.columns ?? []).filter(c => c.role === 'shaft' || c.role === 'boxing').map(c => <g key={c.id} stroke="#333" strokeWidth={fs(0.2)} fill="#f4f1ea"><rect x={c.x - c.w / 2} y={c.z - c.d / 2} width={c.w} height={c.d} />
       {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
     {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
-    {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text') return <text key={an.id} x={an.at[0]} y={an.at[1]} fontSize={textHeight(an)} fill="#222" transform={an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined}>{an.text}</text>;
+    {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text'){ const ta = textAnchorAt(an), lg = leaderGeometry(an), rot = an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined;
+        // săgeata cu notă (linie + vârf plin) și cota de nivel (valoarea în dreptunghi), apoi textul
+        return <g key={an.id}>{lg && <><line x1={lg.from[0]} y1={lg.from[1]} x2={lg.tip[0]} y2={lg.tip[1]} stroke="#222" strokeWidth={fs(0.15)} /><path d={`M${lg.head.map(q => q.join(' ')).join('L')}Z`} fill="#222" /></>}
+          {an.symbol === 'level' && <path d={`M${levelMarkGeometry(an).outline.map(q => q.join(' ')).join('L')}Z`} fill="none" stroke="#222" strokeWidth={fs(0.15)} transform={rot} />}
+          <text x={ta[0]} y={ta[1]} fontSize={textHeight(an)} fill="#222" textAnchor={textAnchor(an) === 'end' ? 'end' : undefined} transform={rot}>{an.text}</text></g>; }
+      // cota unghiulară (brațe, arc, valoarea pe bisectoare) și norul de revizie (contur cu arce, eticheta deasupra)
+      if (an.kind === 'angle'){ const g = angleGeometry(an), lb = angleLabelAt(an, fs(2.6));
+        return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)} fill="none">{g.arms.map(([q, e], k) => <line key={k} x1={q[0]} y1={q[1]} x2={e[0]} y2={e[1]} />)}<path d={angleArcPath(an)} />
+          <text x={lb[0]} y={lb[1]} fontSize={fs(2.4)} fill="#333" stroke="none" textAnchor="middle" dominantBaseline="central">{formatAngle(g.deg, locale === 'en' ? '.' : ',')}</text></g>; }
+      if (an.kind === 'cloud'){ const lb = cloudLabelAt(an.rect);
+        return <g key={an.id}><path d={cloudPath(an.rect)} fill="none" stroke="#666" strokeWidth={fs(0.2)} strokeLinejoin="round" />
+          {an.label && <text x={lb[0]} y={lb[1]} fontSize={CLOUD_LABEL_M} fontWeight={600} fill="#222">{an.label}</text>}</g>; }
       const g = dimGeometry(an), [nx, nz] = g.n, s = Math.sign(an.offset) || 1, tk = fs(1.2), m = [g.mid[0] + nx * s * fs(2), g.mid[1] + nz * s * fs(2)];
       return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)}><line x1={an.a[0]} y1={an.a[1]} x2={g.p1[0]} y2={g.p1[1]} /><line x1={an.b[0]} y1={an.b[1]} x2={g.p2[0]} y2={g.p2[1]} /><line x1={g.p1[0]} y1={g.p1[1]} x2={g.p2[0]} y2={g.p2[1]} />
         {[g.p1, g.p2].map((q, k) => <line key={k} x1={q[0] - (g.u[0] + nx) * tk / 2} y1={q[1] - (g.u[1] + nz) * tk / 2} x2={q[0] + (g.u[0] + nx) * tk / 2} y2={q[1] + (g.u[1] + nz) * tk / 2} />)}
@@ -63,7 +87,7 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
         <path d={`M${g.bottom[0] + dx * .1} ${g.bottom[1] + dz * .1}L${g.top[0]} ${g.top[1]}M${g.top[0] - dx * .2 - px * .12} ${g.top[1] - dz * .2 - pz * .12}L${g.top[0]} ${g.top[1]}L${g.top[0] - dx * .2 + px * .12} ${g.top[1] - dz * .2 + pz * .12}`} strokeWidth={fs(0.2)} /></g>; })}
     {pls.map(pl => { const fp = footprintOf(catalog, pl); if (!fp) return null; const rv = resolve(catalog, pl.variantId);
       const sym = planSymbol(pl.group, pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, rv?.variant.chairs ?? 4);
-      return <g key={pl.id} transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} fill="none" stroke="#3a352f" strokeLinejoin="round">
+      return <g key={pl.id} transform={symbolTransform(pl)} fill="none" stroke="#3a352f" strokeLinejoin="round">
         {sym.outline && <path d={sym.outline} fill="#fffdf8" strokeWidth={fs(0.22)} />}{sym.detail && <path d={sym.detail} strokeWidth={fs(0.14)} />}</g>; })}
     {rooms.map(r => <text key={'l' + r.id} x={r.rect.x0 + 0.15} y={r.rect.z1 - 0.15} fontSize={fs(3)} fill="#444" stroke="#fbfaf7" strokeWidth={fs(1)} strokeLinejoin="round" paintOrder="stroke">{r.name} · {formatArea((r.rect.x1 - r.rect.x0) * (r.rect.z1 - r.rect.z0), units, locale)}</text>)}
     {dims.filter(d => d.exterior).map(d => { const w = f.walls.find(x => x.id === d.wallId)!, k = 0.3, tick = fs(1.2), nx = d.normal[0], nz = d.normal[1];
@@ -73,6 +97,15 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
         <line x1={a[0] - nx * tick} y1={a[1] - nz * tick} x2={a[0] + nx * tick} y2={a[1] + nz * tick} /><line x1={c[0] - nx * tick} y1={c[1] - nz * tick} x2={c[0] + nx * tick} y2={c[1] + nz * tick} />
         <text x={d.label[0]} y={d.label[1]} fontSize={fs(2.4)} fill="#333" stroke="none" textAnchor="middle" dominantBaseline="central" transform={vertical ? `rotate(-90 ${d.label[0]} ${d.label[1]})` : undefined}>{text}</text></g>; })}
   </svg>);
+}
+/** Legenda planșelor pe faze: cele trei stări ale peretelui, desenate ca pe plan. */
+export function PhaseLegend({ t }: { t: Translate }){
+  const sw = (kind: 'kept' | 'demolish' | 'new') => <svg width="14mm" height="3mm" viewBox="0 0 14 3" aria-hidden="true">
+    {kind === 'kept' ? <line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#333" strokeWidth={2.4} />
+      : kind === 'new' ? <><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#333" strokeWidth={2.4} /><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#fff" strokeWidth={1.7} strokeDasharray=".6 .6" /></>
+      : <><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#B3261E" strokeOpacity={.16} strokeWidth={2.4} /><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#B3261E" strokeWidth={2.4} strokeDasharray=".6 1.2" /></>}</svg>;
+  return (<ul className="phase-legend" aria-label={t('phv.legend')}><li className="phase-legend-h">{t('phv.legend')}</li>
+    <li>{sw('kept')}{t('phv.legendKept')}</li><li>{sw('demolish')}{t('phv.legendDemolish')}</li><li>{sw('new')}{t('phv.legendNew')}</li></ul>);
 }
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 
@@ -102,7 +135,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
       viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
       const snap = data.p.draft, out: Record<string, string> = {};
-      for (let i = 0; i < floors(snap).length; i++){ const v = levelView(snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(snap, i) }); viewer.setState(plan, items);
+      for (let i = 0; i < floors(snap).length; i++){ const v = levelView(snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(snap, i), services: false }); viewer.setState(plan, items);
         await nextFrame(); await nextFrame(); if (!alive) return;
         if (i === 0){ const ov = viewer.renderView(undefined, 1200, 800); if (!ov) throw new Error('no image'); out.overview = ov; }
         for (const r of v.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1200, 800); if (u) out[r.id] = u; } }
@@ -191,8 +224,19 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
         <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
-          <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
+          <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg>
+        {snap.site?.northDeg != null && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}</div>
     {renderTitleBlock(multi ? t('print.levelPlan', { name: levelName(i) }) : t('tb.plan'), `1:${sc.denominator}`)}</section>); })}
+    {/* renovare: situația existentă, demolările și situația propusă — doar pe nivelurile cu pereți noi sau de demolat, la scara planului */}
+    {phaseSheets(snap).map(({ level: i, phase }) => { const { box, sc, mm } = plans[i]!, pv = phaseView(snap, phase, i), name = t(`phv.${phase}`), title = multi ? t('phv.level', { title: name, name: levelName(i) }) : name;
+      return (<section key={`ph-${i}-${phase}`} className="print-plan print-break phase-sheet" data-testid={`phase-${i}-${phase}`} data-title={title}>
+        <h2>{title} <small>1:{sc.denominator}</small></h2>
+        <PlanSvg snap={pv.snap} catalog={catalog} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims phase={phase} voids={stairwells(snap, i)} aria={t('phv.aria', { title })} />
+        <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
+          {snap.site?.northDeg != null && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}
+          <PhaseLegend t={t} /></div>
+        <p className="phase-note">{t('phv.note')}</p>
+      {renderTitleBlock(title, `1:${sc.denominator}`)}</section>); })}
     {/* planșele pentru echipe: tavan și iluminat, pardoseli — la aceeași scară ca planul */}
     {views.map((v, i) => { const { box, sc, mm } = plans[i]!, lv = multi ? ` · ${levelName(i)}` : ''; return (<div key={'dr' + v.floor.id}>
       <section className="print-plan print-break" data-testid={`ceiling-${i}`}><h2>{t('draw.ceiling')}{lv} <small>1:{sc.denominator}</small></h2>
@@ -243,7 +287,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       <table className="so-table"><thead><tr><th>{t('so.col.where')}</th><th>{t('so.col.tile')}</th><th>{t('so.col.size')}</th><th>{t('so.col.across')}</th><th>{t('so.col.along')}</th><th>{t('so.col.tiles')}</th></tr></thead>
         <tbody>{tilePlans.map((x, k) => { const ax = (a: AxisPlan, vertical: boolean) => <>{t(`so.start.${a.start}${vertical && a.start === 'edge' ? 'Floor' : ''}`)}<small>{a.cuts.length ? t('so.cuts', { list: [...new Set(a.cuts.map(c => Math.round(c * 1000) / 10))].join(' / ') }) : t('so.noCuts')}{a.sliver ? ' · ' + t('so.sliver') : ''}</small></>;
           return <tr key={k} className={x.sliver ? 'warn' : ''}><td>{x.room}<small>{t(`so.surface.${x.surface}`)}{x.span ? ` · ${formatLength(x.span[0], units, locale)}–${formatLength(x.span[1], units, locale)}` : ''}</small></td><td>{x.material}<small>{x.tileCm[0]}×{x.tileCm[1]} cm · {t('so.grout', { mm: x.groutMm })}</small></td>
-            <td>{formatLength(x.widthM, units, locale)} × {formatLength(x.heightM, units, locale)}</td><td>{ax(x.across, false)}</td><td>{ax(x.along, x.surface !== 'floor')}</td><td><b>{x.tiles}</b><small>{t('so.tilesSub', { full: x.across.full * x.along.full })}</small></td></tr>; })}</tbody></table>
+            <td>{formatLength(x.widthM, units, locale)} × {formatLength(x.heightM, units, locale)}</td><td>{ax(x.across, false)}</td><td>{ax(x.along, x.surface !== 'floor')}</td><td><b>{x.tiles}</b><small>{t('so.tilesSub', { full: x.fullTiles ?? x.across.full * x.along.full })}</small></td></tr>; })}</tbody></table>
       <p className="muted small">{t('so.note')}</p>{renderTitleBlock(t('so.title'))}</section>}
 
     <section className="print-sec print-break" data-testid="finish-schedule"><h2>{t('sched.title')}</h2><p className="muted">{t('sched.intro')}</p>

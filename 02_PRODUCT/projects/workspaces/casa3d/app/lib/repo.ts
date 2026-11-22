@@ -1,4 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
+import { parseSite } from '../core/north';
 import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
 import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
@@ -19,6 +20,8 @@ import { checkBrief } from '../core/brief';
 import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
 import { sanitizeIssues } from '../core/issues';
+import { sanitizeLaborContract } from '../core/rfq';
+import { checkFxRates, FxError, type FxRates } from '../core/fx';
 import { elementIndex } from '../core/elements';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
@@ -74,7 +77,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues', 'site', 'laborContract', 'fx'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -120,6 +123,8 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   for (const p of s.placements){ if (p.size == null){ delete p.size; continue; }
     if (!(cm(p.size?.w) && cm(p.size?.d) && cm(p.size?.h))) throw new HttpError(400, `Dimensiunile pe comandă trebuie să fie între ${SIZE_LIMITS_CM.min} și ${SIZE_LIMITS_CM.max} cm.`);
     p.size = { w: Math.round(p.size.w), d: Math.round(p.size.d), h: Math.round(p.size.h) }; } // doar w/d/h, în cm întregi
+  // oglindirea și blocarea piesei: doar `true` se păstrează (orice altă valoare = câmp absent)
+  for (const p of s.placements){ if (p.mirrored !== true) delete p.mirrored; if (p.locked !== true) delete p.locked; }
   for (const f of fls) for (const w of f.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
     if (o.sill != null && !(num(o.sill) && o.sill >= 0 && o.sill <= 2)) throw new HttpError(400, 'Parapetul ferestrei trebuie să fie între 0 și 200 cm.');
     if (o.hinge != null && o.hinge !== 'start' && o.hinge !== 'end') throw new HttpError(400, 'Balamaua ușii este invalidă.');
@@ -147,6 +152,13 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   if (s.joinery != null){ const out: Record<string, unknown> = {}, ids = new Set((s.placements as any[]).map(p => p?.id));
     if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
+  // orientarea casei și localitatea (core/north.ts): declarate de utilizator; o valoare greșită dispare (nedeclarat), nu oprește salvarea
+  if (s.site != null){ const n = parseSite(s.site); if (n) s.site = n; else delete s.site; }
+  // prețurile de manoperă contractate (core/rfq.ts): doar intrările valide rămân; nimic valid = câmp absent
+  if (s.laborContract != null){ const c = sanitizeLaborContract(s.laborContract); if (c) s.laborContract = c; else delete s.laborContract; }
+  // cursurile valutare (core/fx.ts): validate strict; un curs greșit oprește salvarea (altfel totalurile ar fi greșite pe tăcute)
+  if (s.fx != null){ let v: FxRates; try { v = checkFxRates(s.fx); } catch (e: any){ throw new HttpError(400, e instanceof FxError ? e.message : 'Cursurile valutare sunt invalide.'); }
+    if (Object.keys(v).length) s.fx = v; else delete s.fx; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   if (mc) pruneProducts(s as Snapshot, mc);

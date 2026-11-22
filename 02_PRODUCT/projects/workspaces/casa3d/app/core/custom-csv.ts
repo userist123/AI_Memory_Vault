@@ -2,6 +2,7 @@
 // export protejat împotriva injecției de formule și fișierul-șablon. Validarea de autoritate rămâne checkCustomItem (server).
 import { checkCustomItem, ClipError, type CustomItemInput } from './clip';
 import { safeCell, FORMULA_START } from './csv-safe';
+import { fxItems, type FxRates } from './fx';
 export { safeCell };
 
 export const CSV_LIMITS = { rows: 500, bytes: 200 * 1024 };
@@ -11,7 +12,7 @@ const ALIASES: Record<CsvField, string[]> = {
   url: ['link', 'url'], unit: ['um', 'unit', 'unitate'], qty: ['cantitate', 'qty', 'quantity', 'cant'], costPrice: ['pret_achizitie', 'cost', 'cost_price', 'pret_cost'],
   price: ['pret_vanzare', 'price', 'pret', 'list_price'], roomId: ['camera', 'room'], leadDays: ['termen_zile', 'lead_days', 'lead_time', 'termen'],
   dimension: ['dimensiune', 'dimensiuni', 'dimension', 'dimensions'], currency: ['moneda', 'currency'] };
-export const TEMPLATE_HEADER = ['denumire', 'furnizor', 'cod', 'link', 'um', 'cantitate', 'pret_achizitie', 'pret_vanzare', 'camera', 'termen_zile', 'dimensiune'];
+export const TEMPLATE_HEADER = ['denumire', 'furnizor', 'cod', 'link', 'um', 'cantitate', 'pret_achizitie', 'pret_vanzare', 'camera', 'termen_zile', 'dimensiune', 'moneda'];
 export const normHeader = (h: string) => h.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 const FIELD_OF = new Map<string, CsvField>(); for (const [f, as] of Object.entries(ALIASES)) for (const a of as) FIELD_OF.set(a, f as CsvField);
 /** Același text, fără diacritice și litere mici: așa se potrivesc numele camerelor. */
@@ -75,15 +76,17 @@ export function parseCustomCsv(input: string, resolveRoom: (name: string) => str
 const cell = (s: string) => /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 const dec = (v: number | null | undefined) => v == null ? '' : String(v).replace('.', ',');
 const toCsv = (rows: string[][]) => '﻿' + rows.map(r => r.map(cell).join(';')).join('\r\n') + '\r\n';
-export const customTemplateCsv = () => toCsv([TEMPLATE_HEADER, ['Canapea la comandă', 'Atelier Exemplu', 'CAN-01', 'https://exemplu.ro/canapea', 'buc', '1', '3200,50', '4500', 'Living', '42', '240x95x85 cm']]);
+export const customTemplateCsv = () => toCsv([TEMPLATE_HEADER, ['Canapea la comandă', 'Atelier Exemplu', 'CAN-01', 'https://exemplu.ro/canapea', 'buc', '1', '3200,50', '4500', 'Living', '42', '240x95x85 cm', 'RON']]);
 export interface ExportItem extends CustomItemInput { roomName?: string | null }
 /** Exportul produselor proprii (cu prețul de achiziție: fișier doar pentru proprietar), ; și virgulă zecimală, reimportabil. */
 export function customItemsCsv(items: ExportItem[]): string {
-  return toCsv([TEMPLATE_HEADER, ...items.map(i => [safeCell(i.name), safeCell(i.supplier), safeCell(i.sku), safeCell(i.url), safeCell(i.unit), dec(i.qty), dec(i.costPrice), dec(i.price), safeCell(i.roomName), i.leadDays == null ? '' : String(i.leadDays), safeCell(i.dimension)])]);
+  return toCsv([TEMPLATE_HEADER, ...items.map(i => [safeCell(i.name), safeCell(i.supplier), safeCell(i.sku), safeCell(i.url), safeCell(i.unit), dec(i.qty), dec(i.costPrice), dec(i.price), safeCell(i.roomName), i.leadDays == null ? '' : String(i.leadDays), safeCell(i.dimension), safeCell(i.currency)])]);
 }
 
 /** Totaluri pentru buget: vânzare (către client), achiziție (ce plătește studioul) și marja; produsele fără preț se numără separat. */
-export function customBudget(items: Pick<CustomItemInput, 'price' | 'costPrice' | 'qty' | 'supplier'>[]){
+/** `rates`: cursurile proiectului (Snapshot.fx); produsele în altă monedă intră convertite, iar cele fără curs se numără la „fără preț”. */
+export function customBudget(rawItems: (Pick<CustomItemInput, 'price' | 'costPrice' | 'qty' | 'supplier'> & { currency?: string | null })[], rates?: FxRates | null){
+  const items = fxItems(rawItems, rates);
   const r2 = (v: number) => Math.round(v * 100) / 100; let sell = 0, cost = 0, noPrice = 0, noCost = 0; const by = new Map<string, number>();   // Map: un furnizor „__proto__” nu atinge prototipul
   for (const i of items){ if (i.price == null) noPrice++; else { sell += i.price * i.qty; by.set(i.supplier, (by.get(i.supplier) ?? 0) + i.price * i.qty); } if (i.costPrice == null) noCost++; else cost += i.costPrice * i.qty; }
   return { count: items.length, sell: r2(sell), cost: r2(cost), margin: r2(sell - cost), noPrice, noCost, bySupplier: Object.fromEntries([...by].map(([k, v]) => [k, r2(v)])) as Record<string, number> };

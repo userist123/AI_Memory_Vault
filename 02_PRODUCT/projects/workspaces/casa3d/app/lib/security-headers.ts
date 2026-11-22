@@ -47,8 +47,8 @@ export const API_CSP = "default-src 'none'; frame-ancestors 'none'; sandbox";
  *  ignoră (send-response: doar dacă lipsește). De aceea varianta cea mai strictă se alege aici, după cale, nu în rută. */
 export function policyFor(path: string, nonce: string){
   const api = /^\/api\//.test(path);
-  // tokenul linkului de client e în cale; /go/ redirecționează spre magazine externe: nu trimitem nici măcar originea
-  const noReferrer = /^\/(api\/)?share\//.test(path) || /^\/go\//.test(path);
+  // tokenul linkului (prezentare, chestionarul clientului sau oferta unui meseriaș) e în cale; /go/ redirecționează spre magazine externe: nu trimitem nici măcar originea
+  const noReferrer = /^\/(api\/)?(share|brief|oferta)\//.test(path) || /^\/go\//.test(path);
   return { csp: api ? API_CSP : contentSecurityPolicy(nonce), referrer: noReferrer ? 'no-referrer' : STATIC_SECURITY_HEADERS['referrer-policy'] };
 }
 /** Aplică toate antetele pe un răspuns din middleware. */

@@ -17,6 +17,9 @@ export async function moveToTrash(owner: string, id: string){
     const { rows } = await q('update projects set deleted_at=now() where id=$1 and owner=$2 and deleted_at is null returning deleted_at', [id, owner]);
     if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.');
     const rv = await q('update shares set revoked_at=now() where project_id=$1 and revoked_at is null', [id]);   // clientul nu mai vede nimic
+    await q('update client_briefs set revoked_at=now() where project_id=$1 and revoked_at is null', [id]);   // nici chestionarul clientului nu mai primește răspunsuri
+    // nici linkurile de ofertă ale meseriașilor (lib/rfq.ts)
+    await q('update rfq_invites set revoked_at=now() where revoked_at is null and request_id in (select id from rfq_requests where project_id=$1)', [id]);
     return { ok: true, purgeAt: purgeAt(rows[0].deleted_at), revokedLinks: (rv as any).affectedRows ?? (rv as any).rowCount ?? 0 };
   });
 }
@@ -44,13 +47,13 @@ export async function listTrash(owner: string){
   const { rows } = await q('select id, name, deleted_at from projects where owner=$1 and deleted_at is not null order by deleted_at desc', [owner]);
   return rows.map(r => ({ id: r.id as string, name: r.name as string, deletedAt: new Date(r.deleted_at).toISOString(), purgeAt: purgeAt(r.deleted_at) }));
 }
-/** Copie de lucru: planul, finisajele și mobilierul; fără client, onorariu, linkuri, revizii, comenzi sau randări. */
+/** Copie de lucru: planul, finisajele și mobilierul; fără client, onorariu, linkuri, revizii, comenzi, randări sau prețuri contractate cu meseriașii. */
 export async function duplicateProject(owner: string, id: string, name?: unknown){
   if (!ID.test(id)) throw new HttpError(404, 'Proiect inexistent.');
   const { q } = await getDb(), { rows } = await q('select name, draft from projects where id=$1 and owner=$2 and deleted_at is null', [id, owner]);
   if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.');
   const n = (typeof name === 'string' && name.trim() ? name.trim() : `${rows[0].name} (copie)`).slice(0, 120);
-  const snap = checkSnapshot({ ...(rows[0].draft as any), name: n }); delete (snap as any).brief;
+  const snap = checkSnapshot({ ...(rows[0].draft as any), name: n }); delete (snap as any).brief; delete (snap as any).laborContract;
   await demoBeforeCreate(q, owner);
   const ins = await q('insert into projects(owner, name, draft) values($1,$2,$3) returning id', [owner, n, JSON.stringify(snap)]);
   return { id: ins.rows[0].id as string };

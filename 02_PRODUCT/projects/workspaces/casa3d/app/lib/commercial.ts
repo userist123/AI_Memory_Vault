@@ -5,6 +5,7 @@ import { HttpError, getProject } from './repo';
 import { getProfile } from './studio-profile';
 import { contractContext, projectBudget } from './contract';
 import { feeFor } from '../core/contract';
+import { fxUsage } from '../core/fx';
 import { checkCommercial, emptyCommercial, CommercialError, profitReport, paymentSchedule, buildProforma, proformaCsv, commercialSources, projectChain,
   type CommercialData } from '../core/commercial';
 
@@ -41,11 +42,13 @@ export async function getCommercial(owner: string, id: string, now = today()){
   const p = await getProject(owner, id), data = await getCommercialData(owner, id), { budget: b, custom } = await projectBudget(p);
   const fee = feeFor(await contractContext(owner, id, now, { p, budget: b }));
   // aceleași linii ca bugetul (core/commercial.ts commercialSources): produse, produse proprii, manoperă, transport și montaj
-  const { items, labor, extras } = commercialSources(b, custom);
+  const { items, labor, extras } = commercialSources(b, custom, p.draft.laborContract);
   const report = profitReport(data, items, labor, fee.net, fee.vat, extras), schedule = paymentSchedule(data.milestones, report.totals.client, now);
   const chain = projectChain(report, b.settings.contingencyPct);
   return { name: p.name, meta: p.meta, data, report, schedule, labor, extras, chain, fee: { kind: fee.kind, net: fee.net, vat: fee.vat, gross: fee.gross, vatPayer: fee.vatPayer, reason: fee.reason ?? null },
-    vatPayer: fee.vatPayer, suppliers: Object.keys(report.bySupplier).sort() };
+    vatPayer: fee.vatPayer, suppliers: Object.keys(report.bySupplier).sort(),
+    // monedele străine ale produselor la comandă: cele fără curs nu sunt adunate (liniile lor au preț necunoscut)
+    fx: { ...fxUsage(custom, p.draft.fx), rates: p.draft.fx ?? {} } };
 }
 
 /** Proforma pentru client: doar prețuri de client (fără cost, discount, adaos sau profit). */
@@ -56,7 +59,7 @@ export async function getProforma(owner: string, id: string, now = today()){
   return { name: c.name, client: c.meta.client ?? null, siteAddress: c.meta.siteAddress ?? null, seller: await getProfile(owner),
     series: c.data.proforma.series, number: c.data.proforma.number, issueDate, dueDate, proforma,
     // doar pentru designer (bara „no-print”): cum se leagă proforma de totalul proiectului din buget
-    chain: { invoiceable: c.chain.invoiceable, contingency: c.chain.contingency, contingencyPct: c.chain.contingencyPct, total: c.chain.total } };
+    chain: { invoiceable: c.chain.invoiceable, contingency: c.chain.contingency, contingencyPct: c.chain.contingencyPct, total: c.chain.total }, fxMissing: c.fx.missing };
 }
 export async function getProformaCsv(owner: string, id: string){
   const p = await getProforma(owner, id);

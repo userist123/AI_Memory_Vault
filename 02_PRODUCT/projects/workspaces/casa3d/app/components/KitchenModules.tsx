@@ -1,12 +1,18 @@
 'use client';
 // Bucătăria pe module: corpurile de jos în ordine (tip + lățime), desenul frontal la scară, verificările NKBA și blatul
-// (bucăți, îmbinări, decupaje pentru chiuvetă și plită).
+// (bucăți, îmbinări, decupaje pentru chiuvetă și plită); sub blat, lista de debitare a corpurilor (fereastră mare).
+import { useState } from 'react';
+import type { KitchenSpec } from '@/core/types';
+import type { KitchenCutOptions } from '@/core/kitchen-cut';
+import KitchenCutPanel from './KitchenCutPanel';
+import { CutDialog } from './CutPlans';
 import { MODULE_TYPES, DEFAULT_W, defaultModules, moduleIssues, worktop, type KitchenModule, type ModuleType } from '@/core/kitchen-modules';
 import { usePrefs } from '@/lib/prefs';
 
 const COLOR: Record<ModuleType, string> = { base: '#efe9df', drawers: '#e6dccb', sink: '#cfe0ea', dishwasher: '#dfe3e6', hob: '#3a3a3a', oven: '#5a5a5a', tall: '#d9cdb8', fridge: '#e9eef0', corner: '#e9e2d5', filler: '#f6f3ee' };
-export default function KitchenModules({ runCm, modules, onChange }: { runCm: number; modules: KitchenModule[] | undefined; onChange(m: KitchenModule[] | undefined): void }){
-  const { t } = usePrefs();
+export default function KitchenModules({ runCm, modules, onChange, kitchen, projectName, onCut }: { runCm: number; modules: KitchenModule[] | undefined; onChange(m: KitchenModule[] | undefined): void;
+  kitchen?: KitchenSpec; projectName?: string; onCut?(cut: Partial<KitchenCutOptions> | undefined): void }){
+  const { t } = usePrefs(), [cut, setCut] = useState(false);
   if (!modules) return <div className="kmods"><button className="btn" onClick={() => onChange(defaultModules(runCm))}>{t('kmod.enable')}</button><small className="muted">{t('kmod.enableSub')}</small></div>;
   const iss = moduleIssues(modules, runCm), top = worktop(modules), sum = modules.reduce((a, m) => a + m.w, 0), W = Math.max(runCm, sum), H = 90;
   const set = (i: number, patch: Partial<KitchenModule>) => onChange(modules.map((m, k) => k === i ? { ...m, ...patch } : m));
@@ -32,5 +38,7 @@ export default function KitchenModules({ runCm, modules, onChange }: { runCm: nu
       <button className="btn" onClick={() => onChange(defaultModules(runCm))}>{t('kmod.reset')}</button><button className="btn" onClick={() => onChange(undefined)}>{t('kmod.disable')}</button></div>
     {top.length > 0 && <div className="kmod-top"><b>{t('kmod.worktop')}</b><ul>{top.map((p, i) => <li key={i}>{t('kmod.piece', { n: i + 1, len: p.length, stock: p.stock })}{p.cutouts.length ? ' · ' + p.cutouts.map(c => t(`kmod.cut.${c.type}`, { at: c.at, w: c.w })).join(', ') : ''}</li>)}</ul>
       {top.length > 1 && <small className="muted">{t('kmod.joints')}</small>}</div>}
+    {kitchen && onCut && modules.length > 0 && <div className="kmod-act"><button className="btn" aria-haspopup="dialog" onClick={() => setCut(true)}>{t('kcut.open')}</button><small className="muted">{t('kcut.openSub')}</small></div>}
+    {cut && kitchen && onCut && <CutDialog title={t('kcut.title')} onClose={() => setCut(false)}><KitchenCutPanel modules={modules} kitchen={kitchen} projectName={projectName ?? ''} onCut={onCut} /></CutDialog>}
   </div>);
 }

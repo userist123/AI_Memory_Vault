@@ -7,6 +7,7 @@ import { getTemplate, localizeRoomNames } from './templates';
 import { floors, levelView, mergeLevel, levelOfRoom } from './levels';
 import { refineFurnishing } from './furnish';
 import { decorateSnapshot } from './decor';
+import { validatePlacement } from './validate';
 
 const uid = () => (globalThis.crypto as Crypto).randomUUID();
 
@@ -30,12 +31,16 @@ export function newSnapshot(cat: Catalog, name: string, template: string, lang: 
 }
 // Rulează motorul extras din prototip. Nu modifică selecțiile utilizatorului: lucrează pe o copie și
 // întoarce varianta efectiv folosită în fiecare plasare (repară efectul secundar din placeDining).
-export function autoLayout(snap: Snapshot, cat: Catalog, opts: { roomId?: string } = {}): { snapshot: Snapshot; notFit: { key: string; room: string }[] } {
+// Piesele blocate (`locked: true`) rămân pe loc, neschimbate, și sunt obstacole fixe: a doua trecere (core/furnish.ts) așază
+// restul în jurul lor, iar ce a mai rămas generat peste ele, în spațiul lor de circulație sau ca dublură a lor se elimină și
+// se raportează în `displaced` (fără alt loc inventat).
+export interface AutoLayoutResult { snapshot: Snapshot; notFit: { key: string; room: string }[]; displaced: { key: string; room: string }[] }
+export function autoLayout(snap: Snapshot, cat: Catalog, opts: { roomId?: string } = {}): AutoLayoutResult {
   // cu etaje: fiecare nivel separat (sau doar nivelul camerei cerute), restul casei rămâne cum era
-  if (snap.levels?.length){ let out = snap; const notFit: { key: string; room: string }[] = [];
+  if (snap.levels?.length){ let out = snap; const notFit: { key: string; room: string }[] = [], displaced: { key: string; room: string }[] = [];
     const which = opts.roomId ? [Math.max(0, levelOfRoom(snap, opts.roomId))] : floors(snap).map((_, i) => i);
-    for (const i of which){ const r = autoLayout(levelView(out, i), cat, opts); out = mergeLevel(out, i, r.snapshot); notFit.push(...r.notFit); }
-    return { snapshot: out, notFit }; }
+    for (const i of which){ const r = autoLayout(levelView(out, i), cat, opts); out = mergeLevel(out, i, r.snapshot); notFit.push(...r.notFit); displaced.push(...r.displaced); }
+    return { snapshot: out, notFit, displaced }; }
   const plan = floorToPlan(snap.floor, snap.name), engineCat = toEngineCatalog(cat);
   const sel: Record<string, number> = {}; for (const [g, vid] of Object.entries(snap.selections)) sel[g] = indexOf(vid);
   const engine = createLayoutEngine({ plan, catalog: engineCat, selection: sel, picked: new Set(snap.picked) });
@@ -43,14 +48,33 @@ export function autoLayout(snap: Snapshot, cat: Catalog, opts: { roomId?: string
   const fresh: FurniturePlacement[] = placed.filter(p => !opts.roomId || p.room === opts.roomId).map(p => {
     const x = p.free ? p.x! : (p.fp.x0 + p.fp.x1) / 2, z = p.free ? p.z! : (p.fp.z0 + p.fp.z1) / 2, rot = p.free ? (p.rot || 0) : p.fp.rot;
     return { id: uid(), roomId: p.room, group: p.key, variantId: `${p.key}-${sel[p.key] ?? 0}`, x: r3(x), z: r3(z), rotation: rot, source: 'auto' }; });
-  const kept = opts.roomId ? snap.placements.filter(p => p.roomId !== opts.roomId) : [];
+  // blocatele din camerele refăcute: intră în a doua trecere ca piese puse de mână (obstacole), apoi se pun la loc exact cum erau
+  const inScope = (p: FurniturePlacement) => !opts.roomId || p.roomId === opts.roomId;
+  const locked = snap.placements.filter(p => p.locked === true && inScope(p)), lockedIds = new Set(locked.map(p => p.id));
+  const lockedRooms = [...new Set(locked.map(p => p.roomId))];
+  const kept = [...(opts.roomId ? snap.placements.filter(p => p.roomId !== opts.roomId) : []), ...locked.map(p => ({ ...p, source: 'manual' as const }))];
   // a doua trecere (core/furnish.ts): bucătăria cu front, patul în garsonieră, dulapul în dormitor, TV-ul departe de ferestre, WC-ul fără duș, holul fără corp înalt
-  const refined = refineFurnishing(cat, { floor: snap.floor, placements: [...kept, ...fresh], selections: snap.selections, picked: snap.picked, ...(opts.roomId ? { roomId: opts.roomId } : {}) });
+  const refined = refineFurnishing(cat, { floor: snap.floor, placements: [...kept, ...fresh], selections: snap.selections, picked: snap.picked, ...(opts.roomId ? { roomId: opts.roomId } : {}), ...(lockedRooms.length ? { forceRooms: lockedRooms } : {}) });
   const nameOf = (id: string) => snap.floor.rooms.find(r => r.id === id)?.name;
   const redone = new Set(refined.rooms.map(nameOf));
   const engineNotFit = notFit.filter(n => !redone.has(n.room) || !refined.placements.some(p => p.group === n.key && nameOf(p.roomId) === n.room));
-  return { snapshot: { ...snap, placements: refined.placements }, notFit: [...engineNotFit, ...refined.notFit.filter(n => !engineNotFit.some(e => e.key === n.key && e.room === n.room))]
+  const { placements, displaced } = settleAroundLocked(snap, cat, refined.placements.filter(p => !lockedIds.has(p.id)), locked);
+  return { snapshot: { ...snap, placements }, displaced: displaced.map(p => ({ key: p.group, room: nameOf(p.roomId) ?? p.roomId })), notFit: [...engineNotFit, ...refined.notFit.filter(n => !engineNotFit.some(e => e.key === n.key && e.room === n.room))]
     .filter(n => !opts.roomId || snap.floor.rooms.find(r => r.id === opts.roomId)?.name === n.room) };
+}
+/** Pune piesele blocate la loc (obiectele originale) și scoate piesele generate care se lovesc de ele: suprapunere, spațiu de
+ *  circulație (validatorul aplicației, doar față de blocate) sau aceeași grupă în aceeași cameră (blocata îi ține locul). */
+function settleAroundLocked(snap: Snapshot, cat: Catalog, rest: FurniturePlacement[], locked: FurniturePlacement[]): { placements: FurniturePlacement[]; displaced: FurniturePlacement[] } {
+  if (!locked.length) return { placements: rest, displaced: [] };
+  const fresh = (p: FurniturePlacement) => p.source === 'auto' && locked.some(l => l.roomId === p.roomId);
+  const hits = (p: FurniturePlacement) => validatePlacement({ ...snap, placements: [...locked, p] }, cat, p).some(i => (i.code === 'OVERLAP' || i.code === 'CLEARANCE') && !!i.with);
+  const out = new Set(rest.filter(p => fresh(p) && hits(p)));
+  // dublurile: câte o piesă generată din aceeași grupă pentru fiecare blocată (întâi cele deja scoase, apoi cea mai apropiată)
+  for (const l of locked){ const same = rest.filter(p => fresh(p) && p.roomId === l.roomId && p.group === l.group);
+    const taken = same.filter(p => out.has(p)).length, need = locked.filter(x => x.roomId === l.roomId && x.group === l.group).length;
+    if (taken >= need) continue;
+    const near = same.filter(p => !out.has(p)).sort((a, b) => Math.hypot(a.x - l.x, a.z - l.z) - Math.hypot(b.x - l.x, b.z - l.z))[0]; if (near) out.add(near); }
+  return { placements: [...locked, ...rest.filter(p => !out.has(p))], displaced: [...out] };
 }
 export function addPlacement(snap: Snapshot, cat: Catalog, roomId: string, variantId: string){
   // folosește findSpot din motor ca să găsească primul loc valid lângă un perete (sau în mijloc pentru piesele libere)

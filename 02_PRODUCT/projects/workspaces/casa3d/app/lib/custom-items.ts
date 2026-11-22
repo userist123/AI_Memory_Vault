@@ -4,6 +4,7 @@ import { HttpError, getProject } from './repo';
 import { floors } from '../core/levels';
 import { checkCustomItem, ClipError, type CustomItemInput } from '../core/clip';
 import { parseCustomCsv, customItemsCsv, customBudget, normText, CSV_LIMITS } from '../core/custom-csv';
+import { fxUsage } from '../core/fx';
 
 export interface CustomItem extends CustomItemInput { id: string; createdAt: string }
 export const CUSTOM_LIMITS = { perProject: 1000 };
@@ -18,6 +19,13 @@ const v = <T>(fn: () => T) => { try { return fn(); } catch (e: any){ if (e insta
 
 export async function listCustomItems(projectId: string): Promise<CustomItem[]> {
   const { q } = await getDb(), { rows } = await q('select * from custom_items where project_id=$1 order by created_at', [projectId]); return rows.map(row);
+}
+/** Produsele proprii ale mai multor proiecte dintr-o singură interogare (lib/attention.ts): proiect → produsele lui. */
+export async function listCustomItemsFor(projectIds: string[]): Promise<Map<string, CustomItem[]>> {
+  const out = new Map<string, CustomItem[]>(); if (!projectIds.length) return out;
+  const { q } = await getDb(), { rows } = await q('select * from custom_items where project_id = any($1::uuid[]) order by created_at', [projectIds]);
+  for (const r of rows) out.set(r.project_id, [...(out.get(r.project_id) ?? []), row(r)]);
+  return out;
 }
 export async function addCustomItem(owner: string, projectId: string, input: unknown): Promise<CustomItem> {
   const x = v(() => checkCustomItem(input)) as CustomItemInput; await owned(owner, projectId, x.roomId);
@@ -52,7 +60,9 @@ export async function deleteCustomItem(owner: string, projectId: string, id: unk
 const roomsOf = (draft: any) => floors(draft).flatMap(f => f.rooms.map(r => ({ id: r.id as string, name: r.name as string })));
 const csvErr = (fn: () => any) => { try { return fn(); } catch (e: any){ if (e instanceof ClipError) throw new HttpError(e.message.includes('KB') ? 413 : 400, e.message); throw e; } };
 /** Listă + totaluri pentru buget (proprietar). */
-export async function getCustomItems(owner: string, projectId: string){ await getProject(owner, projectId); const items = await listCustomItems(projectId); return { items, budget: customBudget(items) }; }
+export async function getCustomItems(owner: string, projectId: string){ const p = await getProject(owner, projectId), items = await listCustomItems(projectId);
+  // totalurile în moneda proiectului, la cursurile din ciornă; `fx`: monedele străine folosite și cele fără curs
+  return { items, budget: customBudget(items, p.draft.fx), fx: fxUsage(items, p.draft.fx) }; }
 /** Importul CSV: validarea e aici, pe server; cu `dryRun` doar previzualizare. Un rând greșit oprește tot importul (nimic nu se scrie pe jumătate). */
 export async function importCustomItems(owner: string, projectId: string, body: unknown){
   const p = await getProject(owner, projectId), b = body as any;

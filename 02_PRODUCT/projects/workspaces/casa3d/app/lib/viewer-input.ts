@@ -26,13 +26,13 @@ import { MEP_SYSTEMS } from '../core/mep';
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
 export interface PlateVoid { x0: number; z0: number; x1: number; z1: number; dir: [number, number] }
 
-export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnType<typeof toEngineCatalog> = toEngineCatalog(catalog), extra: { voids?: PlateVoid[]; mc?: MaterialsCatalog | null } = {}){
+export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnType<typeof toEngineCatalog> = toEngineCatalog(catalog), extra: { voids?: PlateVoid[]; mc?: MaterialsCatalog | null; /** traseele și fundațiile (pista BIM); false în prezentarea, printul și imaginile pentru client */ services?: boolean } = {}){
   const items = snap.placements.map(p => { const g = engineCat[groupOf(p.variantId)], vv = g?.v[indexOf(p.variantId)];
     // culoarea/materialul aleși și dimensiunile pe comandă înlocuiesc stilul și mărimea variantei
     const size = p.size ? itemSizeCm(catalog, p) : null, variant = vv ? { ...vv, model: g.model, s: itemStyle(snap, p, vv.s, g.model ?? ''), ...(size ? { w: size.w, d: size.d, h: size.h } : {}) } : null;
     // veioza sau planta mică pusă pe o piesă joasă stă pe fața ei de sus (`y` doar când nu e 0, ca proiectele vechi să dea aceeași intrare)
     const y = surfaceUnder(snap, catalog, p);
-    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant, ...(y > 0 ? { y } : {}) }; });
+    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant, ...(y > 0 ? { y } : {}), ...(p.mirrored === true ? { mirrored: true as const } : {}) }; });
   const rise = snap.floor.ceilingHeight + SLAB;
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;
@@ -88,6 +88,6 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     const roomDrop = ceilingOf(finishesOf(snap, room)).dropCm; if (ceilingZoneHidden(z, roomDrop)) return [];
     const top = roomDrop / 100, led = z.led ? (mc ? matOf(mc, z.led) : null) : null, cct = led?.specs?.cctK ?? 3000;
     return [{ id: z.id, room: z.roomId, ...c, top, drop: Math.max(top + .02, z.dropCm / 100), cove: (z.coveCm ?? 0) / 100, led: z.led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null }]; });
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(trasee.length ? { trasee } : {}), ...(fundatii.length ? { fundatii } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(extra.services !== false && trasee.length ? { trasee } : {}), ...(extra.services !== false && fundatii.length ? { fundatii } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
     ...(tavaneZona.length ? { tavaneZona } : {}), ...(rv.metal.length ? { balustrade: rv.metal } : {}), goluriPlaca: extra.voids ?? [] }, items };
 }

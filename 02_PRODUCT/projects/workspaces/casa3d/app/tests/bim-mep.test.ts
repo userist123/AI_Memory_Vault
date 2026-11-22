@@ -88,3 +88,34 @@ test('revizie: fundația nu are dimensiuni precompletate în panou (art. 4)', ()
   const src = readFileSync(new URL('../components/MepPanel.tsx', import.meta.url), 'utf8');
   assert.match(src, /useState\(\{ x: '', z: '', w: '', d: '', depth: '' \}\)/);
 });
+
+import { describePlan } from '../core/plan-describe';
+import { translator } from '../lib/i18n';
+test('descrierea planului (arbore, cititor de ecran): fundația la structură, traseele în grupul lor, peretele structural marcat', () => {
+  const f = floor(); f.walls[0]!.structural = true; f.footings = [{ id: 'fd1', x: 1, z: 1, w: .8, d: .8, depth: .6 }];
+  f.mepRuns = [{ id: 'm1', system: 'water_hot', diameterMm: 20, points: [[0, 1, 0], [2, 1, 0]] }, { id: 'm2', system: 'electric', points: [[0, 2, 0], [1, 2, 0]] }];
+  for (const lang of ['ro', 'en'] as const) {
+    const g = describePlan({ floor: f, placements: [] }, cat, { t: translator(lang), units: 'metric', lang });
+    const struct = g.find(x => x.id === 'structure')!, svc = g.find(x => x.id === 'services')!;
+    assert.match(struct.items.find(i => i.id === 'w1')!.label, /structural/);
+    assert.ok(struct.items.some(i => i.kind === 'footing' && i.id === 'fd1'));
+    assert.deepEqual(svc.items.map(i => i.kind), ['mep_run', 'mep_run']);
+    assert.match(svc.items[0]!.label, lang === 'ro' ? /Apă caldă · 2,00 m · Ø20 mm/ : /Hot water · 2\.00 m · Ø20 mm/);
+    assert.match(svc.items[1]!.label, lang === 'ro' ? /diametru nedeclarat/ : /diameter not declared/);
+  }
+});
+
+import catalogJson from '../data/catalog.v1.json';
+import materialsJson from '../data/materials.v1.json';
+import { newSnapshot } from '../core/project';
+import { computeBudget } from '../core/boq';
+import { excludedGroups } from '../core/budget-excluded';
+test('deviz: traseele apar ca linii fără preț, pe sistem și diametru, cu lungimea totală; totalul nu se schimbă', () => {
+  const cat: any = catalogJson, mc: any = materialsJson, s = newSnapshot(cat, 'D', 'demo', 'ro', { materials: mc }), before = computeBudget(s, cat, mc);
+  s.floor.mepRuns = [{ id: 'm1', system: 'water_cold', diameterMm: 20, points: [[0, 1, 0], [2, 1, 0]] }, { id: 'm2', system: 'water_cold', diameterMm: 20, points: [[0, 1, 1], [1.5, 1, 1]] }, { id: 'm3', system: 'drain', points: [[0, .1, 0], [3, .1, 0]] }];
+  const b = computeBudget(s, cat, mc), mep = b.unknownLines.filter(l => l.key.startsWith('mep-'));
+  assert.deepEqual(mep.map(l => l.label), ['Instalații: Canalizare — 3,00 ml', 'Instalații: Apă rece Ø20 mm — 3,50 ml']);
+  assert.ok(mep.every(l => l.amount === null && l.confidence === 'UNKNOWN'));
+  assert.equal(b.chosen.total, before.chosen.total, 'liniile fără preț nu schimbă totalul');
+  assert.ok(excludedGroups(b.unknownLines.map(u => u.label), b.unknownItems).some(g => g.kind === 'installations' && g.items.length === 2));
+});

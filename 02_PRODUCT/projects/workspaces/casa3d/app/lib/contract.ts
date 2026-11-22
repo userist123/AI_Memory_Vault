@@ -60,6 +60,7 @@ export async function contractContext(owner: string, id: string, today = new Dat
 }
 /** Tot ce trebuie paginilor /contract și /offer și panoului: datele, calculul onorariului, planul de plată și cele două documente. */
 export async function getContractBundle(owner: string, id: string, today?: string) {
-  const ctx = await contractContext(owner, id, today), fee = feeFor(ctx);
-  return { data: ctx.data, effectiveFee: effectiveFee(ctx.meta, ctx.data) ?? null, areaM2: ctx.areaM2, budgetBase: ctx.budgetBase, calc: fee, schedule: paymentSchedule(fee.gross, ctx.data.depositPct, ctx.data.installments), contract: buildContract(ctx), offer: buildOffer(ctx) };
+  // bugetul se calculează o dată: baza onorariului procentual și monedele fără curs (produsele lor nu intră în bază)
+  const p = await getProject(owner, id), { budget } = await projectBudget(p), ctx = await contractContext(owner, id, today, { p, budget }), fee = feeFor(ctx);
+  return { fxMissing: budget.fxMissing ?? [], data: ctx.data, effectiveFee: effectiveFee(ctx.meta, ctx.data) ?? null, areaM2: ctx.areaM2, budgetBase: ctx.budgetBase, calc: fee, schedule: paymentSchedule(fee.gross, ctx.data.depositPct, ctx.data.installments), contract: buildContract(ctx), offer: buildOffer(ctx) };
 }

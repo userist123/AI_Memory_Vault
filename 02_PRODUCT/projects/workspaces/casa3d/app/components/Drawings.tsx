@@ -1,7 +1,9 @@
 // Planșele pentru echipe (tipărite la scară): plan de tavan și iluminat, plan de pardoseli, elevațiile pereților pe cameră.
 // Geometria vine din core/drawings.ts; aici e doar desenul.
 import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot } from '@/core/types';
-import { ceilingPlan, lightingLegend, floorPlan, wallElevations, type Elevation } from '@/core/drawings';
+import { ceilingPlan, lightingLegend, floorPlan, wallElevations, ELEV_DIM_FONT_M, ELEV_DIM_ROW_M, type Elevation } from '@/core/drawings';
+import { TECH_KINDS, type TechKind } from '@/core/technical';
+import { TECH_SYMBOL } from './TechPanel';
 import { formatArea, formatLength, type Units } from '@/core/format';
 import type { Lang, Translate } from '@/lib/i18n';
 import { isDemolished } from '@/core/renovation';
@@ -79,7 +81,9 @@ export function FloorSheet({ snap, fl, mc, box, widthMm, heightMm, mm, t, units,
 const ELEV_SCALE = 50;  // 1:50
 const BAND_FILL: Record<string, string> = { walltile: '#dfe6ea', tile: '#dfe6ea', paint: '#efe9df', panel: '#e9e1d2', rail: '#8a7a64', wallpaper: '#e8e2f0', slats: '#d8c8ae', plaster: '#e3ddd3', brick: '#c98f74', stone: '#d6d0c4' };
 export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]; t: Translate; units: Units; locale: Lang }){
-  return (<div className="print-elevs">{elevs.map(e => { const k = 1000 / ELEV_SCALE, W = e.lengthM, H = e.heightM, pad = .35, fsz = .09;
+  // punctele tehnice: doar cele declarate în proiect (vin din core/drawings.ts, fără sugestii); cotele lor sunt în cm
+  const kinds = [...new Set(elevs.flatMap(e => e.tech.map(p => p.kind)))] as TechKind[], declared = elevs.some(e => e.techDeclared), cm = (m: number) => Math.round(m * 100);
+  return (<><div className="print-elevs">{elevs.map(e => { const k = 1000 / ELEV_SCALE, W = e.lengthM, H = e.heightM, pad = .35, fsz = .09;
     if (W < .05) return null;
     return (<figure key={e.side} className="print-elev"><figcaption>{t('draw.wall', { side: e.side })} · {formatLength(W, units, locale)} × {formatLength(H, units, locale)}</figcaption>
       <svg viewBox={`${-pad} ${-pad} ${W + 2 * pad} ${H + 2 * pad}`} width={`${(W + 2 * pad) * k}mm`} height={`${(H + 2 * pad) * k}mm`} role="img" aria-label={`${t('draw.wall', { side: e.side })}`}>
@@ -102,14 +106,27 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
           <line x1={W + .15} y1={0} x2={W + .15} y2={H} stroke={INK} strokeWidth={.006} /><text x={W + .2} y={H / 2} transform={`rotate(-90 ${W + .2} ${H / 2})`} textAnchor="middle" dy={-.03}>{formatLength(H, units, locale)}</text>
           {[...new Set(e.bands.flatMap(b => [b.y0, b.y1]).filter(y => y > .01 && y < H - .01).map(y => Math.round(y * 100) / 100))].sort((a, b) => a - b).filter((y, i, a) => i === 0 || y - a[i - 1]! > .08).map(y => <g key={y}><line x1={W} y1={H - y} x2={W + .1} y2={H - y} stroke={INK} strokeWidth={.006} /><text x={-.04} y={H - y + .03} textAnchor="end">{formatLength(y, units, locale)}</text></g>)}
           {e.items.map(it => <text key={it.id} x={it.u + .03} y={H - it.y / 2} fontSize={fsz * .8}>{formatLength(it.y, units, locale)}</text>)}
+          {/* lanțul de cote de la colțul stâng (cm), deasupra liniei pardoselii; rândul urcă unde textele s-ar suprapune */}
+          <g data-elev="dims">{e.dims.map(d => <line key={d.cm} x1={d.u} y1={H} x2={d.u} y2={H - .025 - d.row * ELEV_DIM_ROW_M} stroke={INK} strokeWidth={.005} />)}
+            {e.dims.map(d => <text key={d.cm} x={d.u} y={H - .035 - d.row * ELEV_DIM_ROW_M} textAnchor="middle" fontSize={ELEV_DIM_FONT_M} stroke="#fff" strokeWidth={.02} paintOrder="stroke">{d.cm}</text>)}</g>
+          {/* punctele tehnice: corpul (calorifer, AC), simbolul cu litera din panoul tehnic și, deasupra, înălțimea de la pardoseala finită (cm) */}
+          <g data-elev="tech">{e.tech.map(p => { const sym = TECH_SYMBOL[p.kind], x = p.u + p.du, y = H - p.y;
+            return <g key={p.id} data-tech={p.kind}>{p.body && <rect x={p.u - p.body.w / 2} y={y - p.body.h} width={p.body.w} height={p.body.h} fill={sym.color} fillOpacity={.12} stroke={sym.color} strokeWidth={.012} />}
+              {p.du !== 0 && <line x1={p.u} y1={y} x2={x} y2={y} stroke={sym.color} strokeWidth={.006} />}
+              <circle cx={x} cy={y} r={.055} fill={sym.color} stroke="#fff" strokeWidth={.008} />
+              <text x={x} y={y + .02} textAnchor="middle" fontSize={sym.letter.length > 1 ? .048 : .06} fontWeight={600} fill="#fff">{sym.letter}</text>
+              <text x={x} y={y - .07} textAnchor="middle" fontSize={.06} stroke="#fff" strokeWidth={.02} paintOrder="stroke">{cm(p.y)}</text></g>; })}</g>
           {e.openings.map((o, i) => <text key={i} x={(o.u0 + o.u1) / 2} y={H - o.y1 - .04} textAnchor="middle" fontSize={fsz * .85}>{formatLength(o.u1 - o.u0, units, locale)}{o.kind === 'window' ? ` · ${t('draw.sill')} ${formatLength(o.y0, units, locale)}` : ''}</text>)}
         </g>
       </svg>
       <ul className="print-elev-legend">{e.bands.map((b, i) => <li key={i}><i style={{ background: b.color ?? BAND_FILL[b.kind] ?? '#eee' }} />{t(b.kind === 'walltile' ? 'sched.el.walltile' : `fin.kind.${b.kind}`)} {formatLength(b.y0, units, locale)}–{formatLength(b.y1, units, locale)}{b.u0 > .005 || b.u1 < W - .005 ? ` · ${t('draw.along', { a: formatLength(b.u0, units, locale), b: formatLength(b.u1, units, locale) })}` : ''}: {b.name}{b.color ? ` (${b.color})` : ''}</li>)}
         {e.baseboardM ? <li><i style={{ background: '#fff' }} />{t('sched.el.baseboard')} {formatLength(e.baseboardM, units, locale)}</li> : null}
         {e.sconces.length > 0 && <li>{t('draw.sconces', { n: e.sconces.length, h: formatLength(e.sconces[0]!.y, units, locale) })}</li>}
-        {e.items.map(it => <li key={it.id}>{t('draw.wallItem', { kind: t(`wallItem.kind.${it.kind}`), w: formatLength(it.w, units, locale), h: formatLength(it.h, units, locale), y: formatLength(it.y, units, locale) })}</li>)}</ul>
-    </figure>); })}</div>);
+        {e.items.map(it => <li key={it.id}>{t('draw.wallItem', { kind: t(`wallItem.kind.${it.kind}`), w: formatLength(it.w, units, locale), h: formatLength(it.h, units, locale), y: formatLength(it.y, units, locale) })}</li>)}
+        {e.tech.map(p => <li key={p.id}>{TECH_SYMBOL[p.kind].letter} · {TECH_KINDS[p.kind].label[locale === 'en' ? 'en' : 'ro']}: {t('draw.techAt', { u: cm(p.u), h: cm(p.y) })}</li>)}</ul>
+    </figure>); })}</div>
+    {kinds.length > 0 && <div className="print-colors" data-testid="elev-tech-legend"><b>{t('draw.techLegend')}:</b> {kinds.map(k => <span key={k}><i className="techdot" style={{ background: TECH_SYMBOL[k].color }}>{TECH_SYMBOL[k].letter}</i> {TECH_KINDS[k].label[locale === 'en' ? 'en' : 'ro']}</span>)}</div>}
+    <p className="muted" data-testid="elev-tech-note">{declared ? t('draw.techNote') : t('draw.techUndeclared')}</p></>);
 }
 export const roomElevations = (snap: Snapshot, mc: MaterialsCatalog, cat: Catalog, fl: Floor, room: Room) => wallElevations(snap, mc, cat, fl, room);
 export { ArchitecturalTitleBlock } from './ArchitecturalTitleBlock';

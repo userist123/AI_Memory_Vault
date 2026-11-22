@@ -9,7 +9,7 @@ export interface Snag extends Required<Pick<SnagInput, 'title' | 'trade'>> { id:
 export const SITE_LIMITS = { title: 160, body: 2000, photosPerSnag: 8, photoBytes: 3 * 1024 * 1024, photosPerProject: 600, snagsPerProject: 1000 };
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v);
-const clean = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max) : '';
+export const clean = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max) : '';
 
 export class SiteError extends Error {}
 /** Validare pentru creare (full) sau modificare (parțial). Camerele trebuie să existe în proiect. */
@@ -31,4 +31,4 @@ export function sniffImage(b: Uint8Array): 'image/jpeg' | 'image/png' | 'image/w
   if (b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === 'RIFF' && String.fromCharCode(...b.slice(8, 12)) === 'WEBP') return 'image/webp';
   return null;
 }
-export function snagSummary(items: Snag[]){ return { open: items.filter(s => s.status === 'open').length, fixed: items.filter(s => s.status === 'fixed').length, verified: items.filter(s => s.status === 'verified').length }; }
+export function snagSummary(items: Pick<Snag, 'status'>[]){ return { open: items.filter(s => s.status === 'open').length, fixed: items.filter(s => s.status === 'fixed').length, verified: items.filter(s => s.status === 'verified').length }; }

@@ -18,7 +18,10 @@ import { PlanSvg } from './PrintView';
 import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
 import PinLayer from './PinLayer';
 import ClientDeliveries from './ClientDeliveries';
+import ClientSiteLog from './ClientSiteLog';
+import type { ClientLogEntry } from '@/core/site-log';
 import { ClientChanges } from './ChangeOrders';
+import { ClientOffer } from './OfferAcceptance';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
 import { FULL_W, renderSize, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
@@ -31,7 +34,7 @@ import { feedbackLog } from '@/core/feedback-log';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
-export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null; renders?: Record<string, number[]> }
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null; renders?: Record<string, number[]>; siteLog?: ClientLogEntry[] }
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   // pe link datele vin deja de pe server: planșele (și coperta, elementul LCP) sunt în HTML-ul inițial, nu după hidratare
@@ -74,7 +77,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     e.queued.add(tag); setQueued(n => n + 1);
     e.chain = e.chain.then(async () => { try { if (g !== e.gen || goodEnough(e.done[key], w)) return; const v = await ensureViewer(); if (!v || g !== e.gen) return;
         const L = levelOf[key] ?? 0;
-        if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc }); v.setState(plan, items); e.level = L;
+        if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc, services: false }); v.setState(plan, items); e.level = L;
           await nextFrame(); await nextFrame(); if (g !== e.gen) return; }
         const url = key === 'overview' ? v.renderView(undefined, size.w, size.h) : v.renderView({ roomId: key }, size.w, size.h);
         if (url && g === e.gen){ e.done[key] = w; setImages(m => ({ ...m, [key]: { url, w } })); } }
@@ -171,8 +174,11 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <dl>{Object.entries(pres.budget.categories).filter(([, v]) => v > 0).map(([k, v]) => <div key={k}><dt>{t(`budget.cat.${k}`)}</dt><dd>{money(v)}</dd></div>)}
           {pres.budget.labor > 0 && <div><dt>{t('pres.labour')}</dt><dd>{money(pres.budget.labor)}</dd></div>}<div><dt>{t('pres.contingency')}</dt><dd>{money(pres.budget.contingency)}</dd></div></dl></div>
       <footer>{num(n)}</footer></section>
+    {/* oferta de acceptat: apare doar dacă designerul a activat acceptarea online pe acest link (cere PIN) */}
+    {share && <ClientOffer token={share.token} />}
     {share && <ClientChanges token={share.token} offered={pres.budget.total} cur={cur} />}
     {share?.progress && <ClientDeliveries p={share.progress} />}
+    {share && (share.siteLog?.length ?? 0) > 0 && <ClientSiteLog token={share.token} entries={share.siteLog!} />}
     {share && <FeedbackBox id="fb-general" token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
     {/* istoricul deciziilor: cine, ce și când (trasabilitate pentru client și designer); cele mai noi primele */}
     {share && feedback.length > 0 && <details className="fb-log no-print"><summary>{t('fb.logTitle', { n: feedback.length })}</summary>

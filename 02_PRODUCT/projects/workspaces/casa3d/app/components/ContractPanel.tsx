@@ -8,13 +8,14 @@ import { FEE_KINDS, type ProjectMeta } from '@/core/project-meta';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { FEE_EVENT } from './ChainTable';
+import { OfferAcceptanceAdmin } from './OfferAcceptance';
 
 type Calc = { net: number | null; vat: number; gross: number | null; reason?: string };
 export default function ContractPanel({ id, meta, say }: { id: string; meta: ProjectMeta; say(s: string): void }){
-  const { t, lang } = usePrefs(), [d, setD] = useState<ContractData | null>(null), [calc, setCalc] = useState<Calc | null>(null), [sched, setSched] = useState<PayRow[]>([]), [state, setState] = useState<'saved' | 'saving' | 'error'>('saved'), [loadErr, setLoadErr] = useState<string | null>(null);
+  const { t, lang } = usePrefs(), [d, setD] = useState<ContractData | null>(null), [calc, setCalc] = useState<Calc | null>(null), [sched, setSched] = useState<PayRow[]>([]), [state, setState] = useState<'saved' | 'saving' | 'error'>('saved'), [loadErr, setLoadErr] = useState<string | null>(null), [tick, setTick] = useState(0);
   const timer = useRef<any>(null), dirty = useRef(false), money = (n: number | null) => formatMoney(n, 'RON', lang);
   // ceilalți (fișa proiectului, bugetul) află imediat onorariul: contractul e sursa unică
-  const apply = (j: any) => { setCalc(j.calc); setSched(j.schedule); window.dispatchEvent(new CustomEvent(FEE_EVENT, { detail: { id, calc: j.calc } })); };
+  const apply = (j: any) => { setCalc(j.calc); setSched(j.schedule); setTick(n => n + 1); window.dispatchEvent(new CustomEvent(FEE_EVENT, { detail: { id, calc: j.calc } })); };
   useEffect(() => { fetch(`/api/projects/${id}/contract`).then(async r => { if (r.ok) return r.json(); const j = await r.json().catch(() => null); setLoadErr(j?.error || t('ctr.loadError')); return Promise.reject(); }).then(j => { setD(j.data); apply(j); }).catch(() => setState('error')); }, [id]); // eslint-disable-line
   useEffect(() => { if (!d || !dirty.current) return; setState('saving'); clearTimeout(timer.current);
     timer.current = setTimeout(async () => { const r = await fetch(`/api/projects/${id}/contract`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...d, fee: d.fee ?? null }) }).catch(() => null);
@@ -45,6 +46,7 @@ export default function ContractPanel({ id, meta, say }: { id: string; meta: Pro
     <label className="f"><span>{t('ctr.contractNo')}</span><input value={d.contractNo ?? ''} maxLength={CONTRACT_LIMITS.no} onChange={e => set({ contractNo: e.target.value || undefined })} /></label>
     {sched.length > 0 && <ul className="hint">{sched.map((p, k) => <li key={k}>{t(`ctr.pay.${p.key}`, { n: p.n })}: {money(p.amount)}</li>)}</ul>}
     <small className={`prov ${state === 'error' ? 'err' : ''}`}>{t(`ctr.state.${state}`)}</small>
+    <OfferAcceptanceAdmin id={id} say={say} tick={tick} />
     <div className="pcard-act"><a className="btn" href={`/p/${id}/contract`} target="_blank" rel="noopener">{t('ctr.openContract')}</a><a className="btn" href={`/p/${id}/offer`} target="_blank" rel="noopener">{t('ctr.openOffer')}</a></div>
   </FoldSection>);
 }

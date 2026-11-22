@@ -116,7 +116,8 @@ describe('obiecte pe perete: 3D, deviz, planșe, listă, tastatură, bară', () 
     assert.deepEqual(planKeyAction({ key: 'PageDown', shiftKey: true }, planItems(s), { kind: 'wall_item', id: 'tab-1' }), { type: 'lift', dyCm: -50 });
   });
   test('bara: „Placare” și „Pe perete” stau în grupa Decor (cu zona de pardoseală, lotul 3, și tavanul fals pe zonă, lotul 4); etapele cu puține unelte rămân plate', () => {
-    assert.deepEqual(TOOL_GROUPS.find(g => g.id === 'decor')!.tools, ['clad', 'wall_item', 'floor_zone', 'ceiling_zone']);
+    // schimbat conștient: grupa Decor a primit Covorul și Pipeta de finisaje (unelte noi), la coadă, deci ordinea celor vechi e aceeași
+    assert.deepEqual(TOOL_GROUPS.find(g => g.id === 'decor')!.tools, ['clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'rug', 'style_copy']);
     assert.deepEqual(railSlots(['select', 'clad', 'wall_item', 'measure'], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'clad', 'wall_item', 'measure']);
     const many = ['select', 'niche', 'column', 'glass_wall', 'wall_item', 'clad', 'measure', 'dim', 'text'] as const;
     assert.deepEqual(railSlots([...many], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'niche', 'structure', 'decor', 'notes']);

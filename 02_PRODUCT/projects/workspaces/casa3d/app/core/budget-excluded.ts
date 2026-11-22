@@ -3,10 +3,10 @@
 // numele ei, iar interfața arată lângă el o pastilă cu culoarea. Intrarea sunt textele din core/boq.ts (unknownLines + unknownItems).
 import { hexToRgb, rgbToHsl } from './color';
 
-export type ExcludedKind = 'services' | 'labor' | 'kitchen' | 'bath' | 'lighting' | 'finishes' | 'products';
+export type ExcludedKind = 'services' | 'labor' | 'kitchen' | 'bath' | 'lighting' | 'finishes' | 'products' | 'installations';
 export interface ExcludedItem { key: string; label: string; count: number; color?: string; note?: 'paintYield' | 'onOrder' }
 export interface ExcludedGroup { kind: ExcludedKind; items: ExcludedItem[] }
-const ORDER: ExcludedKind[] = ['products', 'finishes', 'kitchen', 'bath', 'lighting', 'labor', 'services'];
+const ORDER: ExcludedKind[] = ['products', 'finishes', 'kitchen', 'bath', 'lighting', 'installations', 'labor', 'services'];
 
 const NAMED: [string, string][] = [['#f4f4f1', 'alb'], ['#ffffff', 'alb'], ['#222222', 'negru'], ['#000000', 'negru'], ['#cdb592', 'stejar deschis'], ['#b8936a', 'stejar'], ['#8d8a85', 'gri cald']];
 /** Numele unei culori: din paleta aplicației, altfel o descriere după nuanță și luminozitate („gri deschis”, „verde închis”). */
@@ -35,6 +35,7 @@ function humanize(raw: string): { label: string; color?: string; note?: Excluded
   return { label: s.replace(/\s+/g, ' ').trim(), color, note };
 }
 function kindOf(s: string): ExcludedKind {
+  if (/^Instalații:/.test(s)) return 'installations';
   if (/^(Transport|Montaj mobilier|Montaj bucătărie)/.test(s)) return 'services';
   if (/^(Manoperă|Montaj ușă)/.test(s)) return 'labor';
   if (/bucătărie/i.test(s)) return 'kitchen';

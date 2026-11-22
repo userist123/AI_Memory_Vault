@@ -1,0 +1,89 @@
+/* Tema „pro” a editorului: spațiu de lucru întunecat și compact, ca în programele profesionale de montaj — bară de meniuri,
+   panouri gri închis cu titluri de filă, etapele ca file de spații de lucru, albastru pentru selecție și focus. Planul rămâne
+   pe hârtie deschisă (e „monitorul” proiectului). Doar culori și densitate: structura și comportamentul nu se schimbă.
+   Se activează cu clasa .theme-pro pe .ws (Vizualizare → Tema pro / clasică). */
+.ws.theme-pro {
+  --pro-frame: #1b1b1b; --pro-panel: #232323; --pro-panel-2: #2b2b2b; --pro-raised: #333; --pro-line: #3a3a3a; --pro-line-2: #4a4a4a;
+  --pro-ink: #e3e3e3; --pro-ink-2: #c3c3c3; --pro-ink-3: #9a9a9a; --pro-blue: #2470cf; --pro-blue-2: #1d66c0; --pro-line-blue: #378ef0; --pro-hover: #353535;
+  --bg: var(--pro-frame); --bg-2: #161616; --surface: var(--pro-panel); --surface-2: var(--pro-panel-2);
+  --ink: var(--pro-ink); --ink-2: var(--pro-ink-2); --ink-3: var(--pro-ink-3); --ink-num: #b0b0b0;
+  --line: var(--pro-line); --line-strong: var(--pro-line-2); --accent: var(--pro-blue); --accent-soft: #1f3a5c;
+  --ok: #6fcf8a; --ok-soft: #1d3324; --warn: #f0b35a; --warn-soft: #3a2e18; --err: #ff8b7a; --err-soft: #3d1f1b; --focus: var(--pro-blue);
+  --color-bg-canvas: var(--bg); --color-bg-sunken: var(--bg-2); --color-bg-surface: var(--surface); --color-bg-raised: var(--surface-2);
+  --color-fg-default: var(--ink); --color-fg-secondary: var(--ink-2); --color-fg-muted: var(--ink-3); --color-border-default: var(--line); --color-border-strong: var(--line-strong);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .5); --shadow-2: 0 8px 24px rgb(0 0 0 / .55);
+  background: var(--pro-frame); color: var(--pro-ink); color-scheme: dark; font-size: 13px;
+}
+.ws.theme-pro :focus-visible { outline-color: var(--pro-line-blue); }
+.ws.theme-pro ::selection { background: #2c5d94; }
+
+/* ---------- bara de meniuri ---------- */
+.ws .menubar { display: flex; align-items: stretch; gap: 0; height: 28px; padding: 0 6px; background: #161616; border-bottom: 1px solid #000; position: relative; z-index: 60; }
+.ws .menubar .mb-menu { position: relative; display: flex; }
+.ws .menubar .mb-menu > button { background: none; border: 0; color: #cfcfcf; font: 13px var(--sans); padding: 0 10px; cursor: default; border-radius: 3px; margin: 2px 0; }
+.ws .menubar .mb-menu > button:hover, .ws .menubar .mb-menu > button.is-open { background: #2f2f2f; color: #fff; }
+.ws .menubar .mb-pop { position: absolute; top: calc(100% + 1px); left: 0; min-width: 260px; max-height: 70vh; overflow: auto; padding: 4px 0; background: #2b2b2b; border: 1px solid #111; border-radius: 4px; box-shadow: 0 10px 28px rgb(0 0 0 / .6); }
+.ws .menubar .mb-pop > button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 6px; width: 100%; padding: 5px 14px 5px 8px; background: none; border: 0; color: #e3e3e3; font: 13px var(--sans); text-align: left; cursor: default; }
+.ws .menubar .mb-pop > button.is-act { background: #2470cf; color: #fff; }
+.ws .menubar .mb-pop > button:disabled { color: #707070; }
+.ws .menubar .mb-hint { color: #9a9a9a; font-size: 12px; padding-left: 18px; white-space: nowrap; } .ws .menubar .is-act .mb-hint { color: #e6efff; }
+.ws .menubar .mb-check.is-done::before { content: '✓'; font-size: 11px; color: #6fcf8a; } .ws .menubar .is-act .mb-check.is-done::before { color: #fff; }
+.ws .menubar .mb-sep { height: 1px; margin: 4px 0; background: #3e3e3e; }
+
+/* ---------- bara de sus și etapele (file de spații de lucru) ---------- */
+.ws.theme-pro .banner { background: #3a2a14; color: #f5d9a8; font-size: 12px; padding: 3px 12px; }
+.ws.theme-pro .topbar { background: var(--pro-panel); border-bottom: 1px solid #000; min-height: 44px; padding-top: 4px; padding-bottom: 4px; gap: 6px; }
+.ws.theme-pro .topbar .name { background: transparent; color: #fff; font-family: var(--sans); font-size: 15px; font-weight: 600; border-color: transparent; }
+.ws.theme-pro .topbar .name:hover, .ws.theme-pro .topbar .name:focus { border-color: var(--pro-line-2); background: #1b1b1b; }
+.ws.theme-pro .btn { background: var(--pro-panel-2); border-color: var(--pro-line); color: var(--pro-ink); border-radius: 4px; }
+.ws.theme-pro .btn:hover:not(:disabled):not([aria-disabled=true]) { background: var(--pro-hover); border-color: var(--pro-line-2); }
+.ws.theme-pro .btn.ghost { background: transparent; border-color: transparent; }
+.ws.theme-pro .btn.ghost:hover:not(:disabled) { background: var(--pro-hover); }
+.ws.theme-pro .btn.primary, .ws.theme-pro .topbar .tb-save, .ws.theme-pro .topbar .btn.primary, .ws.theme-pro .pagebody .btn.primary { background: var(--pro-blue); border-color: var(--pro-blue); color: #fff; }
+.ws.theme-pro .btn.primary:hover:not(:disabled):not([aria-disabled=true]), .ws.theme-pro .topbar .tb-save:hover:not(:disabled) { background: var(--pro-blue-2); border-color: var(--pro-blue-2); }
+.ws.theme-pro .btn.primary:disabled { background: var(--pro-panel-2); border-color: var(--pro-line); color: var(--pro-ink-3); }
+.ws.theme-pro .seg { background: #161616; border-color: var(--pro-line); border-radius: 4px; }
+.ws.theme-pro .seg button { color: var(--pro-ink-2); border-radius: 3px; }
+.ws.theme-pro .seg button[aria-pressed=true] { background: #3d3d3d; color: #fff; box-shadow: none; }
+.ws.theme-pro kbd, .ws.theme-pro .cmdk-kbd { background: #161616; border-color: var(--pro-line); color: var(--pro-ink-3); }
+.ws.theme-pro .stagewrap { background: #1f1f1f; border-bottom: 1px solid #000; }
+.ws.theme-pro .stagebar button { color: #a8a8a8; background: transparent; border-radius: 0; border-color: transparent; box-shadow: none; }
+.ws.theme-pro .stagebar button:hover { color: #fff; background: transparent; }
+.ws.theme-pro .stagebar button[aria-current=step] { color: #fff; background: transparent; box-shadow: inset 0 -2px 0 var(--pro-blue); }
+.ws.theme-pro .stagebar .phase-label { color: #7d7d7d; }
+.ws.theme-pro .stage-step { color: var(--pro-ink-2); background: transparent; }
+
+/* ---------- panouri: unelte, structură, inspector ---------- */
+.ws.theme-pro .tools, .ws.theme-pro .studio-toolrail { background: var(--pro-panel); border-color: #000; }
+.ws.theme-pro .tools button { color: #bdbdbd; border-radius: 4px; }
+.ws.theme-pro .tools button:hover { background: var(--pro-hover); color: #fff; }
+.ws.theme-pro .tools button.is-active, .ws.theme-pro .tools button[aria-pressed=true] { background: #3d3d3d; color: #fff; box-shadow: inset 2px 0 0 var(--pro-blue); }
+.ws.theme-pro .ol-pane, .ws.theme-pro .side, .ws.theme-pro .studio-inspector { background: var(--pro-panel); border-color: #000; color: var(--pro-ink); }
+.ws.theme-pro .ol-pane h2, .ws.theme-pro .side h2, .ws.theme-pro .side h3, .ws.theme-pro .sidetabs { color: var(--pro-ink); }
+.ws.theme-pro .sidetabs { background: var(--pro-panel-2); border-bottom: 1px solid #000; }
+.ws.theme-pro .sidetabs button { color: var(--pro-ink-3); border-radius: 0; }
+.ws.theme-pro .sidetabs button[aria-selected=true], .ws.theme-pro .sidetabs button[aria-pressed=true] { color: #fff; box-shadow: inset 0 -2px 0 var(--pro-blue); background: transparent; }
+.ws.theme-pro input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), .ws.theme-pro select, .ws.theme-pro textarea {
+  background: #161616; color: var(--pro-ink); border-color: var(--pro-line); border-radius: 3px; }
+.ws.theme-pro input:focus, .ws.theme-pro select:focus, .ws.theme-pro textarea:focus { border-color: var(--pro-blue); }
+.ws.theme-pro input[type=checkbox], .ws.theme-pro input[type=radio], .ws.theme-pro input[type=range] { accent-color: var(--pro-blue); }
+.ws.theme-pro [aria-selected=true], .ws.theme-pro .is-selected, .ws.theme-pro .outliner .sel { --sel-bg: #2c5d94; }
+
+/* ---------- planul rămâne pe hârtie; bara nivelurilor și indiciile ca o bară de instrumente a monitorului ---------- */
+.ws.theme-pro .canvas, .ws.theme-pro .studio-canvas { background: #121212; }
+.ws.theme-pro .levelbar { background: transparent; }
+.ws.theme-pro .levelbar-tabs button { background: var(--pro-panel-2); color: var(--pro-ink-2); border-color: var(--pro-line); }
+.ws.theme-pro .levelbar-tabs button[aria-selected=true] { background: #3d3d3d; color: #fff; }
+/* panoul de straturi al planului: butonul ca tab-urile nivelurilor, lista ca meniurile barei */
+.ws.theme-pro .levelbar .layers-btn { background: var(--pro-panel-2); color: var(--pro-ink-2); border: 1px solid var(--pro-line); }
+.ws.theme-pro .levelbar .layers-btn[aria-expanded=true] { background: #3d3d3d; color: #fff; }
+.ws.theme-pro .layers-badge { background: var(--pro-blue); color: #fff; }
+.ws.theme-pro .layers-pop { background: #2b2b2b; color: #e3e3e3; border-color: #111; border-radius: 4px; box-shadow: 0 10px 28px rgb(0 0 0 / .5); }
+.ws.theme-pro .layers-pop label:hover { background: #3a3a3a; }
+.ws.theme-pro .layers-pop label.is-off, .ws.theme-pro .layers-pop label small { color: #9a9a9a; }
+.ws.theme-pro .levelbar .layers-foot .btn { background: #3a3a3a; color: #e3e3e3; border-color: #111; border-radius: 3px; }
+.ws.theme-pro .hintbar { background: rgb(27 27 27 / .9); color: var(--pro-ink-2); border-color: var(--pro-line); }
+
+/* ---------- tipografie de aplicație: titlurile panourilor în fontul fără serife (planul își păstrează etichetele) ---------- */
+.ws.theme-pro .topbar, .ws.theme-pro .stagewrap, .ws.theme-pro .side, .ws.theme-pro .ol-pane, .ws.theme-pro .pagebody { --serif: var(--sans); }
+.ws.theme-pro .side .stage-title { font-weight: 600; font-size: 19px; letter-spacing: 0; }

@@ -198,7 +198,10 @@ export function buildOffer(ctx: DocContext): ContractDoc {
   const sections: DocSection[] = [
     { id: 'for', title: 'Pentru', paras: [[ctx.client.name || BLANK, ctx.client.email, ctx.client.phone].filter(Boolean).join(' · ')] },
     scopeSection(ctx), phasesSection(ctx), feeSection(ctx, r, f), pay, revisionsSection(ctx),
-    { id: 'validity', title: 'Valabilitatea ofertei', paras: [validityLine(ctx), 'Acceptarea ofertei se confirmă în scris, iar serviciile încep după semnarea contractului și plata avansului.'] },
+    // acceptarea (pe linkul clientului, core/offer-acceptance.ts, sau în scris) încheie contractul; formulare de verificat cu avocatul
+    { id: 'validity', title: 'Valabilitatea și acceptarea ofertei', paras: [validityLine(ctx),
+      'Acceptarea fără rezerve a ofertei în termenul ei de valabilitate, confirmată online pe linkul de prezentare sau în scris, încheie contractul între părți pe baza acestei oferte. Un contract scris, mai detaliat, poate fi semnat ulterior; el nu schimbă prețul și graficul de plăți acceptate decât cu acordul ambelor părți. Serviciile încep după plata avansului.',
+      'Formulare orientativă, de verificat cu avocatul.'] },
   ];
   return { kind: 'offer', title: 'Ofertă de servicii de design interior', notice: CONTRACT_NOTICE, studioLines: header(ctx), dateLine: roDate(date), sections, signatures: { studio: studioName(ctx.studio), client: ctx.client.name || BLANK } };
 }

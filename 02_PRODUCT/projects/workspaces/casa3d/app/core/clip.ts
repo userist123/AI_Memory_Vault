@@ -61,7 +61,7 @@ export function parseProductPage(html: string, url: string, shop: string): Clipp
   const image = httpsUrl(Array.isArray(p?.image) ? (typeof p.image[0] === 'string' ? p.image[0] : p.image[0]?.url) : typeof p?.image === 'object' ? p?.image?.url : p?.image, url) ?? httpsUrl(meta(html, 'og:image'), url);
   const price = num(offer?.price ?? offer?.lowPrice) ?? num(meta(html, 'product:price:amount')) ?? num(meta(html, 'og:price:amount'));
   const currency = text(offer?.priceCurrency, 3) ?? text(meta(html, 'product:price:currency'), 3);
-  return { name, price, currency: currency ? currency.toUpperCase() : null, image, sku: text(p?.sku ?? p?.mpn ?? p?.gtin13 ?? p?.productID, 60), brand: text(typeof p?.brand === 'object' ? p?.brand?.name : p?.brand, 80), supplier: SHOP_NAMES[shop] ?? shop, url };
+  return { name, price, currency: currency ? (/^(lei|leu|ron)$/i.test(currency.trim()) ? 'RON' : currency.toUpperCase()) : null, image, sku: text(p?.sku ?? p?.mpn ?? p?.gtin13 ?? p?.productID, 60), brand: text(typeof p?.brand === 'object' ? p?.brand?.name : p?.brand, 80), supplier: SHOP_NAMES[shop] ?? shop, url };
 }
 
 // Produsul adăugat de designer în comenzi (preluat din link sau scris de mână): validat aici, pe server.
@@ -86,7 +86,8 @@ export function checkCustomItem(x: unknown, partial = false): Partial<CustomItem
   if (has('costPrice')) out.costPrice = money(o.costPrice, 'Prețul de achiziție');
   if (has('leadDays')){ const d = o.leadDays; if (d == null || d === '') out.leadDays = null; else if (typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 365) out.leadDays = d; else throw new ClipError('Termenul de livrare nu e valid (0–365 de zile).'); }
   if (has('dimension')) out.dimension = field(o.dimension, 80) || null;
-  if (has('currency')){ const c = o.currency; if (c == null || c === '') out.currency = null; else if (typeof c === 'string' && /^[A-Za-z]{3}$/.test(c)) out.currency = c.toUpperCase(); else throw new ClipError('Moneda nu e validă.'); }
+  if (has('currency')){ const c = o.currency; if (c == null || c === '') out.currency = null; else if (typeof c === 'string' && /^(lei|leu)$/i.test(c.trim())) out.currency = 'RON';
+    else if (typeof c === 'string' && /^[A-Za-z]{3}$/.test(c)) out.currency = c.toUpperCase(); else throw new ClipError('Moneda nu e validă.'); }
   if (has('qty')){ const q = o.qty ?? 1; if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0 || q > 100000) throw new ClipError('Cantitatea nu e validă.'); out.qty = Math.round(q * 100) / 100; }
   if (has('unit')) out.unit = field(o.unit, 12) || 'buc';
   if (has('roomId')){ const r = o.roomId; if (r == null || r === '') out.roomId = null; else if (typeof r === 'string' && r.length <= 64) out.roomId = r; else throw new ClipError('Camera nu e validă.'); }

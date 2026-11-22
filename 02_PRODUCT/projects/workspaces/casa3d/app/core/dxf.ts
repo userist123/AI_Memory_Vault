@@ -10,7 +10,8 @@ import { doorSymbol } from './door-symbols';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
 import { nicheGeometry } from './niches';
-import { dimGeometry, textHeight } from './annotations';
+import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, rotateAbout, textAnchor, textAnchorAt, angleGeometry, angleLabelAt, formatAngle, cloudOutline, cloudLabelAt, ANGLE_TEXT_M, CLOUD_LABEL_M } from './annotations';
+import { risers } from './mep-riser';
 
 export const DXF_LAYERS = [
   { name: 'WALLS', color: 7 }, { name: 'DOORS', color: 1 }, { name: 'WINDOWS', color: 5 }, { name: 'ROOMS', color: 3 },
@@ -62,10 +63,11 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     ents.push(['0\nCIRCLE', tag(8, layer), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r))].join('\n')); };
   const arc = (layer: string, c: Pt, r: number, a0: number, a1: number) => { grow(c[0] - r, c[1] - r); grow(c[0] + r, c[1] + r);
     ents.push(['0\nARC', tag(8, layer), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r)), tag(50, num(a0)), tag(51, num(a1))].join('\n')); };
-  const text = (layer: string, at: Pt, h: number, s: string, o: { rot?: number; center?: boolean } = {}) => { grow(...at);
+  const text = (layer: string, at: Pt, h: number, s: string, o: { rot?: number; center?: boolean; right?: boolean } = {}) => { grow(...at);
     const l = ['0\nTEXT', tag(8, layer), tag(10, num(at[0])), tag(20, num(at[1])), tag(30, 0), tag(40, num(h)), tag(1, dxfText(s))];
     if (o.rot) l.push(tag(50, num(o.rot)));
     if (o.center) l.push(tag(72, 1), tag(11, num(at[0])), tag(21, num(at[1])), tag(31, 0));
+    else if (o.right) l.push(tag(72, 2), tag(11, num(at[0])), tag(21, num(at[1])), tag(31, 0));   // textul se termină în `at`
     ents.push(l.join('\n')); };
   const deg = (r: number) => ((r * 180 / Math.PI) % 360 + 360) % 360;
 
@@ -164,7 +166,19 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
         line('DIMENSIONS', A, B); line('DIMENSIONS', P(...an.a), A); line('DIMENSIONS', P(...an.b), B);
         for (const pt of [A, B]) line('DIMENSIONS', [pt[0] - (dx - dy) * t, pt[1] - (dy + dx) * t], [pt[0] + (dx - dy) * t, pt[1] + (dy + dx) * t]);
         const m = P(g.mid[0] + g.n[0] * .12, g.mid[1] + g.n[1] * .12); text('DIMENSIONS', m, 120, String(Math.round(g.value * 1000)), { rot: ((-g.rot) % 360 + 360) % 360, center: true }); }
-      else text('NOTES', P(...an.at), textHeight(an) * 1000, an.text, { rot: an.rotation ? (360 - an.rotation) % 360 : 0 }); }
+      // cota unghiulară = cele două brațe (LINE) + arcul (ARC, mereu în sens trigonometric în DXF) + valoarea (TEXT), pe NOTES
+      else if (an.kind === 'angle'){ const g = angleGeometry(an), deg = (t: number) => ((-t * 180 / Math.PI) % 360 + 360) % 360, t0 = g.start, t1 = g.start + g.sweep;
+        line('NOTES', P(...g.arms[0][0]), P(...g.arms[0][1])); line('NOTES', P(...g.arms[1][0]), P(...g.arms[1][1]));
+        arc('NOTES', P(...an.v), an.r * 1000, deg(g.sweep > 0 ? t1 : t0), deg(g.sweep > 0 ? t0 : t1));
+        text('NOTES', P(...angleLabelAt(an, ANGLE_TEXT_M)), ANGLE_TEXT_M * 1000, formatAngle(g.deg, opts.lang === 'en' ? '.' : ','), { center: true }); }
+      // norul de revizie = un contur închis (arcele aproximate cu segmente) + eticheta, dacă are, pe NOTES
+      else if (an.kind === 'cloud'){ poly('NOTES', cloudOutline(an.rect).map(q => P(...q)));
+        if (an.label) text('NOTES', P(...cloudLabelAt(an.rect)), CLOUD_LABEL_M * 1000, an.label); }
+      else { // text liber; săgeata cu notă = linia + cele două laturi ale vârfului, cota de nivel = triunghiul, toate pe NOTES
+        const lg = leaderGeometry(an), rot = an.rotation ?? 0, R = (q: [number, number]) => P(...rotateAbout(q, an.at, rot));
+        if (lg){ line('NOTES', P(...lg.from), P(...lg.tip)); line('NOTES', P(...lg.tip), P(...lg.head[1])); line('NOTES', P(...lg.tip), P(...lg.head[2])); }
+        if (an.symbol === 'level') poly('NOTES', levelMarkGeometry(an).outline.map(R));
+        text('NOTES', R(textAnchorAt(an)), textHeight(an) * 1000, an.text, { rot: rot ? (360 - rot) % 360 : 0, right: textAnchor(an) === 'end' }); } }
 
     // ---- mobilier ----
     for (const p of snap.placements){ const fp = footprintOf(cat, p); if (!fp) continue;
@@ -180,6 +194,10 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     // Traseul se desenează în plan (proiecția x/z); eticheta are diametrul declarat sau „D?”, nu o valoare inventată.
     for (const r of snap.floor.mepRuns ?? []){ const L = `MEP_${r.system.toUpperCase()}`; usedBim.add(L);
       for (let k = 1; k < r.points.length; k++){ const a = r.points[k - 1]!, b = r.points[k]!; if (a[0] !== b[0] || a[2] !== b[2]) line(L, P(a[0], a[2]), P(b[0], b[2])); }
+      // coloana verticală (core/mep-riser.ts): cerc cu cruce în punctul ei, pe stratul sistemului, și „UP”/„DN” cu cota de sosire (m)
+      for (const v of risers(r)){ const q = r.points[v.to]!, c = P(q[0], q[2]), rr = Math.max(60, (r.diameterMm ?? 0) / 2 + 20);
+        circle(L, c, rr); line(L, [c[0] - rr * .7, c[1] - rr * .7], [c[0] + rr * .7, c[1] + rr * .7]); line(L, [c[0] - rr * .7, c[1] + rr * .7], [c[0] + rr * .7, c[1] - rr * .7]);
+        text(L, [c[0] + rr + 30, c[1] - 40], 70, `${v.dh > 0 ? 'UP' : 'DN'} ${q[1] >= 0 ? '+' : ''}${q[1].toFixed(2)}`); }
       const m = r.points[Math.floor(r.points.length / 2)]!; text(L, [P(m[0], m[2])[0] + 60, P(m[0], m[2])[1] + 60], 80, `${r.id} ${r.diameterMm ? `D${r.diameterMm}` : 'D?'}`); }
     for (const fd of snap.floor.footings ?? []){ usedBim.add('STRUCT_FOOTINGS'); poly('STRUCT_FOOTINGS', [P(fd.x - fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z + fd.d / 2), P(fd.x - fd.w / 2, fd.z + fd.d / 2)]); }
     for (const w of snap.floor.walls) if (w.structural){ usedBim.add('STRUCT_WALLS'); line('STRUCT_WALLS', P(...w.a), P(...w.b)); }

@@ -163,7 +163,7 @@ describe('pereți în straturi (benzi)', () => {
       { side: 'E', kind: 'wallpaper', material: 'tapet-grandeco-marmor', fromM: 1.1 }, { side: 'W', kind: 'paint', material: 'vopsea-savana-super', color: '#5b7065' } ] });
     const b = computeBOQ(s, cat, mc), fl = s.floor, r = room(s, 'living');
     const wp = b.items.find(i => i.key === 'living:wall:E:2')!, full = sideGeometry(fl, r, 'E').netM2, low = sideGeometry(fl, r, 'E', 1.1).netM2;
-    assert.match(wp.label, /1\.1–2\.6 m/); const rr = wallpaperRolls(3.8, 1.5, { widthM: .53, lengthM: 10.05, repeatCm: 0 }); assert.equal(wp.orderedQty, rr.rolls);
+    assert.match(wp.label, /1,1–2,6 m/); const rr = wallpaperRolls(3.8, 1.5, { widthM: .53, lengthM: 10.05, repeatCm: 0 }); assert.equal(wp.orderedQty, rr.rolls);
     const pan = b.items.find(i => i.key === 'living:wall:E:0')!; assert.equal(pan.orderedQty, panelCount(3.8, 1.1, [60, 240]));
     assert.ok(b.unknown.some(u => /baghetă/.test(u)), 'bagheta fără produs e necunoscută');
     const accent = b.items.find(i => i.key === 'living:wall:W:3')!; assert.match(accent.label, /nuanță gri verzui/); assert.match(accent.label, /perete vest/); assert.ok(!/#[0-9a-f]{6}/i.test(accent.label), 'fără hex în etichetă'); assert.equal(accent.color, '#5b7065', 'codul exact rămâne pe articol'); assert.equal(accent.refId, 'vopsea-savana-super');
@@ -255,7 +255,7 @@ describe('placare pe o porțiune (alongFromM / alongToM)', () => {
     const t = set(demo(), 'living', { wallFeatures: [{ side: 'N', kind: 'slats', material: 'riflaj-mdf-unic-alb', heightM: 2.4, alongFromM: 0, alongToM: 4.8 }] });
     const a = computeBOQ(s, cat, mc).items.find(i => i.key === 'living:wall:N:0')!, b = computeBOQ(t, cat, mc).items.find(i => i.key === 'living:wall:N:0')!;
     assert.equal(a.orderedQty, panelCount(2.4, 2.4, [60, 240])); assert.equal(b.orderedQty, 2 * a.orderedQty, 'riflaj pe 2,4 m din 4,8 m = jumătate din panouri');
-    assert.match(a.label, /porțiunea 0–2\.4 m pe lungime/);
+    assert.match(a.label, /porțiunea 0–2,4 m pe lungime/);
   });
   test('plan, elevație, fișă, 3D și server', () => {
     const s = set(demo(), 'living', { wallFeatures: [{ side: 'S', kind: 'slats', material: 'riflaj-mdf-unic-alb', alongFromM: 1, alongToM: 2.5, vertical: false }, { side: 'N', kind: 'wallpaper', material: 'tapet-grandeco-marmor', alongFromM: .5, alongToM: 2 }] });
@@ -285,7 +285,7 @@ describe('tapet și vopsea decorativă cu efect', () => {
     const s = set(demo(), 'living', { wallFeatures: [{ side: 'N', kind: 'wallpaper', material: 'tapet-grandeco-marmor' }] });
     const it = computeBOQ(s, cat, mc).items.find(i => i.key === 'living:wall:N:0')!, n = sideGeometry(s.floor, room(s, 'living'), 'N'), rr = wallpaperRolls(n.lengthM, n.heightM, { widthM: .53, lengthM: 10.05, repeatCm: 0 });
     assert.equal(it.orderedQty, rr.rolls); assert.ok(rr.spare >= 1);
-    assert.match(it.label, /fâșii de 2\.65 m, 3 pe rolă, \+ 1 rolă rezervă; toate din același lot/);
+    assert.match(it.label, /fâșii de 2,65 m, 3 pe rolă, \+ 1 rolă rezervă; toate din același lot/);
   });
   test('efectul: manopera are tarif propriu; fără tarif și fără produs pentru efect, ambele apar fără preț (nu cu prețul tencuielii obișnuite)', () => {
     assert.equal(featureLabor({ kind: 'plaster' }), 'manopera-tencuiala-decorativa');

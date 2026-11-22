@@ -5,7 +5,11 @@ const LOCAL_HOST = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(:\d+)?$/i;
 const LOOPBACK_IP = /^(127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/i;
 const PUBLIC_PATHS = [
   /^\/share\/[A-Za-z0-9_-]{43}\/?$/,                 // prezentarea pentru client
-  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?|\/render\/[A-Za-z0-9_-]{1,80})?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul, pinii pe imagine și imaginile 3D gata randate
+  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?|\/offer(\/confirmation)?|\/render\/[A-Za-z0-9_-]{1,80})?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul, pinii pe imagine, oferta de acceptat (cu confirmarea ei) și imaginile 3D gata randate
+  /^\/brief\/[A-Za-z0-9_-]{43}\/?$/,                 // chestionarul clientului (lib/client-brief.ts)
+  /^\/api\/brief\/[A-Za-z0-9_-]{43}(\/submit|\/photos(\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?)?$/,  // răspunsurile, trimiterea și pozele chestionarului
+  /^\/oferta\/[A-Za-z0-9_-]{43}\/?$/,                // cererea de ofertă pentru un meseriaș (lib/rfq.ts)
+  /^\/api\/oferta\/[A-Za-z0-9_-]{43}(\/submit)?$/,    // oferta lui: citire, salvare automată, trimitere
   /^\/accesibilitate\/?$/,                             // declarația de accesibilitate (Legea 232/2022), legată din linkul clientului
   /^\/_next\//, /^\/tex\//, /^\/models\//, /^\/favicon\.(ico|svg)$/,
 ];

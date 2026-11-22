@@ -4,6 +4,7 @@ import type { Catalog, FurniturePlacement, KitchenSpec, Material, MaterialsCatal
 import { resolve } from './catalog';
 import { materialOf } from './finishes';
 import { checkModules, moduleIssues } from './kitchen-modules';
+import { checkKitchenCut } from './kitchen-cut';
 
 export const KITCHEN_DEFAULT: Required<Pick<KitchenSpec, 'frontColor' | 'frontFinish' | 'handle' | 'handleColor' | 'upper' | 'countertopColor' | 'countertopMm' | 'backsplash'>> =
   { frontColor: '#f4f4f1', frontFinish: 'matt', handle: 'bar', handleColor: '#222222', upper: 'open', countertopColor: '#cdb592', countertopMm: 38, backsplash: 'tile' };
@@ -41,6 +42,7 @@ export function sanitizeKitchen(k: any): string | null {
     || !one(k.upper, ['open', 'closed', 'none']) || !one(k.backsplash, ['tile', 'countertop', 'glass', 'paint']) || !id(k.countertop) || !id(k.sink) || !id(k.tap) || !id(k.underLed)
     || (k.countertopMm !== undefined && !(typeof k.countertopMm === 'number' && k.countertopMm >= 8 && k.countertopMm <= 80))) return 'Bucătăria este invalidă.';
   if (k.modules !== undefined){ try { k.modules = checkModules(k.modules); } catch { return 'Modulele bucătăriei sunt invalide.'; } }
+  if (k.cut !== undefined){ try { const c = checkKitchenCut(k.cut); if (Object.keys(c).length) k.cut = c; else delete k.cut; } catch (e: any){ return e?.message || 'Parametrii de debitare sunt invalizi.'; } }
   return null;
 }
 /** Ce desenează motorul 3D pe piesa de bucătărie. */

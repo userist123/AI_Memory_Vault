@@ -1,5 +1,11 @@
 // Exportul complet al unui proiect (portabilitate, GDPR art. 20): tot ce a lucrat designerul, în formate deschise —
 // proiectul și reviziile în JSON, comenzile și devizul în CSV, pozele de pe șantier și randările ca fișiere.
+// Chestionarul clientului (lib/client-brief.ts) nu intră în arhivă: nici răspunsurile, nici pozele de inspirație ale clientului;
+// ce a preluat designerul din el e deja în brief-ul din proiect.json.
+// Cererile de ofertă către meseriași (lib/rfq.ts) nu intră nici ele: ofertele sunt datele meseriașilor; prețurile contractate la
+// atribuire sunt deja în proiect.json (laborContract).
+// Acceptările ofertei de către client (lib/offer-acceptance.ts) INTRĂ în arhivă: sunt dovada contractului designerului (instantaneul
+// înghețat, amprenta, numele tastat, data), cu câte o confirmare text pe acceptare; cheia linkului pe care s-au făcut nu apare.
 // Linkurile clientului apar fără cheie (doar revizia și datele), ca arhiva să nu deschidă nimic dacă ajunge la altcineva.
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -7,9 +13,12 @@ import { getDb } from './db';
 import { getProject, getCatalog, getMaterials } from './repo';
 import { getOrders } from './procurement';
 import { listCustomItems } from './custom-items';
+import { fxItems } from '../core/fx';
 import { safeValue, quoteCell } from '../core/csv-safe';
 import { listSnags } from './site';
+import { listSiteLog } from './site-log';
 import { listChanges } from './change-orders';
+import { listAcceptanceRecords, confirmationFile } from './offer-acceptance';
 import { getTimesheet } from './timesheet';
 import { getContractData, readStoredContract } from './contract';
 import { listSurveys } from './surveys';
@@ -35,15 +44,18 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   const shares = (await q('select revision_number, created_at, revoked_at from shares where project_id=$1 order by created_at', [id])).rows;
   files.push({ name: 'linkuri-client.json', data: JSON.stringify(shares.map(s => ({ revision: s.revision_number, createdAt: s.created_at, revokedAt: s.revoked_at })), null, 2) });
   const orders = await getOrders(owner, id);
-  files.push({ name: 'comenzi.csv', data: csv([['Produs', 'Cod', 'Camere', 'Furnizor', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Stare', 'Nr. comandă', 'Comandat', 'Livrare estimată', 'Livrat', 'Necesar pe șantier', 'Link'],
-    ...orders.rows.map(r => [r.product, r.code, r.rooms.join(', '), r.supplier, r.qty, r.unit, r.unitPrice, r.total, r.state.status, r.state.ref, r.state.orderedAt, r.state.eta, r.state.deliveredAt, r.state.neededBy, r.url])]) });
+  files.push({ name: 'comenzi.csv', data: csv([['Produs', 'Cod', 'Camere', 'Furnizor', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Stare', 'Nr. comandă', 'Comandat', 'Livrare estimată', 'Livrat', 'Necesar pe șantier', 'Link', 'Preț original'],
+    ...orders.rows.map(r => [r.product, r.code, r.rooms.join(', '), r.supplier, r.qty, r.unit, r.unitPrice, r.total, r.state.status, r.state.ref, r.state.orderedAt, r.state.eta, r.state.deliveredAt, r.state.neededBy, r.url,
+      r.fx ? r.fx.rate != null ? `${r.fx.price ?? '?'} ${r.fx.currency} × ${r.fx.rate}` : `lipsește cursul ${r.fx.currency}` : ''])]) });
   const boq = computeBOQ(p.draft, await getCatalog(), await getMaterials());
   files.push({ name: 'deviz.csv', data: csv([['Categorie', 'Cameră', 'Articol', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Furnizor', 'Sursă'],
     ...boq.items.map(i => [i.category, i.roomId ?? '', i.label, i.orderedQty, i.unit, i.unitPrice, i.total, i.supplier, i.sourceUrl ?? '']),
-    ...(await listCustomItems(id)).map(i => ['produs propriu', i.roomId ?? '', i.name, i.qty, i.unit, i.price, i.price != null ? Math.round(i.price * i.qty * 100) / 100 : '', i.supplier, i.url]),
+    // produsele în altă monedă: la cursul proiectului; originalul (sau „lipsește cursul”) în denumire
+    ...fxItems(await listCustomItems(id), p.draft.fx).map(i => ['produs propriu', i.roomId ?? '', i.fx ? `${i.name} (${i.fx.rate != null ? `${i.fx.price ?? '?'} ${i.fx.currency} × ${i.fx.rate}` : `lipsește cursul ${i.fx.currency}`})` : i.name, i.qty, i.unit, i.price, i.price != null ? Math.round(i.price * i.qty * 100) / 100 : '', i.supplier, i.url]),
     ...boq.labor.map(l => ['manoperă', l.roomId, l.label, l.qty, l.unit, '', l.expected, '', '']),
     ...boq.unknown.map(u => ['de stabilit', '', u, '', '', '', '', '', ''])]) });
   const snags = await listSnags(owner, id); files.push({ name: 'santier/remedieri.json', data: JSON.stringify(snags, null, 2) });
+  files.push({ name: 'santier/jurnal.json', data: JSON.stringify(await listSiteLog(owner, id), null, 2) });
   const photos = (await q('select id, mime, data from site_photos where project_id=$1', [id])).rows;
   for (const ph of photos) files.push({ name: `santier/poze/${ph.id}.${ph.mime === 'image/png' ? 'png' : ph.mime === 'image/webp' ? 'webp' : 'jpg'}`, data: Buffer.from(ph.data) });
   files.push({ name: 'modificari.json', data: JSON.stringify(await listChanges(owner, id), null, 2) });
@@ -52,12 +64,15 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   files.push({ name: 'pareri-client.json', data: JSON.stringify(await listFeedback(owner, id), null, 2) });
   files.push({ name: 'alegeri-variante.json', data: JSON.stringify(await listChoices(owner, id), null, 2) });
   files.push({ name: 'contract.json', data: JSON.stringify(await orRaw(() => getContractData(owner, id), () => readStoredContract(id)), null, 2) });
+  const acceptances = await listAcceptanceRecords(owner, id);
+  files.push({ name: 'acceptari-oferta.json', data: JSON.stringify(acceptances, null, 2) });
+  for (const a of acceptances){ const c = confirmationFile(a); files.push({ name: `acceptari-oferta/${c.filename}`, data: c.text }); }
   files.push({ name: 'sarcini.json', data: JSON.stringify(await listTasks(owner, id), null, 2) });
   files.push({ name: 'comercial.json', data: JSON.stringify(await orRaw(() => getCommercialData(owner, id), () => readStoredCommercial(id)), null, 2) });   // discount, adaos, grafic de plăți (doar pentru designer)
   // randările de pe disc (doar imaginile, nu scena intermediară)
   const root = path.join(process.env.CASA3D_RENDER_DIR || path.join(process.cwd(), '.data', 'renders'), id);
   for (const job of await fs.readdir(root).catch(() => [] as string[])){ if (!/^\d{13}$/.test(job)) continue;
     for (const f of await fs.readdir(path.join(root, job)).catch(() => [] as string[])) if (/^[\w-]{1,80}\.png$/.test(f)) files.push({ name: `randari/${job}/${f}`, data: await fs.readFile(path.join(root, job, f)) }); }
-  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, alegeri-variante, sarcini, comercial — JSON\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
+  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, alegeri-variante, sarcini, comercial — JSON\r\nacceptari-oferta.json și acceptari-oferta/ — acceptările ofertei de către client: conținutul înghețat, amprenta SHA-256 și confirmarea fiecăreia\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
   return { filename: `${safe(p.name)}-casa3d-${new Date().toISOString().slice(0, 10)}.zip`, data: zip(files) };
 }

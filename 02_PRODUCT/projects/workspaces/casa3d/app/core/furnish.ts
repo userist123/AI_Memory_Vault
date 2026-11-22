@@ -159,7 +159,9 @@ const doorCount = (c: Ctx, s: Side) => c.openings(s).filter(o => o.kind === 'doo
 const sideMid = (r: RoomRect, s: Side) => horizontal(s) ? (r.x0 + r.x1) / 2 : (r.z0 + r.z1) / 2;
 const sideLen = (r: RoomRect, s: Side) => horizontal(s) ? r.x1 - r.x0 : r.z1 - r.z0;
 
-export interface RefineInput { floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked?: string[]; roomId?: string }
+export interface RefineInput { floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked?: string[]; roomId?: string;
+  /** Camere refăcute oricum (au piese blocate, date ca obstacole fixe): restul pieselor se așază în jurul lor. */
+  forceRooms?: readonly string[] }
 /** Ce s-a schimbat: camerele refăcute și piesele care tot nu încap. */
 export interface RefineResult { placements: FurniturePlacement[]; rooms: string[]; notFit: { key: string; room: string }[] }
 
@@ -193,7 +195,7 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     let need = false;
     const roomArea = area(room.rect);
     const isTargetRoom = inp.roomId === room.id;
-    if (isTargetRoom) need = true;
+    if (isTargetRoom || inp.forceRooms?.includes(room.id)) need = true;
     else if (room.type === 'bucatarie') need = !has('bucatarie') || !has('frigider') || blocking || (roomArea >= 8.5 && !has('comoda'));
     // livingul se reface și când casa a rămas fără masă (motorul nu a găsit loc nici în bucătărie, nici aici) sau e spațios și sub-mobilat
     else if (room.type === 'living') need = blocking || (has('canapea') && !has('comodaTv')) || (isStudioLiving(floor, room) && !has('pat'))

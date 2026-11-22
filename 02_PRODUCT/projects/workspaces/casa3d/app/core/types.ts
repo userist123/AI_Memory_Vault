@@ -38,8 +38,15 @@ export interface GlassWall { id: string; a: [number, number]; b: [number, number
 export interface Niche { id: string; wallId: string; offset: number; width: number; height: number; depth: number; elevation: number; side?: 1 | -1; finish?: 'tile' | 'paint' | 'led' }
 /** Adnotări de planșă: cotă persistentă (aliniată sau ortogonală, linia la `offset` m de segmentul a–b) și text liber. */
 export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b: [number, number]; offset: number; mode?: 'aligned' | 'ortho' }
-export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number }
-export type Annotation = DimAnnotation | TextAnnotation;
+/** Text liber pe plan. `leader` = vârful săgeții (m), pentru „Săgeată cu notă”: linia pleacă din `at`. `symbol: 'level'` = cotă de
+ *  nivel: triunghiul are vârful în `at`, iar `text` este valoarea tastată (ex. „+0,00”). Ambele sunt opționale. */
+export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number; leader?: [number, number]; symbol?: 'level' }
+/** Cotă unghiulară: vârful `v`, câte un punct pe fiecare braț (`a`, `b`) și raza arcului `r` (m). Se măsoară unghiul dintre
+ *  brațe (0–180°), de la brațul `a` spre brațul `b` pe drumul scurt. */
+export interface AngleAnnotation { id: string; kind: 'angle'; v: [number, number]; a: [number, number]; b: [number, number]; r: number }
+/** Nor de revizie: conturul cu arce al dreptunghiului `rect` (m); `label` = eticheta scurtă a reviziei (ex. „R2”), opțională. */
+export interface CloudAnnotation { id: string; kind: 'cloud'; rect: { x0: number; z0: number; x1: number; z1: number }; label?: string }
+export type Annotation = DimAnnotation | TextAnnotation | AngleAnnotation | CloudAnnotation;
 /** Obiect pe perete (tablou, oglindă, raft, TV): pe fața `side` a peretelui `wallId` (ca nișa); `offset` = centrul, de la capătul `a`
  *  al peretelui; `elevation` = centrul, de la pardoseală; dimensiuni în m (`depth` lipsă = implicitul tipului). `product` = id din
  *  catalogul de materiale (wall_art / mirror / wall_shelf), opțional: fără produs e obiectul clientului, fără linie în deviz. */
@@ -61,7 +68,11 @@ export interface Floor { id: string; name: string; ceilingHeight: number; rooms:
   /** trasee de instalații (core/mep.ts) și fundații (ghidul BIM §3.4–3.5) */
   mepRuns?: MepRun[]; footings?: Footing[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
-export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
+export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number };
+  /** oglindită față de axa ei de lățime (canapea de colț stânga ↔ dreapta); lipsă = ca în catalog */
+  mirrored?: true;
+  /** blocată: nu se mută, nu se rotește, nu se șterge și nu se aliniază până nu e deblocată */
+  locked?: true }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
 export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
@@ -90,7 +101,13 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   /** biblioteca de componente parametrice și modele importate ale proiectului/utilizatorului */
   userLibrary?: import('./user-library').UserLibraryItem[];
   /** statusul constatărilor de coordonare, pe id-ul lor stabil (core/issues.ts); lipsă = toate „new” */
-  issues?: Record<string, IssueRecord> }
+  issues?: Record<string, IssueRecord>;
+  /** orientarea casei și localitatea (core/north.ts): nordul real față de sus-ul planului și coordonatele; fiecare lipsă = nedeclarată */
+  site?: import('./north').SiteInfo;
+  /** prețurile de manoperă contractate după atribuirea unei cereri de ofertă (core/rfq.ts), pe tarif; doar pentru designer */
+  laborContract?: import('./rfq').LaborContract;
+  /** cursurile valutare ale proiectului (core/fx.ts): lei pentru 1 unitate din moneda produselor la comandă; o revizie le îngheață */
+  fx?: import('./fx').FxRates }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }
@@ -152,7 +169,9 @@ export interface BathSpec { metal?: 'chrome' | 'black' | 'brass' | 'gunmetal'; t
 /** Bucătăria ca sistem: fronturi, mânere, corpuri suspendate, blat, placare între blat și suspendate, chiuvetă, baterie, LED sub suspendate. */
 export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'gloss' | 'wood'; handle?: 'bar' | 'knob' | 'profile' | 'none'; handleColor?: string;
   upper?: 'open' | 'closed' | 'none'; countertop?: string | null; countertopColor?: string; countertopMm?: number;
-  backsplash?: 'tile' | 'countertop' | 'glass' | 'paint'; backsplashColor?: string; sink?: string | null; tap?: string | null; underLed?: string | null ; modules?: import('./kitchen-modules').KitchenModule[] }
+  backsplash?: 'tile' | 'countertop' | 'glass' | 'paint'; backsplashColor?: string; sink?: string | null; tap?: string | null; underLed?: string | null ; modules?: import('./kitchen-modules').KitchenModule[];
+  /** Parametrii listei de debitare (core/kitchen-cut.ts): doar ce diferă de valorile implicite. */
+  cut?: Partial<import('./kitchen-cut').KitchenCutOptions> }
 /** Ce se pune la o fereastră: draperie (pereche de panouri), perdea transparentă, stor/jaluzea; `fullness` = cât de încrețită e draperia. */
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
 /** Ușa aleasă pentru un gol de ușă (produs cu toc), mânerul ei și sistemul (șină, casetă pentru ușa în perete, kit pliant). */

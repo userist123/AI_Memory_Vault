@@ -49,8 +49,9 @@ export function houseFingerprint(snap: Snapshot, cat: Catalog): string {
 /** Proiectarea lucrează pe nivelul camerei vizate; restul casei se pune la loc neschimbat (core/levels.ts). */
 const levelFor = (snap: Snapshot, roomId: string) => Math.max(0, levelOfRoom(snap, roomId));
 
-/** Cu `replace`, piesele din camera vizată sunt scoase ca solver-ul să re-aşeze camera; altfel se adaugă peste ele. */
-const baseFor = (snap: Snapshot, brief: TwinBrief): Snapshot => brief.replace ? { ...snap, placements: snap.placements.filter(p => p.roomId !== brief.roomId) } : snap;
+/** Cu `replace`, piesele din camera vizată sunt scoase ca solver-ul să re-aşeze camera; altfel se adaugă peste ele.
+ *  Piesele blocate rămân (obstacole fixe pentru solver): blocarea înseamnă și „nu se șterge”. */
+export const baseFor = (snap: Snapshot, brief: Pick<TwinBrief, 'roomId' | 'replace'>): Snapshot => brief.replace ? { ...snap, placements: snap.placements.filter(p => p.roomId !== brief.roomId || p.locked === true) } : snap;
 
 /** Proiectul complet după o alternativă: piesele twin-ului plus cele pe care twin-ul nu le poate reprezenta (păstrate). */
 function nextSnapshot(snap: Snapshot, base: Snapshot, cat: Catalog, twinPlacements: Parameters<typeof placementsFromTwin>[2], ids?: Map<string, string>): Snapshot {

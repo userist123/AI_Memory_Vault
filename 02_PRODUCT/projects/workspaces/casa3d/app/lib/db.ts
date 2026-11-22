@@ -75,12 +75,22 @@ async function migrate(q: Query){
   await seedCatalog(q);
   await seedOutbound(q);
 }
+// Contorul de scrieri: crește la fiecare insert / update / delete care a atins măcar un rând (și în tranzacții). Cache-urile
+// scurte din memorie (lib/attention.ts) îl compară cu valoarea de la calcul, deci orice scriere le invalidează imediat.
+// Pe Postgres real o tranzacție mai crește contorul o dată DUPĂ commit: un calcul făcut între scriere și commit (pe altă
+// conexiune, cu datele vechi) nu rămâne astfel valabil în cache.
+const WRITE_RE = /^\s*(insert|update|delete)\b/i;
+const writes = globalThis as unknown as { __casa3d_db_writes?: number };
+export const dbWrites = () => writes.__casa3d_db_writes ?? 0;
+const counted = (q: Query): Query => async (s, p) => { const r = await q(s, p);
+  if (WRITE_RE.test(s) && ((r as any).affectedRows ?? (r as any).rowCount ?? r.rows?.length ?? 1) > 0) writes.__casa3d_db_writes = dbWrites() + 1;
+  return r; };
 export async function getDb(): Promise<Db> {
   const g = globalThis as unknown as { __casa3d_db_ready?: Promise<Db> | null };
   if (!g.__casa3d_db_ready) {
     g.__casa3d_db_ready = (async () => {
       // Fără rezervă în memorie: o bază care nu pornește e o eroare vizibilă, nu o aplicație goală care pierde datele.
-      try { const c = await connect(); await migrate(c.q); return c; }
+      try { const c = await connect(); await migrate(c.q); return { ...c, q: counted(c.q), tx: async fn => { const before = dbWrites(); const r = await c.tx(q => fn(counted(q))); if (dbWrites() !== before) writes.__casa3d_db_writes = dbWrites() + 1; return r; } }; }
       catch (err){ g.__casa3d_db_ready = null; throw err; }
     })();
   }

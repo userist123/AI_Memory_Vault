@@ -43,7 +43,7 @@ export async function prepareShareImages(projectId: string, rev: number, onProgr
     let level = -1;
     for (const key of todo.sort((a, b) => (levelOf[a] ?? 0) - (levelOf[b] ?? 0))){
       const L = levelOf[key] ?? 0;
-      if (L !== level){ const lv = levelView(snap, L), { plan, items } = viewerInput(lv, catalog, undefined, { voids: stairwells(snap, L), mc });
+      if (L !== level){ const lv = levelView(snap, L), { plan, items } = viewerInput(lv, catalog, undefined, { voids: stairwells(snap, L), mc, services: false });
         viewer.setState(plan, items); level = L; await nextFrame(); await nextFrame(); }
       const size = renderSize({ cssWidth: FULL_W, dpr: 1, print: true, overview: key === 'overview' });
       const png: string | null = key === 'overview' ? viewer.renderView(undefined, size.w, size.h) : viewer.renderView({ roomId: key }, size.w, size.h);

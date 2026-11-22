@@ -30,9 +30,25 @@ export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; met
 // vederea 3D (viewer3d-engine.js le citește pe window), de aceea scara e E, nu S. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
 // Lotul 4: literele s-au terminat, deci tavanul fals pe zonă (Shift+Z, lângă zona de pardoseală Z) și balustrada (Shift+Y) au Shift.
 const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', demolish: 'y', floor_zone: 'z', stair: 'e', measure: 'm', tech: 'i',
-  ceiling_zone: { key: 'z', shift: true }, railing: { key: 'y', shift: true } };
+  ceiling_zone: { key: 'z', shift: true }, railing: { key: 'y', shift: true },
+  // navigarea și uneltele de decor / împărțire: Shift + litera uneltei înrudite (V selecție, M măsoară, X pe perete, K placare, C cameră)
+  pan: { key: 'v', shift: true }, zoom_area: { key: 'm', shift: true }, rug: { key: 'x', shift: true }, style_copy: { key: 'k', shift: true }, split: { key: 'c', shift: true },
+  // adnotările noi: Shift + litera uneltei înrudite (B text, Q cotă)
+  leader: { key: 'b', shift: true }, level_mark: { key: 'q', shift: true },
+  // lotul 3 de adnotări: cota unghiulară pe Shift+U (de la „unghi”) și norul de revizie pe Shift+N (de la „nor”); ambele erau libere
+  angle_dim: { key: 'u', shift: true }, rev_cloud: { key: 'n', shift: true },
+  // traseul de instalații desenat în plan: Shift+I, lângă punctele tehnice (I)
+  mep_run: { key: 'i', shift: true } };
 const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
+
+/** Alinierea și distribuirea pieselor selectate (core/arrange.ts): id-ul comenzii e și cheia i18n a etichetei. */
+export const ARRANGE_IDS = ['arrange.left', 'arrange.centerX', 'arrange.right', 'arrange.top', 'arrange.centerZ', 'arrange.bottom', 'arrange.distributeX', 'arrange.distributeZ'] as const;
+export type ArrangeId = typeof ARRANGE_IDS[number];
+/** Ce comenzi de așezare se aplică unui grup de `n` piese: alinierea de la 2, distribuirea de la 3. */
+export const arrangeCommands = (n: number): ArrangeId[] => n < 2 ? [] : ARRANGE_IDS.filter(id => n >= 3 || !id.startsWith('arrange.distribute'));
+/** Meniul contextual al unei piese dintr-un grup de `n`: comenzile piesei, apoi așezarea, cu „șterge” tot ultima. */
+export const groupContextCommands = (n: number): string[] => { const base = contextCommands('placement'); return [...base.slice(0, -1), ...arrangeCommands(n), ...base.slice(-1)]; };
 
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;
 const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
@@ -42,6 +58,8 @@ export const COMMANDS: CommandDef[] = [
   { id: 'delete', label: 'help.delete', menuLabel: 'ctx.delete', group: 'edit', domain: 'editor', helpKeys: 'help.deleteKeys', shortcuts: [{ key: 'Delete', ...ANY }, { key: 'Backspace', ...ANY }] },
   { id: 'rotate', label: 'help.rotate', menuLabel: 'ctx.rotate', group: 'edit', domain: 'editor', shortcuts: [{ key: 'r', shift: 'any' }] },
   { id: 'duplicate', label: 'help.duplicate', menuLabel: 'ctx.duplicate', group: 'edit', domain: 'editor', helpKeys: 'help.duplicateKeys', shortcuts: [{ key: 'd', ctrlOrMeta: true, shift: 'any', alt: 'any' }] },
+  // oglindirea piesei (core/mirror.ts): Shift+O, de la „oglindește”; O simplu rămâne unealta Fereastră
+  { id: 'mirror', label: 'help.mirror', menuLabel: 'ctx.mirror', group: 'edit', domain: 'editor', shortcuts: [{ key: 'o', shift: true }] },
   { id: 'nudge', label: 'help.nudge', group: 'edit', domain: 'editor', helpKeys: 'help.arrowKeys', shortcuts: ARROWS.map(key => ({ key })) },
   { id: 'nudge.big', label: 'help.nudgeBig', group: 'edit', domain: 'editor', helpKeys: 'help.shiftArrowKeys', shortcuts: ARROWS.map(key => ({ key, shift: true })) },
   { id: 'escape', label: 'help.escape', group: 'nav', domain: 'editor', shortcuts: [{ key: 'Escape', ...ANY }] },
@@ -59,6 +77,11 @@ export const COMMANDS: CommandDef[] = [
   { id: 'room.furnish', label: 'hud.autoFurnish', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'room.split', label: 'hud.splitRoom', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'column.shape', label: 'ctx.columnShape', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  // selecția multiplă de piese: Ctrl/⌘A e prinsă de plan (PlanView keyDown), ca F; alinierea și distribuirea n-au taste
+  { id: 'select.all', label: 'help.selectAll', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'a', ctrlOrMeta: true }] },
+  // Shift+Space: obiectul curent al planului intră în grup sau iese (PlanView keyDown; în Structură, Shift+Enter)
+  { id: 'select.toggle', label: 'help.groupToggle', group: 'nav', domain: 'editor', dispatch: false, helpKeys: 'help.groupToggleKeys', shortcuts: [{ key: ' ', shift: true }] },
+  ...ARRANGE_IDS.map((id): CommandDef => ({ id, label: id, group: 'context', domain: 'editor', dispatch: false, shortcuts: [] })),
   ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [toolKey(tk)] }))
 ];
 
@@ -91,13 +114,13 @@ export const toolShortcut = (tk: Tool): Shortcut => toolKey(tk);
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
 /** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
-export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing';
+export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'mep_run';
 const CONTEXT: Record<ContextKind, string[]> = {
-  wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
+  wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'mirror', 'duplicate', 'view3d', 'frame', 'delete'],
   room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
   stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
   niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete'],
-  ceiling_zone: ['frame', 'delete'], railing: ['frame', 'delete']
+  ceiling_zone: ['frame', 'delete'], railing: ['frame', 'delete'], mep_run: ['frame', 'delete']
 };
 export const contextCommands = (kind: ContextKind): string[] => CONTEXT[kind];
 
@@ -107,7 +130,7 @@ export interface HelpRow { keys: string; keysKey?: string; label: string; sectio
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('help'), by('palette'), by('ws.focus'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('select.all'), by('select.toggle'), by('help'), by('palette'), by('ws.focus'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

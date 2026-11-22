@@ -84,17 +84,18 @@ export function sanitizeFloorMep(f: Floor & Record<string, any>, ceiling: number
   for (const w of f.walls || []) { const x = (w as any).structural; if (x == null || x === false) delete (w as any).structural; else if (x !== true) bad('Marcajul de perete structural este invalid.'); }
 }
 
-export interface MepIssue { code: 'MEP_DIAMETER_UNKNOWN' | 'MEP_DRAIN_SLOPE_UNDECLARED' | 'MEP_DRAIN_SLOPE_REVERSED'; severity: 'WARNING' | 'UNKNOWN'; refs: string[]; message: string }
+/** `message` = textul românesc (raportul de coordonare); `key` + `vars` = același text în limba interfeței (lib/locales, mep.issue.*). */
+export interface MepIssue { code: 'MEP_DIAMETER_UNKNOWN' | 'MEP_DRAIN_SLOPE_UNDECLARED' | 'MEP_DRAIN_SLOPE_REVERSED'; severity: 'WARNING' | 'UNKNOWN'; refs: string[]; message: string; key: string; vars: Record<string, string | number> }
 
 /** Ce lipsește sau contrazice geometria. Nu verifică normative (diametre minime, pante minime): acelea țin de proiectantul de instalații. */
 export function mepIssues(f: Floor): MepIssue[] {
   const out: MepIssue[] = [];
   for (const r of f.mepRuns ?? []) {
-    if (r.diameterMm == null) out.push({ code: 'MEP_DIAMETER_UNKNOWN', severity: 'UNKNOWN', refs: [r.id], message: `Traseul ${r.id} (${MEP_SYSTEMS[r.system].label.ro}) nu are diametrul declarat; verificarea interferențelor îl tratează ca pe o linie.` });
+    if (r.diameterMm == null) out.push({ code: 'MEP_DIAMETER_UNKNOWN', severity: 'UNKNOWN', refs: [r.id], key: 'mep.issue.diameterUnknown', vars: { id: r.id, system: r.system }, message: `Traseul ${r.id} (${MEP_SYSTEMS[r.system].label.ro}) nu are diametrul declarat; verificarea interferențelor îl tratează ca pe o linie.` });
     if (r.system !== 'drain') continue;
     const first = r.points[0]!, last = r.points[r.points.length - 1]!;
-    if (last[1] > first[1] + 1e-6) out.push({ code: 'MEP_DRAIN_SLOPE_REVERSED', severity: 'WARNING', refs: [r.id], message: `Canalizarea ${r.id} urcă în sensul curgerii (de la ${first[1]} m la ${last[1]} m).` });
-    else if (r.slopePct == null) out.push({ code: 'MEP_DRAIN_SLOPE_UNDECLARED', severity: 'WARNING', refs: [r.id], message: `Canalizarea ${r.id} nu are panta declarată.` });
+    if (last[1] > first[1] + 1e-6) out.push({ code: 'MEP_DRAIN_SLOPE_REVERSED', severity: 'WARNING', refs: [r.id], key: 'mep.issue.drainReversed', vars: { id: r.id, from: first[1], to: last[1] }, message: `Canalizarea ${r.id} urcă în sensul curgerii (de la ${first[1]} m la ${last[1]} m).` });
+    else if (r.slopePct == null) out.push({ code: 'MEP_DRAIN_SLOPE_UNDECLARED', severity: 'WARNING', refs: [r.id], key: 'mep.issue.drainSlope', vars: { id: r.id }, message: `Canalizarea ${r.id} nu are panta declarată.` });
   }
   return out;
 }

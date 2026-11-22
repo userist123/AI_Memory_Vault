@@ -79,6 +79,12 @@ create table if not exists surveys(project_id uuid not null references projects(
 create table if not exists time_entries(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
   date date not null, minutes int not null, kind text not null, note text not null default '', created_at timestamptz not null default now());
 create index if not exists time_entries_project on time_entries(project_id, date desc);
+-- cheltuielile reale ale proiectului (core/expenses.ts): sume plătite, cu TVA, pe categoriile devizului
+create table if not exists expenses(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  date date not null, category text not null, amount numeric(12,2) not null, supplier text not null default '', doc text not null default '', note text not null default '', created_at timestamptz not null default now());
+create index if not exists expenses_project on expenses(project_id, date desc);
+-- graficul de execuție (core/schedule.ts): etapele cu meseria, datele și dependența
+create table if not exists project_schedule(project_id uuid primary key references projects(id) on delete cascade, data jsonb not null, updated_at timestamptz not null default now());
 alter table projects add column if not exists deleted_at timestamptz;
 create index if not exists projects_trash on projects(owner, deleted_at) where deleted_at is not null;
 create table if not exists studio_profile(owner text primary key, data jsonb not null, updated_at timestamptz not null default now());
@@ -95,4 +101,51 @@ create table if not exists project_commercial(project_id uuid primary key refere
 -- linkul clientului să le arate imediat, fără motorul 3D. Cheia e „overview” sau id-ul camerei, câte o lățime (800, 1600)
 create table if not exists revision_renders(project_id uuid not null references projects(id) on delete cascade, revision_number int not null, key text not null,
   width int not null, mime text not null, data text not null, created_at timestamptz not null default now(), primary key(project_id, revision_number, key, width));
+-- jurnalul zilnic de șantier (core/site-log.ts): pozele stau în site_photos, ca la remedieri. O intrare e internă până când
+-- designerul o face vizibilă clientului (client_visible), deci implicit nu apare pe link
+create table if not exists site_log(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  date date not null, text text not null, weather text not null default '', workers int, trades jsonb not null default '[]'::jsonb, photos jsonb not null default '[]'::jsonb,
+  client_visible boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create index if not exists site_log_project on site_log(project_id, date desc);
+-- situațiile de lucrări (core/progress.ts): devizul de bază înghețat (copia ofertei la momentul fixării) și situațiile pe perioade
+create table if not exists progress_baseline(project_id uuid primary key references projects(id) on delete cascade, data jsonb not null, created_at timestamptz not null default now());
+create table if not exists progress_statements(id text not null, project_id uuid not null references projects(id) on delete cascade, number int not null, data jsonb not null,
+  updated_at timestamptz not null default now(), primary key(project_id, id));
+create unique index if not exists progress_statements_number on progress_statements(project_id, number);
+-- chestionarul clientului (core/client-brief.ts): răspunsurile completate pe un link public și pozele de inspirație (JPEG curățat
+-- de metadate). Un singur link nerevocat pe proiect. Pozele se șterg odată cu chestionarul
+create table if not exists client_briefs(token text primary key, project_id uuid not null references projects(id) on delete cascade, data jsonb not null default '{}'::jsonb,
+  rev int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), submitted_at timestamptz, expires_at timestamptz,
+  revoked_at timestamptz, imported_at timestamptz);
+create unique index if not exists client_briefs_active on client_briefs(project_id) where revoked_at is null;
+create index if not exists client_briefs_project on client_briefs(project_id, created_at desc);
+create table if not exists brief_photos(id uuid primary key default gen_random_uuid(), token text not null references client_briefs(token) on delete cascade, mime text not null,
+  data bytea not null, bytes int not null, width int not null, height int not null, verdict text check (verdict in ('love','ok','dislike')),
+  note text not null default '' check (char_length(note) <= 200), created_at timestamptz not null default now());
+create index if not exists brief_photos_token on brief_photos(token, created_at);
+-- cererile de ofertă către meseriași (core/rfq.ts): lista de cantități înghețată la creare și câte un link (token) pe meseriaș,
+-- cu oferta lui (data), versiunea pentru salvarea automată (rev) și starea linkului. awarded_invite = oferta aleasă
+create table if not exists rfq_requests(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade, title text not null,
+  trades jsonb not null, lines jsonb not null, note text not null default '', site_city text, due_date date, created_at timestamptz not null default now(), closed_at timestamptz, awarded_invite text);
+create index if not exists rfq_requests_project on rfq_requests(project_id, created_at desc);
+create table if not exists rfq_invites(token text primary key, request_id uuid not null references rfq_requests(id) on delete cascade, label text not null, data jsonb not null default '{}'::jsonb,
+  rev int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), submitted_at timestamptz, expires_at timestamptz, revoked_at timestamptz);
+create index if not exists rfq_invites_request on rfq_invites(request_id, created_at);
+-- acceptarea ofertei pe linkul clientului (core/offer-acceptance.ts): designerul o activează pe un link cu PIN (offer_accept).
+-- Fiecare acceptare păstrează instantaneul înghețat al ofertei și amprenta lui SHA-256, numele tastat, opțional contactul și
+-- „în numele”, bifa de începere înainte de 14 zile și momentul serverului. Fără IP, fără agent de browser. Aceeași
+-- versiune poate fi acceptată de mai multe persoane (coproprietari): o singură acceptare în vigoare pe proiect, amprentă și
+-- persoană (name_key = numele normalizat). Retragerea (withdrawn_at) o scoate din vigoare, dar rândul rămâne în istoric
+alter table shares add column if not exists offer_accept boolean not null default false;
+create table if not exists offer_acceptances(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  share_token text not null, revision_number int not null, snapshot jsonb not null, hash text not null, accepted_name text not null, accepted_contact text, accepted_for text,
+  early_start boolean not null default false, accepted_at timestamptz not null default now(), withdrawn_at timestamptz);
+alter table offer_acceptances add column if not exists name_key text not null default '';
+-- rânduri dinaintea coloanei name_key: cheia din nume (litere mici, spații simple), iar dintre eventualele dubluri în vigoare pe
+-- aceeași persoană și amprentă rămâne cea mai veche, celelalte trec la retrase — altfel indexul unic de mai jos ar opri pornirea
+update offer_acceptances set name_key = lower(regexp_replace(trim(accepted_name), '[[:space:]]+', ' ', 'g')) where name_key = '';
+update offer_acceptances a set withdrawn_at = a.accepted_at where a.withdrawn_at is null and exists (select 1 from offer_acceptances b where b.project_id = a.project_id and b.hash = a.hash and b.name_key = a.name_key and b.withdrawn_at is null and (b.accepted_at, b.id) < (a.accepted_at, a.id));
+drop index if exists offer_acceptances_active;
+create unique index if not exists offer_acceptances_person on offer_acceptances(project_id, hash, name_key) where withdrawn_at is null;
+create index if not exists offer_acceptances_project on offer_acceptances(project_id, accepted_at desc);
 `;

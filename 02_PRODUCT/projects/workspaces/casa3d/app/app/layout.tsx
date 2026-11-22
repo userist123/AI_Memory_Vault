@@ -12,5 +12,5 @@ export const metadata = { title: 'Casa mea 3D', description: 'Floor plan, real f
 // o pagină pre-randată static n-ar avea nonce și ar fi blocată de 'strict-dynamic'.
 export default async function RootLayout({ children }: { children: React.ReactNode }){
   await headers();
-  return (<html lang="en"><head></head><body><PrefsProvider>{children}<DialogHost /></PrefsProvider></body></html>);
+  return (<html lang="ro"><head></head><body><PrefsProvider>{children}<DialogHost /></PrefsProvider></body></html>);
 }

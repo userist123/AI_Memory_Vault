@@ -1,8 +1,11 @@
 import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
+import { MEP_SYSTEMS, runLength } from './mep';
+import type { MepSystem } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
+import { fxItems, fxUsage, type FxInfo } from './fx';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
@@ -81,7 +84,10 @@ export interface BoqItem { key: string; category: BoqCategory; roomId: string | 
   color?: string }
 export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
 
-function materialLine(m: Material, key: string, roomId: string | null, label: string, net: number, catalogVerifiedAt: string, wasteOverride?: number): BoqItem {
+/** Etichetele liniilor sunt în română: zecimalele cu virgulă („2,43 m”, „33,52 m²”), nu cu punct. */
+export const roDecimals = (s: string) => s.replace(/(\d)\.(\d)/g, '$1,$2');
+function materialLine(m: Material, key: string, roomId: string | null, rawLabel: string, net: number, catalogVerifiedAt: string, wasteOverride?: number): BoqItem {
+  const label = roDecimals(rawLabel);
   const waste = wasteOverride ?? WASTE[m.category] ?? 0, need = net * (1 + waste), verifiedAt = m.verifiedAt || catalogVerifiedAt;
   let packs: number | null = null, ordered = need, total: number;
   if (m.pack){ packs = Math.ceil(need / m.pack.size - 1e-9); ordered = packs * m.pack.size; total = m.pack.price != null ? packs * m.pack.price : ordered * m.unitPrice; }
@@ -290,7 +296,9 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
 
 // ---------- 3) buget ----------
 export interface BudgetLine { key: string; label: string; amount: number | null; confidence: Confidence; note?: string; sourceUrl?: string | null }
-export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: { price: number | null; qty: number }[] = []){
+export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, customRaw: { price: number | null; qty: number; currency?: string | null; costPrice?: number | null; fx?: FxInfo }[] = []){
+  // produsele în altă monedă: la cursul proiectului (snap.fx); fără curs nu se adună (apar în `fxMissing`)
+  const custom = fxItems(customRaw, snap.fx), fxMissing = fxUsage(custom, snap.fx).missing;
   const s = budgetOf(snap), { items, labor, geometry, unknown } = computeBOQ(snap, cat, mc);
   const sum = (c: BoqCategory) => r2(items.filter(i => i.category === c).reduce((a, i) => a + (i.total ?? 0), 0));
   const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary'), textiles: sum('textiles') };
@@ -311,6 +319,12 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   extra.push({ key: 'montaj-mobilier', label: 'Montaj mobilier', amount: s.furnitureAssembly, confidence: s.furnitureAssembly == null ? 'UNKNOWN' : 'MEDIUM', note: s.furnitureAssembly == null ? 'Depinde de ofertă (platformele de servicii arată intervale foarte largi); introdu valoarea primită.' : 'Valoare introdusă manual.' });
   // onorariul de proiectare NU mai e o linie a bugetului: are o singură sursă, contractul (core/contract.ts migratedFee preia
   // vechiul `design` de aici), și intră în total prin lanțul canonic (core/commercial.ts projectChain)
+  // traseele de instalații (core/mep.ts): lungimea măsurată pe sistem și diametru; țevile și tuburile nu sunt în catalog, deci prețul
+  // rămâne necunoscut (linie „neinclusă”), nu se inventează (CONSTITUTION art. 4)
+  const runAgg = new Map<string, { sys: MepSystem; d: number | null; len: number }>();
+  for (const r of floors(snap).flatMap(f => f.mepRuns ?? [])) { const k = `${r.system}|${r.diameterMm ?? ''}`, a = runAgg.get(k) ?? { sys: r.system, d: r.diameterMm ?? null, len: 0 }; a.len += runLength(r); runAgg.set(k, a); }
+  for (const [k, a] of [...runAgg].sort(([x], [y]) => x.localeCompare(y)))
+    extra.push({ key: `mep-${k}`, label: `Instalații: ${MEP_SYSTEMS[a.sys]?.label.ro ?? a.sys}${a.d ? ` Ø${a.d} mm` : ''} — ${formatQty(r2(a.len), 'ml', 'ro')}`, amount: null, confidence: 'UNKNOWN', note: 'Lungimea din traseele desenate; materialul, fitingurile și prețul le stabilește instalatorul.' });
   const known = extra.filter(e => e.amount != null), unknownLines = extra.filter(e => e.amount == null);
   const extrasTotal = r2(known.reduce((a, e) => a + (e.amount || 0), 0));
   const mk = (scen: 'low' | 'expected' | 'high') => { const lab = s.includeLabor ? laborTotals[scen] : 0; const subtotal = r2(Object.values(cats).reduce((a, v) => a + v, 0) + lab + extrasTotal);
@@ -318,6 +332,8 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   const scen = { low: mk('low'), expected: mk('expected'), high: mk('high') }, chosen = scen[s.laborScenario];
   const target = s.target, diff = target != null ? r2(target - chosen.total) : null;
   return { settings: s, categories: cats, laborTotals, extras: known, unknownLines, unknownItems: unknown, scenarios: scen, chosen, target, diff,
-    status: diff == null ? 'none' : diff >= 0 ? 'under' : 'over', items, labor, geometry, vatRate: VAT_RATE };
+    status: diff == null ? 'none' : diff >= 0 ? 'under' : 'over', items, labor, geometry, vatRate: VAT_RATE,
+    // doar când există: cursurile folosite (aceleași în lanțul comercial) și monedele fără curs
+    ...(snap.fx ? { fx: snap.fx } : {}), ...(fxMissing.length ? { fxMissing } : {}) };
 }
 export type Budget = ReturnType<typeof computeBudget>;

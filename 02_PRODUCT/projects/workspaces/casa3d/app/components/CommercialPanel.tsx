@@ -3,12 +3,13 @@
 // graficul de plăți și legăturile spre proformă și CSV. Nimic de aici nu ajunge pe linkul clientului.
 import { useEffect, useRef, useState } from 'react';
 import { ListSkeleton } from './Skeleton';
-import { formatMoney } from '@/core/format';
+import { formatMoney, formatNumber, formatPrice } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
-import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms, type ProjectChain } from '@/core/commercial';
+import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms, type ProjectChain, type SourceLabor } from '@/core/commercial';
 import { ChainTable, TOTALS_EVENT, FEE_EVENT } from './ChainTable';
 
-type Resp = { data: CommercialData; report: ProfitReport; chain: ProjectChain; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[] };
+type Resp = { data: CommercialData; report: ProfitReport; labor?: SourceLabor[]; chain: ProjectChain; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[];
+  /** monedele străine ale produselor la comandă; cele fără curs nu sunt adunate */ fx?: { used: string[]; missing: string[] } };
 const today = () => new Date().toISOString().slice(0, 10);
 const numOrUndef = (s: string) => { const v = Number(s.replace(',', '.')); return s.trim() === '' || !Number.isFinite(v) ? undefined : v; };
 const newId = () => 'm' + Math.random().toString(36).slice(2, 10);
@@ -41,6 +42,10 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
       const fresh = seq.current === at; await load(!fresh); if (fresh) setState('saved');
       window.dispatchEvent(new CustomEvent(TOTALS_EVENT, { detail: { id } }));
     } catch { setState('error'); say(t('com.saveError')); } }
+  // manopera cu preț contractat (cereri de ofertă către meseriași): costul contractat lângă prețul către client
+  // aceeași lucrare apare în mai multe camere: aici se adună pe lucrare și echipă
+  const contracted = [...(r.labor ?? []).filter(l => l.contract).reduce((m, l) => { const k = `${l.label}|${l.unit}|${l.contract!.unitPrice}|${l.contract!.label}`, x = m.get(k);
+    if (x){ x.qty += l.qty; x.costTotal = (x.costTotal ?? 0) + (l.costTotal ?? 0); x.amount += l.amount; } else m.set(k, { ...l }); return m; }, new Map<string, SourceLabor>()).values()], unitL = (u: string) => u === 'm2' ? 'm²' : u;
   const rep = r.report, sumOk = pctOk(d.milestones), rowOf = (mid: string) => r.schedule.rows.find(x => x.id === mid);
   const pctInput = (v: number | undefined, on: (s: string) => void, label: string, max: number) =>
     <input inputMode="decimal" type="number" min={0} max={max} step="0.5" value={v ?? ''} placeholder="—" aria-label={label} onChange={e => on(e.target.value)} />;
@@ -64,10 +69,14 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
       <tbody>{Object.entries(rep.bySupplier).sort((a, b) => a[0].localeCompare(b[0])).map(([s, g]) => <tr key={s}><td>{s}{g.unknown > 0 && <small> {t('com.unknownN', { n: g.unknown })}</small>}</td><td>{money(g.cost)}</td><td>{money(g.client)}</td><td>{money(g.profit)}</td></tr>)}</tbody></table>
     <table className="com-table"><thead><tr><th>{t('com.category')}</th><th>{t('com.cost')}</th><th>{t('com.clientPrice')}</th><th>{t('com.profitCol')}</th></tr></thead>
       <tbody>{Object.entries(rep.byCategory).map(([c, g]) => <tr key={c}><td>{t(`budget.cat.${c}`)}</td><td>{money(g.cost)}</td><td>{money(g.client)}</td><td>{money(g.profit)}</td></tr>)}
-        <tr><td>{t('com.cat.labor')} <small>{t('com.passThrough')}</small></td><td>{money(rep.labor)}</td><td>{money(rep.labor)}</td><td>{money(0)}</td></tr>
+        <tr><td>{t('com.cat.labor')} <small>{t(contracted.length ? 'rfq.contractedLabor' : 'com.passThrough')}</small></td><td>{money(rep.laborCost ?? rep.labor)}</td><td>{money(rep.labor)}</td><td>{money(Math.round((rep.labor - (rep.laborCost ?? rep.labor)) * 100) / 100)}</td></tr>
         {rep.extras > 0 && <tr><td>{t('com.cat.extras')} <small>{t('com.passThrough')}</small></td><td>{money(rep.extras)}</td><td>{money(rep.extras)}</td><td>{money(0)}</td></tr>}
         <tr><td>{t('com.cat.fee')}</td><td>—</td><td>{money(rep.fee == null ? null : rep.fee + rep.feeVat)}</td><td>{money(rep.fee)}</td></tr>
         <tr className="com-total"><td><b>{t('chain.invoiceable')}</b></td><td><b>{money(rep.totals.cost)}</b></td><td><b>{money(rep.totals.client)}</b></td><td><b>{money(rep.totals.profit)}</b>{rep.totals.marginPct != null && <small> {t('com.margin', { p: rep.totals.marginPct })}</small>}</td></tr></tbody></table>
+    {contracted.length > 0 && <div className="com-contract"><p className="muted small">{t('rfq.contractedHelp')}</p>
+      <ul>{contracted.map((l, i) => <li key={`${l.key}:${i}`}><span>{l.label} · {formatNumber(l.qty, lang, { max: 2 })} {unitL(l.unit)}</span>
+        <small>{t('rfq.contracted', { price: formatPrice(l.contract!.unitPrice, cur, lang), unit: unitL(l.unit), vat: l.contract!.vatPayer ? t('rfq.contracted.vat') : '', team: l.contract!.label })} · {t('rfq.contractedSums', { cost: money(l.costTotal), client: money(l.amount) })}</small></li>)}</ul></div>}
+    {!!r.fx?.missing.length && <p className="issue WARNING" role="alert">{t('fx.missing', { list: r.fx.missing.join(', ') })}</p>}
     {rep.unknownLines > 0 && <p className="muted small">{t('com.unknownLines', { n: rep.unknownLines })}</p>}
     {rep.feeUnknown && <p className="muted small">{t('com.feeUnknown')}</p>}
     <p className="muted small">{t('com.vatBasis')}</p>

@@ -67,7 +67,8 @@ export function nearestWallPoint(room: Room, x: number, z: number): { x: number;
 /** Golurile (uși, ferestre) ca intervale în coordonate de plan, pentru a nu pune puncte în ele. */
 function openingSpans(floor: Floor){ return floor.walls.filter(w => w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
   return w.openings.map(o => ({ kind: o.kind, entrance: !!o.entrance, ax: w.a[0] + ux * o.offset, az: w.a[1] + uz * o.offset, bx: w.a[0] + ux * (o.offset + o.width), bz: w.a[1] + uz * (o.offset + o.width), ux, uz, th: w.thickness })); }); }
-function insideOpening(floor: Floor, x: number, z: number){ return openingSpans(floor).find(s => { const t = (x - s.ax) * s.ux + (z - s.az) * s.uz, L = Math.hypot(s.bx - s.ax, s.bz - s.az), perp = Math.abs((x - s.ax) * -s.uz + (z - s.az) * s.ux);
+/** Golul de ușă sau fereastră în care cade punctul (x, z), dacă e pe un perete cu goluri. */
+export function insideOpening(floor: Floor, x: number, z: number){ return openingSpans(floor).find(s => { const t = (x - s.ax) * s.ux + (z - s.az) * s.uz, L = Math.hypot(s.bx - s.ax, s.bz - s.az), perp = Math.abs((x - s.ax) * -s.uz + (z - s.az) * s.ux);
   return t > -0.05 && t < L + 0.05 && perp < s.th / 2 + 0.1; }); }
 /** Mută punctul de pe perete în afara unei uși/ferestre, de-a lungul peretelui. */
 function avoidOpenings(floor: Floor, room: Room, p: { x: number; z: number }): { x: number; z: number } {

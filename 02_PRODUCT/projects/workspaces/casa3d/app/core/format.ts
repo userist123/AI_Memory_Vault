@@ -9,6 +9,11 @@ export function formatMoney(amount: number | null | undefined, currency: string,
   if (amount == null || !Number.isFinite(amount)) return unknown;
   return new Intl.NumberFormat(intlLocale(locale), { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
 }
+/** Preț unitar sau sumă exactă: cu bani (2 zecimale) când nu e întreg — „73,21 RON”, „85 RON”. formatMoney rotunjește la întreg. */
+export function formatPrice(amount: number | null | undefined, currency: string, locale: Locale = 'ro', unknown = '—'): string {
+  if (amount == null || !Number.isFinite(amount)) return unknown; const d = Number.isInteger(Math.round(amount * 100) / 100) ? 0 : 2;
+  return new Intl.NumberFormat(intlLocale(locale), { style: 'currency', currency, minimumFractionDigits: d, maximumFractionDigits: d }).format(amount);
+}
 /** Diferență cu semn explicit (+/−), pentru comparații între variante sau revizii. */
 export function formatMoneyDelta(delta: number, currency: string, locale: Locale = 'ro'): string {
   const s = formatMoney(Math.abs(delta), currency, locale); return delta > 0 ? `+${s}` : delta < 0 ? `−${s}` : s;

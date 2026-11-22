@@ -4,7 +4,10 @@ import Joystick from './Joystick';
 import Icon from './Icon';
 import { usePrefs } from '@/lib/prefs';
 import PanoramaView from './PanoramaView';
+import { tourHotspots } from '@/core/pano-tour';
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
+import { planAzimuth, siteNorth, siteLocation, planUpFacing } from '@/core/north';
+import { sunPosition, sunTimes, civilToUtc, siteTimeZone, realSunLighting, timeOfDayFor } from '@/core/sun';
 import { viewerInput, type PlateVoid } from '@/lib/viewer-input';
 const NO_VOIDS: PlateVoid[] = [];
 import { toEngineCatalog } from '@/core/catalog';
@@ -19,7 +22,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
   selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void }){
   const { t, lang } = usePrefs();
-  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
+  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string; room?: string; lon?: number } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick), hoverRef = useRef(onHover); hoverRef.current = onHover;
   const [xray, setXray] = useState(false);
   // motorul se încarcă asincron: selecția și o cerere de încadrare venite înainte se aplică imediat după creare
@@ -65,20 +68,33 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     if (bimView === 'federated') { v.current.setElementView(null); return; }
     if (bimView === 'clash') { v.current.setElementView({ highlight: detectClashes(snap, catalog).filter(c => c.type !== 'penetration').flatMap(c => c.refs) }); return; }
     v.current.setElementView({ hidden: elementIndex(snap).filter(e => e.discipline !== bimView).map(e => e.elementId) }); }, [bimView, snap, catalog]);
-  function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
-  useEffect(applyLight, [time, azimuth]); // eslint-disable-line
+  // soarele pe nordul real, dacă orientarea casei e declarată (core/north.ts)
+  // „Soare real” (core/sun.ts): poziția după dată, oră și localitate — doar când nordul ȘI localitatea sunt declarate în Releveu;
+  // altfel rămân momentul zilei și glisorul de azimut. Aceeași cale de lumină: lighting + planAzimuth + sunDirection.
+  const north = siteNorth(snap.site), loc = siteLocation(snap.site), canReal = !!north && !!loc, zone = loc ? siteTimeZone(loc) : null;
+  const [sunReal, setSunReal] = useState(false), [sunDate, setSunDate] = useState(() => { const d = new Date(), p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }), [sunHour, setSunHour] = useState(12);
+  const realOn = sunReal && canReal, sunAt = realOn ? civilToUtc(sunDate, sunHour, zone) : null, sunPos = sunAt && loc ? sunPosition(sunAt, loc.lat, loc.lon) : null;
+  // lumina de acum: soarele real când e pornit și calculabil, altfel momentul ales și azimutul de pe glisor
+  const lightNow = () => sunPos ? { time: timeOfDayFor(sunPos.elevationDeg), p: realSunLighting(sunPos, north) } : { time, p: lighting(time, planAzimuth(azimuth, snap.site)) };
+  function applyLight(){ const { p } = lightNow(); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
+  useEffect(applyLight, [time, azimuth, snap.site?.northDeg, snap.site?.lat, snap.site?.lon, sunReal, sunDate, sunHour]); // eslint-disable-line
+  const clock = (h: number) => `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+  const sunClock = (d: Date | null) => d ? new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'ro-RO', { hour: '2-digit', minute: '2-digit', ...(zone ? { timeZone: zone } : {}) }).format(d) : '—';
+  // răsăritul și apusul zilei alese (amiaza locală cade în aceeași zi UTC pentru orice fus obișnuit)
+  const sunDay = realOn && loc ? (() => { const noon = civilToUtc(sunDate, 12, zone); return noon ? sunTimes(noon, loc.lat, loc.lon) : null; })() : null;
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
-  function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
-    setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === room)?.name;
+  // turul virtual: din panorama unei camere se trece în vecina ei pe ușă (core/pano-tour.ts); privirea continuă în aceeași direcție
+  function openPano(target: string | null = room, lookLon = 0){ const rid = target; if (!rid || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
+    setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === rid)?.name;
         // camera aleasă în tur poate fi ștearsă între timp: spunem, nu tăcem
-        const url = rn ? v.current.renderPanorama(room, 2048) : null;
-        if (url && rn) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg') });
+        const url = rn ? v.current.renderPanorama(rid, 2048) : null;
+        if (url && rn) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg'), room: rid, lon: lookLon });
         else setPanoMsg(t('pano.noRoom')); }
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
   // scena pentru randarea fotorealistă în Blender (tools/blender/casa3d_render.py): aceleași forme, materiale și lumină
-  async function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang, elements: Object.fromEntries(elementIndex(snap).map(e => [e.elementId, e.discipline])) }); if (!sc) return;
+  async function exportBlender(){ const { time: tod, p } = lightNow(), sc = v.current?.exportScene?.({ name: snap.name, time: tod, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang, elements: Object.fromEntries(elementIndex(snap).map(e => [e.elementId, e.discipline])) }); if (!sc) return;
     // pe calculatorul cu Blender: randarea pornește direct, imaginile apar în etapa Prezentare; altfel se descarcă scena
     if (projectId){ try { const r = await fetch(`/api/projects/${projectId}/renders`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sc) });
         if (r.status === 202){ setPanoMsg(t('render.started')); return; } if (r.status !== 501){ const j = await r.json().catch(() => ({})); setPanoMsg(j.error || t('render.failed')); return; } } catch { /* fără server: descărcăm */ } }
@@ -118,7 +134,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
         <option value="">{t('viewer.tourPick')}</option>
         {snap.floor.rooms.map(r => <option key={r.id} value={r.id}>{t('viewer.tour', { room: r.name })}</option>)}
       </select>
-      {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
+      {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={() => openPano()}>360°</button>}
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       {/* un singur meniu „Afișare”: uși, tăierea machetei, lumină și calitate */}
       <button className="btn" aria-expanded={lightOpen} onClick={() => { setLightOpen(o => !o); setViewsOpen(false); }} title={t('viewer.displayTitle')} aria-label={t('viewer.displayTitle')}><Icon name="sun" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.display')}</span></button>
@@ -138,15 +154,26 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <select className="btn" aria-label={t('viewer.bimView')} title={t('viewer.bimView')} value={bimView} onChange={e => setBimView(e.target.value as typeof bimView)}>
         <option value="federated">{t('viewer.bim.federated')}</option>{DISCIPLINES.map(d => <option key={d} value={d}>{t(`coord.disc.${d}`)}</option>)}<option value="clash">{t('viewer.bim.clash')}</option></select>
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
-      {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
+      {!realOn && (['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
       <label className="f" style={{ minWidth: 160 }} title={t('viewer.qualityTitle')}><span>{t('viewer.quality')}</span><select value={tierPick} onChange={e => setTierPick(parseTierPick(e.target.value))}>
         <option value="auto">{tierPick === 'auto' && tierNow ? t('viewer.tierAutoNow', { tier: t(`viewer.tier.${tierNow}`) }) : t('viewer.tierAuto')}</option>
         {(['desktop', 'laptop', 'phone'] as const).map(k => <option key={k} value={k}>{t(`viewer.tier.${k}`)}</option>)}
       </select></label>
-      <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
+      {!realOn && <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>}
+      <div className="v3sun" role="group" aria-label={t('viewer.sunReal')}>
+        <button className="btn" aria-pressed={realOn} disabled={!canReal} title={t('viewer.sunRealTitle')} onClick={() => setSunReal(o => !o)}><Icon name="sun" size={16} />{t('viewer.sunReal')}</button>
+        {!canReal && <span className="muted" role="note">{t(!north && !loc ? 'viewer.sunNeedBoth' : !north ? 'viewer.sunNeedNorth' : 'viewer.sunNeedLoc')}</span>}
+        {realOn && <>
+          <label className="f"><span>{t('viewer.sunDate')}</span><input type="date" value={sunDate} onChange={e => { if (e.target.value) setSunDate(e.target.value); }} /></label>
+          <label className="f" style={{ minWidth: 180 }}><span>{t('viewer.sunHour', { time: clock(sunHour), zone: t(zone ? 'viewer.sunZoneRo' : 'viewer.sunZoneDevice') })}</span><input type="range" min={5} max={21} step={0.25} value={sunHour} aria-valuetext={clock(sunHour)} onChange={e => setSunHour(Number(e.target.value))} /></label>
+          <span className="muted" role="status">{!sunPos ? t('viewer.sunBadDate') : sunPos.elevationDeg <= 0 ? t('viewer.sunBelow') : t('viewer.sunNow', { az: Math.round(sunPos.azimuthDeg), dir: planUpFacing({ northDeg: (360 - sunPos.azimuthDeg) % 360 }, lang === 'en' ? 'en' : 'ro'), el: Math.round(sunPos.elevationDeg) })}
+            {sunDay && (sunDay.polar ? '' : ` · ${t('viewer.sunTimes', { rise: sunClock(sunDay.sunrise), set: sunClock(sunDay.sunset) })}`)}</span>
+        </>}
+        <p className="muted v3sun-note">{t('viewer.sunNote')}</p>
+      </div>
     </div>}
     <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : (touch ? t('viewer.hintHouseTouch') : t('viewer.hintHouse')))}</div>
-    {pano && <PanoramaView url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} />}
+    {pano && <PanoramaView key={pano.url.length + (pano.room ?? '')} url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} hotspots={pano.room ? tourHotspots(snap.floor, pano.room) : []} startLon={pano.lon ?? 0} onGo={h => openPano(h.toRoomId, h.lon)} />}
     {/* WCAG 2.2 2.5.7: tot ce se face prin tragere (rotire, înclinare, zoom) are și un buton */}
     {!err && <div className="v3nudge" role="group" aria-label={t('viewer.nudgeAria')}>
       {([['left', '◀'], ['up', '▲'], ['down', '▼'], ['right', '▶'], ['in', '+'], ['out', '−']] as const).map(([k, sym]) =>

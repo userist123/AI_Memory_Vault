@@ -11,7 +11,9 @@ export const PLAN_LIMITS = {
   beam: { max: 200, minM: .05, maxM: 1.5 },
   glassWall: { max: 100, thickMinM: .01, thickMaxM: .3, mullionsMax: 20 },
   niche: { max: 100, widthMinM: .1, widthMaxM: 3, heightMinM: .1, heightMaxM: 3, depthMinM: .03, depthMaxM: .5, elevMaxM: 3 },
-  annotation: { max: 300, textMax: 120, dimMinM: .01, offsetMaxM: 50 },
+  annotation: { max: 300, textMax: 120, dimMinM: .01, offsetMaxM: 50,
+    /** cota unghiulară: raza arcului 5 cm – 50 m; norul de revizie: latura de cel puțin 10 cm, eticheta de cel mult 8 caractere */
+    angleRadiusMinM: .05, angleRadiusMaxM: 50, cloudMinM: .1, cloudLabelMax: 8 },
   passage: { widthMinM: .3, widthMaxM: 4 },
   wallItem: { max: 300, widthMinM: .05, widthMaxM: 4, heightMinM: .02, heightMaxM: 3, depthMaxM: .6, labelMax: 60 },
   /** zone de pardoseală: cel mult 100 pe nivel, latura de cel puțin 10 cm */
@@ -27,7 +29,7 @@ export const PLAN_LIMITS = {
   railing: { max: 200, minLenM: .2, heightMinM: .3, heightMaxM: 2, minSafeM: .9 },
 } as const;
 /** Dimensiunile implicite la plasare (m). */
-export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3,
+export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3, angleRadius: .5,
   radiator: { width: .8, height: .6, elevation: .15 }, hvac: { width: .8, height: .29, depth: .2 },
   ceilingZone: { dropCm: 15, coveCm: 10 }, railing: { height: 1 } } as const;
 export const RAILING_KINDS: readonly RailingKind[] = ['metal', 'glass'];
@@ -51,8 +53,16 @@ const HEX = /^#[0-9a-f]{6}$/i;
 /** Textul liber de pe plan: fără caractere de control, fără `<>` (ajunge în SVG, DXF și PDF) și fără comenzi de direcție
  *  (bidi, ar inversa vizual textul pe planșă), cel mult 120 de caractere. */
 /** Doar fără caracterele interzise (pentru câmpurile în care se tastează: spațiile rămân); cleanPlanText curăță și marginile. */
-export const stripPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ');
-export const cleanPlanText = (s: unknown) => stripPlanText(s).replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
+// caracterele fără lățime (U+200B–U+200D, U+2060, U+FEFF) dispar: o etichetă din ele ar fi invizibilă; jumătățile de emoji rămase singure, la fel
+export const stripPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/[\u200B-\u200D\u2060\uFEFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+/** Primele `n` caractere întregi (un emoji nu se rupe în două: o jumătate ar strica salvarea în baza de date). */
+export const cutChars = (s: string, n: number) => Array.from(s).slice(0, n).join('');
+export const cleanPlanText = (s: unknown) => cutChars(stripPlanText(s).replace(/\s+/g, ' ').trim(), PLAN_LIMITS.annotation.textMax).trim();
+/** Eticheta norului de revizie: text curățat, cel mult 8 caractere (ex. „R2”). */
+export const cleanCloudLabel = (s: unknown) => cutChars(stripPlanText(s).replace(/\s+/g, ' ').trim(), PLAN_LIMITS.annotation.cloudLabelMax).trim();
+/** Unghiul dintre brațele unei cote unghiulare (0–180°). Sub 0,1° brațele sunt practic pe aceeași dreaptă: nu e un unghi de cotat. */
+export const armsAngleDeg = (v: readonly number[], a: readonly number[], b: readonly number[]) => { const ux = a[0]! - v[0]!, uz = a[1]! - v[1]!, wx = b[0]! - v[0]!, wz = b[1]! - v[1]!; return Math.abs(Math.atan2(ux * wz - uz * wx, ux * wx + uz * wz)) * 180 / Math.PI; };
+export const ANGLE_MIN_DEG = .1;
 
 export class PlanLimitError extends Error {}
 const bad = (m: string): never => { throw new PlanLimitError(m); };
@@ -190,7 +200,24 @@ export function sanitizeAnnotation(a: any): Annotation | null {
     if (a.rotation != null && !num(a.rotation)) bad('Rotația textului este invalidă.');
     if (typeof a.text !== 'string') bad('Textul de pe plan este invalid.');
     const text = cleanPlanText(a.text); if (!text) return null;
-    return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}) }; }
+    // câmpurile opționale ale săgeții cu notă și ale cotei de nivel: vârful = două numere finite în pătratul planului, simbolul
+    // doar 'level'; o valoare stricată se elimină (adnotarea rămâne text simplu), nu blochează salvarea
+    return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}),
+      ...(pt(a.leader) ? { leader: [a.leader[0], a.leader[1]] as [number, number] } : {}), ...(a.symbol === 'level' ? { symbol: 'level' as const } : {}) }; }
+  // cota unghiulară: trei puncte finite în pătratul planului, brațele de cel puțin 1 cm, raza un număr finit în interval
+  if (a.kind === 'angle'){
+    if (!pt(a.v) || !pt(a.a) || !pt(a.b)) bad('O cotă unghiulară are punctele invalide.');
+    if (Math.hypot(a.a[0] - a.v[0], a.a[1] - a.v[1]) < L.dimMinM || Math.hypot(a.b[0] - a.v[0], a.b[1] - a.v[1]) < L.dimMinM) bad('Brațele cotei unghiulare trebuie să aibă cel puțin 1 cm.');
+    if (!(armsAngleDeg(a.v, a.a, a.b) >= ANGLE_MIN_DEG)) bad('Brațele cotei unghiulare sunt pe aceeași dreaptă: nu e un unghi de cotat.');
+    if (!num(a.r) || !(a.r > 0) || !within(a.r, L.angleRadiusMinM, L.angleRadiusMaxM)) bad('Raza cotei unghiulare este invalidă.');
+    return { id: a.id, kind: 'angle', v: [a.v[0], a.v[1]], a: [a.a[0], a.a[1]], b: [a.b[0], a.b[1]], r: a.r }; }
+  // norul de revizie: dreptunghi finit în pătratul planului, cu laturile de cel puțin 10 cm; eticheta e text curățat, tăiat la
+  // 8 caractere (una stricată sau goală se elimină: norul rămâne fără etichetă, salvarea nu se blochează)
+  if (a.kind === 'cloud'){ const r = a.rect;
+    if (!r || typeof r !== 'object' || !inBox(r.x0) || !inBox(r.z0) || !inBox(r.x1) || !inBox(r.z1)) bad('Un nor de revizie are conturul invalid.');
+    if (r.x1 - r.x0 < L.cloudMinM - 1e-9 || r.z1 - r.z0 < L.cloudMinM - 1e-9) bad('Un nor de revizie trebuie să aibă laturile de cel puțin 10 cm.');
+    const label = typeof a.label === 'string' ? cleanCloudLabel(a.label) : '';
+    return { id: a.id, kind: 'cloud', rect: { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1 }, ...(label ? { label } : {}) }; }
   return bad('Tipul adnotării este invalid.');
 }
 /** Curăță pe loc stâlpii, grinzile, pereții de sticlă, nișele și adnotările unui nivel: doar câmpurile modelului, limite

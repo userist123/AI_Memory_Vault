@@ -36,11 +36,14 @@ export function ipv6Prefix64(ip: string){
   return full.slice(0, 4).map(g => g.replace(/^0+(?=.)/, '')).join(':') + '::/64';
 }
 
-export type ShareAction = 'feedback' | 'choices' | 'changes' | 'pin';
+// briefSave / briefPhoto: chestionarul clientului (salvarea automată a formularului și încărcarea pozelor, lib/client-brief.ts)
+// rfqSave / rfqSubmit: oferta unui meseriaș (salvarea automată a formularului și trimiterea, lib/rfq.ts)
+// offerView / offerAccept: oferta de acceptat pe linkul clientului (citirea ei și acceptarea, lib/offer-acceptance.ts)
+export type ShareAction = 'feedback' | 'choices' | 'changes' | 'pin' | 'briefSave' | 'briefPhoto' | 'rfqSave' | 'rfqSubmit' | 'offerView' | 'offerAccept';
 const WINDOW = 10 * 60e3;
 // pe adresă și link (un client normal trimite câteva păreri) și, separat, pe link de pe toate adresele (mai larg)
-const PER_IP: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 20 }), choices: createLimiter({ windowMs: WINDOW, max: 30 }), changes: createLimiter({ windowMs: WINDOW, max: 20 }), pin: createLimiter({ windowMs: WINDOW, max: 10 }) };
-const PER_TOKEN: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 100 }), choices: createLimiter({ windowMs: WINDOW, max: 150 }), changes: createLimiter({ windowMs: WINDOW, max: 100 }), pin: createLimiter({ windowMs: WINDOW, max: 30 }) };
+const PER_IP: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 20 }), choices: createLimiter({ windowMs: WINDOW, max: 30 }), changes: createLimiter({ windowMs: WINDOW, max: 20 }), pin: createLimiter({ windowMs: WINDOW, max: 10 }), briefSave: createLimiter({ windowMs: WINDOW, max: 120 }), briefPhoto: createLimiter({ windowMs: WINDOW, max: 30 }), rfqSave: createLimiter({ windowMs: WINDOW, max: 120 }), rfqSubmit: createLimiter({ windowMs: WINDOW, max: 20 }), offerView: createLimiter({ windowMs: WINDOW, max: 60 }), offerAccept: createLimiter({ windowMs: WINDOW, max: 10 }) };
+const PER_TOKEN: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 100 }), choices: createLimiter({ windowMs: WINDOW, max: 150 }), changes: createLimiter({ windowMs: WINDOW, max: 100 }), pin: createLimiter({ windowMs: WINDOW, max: 30 }), briefSave: createLimiter({ windowMs: WINDOW, max: 360 }), briefPhoto: createLimiter({ windowMs: WINDOW, max: 60 }), rfqSave: createLimiter({ windowMs: WINDOW, max: 360 }), rfqSubmit: createLimiter({ windowMs: WINDOW, max: 60 }), offerView: createLimiter({ windowMs: WINDOW, max: 240 }), offerAccept: createLimiter({ windowMs: WINDOW, max: 30 }) };
 export const minutesLeft = (ms: number) => Math.max(1, Math.ceil(ms / 60e3));
 export const shareLimitMessage = (ms: number) => `Prea multe trimiteri de pe acest link. Încearcă din nou peste ${minutesLeft(ms)} ${minutesLeft(ms) === 1 ? 'minut' : 'minute'}.`;
 

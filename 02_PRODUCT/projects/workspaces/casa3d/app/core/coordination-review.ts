@@ -21,6 +21,9 @@ export interface CoordinationFinding {
   refs: string[];
   message: string;
   rule: string;
+  /** același text în limba interfeței (lib/locales): cheie + variabile; variabila `a`/`b`/`el` = id de element, rezolvat la nume de panou */
+  key?: string;
+  vars?: Record<string, string | number>;
 }
 
 export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: MaterialsCatalog): CoordinationFinding[] {
@@ -37,6 +40,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
         refs: tg ? [tg.id] : [],
         message: iss.message,
         rule: 'casa3d.geometry.floor-validator',
+        ...(iss.key ? { key: iss.key, vars: iss.vars ?? {} } : {}),
       });
     }
   }
@@ -48,6 +52,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
         refs: iss.with ? [pl.id, iss.with] : [pl.id],
         message: iss.message,
         rule: 'casa3d.geometry.placement-validator',
+        ...(iss.key ? { key: iss.key, vars: iss.vars ?? {} } : {}),
       });
     }
     const rv = resolve(cat, pl.variantId);
@@ -57,7 +62,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
         severity: 'UNKNOWN',
         refs: [pl.id],
         message: `Piesa ${pl.id} (${pl.variantId}) nu are preț verificat în catalog sau are dimensiuni personalizate.`,
-        rule: 'casa3d.boq.no-fabricated-prices',
+        rule: 'casa3d.boq.no-fabricated-prices', key: 'coord.f.priceUnknown', vars: { el: pl.id },
       });
     }
   }
@@ -69,7 +74,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
       severity: 'WARNING',
       refs: [],
       message: 'Imaginea de releveu (underlay) este încărcată, dar scara nu a fost confirmată din două puncte cunoscute.',
-      rule: 'casa3d.underlay.scale-confirmation',
+      rule: 'casa3d.underlay.scale-confirmation', key: 'coord.f.underlayScale', vars: {},
     });
   }
 
@@ -81,7 +86,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
         severity: 'UNKNOWN',
         refs: [item.id],
         message: `Componenta "${item.name}" (${item.id}) nu are scară/sursă/licență confirmată și este exclusă din calculul automat BOQ.`,
-        rule: 'casa3d.library.asset-governance',
+        rule: 'casa3d.library.asset-governance', key: 'coord.f.asset', vars: { name: item.name },
       });
     }
   }
@@ -95,7 +100,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
         severity: 'WARNING',
         refs: [swId],
         message: `Întrerupătorul ${swId} nu este asociat niciunui grup de iluminat.`,
-        rule: 'casa3d.technical.switch-group-check',
+        rule: 'casa3d.technical.switch-group-check', key: 'coord.f.switchUnlinked', vars: { el: swId },
       });
     }
     const sanitaryGroups = new Set(['lavoar', 'wc', 'dus', 'cada', 'bideu']);
@@ -109,7 +114,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
           severity: 'WARNING',
           refs: [pl.id, pl.roomId],
           message: `Obiectul sanitar ${pl.group} (${pl.id}) din camera ${pl.roomId} nu are racorduri complete de apă și scurgere pe stratul tehnic.`,
-          rule: 'casa3d.technical.sanitary-service-points',
+          rule: 'casa3d.technical.sanitary-service-points', key: 'coord.f.sanitary', vars: { el: pl.id, room: pl.roomId },
         });
       }
     }
@@ -118,7 +123,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
       severity: 'INFO',
       refs: [],
       message: sched.disclaimer,
-      rule: 'casa3d.technical.competence-boundary',
+      rule: 'casa3d.technical.competence-boundary', key: 'coord.f.preliminary', vars: {},
     });
   }
 
@@ -131,7 +136,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
           severity: 'INFO',
           refs: [r.id],
           message: `Camera "${r.name}" folosește finisajele implicite orientative (nu au fost alese încă finisaje dedicate).`,
-          rule: 'casa3d.finishes.explicit-selection',
+          rule: 'casa3d.finishes.explicit-selection', key: 'coord.f.defaultFinishes', vars: { room: r.id },
         });
       }
     }
@@ -181,11 +186,12 @@ export function runCoordination(snap: Snapshot, cat: Catalog, opts: { revision?:
   const seen = new Set(findings.map(f => f.id));
   const push = (f: CoordinationFinding) => { if (!seen.has(f.id)) { seen.add(f.id); findings.push(f); } };
   for (const c of detectClashes(snap, cat, opts.clash))
-    push({ id: c.id, code: c.type === 'hard' ? 'CLASH_HARD' : c.type === 'penetration' ? 'WALL_PENETRATION' : 'CLASH_CLEARANCE', severity: c.severity, refs: [...c.refs], message: c.message, rule: c.rule });
+    push({ id: c.id, code: c.type === 'hard' ? 'CLASH_HARD' : c.type === 'penetration' ? 'WALL_PENETRATION' : 'CLASH_CLEARANCE', severity: c.severity, refs: [...c.refs], message: c.message, rule: c.rule,
+      key: `coord.f.${c.type}`, vars: { a: c.refs[0], b: c.refs[1], mm: Math.round((c.depthM ?? c.distanceM ?? 0) * 1000), tol: Math.round(c.toleranceM * 1000) } });
   for (const id of solidsOf(snap, cat).skipped.map(x => x.id))
     push({ id: findingId('CLASH_SIZE_UNKNOWN', 'casa3d.clash.inputs', [id]), code: 'CLASH_SIZE_UNKNOWN', severity: 'UNKNOWN', refs: [id], rule: 'casa3d.clash.inputs',
-      message: `Piesa ${id} nu are dimensiuni cunoscute și nu a intrat în verificarea interferențelor.` });
-  for (const fl of floors(snap)) for (const m of mepIssues(fl)) push({ id: findingId(m.code, 'casa3d.mep.declared-properties', m.refs), code: m.code, severity: m.severity, refs: m.refs, message: m.message, rule: 'casa3d.mep.declared-properties' });
+      message: `Piesa ${id} nu are dimensiuni cunoscute și nu a intrat în verificarea interferențelor.`, key: 'coord.f.sizeUnknown', vars: { el: id } });
+  for (const fl of floors(snap)) for (const m of mepIssues(fl)) push({ id: findingId(m.code, 'casa3d.mep.declared-properties', m.refs), code: m.code, severity: m.severity, refs: m.refs, message: m.message, rule: 'casa3d.mep.declared-properties', key: m.key, vars: m.vars });
   const rulesChecked: string[] = [...COORDINATION_RULES, ...(hasTech ? TECHNICAL_RULES : []), ...CLASH_RULES, 'casa3d.clash.inputs', 'casa3d.mep.declared-properties', ...(hasClearance ? [CLEARANCE_RULE] : [])];
   const rulesNotChecked: string[] = [...(hasTech ? [] : TECHNICAL_RULES), ...(hasClearance ? [] : [CLEARANCE_RULE])];
   const counts: Record<CoordinationSeverity, number> = { ERROR: 0, WARNING: 0, INFO: 0, UNKNOWN: 0 };

@@ -16,8 +16,10 @@ test('DXF: traseele pe straturi de sistem, fundațiile și pereții structurali;
   for (const l of ['MEP_WATER_COLD', 'MEP_DRAIN', 'STRUCT_FOOTINGS', 'STRUCT_WALLS']) assert.ok(p.layers.includes(l), l);
   assert.equal(p.units, 'mm');
   const cold = p.segments.filter(s => s.layer === 'MEP_WATER_COLD');
-  assert.equal(cold.length, 1, 'urcarea verticală (aceeași poziție în plan) nu e o linie în plan');
+  // urcarea verticală nu e o linie de traseu în plan, ci simbolul coloanei: cerc cu cruce (2 linii scurte) în punctul ei
+  assert.equal(cold.length, 3, 'traseul orizontal + crucea simbolului de coloană');
   assert.deepEqual(cold[0], { layer: 'MEP_WATER_COLD', a: [500, -200], b: [2500, -200] });
+  assert.ok(cold.slice(1).every(s => Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]) < 150), 'crucea e mică, în jurul punctului coloanei');
   assert.equal(p.segments.filter(s => s.layer === 'STRUCT_FOOTINGS').length, 4);
 });
 test('DXF: diametrul nedeclarat apare ca „D?”, nu ca o valoare', () => {
@@ -38,4 +40,9 @@ test('vederea 3D pe disciplină: exporturile ies din modelul întreg; starea ved
   const decl = src.indexOf('let elView ='), firstUse = src.indexOf('applyElementView();');
   assert.ok(decl > 0 && decl < firstUse, 'let elView trebuie să preceadă orice apel (altfel TDZ la reconstruirea casei)');
   assert.match(src, /const wn0 = walls\.children\.length;/, 'tocurile și foile primesc id-ul peretelui');
+});
+test('DXF: coloana verticală are simbol (cerc cu cruce) și cota de sosire UP/DN', () => {
+  const d = planToDxf(snap(), cat, { lang: 'ro' });
+  assert.ok(/\nCIRCLE\n8\nMEP_WATER_COLD\n/.test(d) || /\nCIRCLE\n(?:[^\n]*\n){0,6}MEP_WATER_COLD/.test(d), 'cercul coloanei pe stratul sistemului');
+  assert.ok(d.includes('UP +2.40'), 'urcare până la +2,40 m');
 });
