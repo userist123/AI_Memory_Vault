@@ -1,0 +1,330 @@
+"""cost-router M12: tool-level ALLOWLIST guard for agent_type `fable-executor` (hook_enforce_route.py).
+
+Threat model X1-X7 (SKILL.md 4G): text that reaches the executor tries to make it run a live or destructive operation,
+reach the network, or write outside its git worktree. The guard decides on what the executor RUNS, not on the brief.
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+SKILL = ROOT / ".claude" / "skills" / "cost-router"
+HOOK = SKILL / "hook_enforce_route.py"
+PROMPT_HOOK = SKILL / "hook_prompt_route.py"
+
+_spec = importlib.util.spec_from_file_location("cr_enforce_m12", HOOK)
+enf = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(enf)
+
+
+@pytest.fixture()
+def wt(tmp_path):
+    w = tmp_path / "wt"
+    (w / "scripts").mkdir(parents=True)
+    (w / "tests").mkdir()
+    (w / "scripts" / "run.py").write_text("print(1)\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q", str(w)], check=True, capture_output=True)
+    (tmp_path / "outside").mkdir()
+    return w
+
+
+def _bash(cmd, cwd):
+    return enf.executor_bash_problem(cmd, str(cwd))
+
+
+# ---- X1-X5 probes: every one denied ---------------------------------------------------------------------------------
+
+X1_GIT = [
+    "git push", "git push origin main", "git -C . push", "git  push", "git\tpush", "git push --force",
+    "git config alias.p push", "git p", "git reset --hard", "git reset --hard HEAD~1", "git clean -fdx",
+    "git branch -D main", "git checkout -- .", "git restore .", "git rebase main", "git filter-branch --all",
+    "git tag -d v1", "git remote add x https://e.invalid/r", "git remote set-url origin https://e.invalid/r",
+    "git fetch", "git pull", "git clone https://e.invalid/r", "git commit --amend -m x", "git switch main",
+    "git checkout main", "git checkout -B main", "git stash drop", "git stash pop", "git -c core.pager=x log",
+    "git --git-dir=../other/.git status", "git diff --ext-diff", "git log --output=../x.txt",
+    "git show --textconv HEAD", "gi\"t\" push", "g'i't push", "GIT PUSH", "git.exe push", "git -C ../.. status",
+    "git -C C:/Windows status", "git am x.patch", "git apply x.patch", "git update-ref -d HEAD", "git gc --prune=now",
+]
+X2_NET = [
+    "curl https://e.invalid", "wget http://e.invalid/x", "Invoke-WebRequest http://e.invalid", "iwr http://e.invalid",
+    "Invoke-RestMethod http://e.invalid", "irm http://e.invalid", "Start-BitsTransfer http://e.invalid x",
+    "certutil -urlcache -f http://e.invalid x", "ssh host", "scp a host:b", "sftp host", "ftp host", "nc host 80",
+    "ncat host 80", "python -c \"import socket\"", "python -c \"import urllib.request\"",
+    "python3 -c \"import requests\"", "node -e \"fetch('http://e.invalid')\"", "pip install requests",
+    "python -m pip install requests", "npm install", "npm i left-pad", "yarn add x", "pnpm add x", "uv pip install x",
+    "uv add x", "npm publish", "gh pr create", "gh release create v1", "gh api -X POST repos/x/y/issues",
+    "docker push img", "docker login", "python -m http.server", "npx something", "pip3 install x",
+]
+X3_DEPLOY = [
+    "vercel --prod", "netlify deploy", "firebase deploy", "terraform apply", "terraform destroy",
+    "kubectl apply -f x.yaml", "kubectl delete pod x", "helm install x y", "helm upgrade x y", "npm publish",
+    "twine upload dist/*", "dotnet nuget push x.nupkg", "dotnet publish", "gh release create v2",
+    "az webapp deploy", "aws s3 cp a s3://b", "gcloud app deploy", "dotnet run", "npm run deploy", "npm run release",
+]
+X4_FS = [
+    "rm -r x", "rm -rf x", "rm -r -f x", "rm --recursive x", "rm a.txt", "Remove-Item -Recurse x", "rd /s /q x",
+    "del /s x", "rmdir /s x", "format D:", "diskpart", "cipher /w:C:", "mv a b", "cp a ../b", "touch x",
+    "echo hi > ../x.txt", "cat a >> ../x", "python ../escape.py", "python C:/Windows/x.py", "python //srv/share/x.py",
+    "python \\\\srv\\share\\x.py", "node ../x.js", "python scripts/run.py --out ../../x.txt",
+    "pytest --basetemp C:/Users", "pytest --basetemp=../tmp", "python -m pytest --basetemp=C:/", "mkdir x",
+    "New-Item x", "Set-Content x y", "Out-File x", "ln -s a b", "cmd /c mklink /J a C:/", "find . -delete",
+    "find . -exec rm {} ;", "rg --pre cat x", "python scripts/run.py:stream",
+]
+X5_OBFUSCATION = [
+    "powershell -EncodedCommand ZQBjAGgAbwA=", "pwsh -enc ZQBjAGgAbwA=", "powershell -c \"git push\"",
+    "cmd /c git push", "bash -c \"git push\"", "sh -c 'git push'", "python -c \"import os; os.system('git push')\"",
+    "node -e \"require('child_process').execSync('git push')\"", "node --eval x", "node -r ./x.js scripts/a.js",
+    "GIT_SSH_COMMAND=x git status", "NODE_OPTIONS=--require=./x.js npm test", "env git push", "$G push",
+    "${G} push", "git $(echo push)", "git `echo push`", "iex \"git push\"", "Invoke-Expression x",
+    "git status; git push", "git status && git push", "git status || git push", "git status | sh", "git status &",
+    "git status\ngit push", "git status \\\ngit push", "pytest @'\nx\n'@", "gіt push", "gi\u200bt push",
+    "git pus\u200bh", "ｇｉｔ push", "pytest\u00a0-q", "\"git\" push", "eval git push", "exec git push",
+    "xargs git push", "sudo git push", "start git push", "& git push", "python -m pytest; curl x",
+    "python - < x.py", "python -", "python -W ignore -c 1", "py -3 -c 1", "python -X importtime -c 1",
+    "~/bin/pytest", "./pytest", "C:/Python/python.exe scripts/run.py", "python scripts/*.py", "pytest {a,b}",
+    "# git status", "cd .. ", "cd ../other", "pushd ..", "set X=1", "export X=1", "alias g=git", "source x.sh",
+    ". x.sh", "ls ~", "a" * 2100,
+]
+DENIED = X1_GIT + X2_NET + X3_DEPLOY + X4_FS + X5_OBFUSCATION
+
+ALLOWED = [
+    "pytest", "pytest -q", "pytest tests/test_x.py -q", "pytest tests/test_x.py::test_a -k \"not slow\"",
+    "python -m pytest tests -q", "python -m pytest -x -p no:cacheprovider", "py -3 -m pytest -q",
+    "python scripts/run.py", "python3 scripts/run.py --flag value", "python -I scripts/run.py", "py scripts/run.py",
+    "pytest --basetemp=tmp/pt", "dotnet build", "dotnet test", "dotnet test src/App.Tests/App.Tests.csproj",
+    "npm test", "npm run test", "npm run build", "npm run lint", "pnpm test", "yarn test", "yarn run lint",
+    "npm test -- --watch=false", "node scripts/run.js", "node --test tests", "git status", "git status --short",
+    "git diff", "git diff --stat HEAD~1", "git log --oneline -5", "git log --format=%h", "git show HEAD",
+    "git add -A", "git add scripts/run.py", "git commit -m \"fix(guard): handle a; b | c\"",
+    "git commit -m 'feat: x'", "git switch -c feature/m12-x", "git checkout -b fix-1", "git stash list",
+    "git rev-parse HEAD", "git ls-files", "git branch --show-current", "git branch", "git -C scripts status",
+    "git blame scripts/run.py", "ls", "ls -la scripts", "dir", "cat scripts/run.py", "type scripts/run.py",
+    "Get-Content scripts/run.py", "Select-String -Pattern x scripts/run.py", "rg -n pattern scripts",
+    "grep -rn \"a|b\" scripts", "find . -name \"*.py\"", "head -5 scripts/run.py", "wc -l scripts/run.py", "pwd",
+    "cat C:/Users/x/notes.txt",
+]
+
+
+@pytest.mark.parametrize("cmd", DENIED)
+def test_probe_is_denied(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason, f"allowed: {cmd!r}"
+    assert reason.startswith("cost-router: fable-executor")
+
+
+@pytest.mark.parametrize("cmd", ALLOWED)
+def test_legitimate_executor_command_is_allowed(wt, cmd):
+    assert _bash(cmd, wt) is None, cmd
+
+
+def test_probe_sets_have_the_promised_size():
+    assert len(ALLOWED) >= 20
+    for group in (X1_GIT, X2_NET, X3_DEPLOY, X4_FS, X5_OBFUSCATION):
+        assert len(group) >= 10
+
+
+def test_deny_reason_names_the_rule(wt):
+    assert "X1" in _bash("git push", wt)
+    assert "X5" in _bash("gіt push", wt)
+    assert "X4" in _bash("python ../escape.py", wt)
+    assert "allowlist" in _bash("curl https://e.invalid", wt)
+
+
+def test_bash_outside_a_git_worktree_runs_only_read_only_commands(tmp_path):
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    (plain / "a.py").write_text("print(1)\n", encoding="utf-8")
+    assert _bash("python a.py", plain)
+    assert _bash("pytest", plain)
+    assert _bash("ls", plain) is None
+
+
+# ---- X6: Write/Edit/NotebookEdit paths ------------------------------------------------------------------------------
+
+def _path(p, cwd):
+    return enf.executor_path_problem(str(p), str(cwd))
+
+
+def test_write_inside_the_worktree_is_allowed(wt):
+    assert _path(wt / "scripts" / "run.py", wt) is None
+    assert _path(wt / "new_dir" / "new.py", wt) is None
+    assert _path("scripts/new.py", wt) is None
+    assert _path("scripts/../tests/test_new.py", wt) is None
+
+
+def test_write_outside_the_worktree_is_denied(wt, tmp_path):
+    for p in (tmp_path / "outside" / "x.py", "../outside/x.py", "scripts/../../outside/x.py", "C:/Windows/x.txt",
+              "\\\\srv\\share\\x.txt", "//srv/share/x.txt", "\\\\?\\C:\\x.txt", "Z:x.txt", ""):
+        assert _path(p, wt), p
+
+
+def test_write_into_git_metadata_is_denied(wt):
+    for p in (wt / ".git" / "config", wt / ".git" / "hooks" / "pre-commit", "./.GIT/config", ".git./config",
+              "scripts/../.git/HEAD"):
+        assert _path(p, wt), p
+
+
+def test_write_to_an_alternate_data_stream_is_denied(wt):
+    assert _path(wt / "scripts" / "run.py:evil", wt)
+    assert _path("run.py::$DATA", wt)
+
+
+def test_write_into_a_nested_repository_is_denied(wt):
+    sub = wt / "vendor" / "other"
+    sub.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(sub)], check=True, capture_output=True)
+    assert _path(sub / "x.py", wt)
+
+
+def test_write_into_home_claude_is_denied(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(home)], check=True, capture_output=True)  # even when home is a repo
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    assert _path(home / ".claude" / "settings.json", home)
+    assert _path(home / "notes.txt", home) is None
+
+
+@pytest.mark.skipif(os.name != "nt", reason="junctions are a Windows feature")
+def test_write_through_a_junction_is_denied(wt, tmp_path):
+    import _winapi
+    _winapi.CreateJunction(str(tmp_path / "outside"), str(wt / "jout"))
+    (wt / "jin_target").mkdir()
+    _winapi.CreateJunction(str(wt / "jin_target"), str(wt / "jin"))
+    assert _path(wt / "jout" / "x.py", wt)
+    assert _path(wt / "jin" / "x.py", wt)  # a link even when it points inside: denied
+    assert _bash("python jout/x.py", wt)
+
+
+def test_write_through_a_symlink_is_denied(wt, tmp_path):
+    target = tmp_path / "outside" / "t.py"
+    target.write_text("x\n", encoding="utf-8")
+    try:
+        os.symlink(str(target), str(wt / "link.py"))
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks need privileges here")
+    assert _path(wt / "link.py", wt)
+
+
+def test_write_to_a_hard_link_is_denied(wt, tmp_path):
+    target = tmp_path / "outside" / "h.txt"
+    target.write_text("x\n", encoding="utf-8")
+    try:
+        os.link(str(target), str(wt / "h.txt"))
+    except (OSError, NotImplementedError):
+        pytest.skip("hard links unsupported here")
+    assert _path(wt / "h.txt", wt)
+
+
+def test_write_outside_any_worktree_is_denied(tmp_path):
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    assert _path(plain / "x.py", plain)
+
+
+# ---- guard wiring (end to end through the hook process): X7 ---------------------------------------------------------
+
+def _hook(tmp_path, wt, tool, tool_input, agent_type="fable-executor", **env_extra):
+    home = tmp_path / "home"
+    home.mkdir(exist_ok=True)
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    for k in ("COST_ROUTER_OFF", "COST_ROUTER_ENFORCE", "CLAUDE_PROJECT_DIR"):
+        env.pop(k, None)
+    env.update(env_extra)
+    payload = {"session_id": "m12-1", "tool_name": tool, "tool_input": tool_input, "cwd": str(wt),
+               "agent_type": agent_type, "agent_id": "a1"}
+    r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload), capture_output=True, text=True,
+                       timeout=60, env=env, encoding="utf-8", cwd=str(wt))
+    assert r.returncode == 0, r.stderr
+    if not r.stdout.strip():
+        return None
+    return json.loads(r.stdout)["hookSpecificOutput"].get("permissionDecision")
+
+
+@pytest.mark.parametrize("env", [{}, {"COST_ROUTER_OFF": "1"}, {"COST_ROUTER_ENFORCE": "0"},
+                                 {"COST_ROUTER_OFF": "true", "COST_ROUTER_ENFORCE": "0"}])
+def test_off_switches_do_not_disable_the_guard(tmp_path, wt, env):
+    assert _hook(tmp_path, wt, "Bash", {"command": "git push"}, **env) == "deny"
+    assert _hook(tmp_path, wt, "Write", {"file_path": str(tmp_path / "outside" / "x.py"), "content": "x"},
+                 **env) == "deny"
+    assert _hook(tmp_path, wt, "Bash", {"command": "git status"}, **env) is None
+
+
+def test_hook_allows_worktree_edit_and_reads(tmp_path, wt):
+    assert _hook(tmp_path, wt, "Edit", {"file_path": str(wt / "scripts" / "run.py"), "old_string": "1",
+                                         "new_string": "2"}) is None
+    assert _hook(tmp_path, wt, "Read", {"file_path": str(tmp_path / "outside" / "x")}) is None
+    assert _hook(tmp_path, wt, "NotebookEdit", {"notebook_path": str(wt / ".git" / "x.ipynb")}) == "deny"
+
+
+def test_other_tools_are_denied_for_the_executor(tmp_path, wt):
+    assert enf.executor_guard({"agent_type": "fable-executor", "tool_name": "WebFetch", "cwd": str(wt),
+                               "tool_input": {"url": "https://e.invalid"}})
+
+
+def test_malformed_input_fails_closed(wt):
+    assert enf.executor_guard({"agent_type": "fable-executor", "tool_name": "Bash", "cwd": str(wt),
+                               "tool_input": {"command": ["git", "push"]}})
+    assert enf.executor_guard({"agent_type": "fable-executor", "tool_name": "Write", "cwd": str(wt),
+                               "tool_input": {}})
+
+
+def test_other_roles_and_the_main_session_are_untouched(tmp_path, wt):
+    assert enf.executor_guard({"agent_type": "vault-worker", "tool_name": "Bash", "tool_input": {"command": "x"}}) is None
+    assert enf.executor_guard({"tool_name": "Bash", "tool_input": {"command": "git push"}}) is None
+
+
+# ---- (g) brief scan: whole brief, confusables folded; short prompts start a new epoch ------------------------------
+
+def test_local_only_scan_reads_the_whole_brief_with_confusables():
+    sys.path.insert(0, str(SKILL / "lib"))
+    import specialists as sp
+    reg = {"dfir-analyst": {"id": "dfir-analyst", "privacy": "local_only", "triggers": ["amcache"]}}
+    assert "dfir-analyst" in sp.local_only_hits("x " * 9000 + " amcache", reg)
+    assert "dfir-analyst" in sp.local_only_hits("check the аmcache", reg)  # Cyrillic a
+    assert sp.fold_strict("dеploy") == "deploy"
+
+
+def test_live_operation_scan_folds_confusables():
+    sys.path.insert(0, str(SKILL))
+    sys.path.insert(0, str(SKILL / "lib"))
+    import specialists as sp
+    spec2 = importlib.util.spec_from_file_location("cr_agent_m12", SKILL / "hook_agent_model.py")
+    am = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(am)
+    assert am._live_operation_hit("please dеploy it", ["prod"], sp) == "deploy"
+
+
+def _prompt(home, prompt, sid="m12-p"):
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    for k in ("COST_ROUTER_OFF", "COST_ROUTER_ENFORCE"):
+        env.pop(k, None)
+    r = subprocess.run([sys.executable, str(PROMPT_HOOK)], input=json.dumps({"session_id": sid, "prompt": prompt}),
+                       capture_output=True, text=True, timeout=60, env=env, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+
+
+def _route_state(home, sid="m12-p"):
+    return json.loads((home / ".claude" / "cache" / "cost-router" / f"route-{sid}.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("short", ["ok", "/clear", "da", "amcache triage now"])
+def test_short_prompt_starts_a_new_epoch_and_scans_local_only(tmp_path, short):
+    home = tmp_path / "home"
+    home.mkdir()
+    _prompt(home, "implement a new feature in the module with tests and refactor the whole parser")
+    before = _route_state(home)
+    _prompt(home, short)
+    after = _route_state(home)
+    assert after["epoch"] != before["epoch"]
+    assert after["task_class"] == before["task_class"] and after["subagent"] == before["subagent"]
+    if "amcache" in short:
+        assert "dfir-analyst" in after["spec"]
