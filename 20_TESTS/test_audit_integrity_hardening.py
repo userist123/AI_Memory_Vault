@@ -167,7 +167,7 @@ def test_t2_controller_errors_leave_no_message_in_audit(tmp_path, monkeypatch):
     monkeypatch.setattr(logger_module, "_logger_instance", AuditLogger(log))
 
     def boom(*a, **k):
-        raise RuntimeError(f"cannot parse note body {MARKER} at C:/secret/vault")
+        raise RuntimeError(f"cannot parse note body {MARKER} at C:/secret/vault")  # hygiene: intentional-absolute-path
 
     monkeypatch.setattr(controller.storage, "get", boom)
     with pytest.raises(Exception):
@@ -179,7 +179,7 @@ def test_t2_controller_errors_leave_no_message_in_audit(tmp_path, monkeypatch):
     assert meta["error_type"] == "RuntimeError"
     assert len(meta["error_sha256"]) == 16
     assert meta["error_sha256"] == hashlib.sha256(
-        f"cannot parse note body {MARKER} at C:/secret/vault".encode()).hexdigest()[:16]
+        f"cannot parse note body {MARKER} at C:/secret/vault".encode()).hexdigest()[:16]  # hygiene: intentional-absolute-path
     assert "error" not in meta
 
 
