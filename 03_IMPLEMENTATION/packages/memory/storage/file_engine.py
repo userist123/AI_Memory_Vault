@@ -1,5 +1,4 @@
 import os
-import glob
 import tempfile
 import sys
 from typing import Dict, Any, List, Optional, Tuple
@@ -50,6 +49,12 @@ LEGACY_WRITE_ROOTS = (
 )
 
 CANONICAL_FOLDERS = CONTENT_ROOTS + LEGACY_WRITE_ROOTS
+
+#: Index-time size cap for one note. Larger files are skipped ("too_large"), never read.
+MAX_NOTE_BYTES = 8 * 1024 * 1024
+
+#: Imported skills are untrusted data, never canonical notes (lower-case, vault-relative).
+_EXCLUDED_IMPORT_PREFIX = "01_knowledge/external_skills/"
 
 _TREE_LABELS = {root: "content root" for root in CONTENT_ROOTS}
 _TREE_LABELS.update({root: "legacy write root" for root in LEGACY_WRITE_ROOTS})
@@ -119,6 +124,41 @@ class FileStorageEngine:
         label = _TREE_LABELS.get(top)
         return f"{label} ({top})" if label else f"unrecognized root ({top})"
 
+    def _is_external_import(self, filepath: str) -> bool:
+        """True for anything under 01_KNOWLEDGE/EXTERNAL_SKILLS: imported material is
+        data, never a canonical note (case-insensitive, vault-relative)."""
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            return False
+        return (rel.replace("\\", "/").lower() + "/").startswith(_EXCLUDED_IMPORT_PREFIX)
+
+    def _scan_markdown(self, folder_path: str) -> List[str]:
+        """Sorted .md files under `folder_path`, never descending into directory
+        symlinks or junctions (each skipped directory is reported once as
+        ``link_not_followed``). Dot-prefixed names are skipped, as glob did."""
+        isjunction = getattr(os.path, "isjunction", None)
+        found: List[str] = []
+        for dirpath, dirnames, filenames in os.walk(folder_path, followlinks=False):
+            keep = []
+            for d in sorted(dirnames):
+                full = os.path.join(dirpath, d)
+                if d.startswith("."):
+                    continue
+                if "RAW_IMPORTS" in full or "Obsidian" in full:
+                    continue
+                if os.path.islink(full) or (isjunction is not None and isjunction(full)):
+                    self._record_skip(full, "link_not_followed", None)
+                    continue
+                keep.append(d)
+            dirnames[:] = keep
+            for name in filenames:
+                if name.startswith("."):
+                    continue
+                if name.endswith(".md") or (os.name == "nt" and name.lower().endswith(".md")):
+                    found.append(os.path.join(dirpath, name))
+        return sorted(found)
+
     def _initialize_index(self):
         # Scan canonical folders to build the UUID -> Path index
         # EXPLICIT EXCLUSIONS: "06_INBOX" and "90_TEMPLATES" are NOT included
@@ -128,16 +168,28 @@ class FileStorageEngine:
             if not os.path.exists(folder_path):
                 continue
             
-            found_files = set(glob.glob(os.path.join(folder_path, "*.md"))).union(
-                set(glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True))
-            )
-            for filepath in sorted(found_files):
+            for filepath in self._scan_markdown(folder_path):
                 if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
                 self.load_report["scanned"] += 1
+                if os.path.islink(filepath):
+                    self._record_skip(filepath, "link_not_followed", None)
+                    continue
+                if self._is_external_import(filepath):
+                    self._record_skip(filepath, "excluded_import", None)
+                    continue
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                    if os.path.getsize(filepath) > MAX_NOTE_BYTES:
+                        self._record_skip(filepath, "too_large", None)
+                        continue
+                    with open(filepath, 'rb') as f:
+                        raw = f.read(MAX_NOTE_BYTES + 1)
+                    if len(raw) > MAX_NOTE_BYTES:
+                        # grew between stat and read
+                        self._record_skip(filepath, "too_large", None)
+                        continue
+                    # same newline translation the old text-mode read applied
+                    content = raw.decode('utf-8').replace("\r\n", "\n").replace("\r", "\n")
                 except UnicodeDecodeError as e:
                     self._record_skip(filepath, "decode_error", e)
                     continue
