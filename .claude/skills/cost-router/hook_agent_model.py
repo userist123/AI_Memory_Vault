@@ -46,6 +46,7 @@ RISK_PREFIXES = ("risk_detected", "risk_floor")
 SPAWN_TOOLS = ("Agent", "Task")  # "Task" is the legacy name of the spawn tool
 FABLE_CONSULTANT = "fable-consultant"
 FABLE_EXECUTOR = "fable-executor"  # M11: gated, default off (see _fable_executor_gate)
+HEAVY_CLASSES = ("implement", "design", "frontier")  # M12 condition (i): the owner prompt's route class, never the brief
 REVIEWER_MARKS = ("review", "verif")  # vault-reviewer, code-review, verifier: never below Opus
 # vault-worker, implementer: routed as implement; on risky code the floor moves to the mandatory
 # Opus reviewer (policy rules.implementer_risk_floor), so the worker stays on Sonnet.
@@ -1053,7 +1054,8 @@ def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off
     AND this hook itself recorded a real (allowed, writing) sonnet-tier and opus-tier spawn in that epoch;
     (f) no critical risk, no live-operation stem (rules.implementer_risk_floor.never_for_stems); (g) no local_only
     specialist on this prompt or in the brief; (e) a slot of max_per_session, taken under a cross-process lock.
-    (h) COST_ROUTER_OFF bypasses none of it. Receipts and route state can be written by the main session: this limits
+    (h) COST_ROUTER_OFF bypasses none of it. (i) heavy task only: the CURRENT owner prompt's route state (written by
+    hook_prompt_route from the owner's own text) is implement/design/frontier, not a short follow-up/slash/#direct. Receipts and route state can be written by the main session: this limits
     induced overspend, it does not stop a hostile Opus session (threat E1)."""
     def deny(cond: str, why: str) -> int:
         print(f"cost-router: fable-executor blocked: condition ({cond}) {why}; blocking spawn", file=sys.stderr)
@@ -1099,6 +1101,11 @@ def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off
     epoch = state.get("epoch") if isinstance(state, dict) else None
     if not isinstance(epoch, str) or not epoch:
         return deny("d", "failed checks: no route state for the current prompt (the prompt hook did not run)")
+    task_class = str(state.get("task_class") or "")
+    if task_class not in HEAVY_CLASSES or state.get("followup"):
+        why = ("the current owner prompt is a short follow-up or slash command" if state.get("followup") else
+               f"the current owner prompt is routed {task_class or 'unclassified'!r}")
+        return deny("i", f"heavy task only: {why}; the executor runs only for an implement/design/frontier prompt")
     sid_s = str(sid or "")
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", sid_s):
         return deny("d", "failed checks: the session id cannot key check.py receipts")

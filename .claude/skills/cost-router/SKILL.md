@@ -427,7 +427,11 @@ collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt 
 normalization plus the `specialists.CONFUSABLES` look-alike fold, also used by (f)), and the installed registry is readable;
 the prompt hook records the local_only scan on every path, `#direct` override, router error and short/slash/trivial
 prompts included (a short prompt keeps its route but starts a new prompt epoch); (h)
-`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
+`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails); (i) heavy task only: the CURRENT owner
+prompt's route state (hook_prompt_route, from the owner's own text, never the brief) has class implement, design or frontier
+and is not a short follow-up, trivial or slash prompt (`followup` marker); explore/summarize/review/unrouted/#direct-short
+are denied. When to spawn is the Opus main session's decision: never for easy tasks, only on a heavy task after a sonnet
+and an opus attempt failed the same check ((d) is that proof); the Opus vault-reviewer pass afterwards stays mandatory. On allow, the context says an Opus
 vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
 spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
 Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` under `rules.fable_executor` in

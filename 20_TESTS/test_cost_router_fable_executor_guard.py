@@ -317,3 +317,41 @@ def test_short_prompt_starts_a_new_epoch_and_scans_local_only(tmp_path, short):
     assert after["main_calls"] == before["main_calls"] and after["delegated"] == before["delegated"]
     if "amcache" in short:
         assert "dfir-analyst" in after["spec"]
+
+
+# ---- gate condition (i): heavy task only (owner decision 2026-11-23) ------------------------------------------------
+
+@pytest.mark.parametrize("task_class", ["explore", "summarize", "review", "unrouted", "direct", "unclassified", ""])
+def test_i_light_route_classes_are_denied(tmp_path, task_class):
+    import test_cost_router_fable_executor as fe
+    home = fe._ready(tmp_path)
+    fe._state(home, task_class=task_class)
+    fe._denied(fe._spawn(home), "condition (i)")
+
+
+def test_i_short_follow_up_is_denied_even_on_a_heavy_route(tmp_path):
+    import test_cost_router_fable_executor as fe
+    home = fe._ready(tmp_path)
+    path = fe._cache(home) / f"route-{fe.SID}.json"
+    st = json.loads(path.read_text(encoding="utf-8"))
+    st["followup"] = True
+    path.write_text(json.dumps(st), encoding="utf-8")
+    fe._denied(fe._spawn(home), "condition (i)", "short follow-up")
+
+
+@pytest.mark.parametrize("task_class", ["implement", "design", "frontier"])
+def test_i_heavy_task_with_the_failed_ladder_is_allowed_with_the_review_note(tmp_path, task_class):
+    import test_cost_router_fable_executor as fe
+    home = fe._ready(tmp_path)
+    fe._state(home, task_class=task_class)
+    ctx = fe._allowed(fe._spawn(home))
+    assert "vault-reviewer" in ctx and "mandatory" in ctx
+
+
+def test_i_heavy_task_without_the_ladder_is_still_denied(tmp_path):
+    import test_cost_router_fable_executor as fe
+    home = tmp_path / "home"
+    home.mkdir()
+    fe._install_trust(home)
+    fe._state(home, task_class="implement")
+    fe._denied(fe._spawn(home), "condition (d)")

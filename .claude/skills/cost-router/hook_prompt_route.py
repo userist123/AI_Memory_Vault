@@ -168,6 +168,7 @@ def renew_epoch(data: dict, prompt: str, esc: bool) -> None:
         if not state.get("delegation_denied"):
             state.pop("delegation_denied", None)  # load() adds the marker key; keep the saved shape
         state["escalation_authorized"] = esc
+        state["followup"] = True  # gate (i): a short/slash/trivial prompt never authorizes the fable-executor
         old = state.get("spec") if isinstance(state.get("spec"), list) else []
         state["spec"] = ([str(x)[:40] for x in old if x] + [x for x in hits if x not in old])[:8]
         route_state.reset(sid, state)
