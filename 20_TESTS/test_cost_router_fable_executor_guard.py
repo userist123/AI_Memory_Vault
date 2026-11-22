@@ -19,9 +19,22 @@ SKILL = ROOT / ".claude" / "skills" / "cost-router"
 HOOK = SKILL / "hook_enforce_route.py"
 PROMPT_HOOK = SKILL / "hook_prompt_route.py"
 
-_spec = importlib.util.spec_from_file_location("cr_enforce_m12", HOOK)
-enf = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(enf)
+enf = None
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_hook_module():
+    """Load hook_enforce_route in-process, then restore sys.path and sys.modules: the hook puts its lib/ first on
+    sys.path and caches top-level `route_state`/`specialists`, which other skill copies (.agents/...) also import."""
+    global enf
+    saved_path, saved_mods = list(sys.path), set(sys.modules)
+    spec = importlib.util.spec_from_file_location("cr_enforce_m12", HOOK)
+    enf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(enf)
+    yield
+    sys.path[:] = saved_path
+    for name in set(sys.modules) - saved_mods:
+        sys.modules.pop(name, None)
 
 
 @pytest.fixture()
@@ -284,8 +297,8 @@ def test_other_roles_and_the_main_session_are_untouched(tmp_path, wt):
 
 # ---- (g) brief scan: whole brief, confusables folded; short prompts start a new epoch ------------------------------
 
-def test_local_only_scan_reads_the_whole_brief_with_confusables():
-    sys.path.insert(0, str(SKILL / "lib"))
+def test_local_only_scan_reads_the_whole_brief_with_confusables(monkeypatch):
+    monkeypatch.syspath_prepend(str(SKILL / "lib"))
     import specialists as sp
     reg = {"dfir-analyst": {"id": "dfir-analyst", "privacy": "local_only", "triggers": ["amcache"]}}
     assert "dfir-analyst" in sp.local_only_hits("x " * 9000 + " amcache", reg)
@@ -293,9 +306,8 @@ def test_local_only_scan_reads_the_whole_brief_with_confusables():
     assert sp.fold_strict("dеploy") == "deploy"
 
 
-def test_live_operation_scan_folds_confusables():
-    sys.path.insert(0, str(SKILL))
-    sys.path.insert(0, str(SKILL / "lib"))
+def test_live_operation_scan_folds_confusables(monkeypatch):
+    monkeypatch.syspath_prepend(str(SKILL / "lib"))
     import specialists as sp
     spec2 = importlib.util.spec_from_file_location("cr_agent_m12", SKILL / "hook_agent_model.py")
     am = importlib.util.module_from_spec(spec2)
