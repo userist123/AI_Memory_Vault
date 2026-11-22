@@ -65,10 +65,18 @@ class RegistryError(ValueError):
     pass
 
 
+_CEDILLA = str.maketrans({"ş": "ș", "Ş": "Ș", "ţ": "ț", "Ţ": "Ț"})
+
+
 def fold(text: str) -> str:
-    """casefold + strip diacritics: 'Șoferul' and 'soferul' compare equal."""
-    s = unicodedata.normalize("NFKD", str(text).casefold())
-    return unicodedata.normalize("NFKD", "".join(c for c in s if not unicodedata.combining(c))).casefold()
+    """Exactly specialists.fold (the hook's brief normalizer), so compiled triggers and matched text agree: NFKC,
+    Unicode format chars (Cf: zero-width, soft hyphen, BOM, bidi marks) removed, cedilla s/t -> comma-below,
+    casefold, diacritics stripped, whitespace collapsed: 'Șoferul' and 'soferul' compare equal."""
+    s = unicodedata.normalize("NFKC", str(text))
+    s = "".join(c for c in s if unicodedata.category(c) != "Cf")
+    s = unicodedata.normalize("NFKD", " ".join(s.translate(_CEDILLA).casefold().split()))
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return " ".join(unicodedata.normalize("NFKD", s).casefold().split())
 
 
 def _sha(path: Path, lf: bool = False) -> str:
