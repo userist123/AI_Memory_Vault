@@ -381,6 +381,36 @@ def reserve_fable_executor(session_id, max_per_session: int):
         return True, count + 1
 
 
+SPAWNS_MAX = 64
+
+
+def record_spawn(session_id, epoch: str, tier: str, stype: str, writer: bool) -> bool:
+    """Append one real spawn the Agent hook ALLOWED (its resolved tier, the prompt epoch, whether the agent can write)
+    to route-<sid>.spawns, under the same cross-process lock as the resume counter (no lost append under concurrent
+    hooks). Bounded to the last SPAWNS_MAX entries. False when the session id, the lock or the write fails.
+    Evidence for the fable-executor gate (condition d). It lives in the user cache like every route state: a project
+    file cannot create it, but a same-user process (or the main session itself) can edit it (residual, threat E1)."""
+    path = _session_json(session_id, ".spawns")
+    if path is None or not isinstance(epoch, str) or not epoch:
+        return False
+    with _Locked(path) as lk:
+        if not lk.acquired:
+            return False
+        data = _read_json(path, {})
+        items = data.get("spawns") if isinstance(data, dict) else None
+        items = [e for e in items if isinstance(e, dict)] if isinstance(items, list) else []
+        items.append({"epoch": epoch, "tier": str(tier or "")[:16], "stype": str(stype or "")[:64],
+                      "writer": bool(writer), "ts": int(time.time())})
+        return _write_json(path, {"spawns": items[-SPAWNS_MAX:]})
+
+
+def spawns(session_id) -> list:
+    """The recorded real spawns of this session (oldest first); [] when missing or corrupt."""
+    data = _read_json(_session_json(session_id, ".spawns"), {})
+    items = data.get("spawns") if isinstance(data, dict) else None
+    return [e for e in items if isinstance(e, dict)] if isinstance(items, list) else []
+
+
 SEEN_MAX = 500
 USAGE_MAX = 200
 

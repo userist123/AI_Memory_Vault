@@ -1003,11 +1003,52 @@ def _failed_ladder(sid: str, epoch: str):
     return None
 
 
+_WB = r"(?<![^\W_])"  # word start: start of text or a non-alphanumeric char before
+_WE = r"(?![^\W_])"  # word end
+# Live operations the executor never touches, on top of the policy's never_for_stems (matched on the FOLDED brief).
+# Inflection-aware so `application`, `dropdown`, `relationship`, `shipment` stay benign.
+EXECUTOR_LIVE_PATTERNS = (
+    ("push", _WB + r"push(?:es|ed|ing)?" + _WE),
+    ("apply", _WB + r"appl(?:y|ies|ied|ying)" + _WE),
+    ("drop", _WB + r"drop(?:s|ped|ping)?" + _WE),
+    ("upload", _WB + r"upload"),
+    ("ship", _WB + r"ship(?:s|ped|ping)?" + _WE),
+    ("release", _WB + r"releas"),
+    ("rollout", _WB + r"roll(?:s|ed|ing)?[\s-]?outs?" + _WE),
+    ("migrate", _WB + r"migrat"),
+    ("truncate", _WB + r"truncat"),
+    ("rm -rf", _WB + r"rm\s+-[a-z]*(?:rf|fr)"),
+    ("force-push", _WB + r"force[\s-]?push"),
+)
+# Stems that are live operations wherever they occur, compounds included (autodeploy, redeploy, republish, auto-rotate).
+EXECUTOR_SUBSTRING_STEMS = ("deploy", "rotate", "publish")
+
+
+def _live_operation_hit(brief: str, stems, specialists):
+    """The first live-operation stem/pattern in `brief`, else None. The brief is normalized first (specialists:
+    NFKC, Cf/zero-width removed, cedilla -> comma-below, casefold, whitespace collapsed). A policy stem with diacritics
+    (`șterg`, `producț`) matches the normalized text with its diacritics; an ASCII stem matches the diacritic-folded
+    text too (`şterge` -> `sterge`), so folding never turns `producț` into a bare `product`."""
+    kept = " " + specialists.normalize(brief) + " "
+    folded = " " + specialists.fold(brief) + " "
+    for k in stems:
+        kn, kf = specialists.normalize(k), specialists.fold(k)
+        if not kn:
+            continue
+        if re.search(_WB + re.escape(kn), kept) or (kf == kn and re.search(_WB + re.escape(kf), folded)):
+            return k
+    for name, pat in EXECUTOR_LIVE_PATTERNS:
+        if re.search(pat, folded):
+            return name
+    return next((k for k in EXECUTOR_SUBSTRING_STEMS if k in folded), None)
+
+
 def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off: bool) -> int:
     """M11 gate for a `fable-executor` spawn (default off). Every condition must hold, else exit 2 naming it:
     (a) rules.fable_executor.enabled in the INSTALLED, hash-verified policy; (b) the session runs Opus; (c) the
     definition is the pinned one and passes its own exact validator, no project file claims the name; (d) this session
-    and prompt epoch hold a failed check.py receipt from a sonnet-tier AND from an opus-tier attempt of the same check;
+    and prompt epoch hold a failed check.py receipt from a sonnet-tier AND from an opus-tier attempt of the same check,
+    AND this hook itself recorded a real (allowed, writing) sonnet-tier and opus-tier spawn in that epoch;
     (f) no critical risk, no live-operation stem (rules.implementer_risk_floor.never_for_stems); (g) no local_only
     specialist on this prompt or in the brief; (e) a slot of max_per_session, taken under a cross-process lock.
     (h) COST_ROUTER_OFF bypasses none of it. Receipts and route state can be written by the main session: this limits
@@ -1066,6 +1107,13 @@ def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off
     if label is None:
         return deny("d", "failed checks: needs a FAILED check.py receipt of the same check from a sonnet-tier attempt "
                          "AND from an opus-tier attempt in this prompt (check.py run --session <id> --tier sonnet|opus)")
+    try:
+        ladder = _real_ladder(sid_s, epoch)
+    except Exception:
+        ladder = False
+    if not ladder:
+        return deny("d", "failed attempts: this hook recorded no real sonnet-tier AND opus-tier implementation spawn "
+                         "in this prompt (receipts alone do not count; read-only/reviewer agents are not attempts)")
     brief = f"{tool_input.get('description') or ''} {tool_input.get('prompt') or ''}"
     try:
         try:
@@ -1081,8 +1129,7 @@ def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off
     stems = [str(k).lower() for k in (rule.get("never_for_stems") or ()) if k] if isinstance(rule, dict) else []
     if not stems:
         return deny("f", "risk: the installed policy has no live-operation stems")
-    text = " " + re.sub(r"\s+", " ", brief.lower()) + " "
-    hit = next((k for k in stems if re.search(rf"(?<![^\W_]){re.escape(k)}", text)), None)
+    hit = _live_operation_hit(brief, stems, specialists)
     if hit:
         return deny("f", f"risk: live operation ({hit!r}) stays on Opus")
     spec = state.get("spec")
@@ -1110,6 +1157,38 @@ def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off
            "vault-reviewer with the diff and the same acceptance check.")
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": ctx}}))
     return 0
+
+
+def _record_real_spawn(data: dict, stype: str, policy, target, tool_input: dict, session) -> None:
+    """E1 hardening: record a spawn this hook ALLOWED with the tier it will actually run on (the rewrite target, else
+    the given model, else the agent default, else the session model) for the current prompt epoch. Read-only and
+    reviewer agents are recorded with writer=False: they are not implementation attempts. Never raises."""
+    try:
+        if policy is None:
+            return
+        import route_state  # noqa: E402
+        sid = data.get("session_id")
+        state = route_state.load(sid)
+        epoch = state.get("epoch") if isinstance(state, dict) else None
+        if not isinstance(epoch, str) or not epoch:
+            return
+        default = _agent_default_model(stype, data)
+        eff = next((m for m in (target, tool_input.get("model"), None if default is UNKNOWN_DEFAULT else default)
+                    if m and not _is_inherit(m)), None) or session
+        tier = _tier(policy, eff)
+        if not tier:
+            return
+        writer = not (_read_only_agent(stype, data) or any(m in stype for m in REVIEWER_MARKS))
+        route_state.record_spawn(sid, epoch, tier, stype, writer)
+    except Exception:
+        pass
+
+
+def _real_ladder(sid: str, epoch: str) -> bool:
+    """A real sonnet-tier AND a real opus-tier implementation spawn were allowed by this hook in this prompt epoch."""
+    import route_state  # noqa: E402
+    tiers = {e.get("tier") for e in route_state.spawns(sid) if e.get("epoch") == epoch and e.get("writer") is True}
+    return {"sonnet", "opus"} <= tiers
 
 
 def _verbose() -> bool:
@@ -1238,6 +1317,7 @@ def _main() -> int:
             print("cost-router: Fable routing policy unavailable; blocking spawn", file=sys.stderr)
             return 2
         target, d, deny, pnote = None, None, None, None  # fail open: only the Vault-router gate still applies
+        policy, session = None, None
     if deny:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                                  "permissionDecisionReason": deny}}))
@@ -1257,6 +1337,7 @@ def _main() -> int:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                                  "permissionDecisionReason": reason}}))
         return 0
+    _record_real_spawn(data, stype, policy, target, tool_input, session)
     if d is None:
         return 0
     if target == "fable" and stype == FABLE_CONSULTANT and not tool_input.get("model"):

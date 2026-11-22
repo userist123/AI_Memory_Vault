@@ -29,8 +29,21 @@ ID_RE = re.compile(r"^[a-z0-9-]{1,40}$")
 MAX_PROMPT = 8000  # only the head of the prompt is matched: bounded work, and pasted bulk is not the request
 
 
+# Romanian legacy cedilla letters -> the correct comma-below ones (both then fold to plain s/t)
+_CEDILLA = str.maketrans({"ş": "ș", "Ş": "Ș", "ţ": "ț", "Ţ": "Ț"})
+
+
+def normalize(text: str) -> str:
+    """NFKC, Unicode format chars (Cf: zero-width space/joiners, soft hyphen, bidi marks) removed, cedilla s/t mapped to
+    comma-below, casefold, whitespace collapsed. Diacritics are KEPT (see fold)."""
+    s = unicodedata.normalize("NFKC", str(text))
+    s = "".join(c for c in s if unicodedata.category(c) != "Cf")
+    return " ".join(s.translate(_CEDILLA).casefold().split())
+
+
 def fold(text: str) -> str:
-    s = unicodedata.normalize("NFKD", str(text).casefold())
+    """normalize() plus diacritics folded: 'Șterge', 'şterge' and 'sterge' compare equal."""
+    s = unicodedata.normalize("NFKD", normalize(text))
     s = "".join(c for c in s if not unicodedata.combining(c))
     return " ".join(unicodedata.normalize("NFKD", s).casefold().split())
 

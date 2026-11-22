@@ -34,7 +34,18 @@
    "ioc matches",
    "indicators of compromise",
    "prefetch",
-   "srum"
+   "srum",
+   "amcache",
+   "shimcache",
+   "lnk file",
+   "lnk files",
+   "jumplist",
+   "intrusion",
+   "security log",
+   "event log",
+   "malware execution",
+   "triage",
+   "timeline"
   ]
  },
  "summary": "Local-only forensic analysis of Windows evidence and logs; cites path, sha256 and record id; never writes.",

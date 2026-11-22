@@ -761,7 +761,7 @@ def test_g_residual_dfir_repros_are_local_only(tmp_path, text):
     _denied(_spawn(home, brief=BRIEF + "; " + text), "condition (g)")
 
 
-@pytest.mark.parametrize("trigger", ["amcache", "shimcache", "prefetch", "srum", "lnk", "jumplist", "intrusion",
+@pytest.mark.parametrize("trigger", ["amcache", "shimcache", "prefetch", "srum", "lnk file", "jumplist", "intrusion",
                                      "security log", "event log", "malware execution", "triage", "timeline"])
 def test_g_dfir_analyst_carries_the_privacy_triggers(trigger):
     meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
@@ -786,7 +786,7 @@ def test_e1_receipts_without_real_spawns_are_denied(tmp_path):
     _denied(_spawn(home), "condition (d)", "spawn")
 
 
-@pytest.mark.parametrize("tiers", [("sonnet",), ("opus",), ("sonnet", "sonnet"), ("haiku", "opus")])
+@pytest.mark.parametrize("tiers", [("sonnet",), ("opus",), ("sonnet", "sonnet"), ("opus", "opus")])
 def test_e1_both_real_spawn_tiers_are_required(tmp_path, tiers):
     home = _receipts_only(tmp_path)
     for t in tiers:
@@ -836,6 +836,8 @@ def test_e1_project_file_cannot_create_spawn_records(tmp_path):
     (base / f"route-{SID}.spawns").write_text(json.dumps({"spawns": [
         {"epoch": EPOCH, "tier": t, "stype": "vault-worker", "writer": True, "ts": 1} for t in ("sonnet", "opus")]}),
         encoding="utf-8")
+    (proj / ".claude" / "agents").mkdir(parents=True)
+    (proj / ".claude" / "agents" / "fable-executor.md").write_bytes((AGENTS / "fable-executor.md").read_bytes())
     _denied(_spawn(home, project=proj), "condition (d)")
 
 

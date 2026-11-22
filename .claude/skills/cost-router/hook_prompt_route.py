@@ -184,6 +184,16 @@ def pick_specialist(prompt: str, d):
         return None
 
 
+def _local_only(prompt: str) -> list:
+    """Ids of the trusted local_only (privacy) specialists triggered anywhere in the prompt; [] on any failure (the
+    fable-executor gate re-scans the brief against the installed registry and fails closed without one)."""
+    try:
+        from specialists import local_only_hits  # noqa: E402
+        return list(local_only_hits(prompt))
+    except Exception:
+        return []
+
+
 def _route_changed(data: dict, d, risky: bool, same_tier: bool = False, spec: str = "") -> bool:
     """True when the route line must be printed: first prompt of the session, a changed (class, model, subagent),
     risk >= high. Records the signature. COST_ROUTER_VERBOSE_ROUTE=1 never reaches here (always prints)."""
@@ -234,7 +244,7 @@ def main() -> int:
         return 0
     esc = escalation_authorized(prompt)
     if direct_requested(prompt) and len(words) < 4:
-        persist(data, prompt, None, direct=True)  # owner override, however short the prompt
+        persist(data, prompt, None, direct=True, spec=_local_only(prompt))  # owner override, however short the prompt
         if warning:
             _emit(warning)
         return 0
@@ -247,18 +257,15 @@ def main() -> int:
         from route import decide, one_line  # noqa: E402
         d = decide(prompt)
     except Exception:
-        persist(data, prompt)
+        persist(data, prompt, spec=_local_only(prompt))  # router error: the privacy scan still runs and is recorded
         if warning:
             _emit(warning)
         return 0
     same_tier = not direct_requested(prompt) and is_same_tier(resolve_model(data), d)
     sel = pick_specialist(prompt, d)
     spec_ids = [sel.get("id"), sel.get("overlay")] if isinstance(sel, dict) else []
-    try:  # a privacy (local_only) trigger anywhere in the prompt is recorded whatever the class (fable-executor gate)
-        from specialists import local_only_hits  # noqa: E402
-        spec_ids += [x for x in local_only_hits(prompt) if x not in spec_ids]
-    except Exception:
-        pass
+    # a privacy (local_only) trigger anywhere in the prompt is recorded whatever the class (fable-executor gate)
+    spec_ids += [x for x in _local_only(prompt) if x not in spec_ids]
     persist(data, prompt, d, same_tier=same_tier, spec=spec_ids)
     try:
         from specialists import spec_token  # noqa: E402
