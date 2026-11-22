@@ -150,7 +150,11 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         """JSON body, bounded BEFORE reading (security program, path 8): a declared length that
         is not a plain non-negative integer is refused with 400, one over MAX_BODY_BYTES with 413,
         and the connection is closed so the unread bytes are never consumed."""
-        declared=(self.headers.get('Content-Length') or '').strip()
+        lengths=self.headers.get_all('Content-Length') or []
+        if len(lengths)>1:
+            self.close_connection=True
+            raise _BodyRefused(400,'multiple Content-Length headers')
+        declared=(lengths[0] if lengths else '').strip()
         if not declared: return {}
         if not (declared.isascii() and declared.isdigit()):
             self.close_connection=True
@@ -195,11 +199,14 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         self._json(404,{'error':'Endpoint not found'})
     def do_POST(self):
         path=urlparse(self.path).path
-        if path.startswith('/api/v1/') and not self._require_api_auth():
+        if not path.startswith('/api/v1/'):
+            # unknown path: answer before reading anything; the unread body is never consumed
+            self.close_connection=True; self._json(404,{'error':'Endpoint not found'}); return
+        if not self._require_api_auth():
             return
         try: data=self._body()
         except _BodyRefused as exc: self._json(exc.status,{'error':exc.reason}); return
-        except (UnicodeDecodeError,json.JSONDecodeError): self._json(400,{'error':'Invalid JSON body'}); return
+        except (UnicodeDecodeError,json.JSONDecodeError,RecursionError): self._json(400,{'error':'Invalid JSON body'}); return
         if not isinstance(data,dict): self._json(400,{'error':'JSON body must be an object'}); return
         if path=='/api/v1/propose':
             content=str(data.get('content','')).strip(); kind=str(data.get('type','fact')).lower()

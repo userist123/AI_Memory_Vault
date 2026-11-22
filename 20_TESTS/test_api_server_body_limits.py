@@ -45,13 +45,14 @@ def gateway(tmp_path):
         proc.wait(timeout=10)
 
 
-def _post(port: int, length_header: str, body: bytes = b"", auth: bool = True) -> int:
-    lines = [f"POST /api/v1/propose HTTP/1.1", "Host: 127.0.0.1", "Content-Type: application/json",
-             f"Content-Length: {length_header}"]
+def _post(port: int, length_header: str, body: bytes = b"", auth: bool = True,
+          path: str = "/api/v1/propose", extra_headers: tuple = (), timeout: float = 10) -> int:
+    lines = [f"POST {path} HTTP/1.1", "Host: 127.0.0.1", "Content-Type: application/json",
+             f"Content-Length: {length_header}", *extra_headers]
     if auth:
         lines.append(f"Authorization: Bearer {TOKEN}")
     raw = ("\r\n".join(lines) + "\r\n\r\n").encode("ascii") + body
-    with socket.create_connection(("127.0.0.1", port), timeout=10) as s:
+    with socket.create_connection(("127.0.0.1", port), timeout=timeout) as s:
         s.sendall(raw)
         data = b""
         while b"\r\n" not in data:
@@ -86,6 +87,25 @@ def test_a_malformed_content_length_gets_an_answer(gateway, bad):
 def test_a_normal_body_still_works(gateway):
     body = b'{"content": "a small fact", "type": "fact"}'
     assert _post(gateway, str(len(body)), body) == 201
+
+
+def test_unknown_path_is_404_before_any_body_is_read(gateway):
+    # Content-Length 1000 but only 10 bytes sent: the old code blocked in rfile.read. No token needed.
+    assert _post(gateway, "1000", b"0123456789", auth=False, path="/x", timeout=2) == 404
+
+
+def test_more_than_one_content_length_header_is_refused(gateway):
+    body = b'{"content": "a small fact", "type": "fact"}'
+    assert _post(gateway, str(len(body)), body, extra_headers=("Content-Length: 5",)) == 400
+
+
+def test_deeply_nested_json_is_a_400_not_a_crash(gateway):
+    body = b"[" * 100000
+    assert len(body) < 1024 * 1024
+    assert _post(gateway, str(len(body)), body) == 400
+    # the server is still alive afterwards
+    ok = b'{"content": "still alive", "type": "fact"}'
+    assert _post(gateway, str(len(ok)), ok) == 201
 
 
 def test_auth_is_still_checked_before_any_body_handling(gateway):
