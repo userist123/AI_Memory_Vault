@@ -50,8 +50,18 @@ _PYTEST_LINE = re.compile(r"^\W*(?:\d+ (?:passed|failed|errors?|skipped|xfailed|
 _DOTNET = re.compile(r"(?:Passed|Failed)!\s+-\s+Failed:\s*(\d+),\s*Passed:\s*(\d+),\s*Skipped:\s*(\d+),\s*Total:\s*(\d+)")
 
 
-def checks_dir() -> Path:
+def _route_state():
+    """route_state from this script's own lib dir, re-added to sys.path at call time (a test harness may have
+    dropped it after the import-time insert, and `python -I` never has the script dir on the path)."""
+    lib = str(Path(__file__).resolve().parent)
+    if lib not in sys.path:
+        sys.path.insert(0, lib)
     import route_state
+    return route_state
+
+
+def checks_dir() -> Path:
+    route_state = _route_state()
     return route_state.state_dir() / "checks"
 
 
@@ -192,8 +202,7 @@ def prompt_epoch(session: str):
     if not session:
         return None
     try:
-        import route_state
-        state = route_state.load(session) or {}
+        state = _route_state().load(session) or {}
         epoch = state.get("epoch")
         return epoch if isinstance(epoch, str) and epoch else None
     except Exception:

@@ -512,7 +512,10 @@ def test_injection_changes_no_tier_tools_or_authority(homes, prompt):
     ctx, state, full = _hook(homes["with"], prompt)
     ctx0, state0, _ = _hook(homes["without"], prompt)
     assert state == state0, "the registry (spec selection) altered the route state"
-    assert "tools" not in full and "authority" not in full and "spec" not in full
+    assert "tools" not in full and "authority" not in full
+    # M11: the state records the hinted specialist ids (a plain list of short strings) for the fable-executor privacy
+    # check; it never carries a tier, tools or authority taken from the registry
+    assert not full or isinstance(full.get("spec"), list) and all(isinstance(x, str) and len(x) <= 40 for x in full["spec"])
     ids = {e["id"] for e in json.loads((homes["with"] / ".claude/skills/cost-router/registry.json").read_text())["entries"]}
     if "spec=" in ctx:
         token = ctx.split("spec=", 1)[1].split()[0]
