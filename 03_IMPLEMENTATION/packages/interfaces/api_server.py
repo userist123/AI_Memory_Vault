@@ -33,6 +33,14 @@ from cognitive_core.queue_promoter import QueuePromoter
 #: Display label recorded as `reviewed_by` for a decision made through the web UI. It is only a
 #: label: what makes an approval count is the owner Principal passed to the queue.
 REST_REVIEWER_LABEL='jarvis-web'
+#: Largest accepted request body (security program, path 8). A proposal is a short text; 1 MiB
+#: is far above any real one and bounds what one authenticated request can make a thread hold.
+MAX_BODY_BYTES=1024*1024
+
+
+class _BodyRefused(Exception):
+    def __init__(self,status,reason):
+        super().__init__(reason); self.status=status; self.reason=reason
 
 class APIJSONEncoder(json.JSONEncoder):
     def default(self,obj):
@@ -139,7 +147,19 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     def _json(self,status,payload):
         self._set_headers(status); self.wfile.write(json.dumps(payload,ensure_ascii=False,cls=APIJSONEncoder).encode('utf-8'))
     def _body(self):
-        n=int(self.headers.get('Content-Length',0) or 0); raw=self.rfile.read(n); return json.loads(raw.decode('utf-8')) if raw else {}
+        """JSON body, bounded BEFORE reading (security program, path 8): a declared length that
+        is not a plain non-negative integer is refused with 400, one over MAX_BODY_BYTES with 413,
+        and the connection is closed so the unread bytes are never consumed."""
+        declared=(self.headers.get('Content-Length') or '').strip()
+        if not declared: return {}
+        if not (declared.isascii() and declared.isdigit()):
+            self.close_connection=True
+            raise _BodyRefused(400,'invalid Content-Length')
+        n=int(declared) if len(declared)<=12 else MAX_BODY_BYTES+1  # bounded parse
+        if n>MAX_BODY_BYTES:
+            self.close_connection=True
+            raise _BodyRefused(413,'request body too large')
+        raw=self.rfile.read(n); return json.loads(raw.decode('utf-8')) if raw else {}
     def do_OPTIONS(self): self._set_headers(200)
     def do_GET(self):
         p=urlparse(self.path); path=p.path; q=parse_qs(p.query)
@@ -178,7 +198,9 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path.startswith('/api/v1/') and not self._require_api_auth():
             return
         try: data=self._body()
+        except _BodyRefused as exc: self._json(exc.status,{'error':exc.reason}); return
         except (UnicodeDecodeError,json.JSONDecodeError): self._json(400,{'error':'Invalid JSON body'}); return
+        if not isinstance(data,dict): self._json(400,{'error':'JSON body must be an object'}); return
         if path=='/api/v1/propose':
             content=str(data.get('content','')).strip(); kind=str(data.get('type','fact')).lower()
             if not content: self._json(400,{'error':'content is required'}); return
