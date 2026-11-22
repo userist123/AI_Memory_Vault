@@ -483,13 +483,68 @@ def _project_agent_roots() -> list:
     return [r for r in dict.fromkeys(roots) if r != home]
 
 
-_NAME_LINE = re.compile(r"^\s*[\"']?name[\"']?\s*:(.*)$", re.IGNORECASE)
+def _lf_sha256(raw: bytes) -> str:
+    """sha256 of an agent definition with line endings normalized to LF (CRLF and CR): a Windows checkout with
+    core.autocrlf must hash like the pinned (LF) source. install.py applies the same normalization."""
+    return hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
 
 
-def _project_override_problem(pinned):
-    """A message when ANY project `.claude/agents/**/*.md` claims a privileged name (its file stem, or any `name:` line
-    of its first lines, normalized: comment, BOM, zero-width, NFKC, casefold) without being byte-equal to the pinned
-    definition. A tolerant scan on purpose: the simple frontmatter parser is not what Claude Code uses to resolve."""
+_PLAIN_NAME = re.compile(r"^name:[ \t]*([A-Za-z0-9_-]+)[ \t]*(?:[ \t]#.*)?$")
+_NAMEISH = re.compile(r"""^[ \t]*\??[ \t]*["']?name["']?[ \t]*:""", re.IGNORECASE)
+_TOP_KEY = re.compile(r"^(?:[A-Za-z_][A-Za-z0-9_-]*[ \t]*:(?:[ \t]|$)|-(?:[ \t]|$))")
+
+
+def _strict_agent_name(raw: bytes):
+    """(name casefolded, None) when the file's frontmatter has exactly ONE plain `name: <[A-Za-z0-9_-]+>` line (a
+    trailing ` # comment` is stripped) and no other YAML form of the name key (quotes, escapes, tags, anchors, block
+    scalars, flow mappings, `? name`, multi-line plain scalars, duplicates); else (None, why)."""
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeError:
+        return None, "not valid UTF-8"
+    if text.startswith("﻿"):
+        text = text[1:]
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    if i >= len(lines) or lines[i].rstrip() != "---":
+        return None, "no frontmatter"
+    name = None
+    after_name = False
+    closed = False
+    for ln in lines[i + 1:]:
+        if ln.rstrip() == "---":
+            closed = True
+            break
+        if not ln.strip() or ln.lstrip().startswith("#"):
+            continue
+        indented = ln[0] in " \t"
+        if after_name and indented:
+            return None, "the name value continues on the next line"
+        after_name = False
+        if _NAMEISH.match(ln):
+            m = _PLAIN_NAME.match(ln)
+            if not m or name is not None:
+                return None, "the name is not a single plain `name: value` line"
+            name = m.group(1).casefold()
+            after_name = True
+            continue
+        if not indented and not _TOP_KEY.match(ln):
+            return None, "an unsupported YAML form (not a plain `key: value` line)"
+    if not closed:
+        return None, "unclosed frontmatter"
+    if name is None:
+        return None, "no `name:` line"
+    return name, None
+
+
+def _project_override_problem(pinned, targets):
+    """A message when a project `.claude/agents/**/*.md` cannot be classified or claims a privileged name that is
+    one of the `targets` (the spawned agent, plus fable-consultant on a Fable-sensitive spawn) without being the pinned
+    definition (LF-normalized sha256). Every file must carry exactly one plain `name:` line (_strict_agent_name): a
+    file that does not may claim a privileged name in a form the Claude Code YAML parser reads differently from this
+    one, so it is treated as possibly privileged. Files of other, plain-named agents are out of scope."""
     for root in _project_agent_roots():
         base = root / ".claude" / "agents"
         if not base.is_dir():
@@ -499,24 +554,21 @@ def _project_override_problem(pinned):
         except OSError:
             return f"cannot list {base}"
         for f in files:
-            claimed = set()
-            if _norm_name(f.stem) in PRIVILEGED_AGENTS:
-                claimed.add(_norm_name(f.stem))
+            rel = f.relative_to(base).as_posix()
             try:
                 raw = f.read_bytes()
             except OSError:
-                if claimed:
-                    return f"project agent definition {f.name} is unreadable"
-                continue
-            for line in raw.decode("utf-8", errors="replace").splitlines()[:80]:
-                m = _NAME_LINE.match(line.lstrip("\ufeff"))
-                if m and _norm_name(m.group(1)) in PRIVILEGED_AGENTS:
-                    claimed.add(_norm_name(m.group(1)))
-            digest = hashlib.sha256(raw).hexdigest()
-            for name in sorted(claimed):
-                if pinned.get(name) != digest:
-                    return (f"project agent definition {f.name} claims the privileged name {name!r} and does not match "
-                            "the pinned sha256 recorded at install")
+                return (f"project agent definition {rel} is unreadable, so it cannot be checked against the pinned "
+                        "definitions")
+            name, why = _strict_agent_name(raw)
+            if name is None:
+                return (f"project agent definition {rel} may claim a privileged agent name ({why}) and cannot be "
+                        "checked against the pinned definitions")
+            digest = _lf_sha256(raw)
+            for claimed in sorted({name, _norm_name(f.stem)} & PRIVILEGED_AGENTS & set(targets)):
+                if pinned.get(claimed) != digest:
+                    return (f"project agent definition {rel} claims the privileged name {claimed!r} and does not "
+                            "match the pinned sha256 recorded at install")
     return None
 
 
@@ -532,7 +584,7 @@ def _definition_mismatch(stype: str, fields, path, pinned):
     if not privileged:
         return None
     try:
-        actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+        actual = _lf_sha256(Path(path).read_bytes())
     except OSError:
         return f"definition of agent {name!r} is unreadable"
     if pinned.get(name) == actual:
@@ -931,7 +983,8 @@ def _main() -> int:
     else:
         mismatch = _definition_mismatch(stype, agent_frontmatter, agent_path, pinned_agents)
         if not mismatch and (stype in PRIVILEGED_AGENTS or fable_sensitive):
-            mismatch = _project_override_problem(pinned_agents)
+            mismatch = _project_override_problem(
+                pinned_agents, {stype} | ({FABLE_CONSULTANT} if fable_sensitive else set()))
     if mismatch:
         if fable_sensitive:
             contract = ("; the definition also violates the read-only agent contract"

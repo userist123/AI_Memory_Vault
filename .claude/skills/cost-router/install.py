@@ -349,6 +349,12 @@ def _file_sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _lf_sha(path: Path) -> str:
+    """sha256 with CRLF and CR normalized to LF: how agent definitions are pinned and checked (hook_agent_model
+    applies the same normalization, so a CRLF checkout of the same text matches)."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
+
+
 def manifest(root: Path, extra: dict[str, Path] | None = None) -> dict[str, str]:
     """relative path -> sha256 of the files install() copies from `root` (same ignore rules), plus `extra`
     (relative path -> source file). VERSION and the agent manifest are generated per install and excluded."""
@@ -477,13 +483,13 @@ def pins_status(skill_dir: Path, agents_dir: Path, agents_src: Path | None) -> d
     differing, edited = [], []
     for name, want in sorted((pinned or {}).items()):
         try:
-            same = _file_sha(agents_dir / name) == want
+            same = _lf_sha(agents_dir / name) == want
         except OSError:
             same = False
         if not same:
             (differing if Path(name).stem in PRIVILEGED_AGENTS else edited).append(name)
     if agents_src is not None and pinned is not None:
-        source = {p.name: _file_sha(p) for p in sorted(agents_src.glob("*.md"))}
+        source = {p.name: _lf_sha(p) for p in sorted(agents_src.glob("*.md"))}
         if source != pinned:
             agents_pinned_ok = False
     return {"pins_recorded": bool(record), "config_ok": config_ok, "agents_pinned_ok": agents_pinned_ok,
@@ -632,7 +638,7 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     # hook_agent_model compares a resolved privileged definition (fable-consultant, vault-reviewer, any opus/fable
     # agent) with these hashes: a project .claude/agents/<name>.md is searched before ~/.claude/agents
     (staging / PINNED_AGENTS).write_text(
-        json.dumps({src.name: _sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
+        json.dumps({src.name: _lf_sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
     (staging / PIN_RECORD).write_text(
         json.dumps({n: _file_sha(staging / n) for n in (CONFIG_NAME, PINNED_AGENTS)}, indent=2) + "\n", encoding="utf-8")
     try:
