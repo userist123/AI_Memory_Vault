@@ -112,4 +112,15 @@ create table if not exists progress_baseline(project_id uuid primary key referen
 create table if not exists progress_statements(id text not null, project_id uuid not null references projects(id) on delete cascade, number int not null, data jsonb not null,
   updated_at timestamptz not null default now(), primary key(project_id, id));
 create unique index if not exists progress_statements_number on progress_statements(project_id, number);
+-- chestionarul clientului (core/client-brief.ts): răspunsurile completate pe un link public și pozele de inspirație (JPEG curățat
+-- de metadate). Un singur link nerevocat pe proiect. Pozele se șterg odată cu chestionarul
+create table if not exists client_briefs(token text primary key, project_id uuid not null references projects(id) on delete cascade, data jsonb not null default '{}'::jsonb,
+  rev int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), submitted_at timestamptz, expires_at timestamptz,
+  revoked_at timestamptz, imported_at timestamptz);
+create unique index if not exists client_briefs_active on client_briefs(project_id) where revoked_at is null;
+create index if not exists client_briefs_project on client_briefs(project_id, created_at desc);
+create table if not exists brief_photos(id uuid primary key default gen_random_uuid(), token text not null references client_briefs(token) on delete cascade, mime text not null,
+  data bytea not null, bytes int not null, width int not null, height int not null, verdict text check (verdict in ('love','ok','dislike')),
+  note text not null default '' check (char_length(note) <= 200), created_at timestamptz not null default now());
+create index if not exists brief_photos_token on brief_photos(token, created_at);
 `;

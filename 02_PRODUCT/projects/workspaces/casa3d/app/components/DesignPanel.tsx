@@ -5,6 +5,7 @@ import { STYLES, PRIORITIES, DEFAULT_BRIEF, type DesignBrief } from '@/core/brie
 import { usePrefs } from '@/lib/prefs';
 import { issueText } from '@/lib/i18n';
 import { formatMoney } from '@/core/format';
+import ClientBriefPanel from './ClientBriefPanel';
 const STATUS: Record<string, string> = { PASS: 'design.status.PASS', WARNING: 'design.status.WARNING', ERROR: 'design.status.ERROR' };
 
 export default function DesignPanel({ id, snap, onPreview, onApplied, onBrief, flush, say, cur = 'RON' }: { id: string; snap: Snapshot; onPreview(v: any | null, pid: string | null): void; onApplied(s: Snapshot, rev: number, draftRev?: number | null): void; onBrief?(brief: DesignBrief, draftRev?: number | null): void; flush?(): Promise<boolean>; say(t: string): void; cur?: string }){
@@ -40,6 +41,8 @@ export default function DesignPanel({ id, snap, onPreview, onApplied, onBrief, f
     <label className="f"><span>{t('design.colors')}</span><input type="text" maxLength={120} value={b.colors} placeholder={t('design.colorsPh')} onChange={e => set({ colors: e.target.value })} /></label>
     <label className="f"><span>{t('design.avoid')}</span><input type="text" maxLength={200} value={b.avoid} placeholder={t('design.avoidPh')} onChange={e => set({ avoid: e.target.value })} /></label>
     <label className="f"><span>{t('design.notes')}</span><textarea maxLength={600} rows={3} value={b.notes} onChange={e => set({ notes: e.target.value })} style={{ width: '100%', border: '1px solid var(--rule)', borderRadius: 6, padding: 8 }} /></label>
+    {/* chestionarul completat de client: câmpurile preluate intră și în starea locală a brief-ului, ca „Generează” să nu rescrie brief-ul vechi */}
+    <ClientBriefPanel id={id} brief={b} cur={cur} say={say} flush={flush} onImported={(sb, keys, draftRev) => { setB(prev => ({ ...prev, ...Object.fromEntries(keys.map(k => [k, sb[k]])) })); onBrief?.(sb, draftRev); }} />
     <button className="btn primary" disabled={busy || !b.suppliers.length} onClick={generate}>{busy ? t('design.generating') : t('design.generate')}</button>
     {res && <>
       <div className={`issue ${res.aiGenerated ? 'PASS' : 'WARNING'}`}>{res.aiGenerated ? t('design.byAi', { model: res.model }) : t('design.byRules')} {res.notes.join(' ')}</div>

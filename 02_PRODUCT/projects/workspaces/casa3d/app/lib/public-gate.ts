@@ -6,6 +6,8 @@ const LOOPBACK_IP = /^(127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/i;
 const PUBLIC_PATHS = [
   /^\/share\/[A-Za-z0-9_-]{43}\/?$/,                 // prezentarea pentru client
   /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?|\/render\/[A-Za-z0-9_-]{1,80})?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul, pinii pe imagine și imaginile 3D gata randate
+  /^\/brief\/[A-Za-z0-9_-]{43}\/?$/,                 // chestionarul clientului (lib/client-brief.ts)
+  /^\/api\/brief\/[A-Za-z0-9_-]{43}(\/submit|\/photos(\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?)?$/,  // răspunsurile, trimiterea și pozele chestionarului
   /^\/accesibilitate\/?$/,                             // declarația de accesibilitate (Legea 232/2022), legată din linkul clientului
   /^\/_next\//, /^\/tex\//, /^\/models\//, /^\/favicon\.(ico|svg)$/,
 ];

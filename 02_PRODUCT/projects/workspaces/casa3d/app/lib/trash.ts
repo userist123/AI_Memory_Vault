@@ -17,6 +17,7 @@ export async function moveToTrash(owner: string, id: string){
     const { rows } = await q('update projects set deleted_at=now() where id=$1 and owner=$2 and deleted_at is null returning deleted_at', [id, owner]);
     if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.');
     const rv = await q('update shares set revoked_at=now() where project_id=$1 and revoked_at is null', [id]);   // clientul nu mai vede nimic
+    await q('update client_briefs set revoked_at=now() where project_id=$1 and revoked_at is null', [id]);   // nici chestionarul clientului nu mai primește răspunsuri
     return { ok: true, purgeAt: purgeAt(rows[0].deleted_at), revokedLinks: (rv as any).affectedRows ?? (rv as any).rowCount ?? 0 };
   });
 }

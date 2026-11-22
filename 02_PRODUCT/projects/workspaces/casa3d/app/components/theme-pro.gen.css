@@ -320,3 +320,6 @@
 .ws.theme-pro .pano-hot{background:rgba(26,26,26,.78);color:#ffffff;border:2px solid #3d3d3d;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .ws.theme-pro .pano-hot:hover,.ws.theme-pro .pano-hot:focus-visible{background:#749fd4}
 .ws.theme-pro .prog-table tr.over td{background:#222222}
+.ws.theme-pro .cbf progress::-webkit-progress-value{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
+.ws.theme-pro .cbf progress::-moz-progress-bar{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
+.ws.theme-pro .cbf-opt[aria-pressed=true]{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
