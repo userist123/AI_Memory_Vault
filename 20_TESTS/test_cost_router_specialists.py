@@ -84,7 +84,7 @@ def test_compile_is_byte_identical_twice_and_within_cap(tree):
     assert len(a) <= 8192
     reg = json.loads(a)
     ids = [e["id"] for e in reg["entries"]]
-    assert ids == sorted(ids) and len(ids) == 13
+    assert ids == sorted(ids) and len(ids) == 14
     assert all(e["artifact_sha256"] and len(e["src_sha256"]) == 64 for e in reg["entries"])
 
 
@@ -174,7 +174,7 @@ def test_bak_dirs_are_ignored(tree):
     shutil.copy2(_meta(s_dir, "surse-web"), dup)  # would be a mismatched id
     (s_dir / "roles" / "vault-worker.json.bak-1").write_text("{", encoding="utf-8")
     reg, _ = rc.compile_registry(s_dir, skills, agents)
-    assert len(reg["entries"]) == 13
+    assert len(reg["entries"]) == 14
 
 
 def test_size_cap_enforced(tree):
@@ -214,7 +214,7 @@ def test_shipped_sidecars_cover_the_required_set(tree):
     s_dir, skills, agents = tree
     reg, _ = rc.compile_registry(s_dir, skills, agents)
     assert {e["id"] for e in reg["entries"]} == {
-        "vault-worker", "vault-reviewer", "explore", "fable-consultant", "analist-juridic", "aplicatie-securizata",
+        "vault-worker", "vault-reviewer", "explore", "fable-consultant", "check-runner", "analist-juridic", "aplicatie-securizata",
         "surse-web", "agent-bridge", "animatie-3d", "clips-kitty", "clip", "prompt-director", "cost-router"}
     by = {e["id"]: e for e in reg["entries"]}
     assert by["cost-router"]["kind"] == "overlay" and by["prompt-director"]["kind"] == "overlay"

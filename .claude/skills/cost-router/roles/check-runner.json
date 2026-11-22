@@ -1,0 +1,48 @@
+{
+ "schema_version": 1,
+ "id": "check-runner",
+ "kind": "agent",
+ "domain": [
+  "code"
+ ],
+ "task_classes": [
+  "summarize"
+ ],
+ "triggers": {
+  "ro": [
+   "ruleaza testele"
+  ],
+  "en": [
+   "run the tests"
+  ]
+ },
+ "summary": "Runs a given check via check.py, reports the receipt line and failing excerpts verbatim.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "haiku",
+  "default": "haiku",
+  "max": "sonnet"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Receipt line, failing lines.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 15,
+ "subagent_type": "check-runner",
+ "effort": "low",
+ "cost": {
+  "class": "S",
+  "typical_usd": null
+ }
+}

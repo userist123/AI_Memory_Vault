@@ -348,6 +348,17 @@ project-local `routing/route_cli.py` is never executed. `hook_enforce_route` cou
 `python -m routing.route_cli route|dispatch`. The automatic in-hook router gate stays inside pinned vault roots only;
 outside them nothing calls the router unless the advisor runs the wrapper.
 
+### 4F. Acceptance receipts (`lib/check.py`) and the `check-runner` agent
+
+`python -I <S>/lib/check.py run [--session <id>] --label <name> -- <command...>` runs the command (argv list, no shell),
+keeps the exit code, duration, last 40 output lines and the sha256 of the command line in
+`~/.claude/cache/cost-router/checks/<session-or-pid>-<epoch>.json`, and prints `check <label>: exit=<n> pass|fail
+(<pytest or dotnet summary>)`. `check.py last [--label]` prints the newest receipt. The `check-runner` agent (Haiku;
+Read, Grep, Glob, Bash; sidecar `roles/check-runner.json`, write none) runs one given check this way and quotes the
+receipt line and the failing lines verbatim, never interpreting causes. When the Agent hook escalates a spawn one tier it
+appends `after failed check <label> exit=<n>` if the session (matched by `--session`) has a failing receipt: informational
+only. Receipts are forgeable by the main session and never grant authority or relax any gate.
+
 ## 5. Report shape (end of task)
 
 Outcome first, then evidence (commands, exit codes, counts), then what was not verified, then the

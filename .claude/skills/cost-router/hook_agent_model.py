@@ -1040,6 +1040,14 @@ def _main() -> int:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                                  "permissionDecisionReason": deny}}))
         return 0
+    if pnote and pnote.startswith("escalated "):
+        try:  # informational only: a receipt is forgeable by the main session and never grants anything
+            import check  # noqa: E402
+            failed = check.last_failing(data.get("session_id"))
+            if failed:
+                pnote += f"; after failed check {failed['label'][:40]} exit={failed['exit']}"
+        except Exception:
+            pass
     if definition_note:
         pnote = "; ".join(x for x in (pnote, definition_note) if x)
     reason = None if off else gate_and_mark(data)  # OFF: no Vault-router gate, no delegation marker
