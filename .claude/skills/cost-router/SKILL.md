@@ -336,6 +336,18 @@ the specialist's acceptance check. The hint is advisory: prompt text can only se
 changes the route state, tier, tools or authority, and a missing or corrupt registry means no hint (fail open, the Fable
 guard is separate). Not a gate: the route class and the hooks of section 4A stay binding.
 
+## 4E. Vault Agent Router on demand (Opus as main advisor)
+
+Opus as main advisor runs `python -I <installed cost-router>/lib/vault_router.py route --goal "<text>" [--json]` when it
+wants the Agent Router's decision, from any project. The vault root is the first root pinned in the installed
+`config.json` that still passes the M2 link/realpath check, never the cwd or the project; nothing configured is exit 3.
+It runs the vault's `routing.route_cli route` (argv list, no shell, cwd = pinned root, 20 s timeout; `-I` ignores
+PYTHONPATH, so the child puts the pinned packages dir on `sys.path` itself) and prints status, primary agent, verifier and
+`execute_via`. Exit 0 ROUTED/PLANNED, 4 BLOCKED, 5 timeout or crash. The goal is one argv element and is never logged. A
+project-local `routing/route_cli.py` is never executed. `hook_enforce_route` counts this call as a router receipt, like
+`python -m routing.route_cli route|dispatch`. The automatic in-hook router gate stays inside pinned vault roots only;
+outside them nothing calls the router unless the advisor runs the wrapper.
+
 ## 5. Report shape (end of task)
 
 Outcome first, then evidence (commands, exit codes, counts), then what was not verified, then the

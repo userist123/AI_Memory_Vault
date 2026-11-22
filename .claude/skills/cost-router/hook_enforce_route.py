@@ -33,13 +33,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 # An actual interpreter call of `-m routing.route_cli route|dispatch`, at the command start or after
 # a separator. Accepted launchers: python/python3[.x][.exe] (any path), `py [-3[.x]]`, `uv run python`,
 # `env [VAR=x ...]`, leading VAR=value assignments, and interpreter flags before -m (`-I`, `-X utf8`).
-ROUTER_CALL = re.compile(
-    r"(?:^|[;&|\n(])\s*"
-    r"(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
-    r"(?:uv\s+run\s+)?"
-    r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
-    r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*"  # only -X/-W take a value
-    r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+_LAUNCH = (r"(?:^|[;&|\n(])\s*"
+           r"(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
+           r"(?:uv\s+run\s+)?"
+           r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
+           r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*")  # only -X/-W take a value
+ROUTER_CALL = re.compile(_LAUNCH + r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+# The on-demand wrapper (lib/vault_router.py route): same launcher forms; the script must sit in a cost-router/lib dir.
+_VR = r"cost-router[\\/]lib[\\/]vault_router\.py"
+VAULT_ROUTER_CALL = re.compile(
+    _LAUNCH + r"""\s+(?:"[^"]*""" + _VR + r"""\"|'[^']*""" + _VR + r"""'|[^\s"';&|]*""" + _VR + r""")\s+route\b""")
 
 
 # Exempt from the delegation counter (owner rule 2026-10-16): a single read-only or one-shot git/gh
@@ -76,7 +79,8 @@ def exempt(tool_name, tool_input: dict) -> bool:
 def invokes_router(command: str) -> bool:
     # A real router call is short; scanning only the head keeps the regex linear-time in practice
     # (a long run of separators, e.g. inline minified JSON, made it quadratic past the hook timeout).
-    return bool(ROUTER_CALL.search((command or "")[:2000]))
+    head = (command or "")[:2000]
+    return bool(ROUTER_CALL.search(head) or VAULT_ROUTER_CALL.search(head))
 
 
 def from_subagent(data: dict) -> bool:
