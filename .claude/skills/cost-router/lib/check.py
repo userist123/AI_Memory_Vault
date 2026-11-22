@@ -102,6 +102,21 @@ def write_receipt(receipt: dict, session: str):
         return None
 
 
+CMD_METACHARS = frozenset('&|<>^%"'+chr(10)+chr(13))
+
+
+def shim_refusal(argv):
+    """A .cmd/.bat target is started through cmd.exe, which re-parses the command line: refuse an argument that holds a
+    cmd metacharacter (argument injection). Returns the refusal text, or None when it is fine to run."""
+    exe = shutil.which(argv[0]) or argv[0]
+    if str(exe).lower().endswith((".cmd", ".bat")):
+        for a in argv[1:]:
+            if any(c in CMD_METACHARS for c in a):
+                return (f"check: refused: {os.path.basename(str(exe))} is a cmd.exe script and an argument holds a cmd "
+                        "metacharacter (& | < > ^ % \" newline); run it through an .exe or drop the character")
+    return None
+
+
 def run(argv, label: str, session: str = "", timeout: float = 1800.0):
     start = time.time()
     exe = shutil.which(argv[0]) or argv[0]  # resolve .cmd/.exe shims the way a shell would, without a shell
@@ -179,6 +194,10 @@ def main(argv=None) -> int:
             return 2
         if not cmd:
             print("check: give the command after --")
+            return 2
+        refusal = shim_refusal(cmd)
+        if refusal:
+            print(refusal)
             return 2
         session = _session(args.session)
         receipt = run(cmd, args.label, session, args.timeout)

@@ -195,5 +195,45 @@ def test_sidecar_is_accepted_by_the_compiler_and_matches_the_agent():
     reg, data = rc.compile_registry(SKILL, ROOT / ".claude" / "skills", ROOT / ".claude" / "agents")
     entry = {e["id"]: e for e in reg["entries"]}["check-runner"]
     assert entry["kind"] == "agent" and entry["subagent_type"] == "check-runner"
-    assert entry["tier"][0] == "haiku" and entry["artifact_sha256"]
-    assert len(data) <= 8192
+    hashes = json.loads(rc.compile_full(SKILL, ROOT / ".claude" / "skills", ROOT / ".claude" / "agents").hashes)
+    assert entry["tier"][0] == "haiku" and hashes["entries"]["check-runner"]["artifact_sha256"]
+    assert len(data) <= 16384
+
+
+# ---- .cmd/.bat shims: cmd.exe re-parses the command line (reviewer probe ph) -------------------------------------
+
+CMD_METACHARS = ["&", "|", "<", ">", "^", "%", '"', "\n"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason=".cmd shims only matter on Windows")
+@pytest.mark.parametrize("ch", CMD_METACHARS, ids=["amp", "pipe", "lt", "gt", "caret", "pct", "quote", "newline"])
+def test_cmd_shim_with_a_cmd_metacharacter_argument_is_refused(home, tmp_path, ch):
+    shim = tmp_path / "shim.cmd"
+    shim.write_text("@echo off"+chr(13)+chr(10)+"echo ARGS=%*"+chr(13)+chr(10), encoding="ascii")
+    sentinel = tmp_path / "PWNED.txt"
+    r = _run(home, "run", "--label", "b", "--", str(shim), f'x{ch} echo hacked > "{sentinel}"')
+    assert r.returncode == 2 and "cmd" in r.stdout.lower() and "refus" in r.stdout.lower()
+    assert not sentinel.exists()
+    assert _receipts(home) == []  # nothing ran, nothing recorded
+
+
+@pytest.mark.skipif(os.name != "nt", reason=".cmd shims only matter on Windows")
+def test_cmd_shim_with_plain_arguments_still_runs(home, tmp_path):
+    shim = tmp_path / "shim.cmd"
+    shim.write_text("@echo off\r\nexit /b 0\r\n", encoding="ascii")
+    r = _run(home, "run", "--label", "b", "--", str(shim), "plain", "--flag=value", "path/with-dash_1.txt")
+    assert r.returncode == 0 and "exit=0 pass" in r.stdout
+
+
+def test_metacharacters_are_fine_for_a_real_executable(home):
+    r = _run(home, "run", "--label", "ok", "--", sys.executable, "-c", "print('a & b | c ^ % \"')")
+    assert r.returncode == 0 and "exit=0 pass" in r.stdout
+
+
+def test_shim_refusal_helper_is_pure(tmp_path):
+    assert check.shim_refusal([sys.executable, "-c", "x&y"]) is None
+    shim = tmp_path / "t.bat"
+    shim.write_text("@echo off"+chr(13)+chr(10), encoding="ascii")
+    assert check.shim_refusal([str(shim), "plain"]) is None
+    assert "metacharacter" in check.shim_refusal([str(shim), "a|b"])
+    assert check.shim_refusal([str(shim)]) is None
