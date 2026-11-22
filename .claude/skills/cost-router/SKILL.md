@@ -75,8 +75,14 @@ and has no extra frontmatter capability fields. Missing, ambiguous, unreadable, 
 definitions block the spawn; unexpected hook errors and malformed hook payloads exit 2. With no
 explicit model override, the exact model ID in frontmatter is preserved; explicit non-Fable overrides
 are respected. Provider-prefixed Fable IDs are detected, while `inherit` on any other subagent is
-forced to Opus. A user-scope hook shadows the project hook only when the actual blocking
-`PreToolUse`/`Agent|Task` registration is present and its installed files are current. The consultant's
+forced to Opus, and so is `CLAUDE_CODE_SUBAGENT_MODEL=fable` or `inherit` (tool input or agent frontmatter) in a
+Fable session: all of these count as Fable-sensitive even with `COST_ROUTER_OFF=1`. Privileged definitions
+(`fable-consultant`, `vault-reviewer`) must match the sha256 in `agents.pinned.json` (written at install); any project
+`.claude/agents/*.md` claiming such a name (normalized: comment, BOM, zero-width, NFKC, casefold) or stem that does not
+match blocks a Fable-sensitive spawn and adds a note to an Opus reviewer; a missing `agents.pinned.json` blocks the
+consultant. A user-scope hook shadows the project hook only when the actual blocking
+`PreToolUse`/`Agent|Task` registration is present; a project copy whose release-pin `seq` is above the installed one
+is a stale install (exit 2), otherwise the installed copy answers (shadow by `seq`, never by bytes). The consultant's
 recommendation is not verification or approval. Pass a model yourself only to escalate one notch
 after a failed check.
 Do it yourself when the work is a one-minute edit or answer: a subagent starts empty and re-reads.
@@ -215,9 +221,11 @@ context, 78% of it inside long-lived subagents. Therefore:
   policy cannot be validated for a Fable-sensitive spawn, when the registered user-scope copy is
   stale, or when the hook cannot execute (the Agent handler uses `onFailure: block`). Other
   legacy hooks retain their existing fail-open behavior.
-- **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) makes every hook return at once: exit 0, no stdout, no
-  state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
-  CLAUDE.md, project MCP and skills and differ only in the hook layer). `hook_agent_usage.py --report` still works.
+- **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) switches off the efficiency behaviour of every hook: exit 0,
+  no stdout, no state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
+  CLAUDE.md, project MCP and skills and differ only in the hook layer). It does NOT make the Fable guard inert: a
+  Fable-sensitive Agent spawn (fable-consultant, an explicit Fable model, `CLAUDE_CODE_SUBAGENT_MODEL=fable`, `inherit` in a
+  Fable session) is still validated and rewritten. `hook_agent_usage.py --report` still works.
 
 ### 4B. Subagent usage telemetry and idempotency
 
@@ -275,7 +283,8 @@ context, 78% of it inside long-lived subagents. Therefore:
 - Unknown session model = cheapest tier (note: set ANTHROPIC_MODEL). The transcript's last model beats a stored one.
   A model known only from a settings file (`route_state.resolve_session_model_ex` source `settings`/`none`) is a guess and counts
   as unknown for escalation; payload, transcript, stored and env `ANTHROPIC_MODEL` are trusted.
-- `COST_ROUTER_OFF=1` stays inert for every hook, including `install.py --session-start`.
+- `COST_ROUTER_OFF=1` stays inert for every hook, including `install.py --session-start`, except the Agent hook's Fable
+  guard (see Kill switch); the installed hooks run `python -I`.
 - `COST_ROUTER_NO_SELF_INSTALL=1` makes `hook_self_update.py` and `install.py --session-start/--self-update` inert:
   no git, no network, no write under `~/.claude`.
 - Hook-driven refresh is OFF by default (owner, 2026-10-22): `install.py --session-start/--self-update` and
@@ -303,6 +312,9 @@ the commit it pins.
 Every install (also `--session-start`) writes `VERSION`: line 1 is the source commit (`git rev-parse HEAD`, `+dirty`, or `unknown`; the
 self-update ref when given), line 2 the sha256 of the file manifest. `python install.py --verify [--json] [--home <dir>]` is read-only:
 it lists missing/extra/differing files and both VERSION lines; exit 0 only when identical, 1 on any difference or a missing VERSION.
+It also checks the trust data: `config.json` (pinned vault roots, listed) and `agents.pinned.json` against `pins.sha256.json`
+(what install wrote), the privileged agent files in `~/.claude/agents` against the pins, and (with a source) the pins against the
+source agents; `--require-hooks` needs the exact command of the installed copy, not a substring.
 
 ## 5. Report shape (end of task)
 
@@ -314,4 +326,4 @@ delegation that happened (which subagent, which model) in one line. Nothing else
 - The route line prints only when (class, model, subagent) changes, on risk >= high, or with `COST_ROUTER_VERBOSE_ROUTE=1` (long form, always). State is written every prompt either way.
 - The repo map is injected on `startup` only (`COST_ROUTER_REPO_MAP=always`: also clear/compact); compact gets a one-line state. Cap 1500 chars (`COST_ROUTER_REPO_MAP_MAX_CHARS`).
 - The Agent hook emits no allow-path context (only the denial reason, or `COST_ROUTER_VERBOSE_ROUTE=1`); read-only agent types (strict allowlist: a project `.claude/agents/<type>.md` whose frontmatter `tools` are all in Read, Grep, Glob, LS, WebFetch, WebSearch or vault-memory read MCP tools; the built-in Explore without such a file, or the project Explore with Bash, is NOT read-only) are clamped to the explore class (haiku, cap one tier above) on non-risky, non-review/design briefs only (review/verify/design or risk >= high keep the old floor); `COST_ROUTER_READONLY_FLOOR=1` restores the old floor. The subagent `prompt` is never modified.
-- `COST_ROUTER_OFF=1` makes every hook inert. Evidence: the phase-3 benchmark dir under `07_EVALUATION/reports/` (to be produced).
+- `COST_ROUTER_OFF=1` makes every hook inert (the Fable guard of the Agent hook excepted). Evidence: the phase-3 benchmark dir under `07_EVALUATION/reports/` (to be produced).
