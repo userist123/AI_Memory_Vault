@@ -9,7 +9,7 @@ export interface Snag extends Required<Pick<SnagInput, 'title' | 'trade'>> { id:
 export const SITE_LIMITS = { title: 160, body: 2000, photosPerSnag: 8, photoBytes: 3 * 1024 * 1024, photosPerProject: 600, snagsPerProject: 1000 };
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v);
-const clean = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max) : '';
+export const clean = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max) : '';
 
 export class SiteError extends Error {}
 /** Validare pentru creare (full) sau modificare (parțial). Camerele trebuie să existe în proiect. */

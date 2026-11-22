@@ -18,6 +18,8 @@ import { PlanSvg } from './PrintView';
 import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
 import PinLayer from './PinLayer';
 import ClientDeliveries from './ClientDeliveries';
+import ClientSiteLog from './ClientSiteLog';
+import type { ClientLogEntry } from '@/core/site-log';
 import { ClientChanges } from './ChangeOrders';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
@@ -31,7 +33,7 @@ import { feedbackLog } from '@/core/feedback-log';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
-export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null; renders?: Record<string, number[]> }
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null; renders?: Record<string, number[]>; siteLog?: ClientLogEntry[] }
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   // pe link datele vin deja de pe server: planșele (și coperta, elementul LCP) sunt în HTML-ul inițial, nu după hidratare
@@ -173,6 +175,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <footer>{num(n)}</footer></section>
     {share && <ClientChanges token={share.token} offered={pres.budget.total} cur={cur} />}
     {share?.progress && <ClientDeliveries p={share.progress} />}
+    {share && (share.siteLog?.length ?? 0) > 0 && <ClientSiteLog token={share.token} entries={share.siteLog!} />}
     {share && <FeedbackBox id="fb-general" token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
     {/* istoricul deciziilor: cine, ce și când (trasabilitate pentru client și designer); cele mai noi primele */}
     {share && feedback.length > 0 && <details className="fb-log no-print"><summary>{t('fb.logTitle', { n: feedback.length })}</summary>

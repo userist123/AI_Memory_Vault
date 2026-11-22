@@ -101,4 +101,10 @@ create table if not exists project_commercial(project_id uuid primary key refere
 -- linkul clientului să le arate imediat, fără motorul 3D. Cheia e „overview” sau id-ul camerei, câte o lățime (800, 1600)
 create table if not exists revision_renders(project_id uuid not null references projects(id) on delete cascade, revision_number int not null, key text not null,
   width int not null, mime text not null, data text not null, created_at timestamptz not null default now(), primary key(project_id, revision_number, key, width));
+-- jurnalul zilnic de șantier (core/site-log.ts): pozele stau în site_photos, ca la remedieri. O intrare e internă până când
+-- designerul o face vizibilă clientului (client_visible), deci implicit nu apare pe link
+create table if not exists site_log(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  date date not null, text text not null, weather text not null default '', workers int, trades jsonb not null default '[]'::jsonb, photos jsonb not null default '[]'::jsonb,
+  client_visible boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create index if not exists site_log_project on site_log(project_id, date desc);
 `;

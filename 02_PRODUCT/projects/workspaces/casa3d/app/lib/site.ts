@@ -10,7 +10,9 @@ const row = (r: any): Snag => ({ id: r.id, number: r.number, title: r.title, bod
   createdAt: new Date(r.created_at).toISOString(), updatedAt: new Date(r.updated_at).toISOString(), resolvedAt: r.resolved_at ? new Date(r.resolved_at).toISOString() : null });
 const v = <T>(fn: () => T) => { try { return fn(); } catch (e: any){ if (e instanceof SiteError) throw new HttpError(400, e.message); throw e; } };
 
-async function ownPhotos(projectId: string, ids: string[]){ if (!ids.length) return;
+/** Poza e folosită de o remediere sau de o intrare din jurnalul de șantier (lib/site-log.ts): aceeași stocare pentru amândouă. */
+const UNUSED = `not exists (select 1 from snags s where s.project_id=$1 and s.photos ? p.id::text) and not exists (select 1 from site_log l where l.project_id=$1 and l.photos ? p.id::text)`;
+export async function ownPhotos(projectId: string, ids: string[]){ if (!ids.length) return;
   const { q } = await getDb(), { rows } = await q('select id from site_photos where project_id=$1 and id = any($2::uuid[])', [projectId, ids]);
   if (rows.length !== ids.length) throw new HttpError(400, 'O poză nu aparține proiectului.'); }
 
@@ -44,16 +46,19 @@ export async function updateSnag(owner: string, id: string, snagId: unknown, pat
   if (!rows[0]) throw new HttpError(404, 'Remediere inexistentă.'); if (s.photos) await dropOrphans(id);
   return row(rows[0]);
 }
-/** Pozele care nu mai aparțin niciunei remedieri: scoase dintr-o remediere imediat, cele neatașate după o oră (formular abandonat). */
-async function dropOrphans(projectId: string, olderThanMinutes = 0){
+/** Pozele care nu mai aparțin niciunei remedieri sau intrări de jurnal: scoase dintr-o remediere imediat, cele neatașate după o oră (formular abandonat). */
+export async function dropOrphans(projectId: string, olderThanMinutes = 0){
   const { q } = await getDb();
-  await q(`delete from site_photos p where p.project_id=$1 and p.created_at < now() - ($2 || ' minutes')::interval and not exists (select 1 from snags s where s.project_id=$1 and s.photos ? p.id::text)`, [projectId, String(olderThanMinutes)]);
+  await q(`delete from site_photos p where p.project_id=$1 and p.created_at < now() - ($2 || ' minutes')::interval and ${UNUSED}`, [projectId, String(olderThanMinutes)]);
 }
+/** Șterge dintre pozele date pe cele pe care nu le mai folosește nimic (remediere sau intrare de jurnal). */
+export async function dropPhotosIfUnused(projectId: string, ids: string[]){ if (!ids.length) return;
+  const { q } = await getDb(); await q(`delete from site_photos p where p.project_id=$1 and p.id = any($2::uuid[]) and ${UNUSED}`, [projectId, ids]); }
 export async function deleteSnag(owner: string, id: string, snagId: unknown){
   if (!isUuid(snagId)) throw new HttpError(404, 'Remediere inexistentă.'); await getProject(owner, id);
   const { q } = await getDb(), { rows } = await q('delete from snags where id=$1 and project_id=$2 returning photos', [snagId, id]);
   if (!rows[0]) throw new HttpError(404, 'Remediere inexistentă.');
-  const ph: string[] = rows[0].photos ?? []; if (ph.length) await q(`delete from site_photos p where p.project_id=$1 and p.id = any($2::uuid[]) and not exists (select 1 from snags s where s.project_id=$1 and s.photos ? p.id::text)`, [id, ph]);
+  await dropPhotosIfUnused(id, rows[0].photos ?? []);
   return { ok: true };
 }
 export async function addPhoto(owner: string, id: string, bytes: Uint8Array){

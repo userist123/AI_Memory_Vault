@@ -379,6 +379,16 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .snag.st-s-fixed .snag-txt b{color:#4f6b4a} .snag.st-s-verified{opacity:.65}
 .snag-form{background:var(--surface);border:1px solid var(--ink);padding:16px;display:grid;gap:12px} .snag-form textarea{font:inherit;padding:8px;border:1px solid var(--rule)}
 .photo-btn{cursor:pointer;display:inline-flex;align-items:center;min-height:42px}
+/* jurnalul de șantier (components/SitePage.tsx SiteLog): intrările zilnice, cu marcajul „Vizibil clientului” */
+.sitelog{display:grid;gap:12px;margin-top:20px} .sitelog>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap} .sitelog h2{font:400 var(--fs-xl)/1.1 var(--serif);margin:0} .sitelog>header p{margin:4px 0 0}
+.slog-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--rule)} .slog{border-top:1px solid var(--rule);padding:12px 16px;display:grid;gap:8px} .slog:first-child{border-top:0} .slog.is-visible{border-left:3px solid #4f6b4a}
+.slog-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .slog-head time{font:500 var(--fs-sm) var(--sans)} .slog>small{color:var(--lead);font-size:var(--fs-xs)}
+.slog-badge{font:500 var(--fs-xs) var(--sans);padding:2px 8px;border:1px solid var(--rule);color:var(--lead)} .slog-badge.on{border-color:#4f6b4a;color:#2f4f2f;background:#eef4ec}
+.slog-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere} .slog-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .slog-act .slog-vis{margin-right:auto}
+.slog-vis{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font:500 var(--fs-sm) var(--sans);min-height:44px} .slog-vis input{width:20px;height:20px;margin:0;flex:none}
+.slog-vis-box{display:flex;align-items:flex-start;border:1px solid var(--rule);padding:10px 12px} .slog-vis-box input{margin-top:2px} .slog-vis-box b{font-weight:500;display:block} .slog-vis-box small{display:block;color:var(--lead);font:400 var(--fs-xs) var(--sans)}
+.slog-form input[type=date],.slog-form input[type=number]{min-height:38px} .slog-trades{border:0;padding:0;margin:0;display:grid;gap:6px} .slog-trades legend{font:500 var(--fs-xs)/1.2 var(--sans);text-transform:uppercase;letter-spacing:.09em;color:var(--lead);padding:0;margin-bottom:6px}
+.slog-ph{position:relative;display:inline-block} .slog-ph button{position:absolute;top:0;right:0;width:28px;height:28px;border:0;background:#1f1f1f;color:#ffffff;cursor:pointer;font-size:16px;line-height:1}
 .report{max-width:900px;margin:0 auto;padding:32px 24px;background:#fff;min-height:100vh} .report header{border-bottom:1px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
 .report h1{font:400 34px var(--serif);margin:6px 0} .report header p{margin:4px 0} .report h2{font:400 22px var(--serif);margin:22px 0 8px;border-bottom:1px solid var(--rule);padding-bottom:4px}
 .report .kicker{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:.14em;color:var(--accent)}
@@ -434,6 +444,12 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .st-c-ordered .cdel-st{color:#4a5c74} .st-c-delivered .cdel-st{color:#4f6b4a} .st-c-installed .cdel-st{color:#2f4f2f} .st-c-todo .cdel-st{color:var(--lead)}
 .pcard-body .chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer} .pcard-body .chk input{margin-top:3px;width:18px;height:18px} .pcard-body .chk small{display:block;color:var(--lead);font-size:var(--fs-xs)}
 @media (max-width:700px){ .cdel{width:auto;margin:0 12px;padding:16px} .cdel h2{font-size:var(--fs-xl)} .cdel-sum{gap:14px} .cdel-sum dd{font-size:var(--fs-lg)} }
+/* jurnalul de șantier pe linkul clientului (components/ClientSiteLog.tsx): doar intrările făcute vizibile */
+.cslog{width:min(1280px,94vw);margin:0 auto;background:var(--surface);border:1px solid var(--rule);padding:22px 26px;display:grid;gap:14px;box-sizing:border-box} .cslog h2{font:400 var(--fs-xl)/1.1 var(--serif);margin:4px 0 0} .cslog header p{margin:4px 0 0}
+.cslog ol{list-style:none;margin:0;padding:0} .cslog-row{display:grid;gap:8px;padding:14px 0;border-top:1px solid var(--rule)} .cslog-row p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.cslog-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap} .cslog-head time{font:500 var(--fs-sm) var(--sans)} .cslog-head small{color:var(--lead);font-size:var(--fs-xs)}
+.cslog-photos{display:flex;gap:8px;flex-wrap:wrap} .cslog-photos img{width:168px;height:126px;object-fit:cover;display:block;border:1px solid var(--rule)}
+@media (max-width:700px){ .cslog{width:auto;margin:0 12px;padding:16px} .cslog-photos img{width:calc(50vw - 36px);height:auto;aspect-ratio:4/3} .slog{padding:12px} .slog-act .btn{flex:1 1 auto} }
 .cdel-todo summary{cursor:pointer;font:500 var(--fs-sm) var(--sans);padding:10px 0;border-top:1px solid var(--rule);min-height:24px} .cdel-todo .cdel-row{opacity:.85}
 /* Modificări cu preț: pe linkul clientului și în editor */
 .cco{width:min(1280px,94vw);margin:0 auto;background:var(--surface);border:1px solid var(--rule);padding:22px 26px;display:grid;gap:14px;box-sizing:border-box}
@@ -775,7 +791,7 @@ label.f > span{font:600 var(--fs-xs)/1.3 var(--sans)!important;text-transform:no
 .missing b{font-weight:600;font-size:var(--fs-xs);color:var(--warn)}
 .missing span{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:var(--r-full);background:var(--warn-soft);color:var(--warn);font-size:var(--fs-xs)}
 @media print{
-  .no-print,.toast,.dlg,.missing,.report-bar,.deck-bar,.fb,.ropt-client-box,.cco,.cdel{display:none!important}
+  .no-print,.toast,.dlg,.missing,.report-bar,.deck-bar,.fb,.ropt-client-box,.cco,.cdel,.cslog{display:none!important}
   .proforma .num,.proforma td.n{font-variant-numeric:tabular-nums}
 }
 /* bara 3D: mod (machetă / cameră) ca listă, comutatoare cu pictogramă; pe telefon doar pictograma, eticheta rămâne pentru cititor (F-7) */

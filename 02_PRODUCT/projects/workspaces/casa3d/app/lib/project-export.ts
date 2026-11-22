@@ -9,6 +9,7 @@ import { getOrders } from './procurement';
 import { listCustomItems } from './custom-items';
 import { safeValue, quoteCell } from '../core/csv-safe';
 import { listSnags } from './site';
+import { listSiteLog } from './site-log';
 import { listChanges } from './change-orders';
 import { getTimesheet } from './timesheet';
 import { getContractData, readStoredContract } from './contract';
@@ -44,6 +45,7 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
     ...boq.labor.map(l => ['manoperă', l.roomId, l.label, l.qty, l.unit, '', l.expected, '', '']),
     ...boq.unknown.map(u => ['de stabilit', '', u, '', '', '', '', '', ''])]) });
   const snags = await listSnags(owner, id); files.push({ name: 'santier/remedieri.json', data: JSON.stringify(snags, null, 2) });
+  files.push({ name: 'santier/jurnal.json', data: JSON.stringify(await listSiteLog(owner, id), null, 2) });
   const photos = (await q('select id, mime, data from site_photos where project_id=$1', [id])).rows;
   for (const ph of photos) files.push({ name: `santier/poze/${ph.id}.${ph.mime === 'image/png' ? 'png' : ph.mime === 'image/webp' ? 'webp' : 'jpg'}`, data: Buffer.from(ph.data) });
   files.push({ name: 'modificari.json', data: JSON.stringify(await listChanges(owner, id), null, 2) });
