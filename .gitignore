@@ -123,3 +123,6 @@ account-statement*
 
 # Build metadata left by `pip wheel .` / `pip install -e .` (WP-17)
 *.egg-info/
+
+# AKE shadow-runner job records: local evaluation output, derived from vault notes
+08_OBSERVABILITY/active_knowledge_engine/
