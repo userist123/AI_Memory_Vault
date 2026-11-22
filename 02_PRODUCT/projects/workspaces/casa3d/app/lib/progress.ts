@@ -51,7 +51,9 @@ export async function offerLines(owner: string, id: string): Promise<{ lines: Ba
   const { items, labor, extras } = commercialSources(b, custom), seen = new Set<string>(), lines: BaseLine[] = []; let skipped = b.extras.filter(e => e.amount == null).length;
   // aceeași lucrare apare în mai multe camere: denumirea primește camera, ca pe situație să se știe ce s-a executat unde
   const roomName = new Map(floors(p.draft).flatMap(f => f.rooms).map(r => [r.id, r.name] as const)), itemRoom = new Map(b.items.map(i => [i.key, i.roomId] as const));
-  const withRoom = (label: string, roomId: string | null | undefined) => { const n = roomId ? roomName.get(roomId) : undefined; return n ? `${label} · ${n}` : label; };
+  // fără dublare: liniile de materiale poartă deja camera („Pardoseală · Hol (decalat 1/3)”), ca segment după „ · ”
+  const hasRoom = (label: string, n: string) => label.split(' · ').slice(1).some(seg => seg === n || seg.startsWith(n + ' (') || seg.startsWith(n + ','));
+  const withRoom = (label: string, roomId: string | null | undefined) => { const n = roomId ? roomName.get(roomId) : undefined; return n && !hasRoom(label, n) ? `${label} · ${n}` : label; };
   for (const s of items){ const l = profitLine(data, s);
     if (l.client == null || l.clientUnit == null || !(l.qty > 0)){ skipped++; continue; }
     lines.push({ key: lineKey('m', s.key, seen), label: withRoom(s.label, itemRoom.get(s.key)), unit: s.unit || 'buc', qty: l.qty, unitPrice: l.clientUnit, kind: 'material' }); }

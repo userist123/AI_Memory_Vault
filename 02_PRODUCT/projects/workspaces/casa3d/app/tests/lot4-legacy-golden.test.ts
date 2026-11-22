@@ -5,6 +5,8 @@
 // DXF-ul, validările (plan, piese, finisaje, puncte tehnice) și lista pentru cititorul de ecran.
 // O schimbare voită în altă parte (alt preț în catalog, alt text) cere regenerarea amprentelor, pe codul fără lot 4:
 //   CASA3D_WRITE_GOLDEN=1 npx vitest run tests/lot4-legacy-golden.test.ts --maxWorkers=2
+// Doar amprentele ieșirilor, cu intrările vechi neatinse (de ex. zecimalele cu virgulă din etichetele devizului, 2026-11-22):
+//   CASA3D_WRITE_GOLDEN=outputs npx vitest run tests/lot4-legacy-golden.test.ts --maxWorkers=2
 import { describe, test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -52,6 +54,10 @@ describe('lot 4: proiectele vechi dau aceleași ieșiri', () => {
       const inputs = Object.fromEntries(['blank', 'demo'].map(tpl => [tpl, newSnapshot(cat, 'Vechi', tpl, 'ro', { materials: mc })]));
       const golden = { inputs, outputs: Object.fromEntries(Object.entries(inputs).map(([k, s]) => [k, outputs(s)])) };
       writeFileSync(FILE, JSON.stringify(golden, null, 1) + '\n'); return; }
+    // schimbare intenționată a ieșirilor (de ex. textul etichetelor): intrările vechi rămân, doar ieșirile se recalculează
+    if (process.env.CASA3D_WRITE_GOLDEN === 'outputs'){
+      const old = JSON.parse(readFileSync(FILE, 'utf8')) as { inputs: Record<string, Snapshot> };
+      writeFileSync(FILE, JSON.stringify({ inputs: old.inputs, outputs: Object.fromEntries(Object.entries(old.inputs).map(([k, s]) => [k, outputs(s)])) }, null, 1) + '\n'); return; }
     assert.ok(existsSync(FILE), 'lipsește tests/fixtures/lot4-legacy-golden.json');
     const golden = JSON.parse(readFileSync(FILE, 'utf8')) as { inputs: Record<string, Snapshot>; outputs: Record<string, Record<string, string>> };
     assert.deepEqual(Object.keys(golden.inputs), ['blank', 'demo']);

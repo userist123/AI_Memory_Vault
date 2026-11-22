@@ -83,7 +83,10 @@ export interface BoqItem { key: string; category: BoqCategory; roomId: string | 
   color?: string }
 export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
 
-function materialLine(m: Material, key: string, roomId: string | null, label: string, net: number, catalogVerifiedAt: string, wasteOverride?: number): BoqItem {
+/** Etichetele liniilor sunt în română: zecimalele cu virgulă („2,43 m”, „33,52 m²”), nu cu punct. */
+export const roDecimals = (s: string) => s.replace(/(\d)\.(\d)/g, '$1,$2');
+function materialLine(m: Material, key: string, roomId: string | null, rawLabel: string, net: number, catalogVerifiedAt: string, wasteOverride?: number): BoqItem {
+  const label = roDecimals(rawLabel);
   const waste = wasteOverride ?? WASTE[m.category] ?? 0, need = net * (1 + waste), verifiedAt = m.verifiedAt || catalogVerifiedAt;
   let packs: number | null = null, ordered = need, total: number;
   if (m.pack){ packs = Math.ceil(need / m.pack.size - 1e-9); ordered = packs * m.pack.size; total = m.pack.price != null ? packs * m.pack.price : ordered * m.unitPrice; }

@@ -94,7 +94,7 @@ describe('tavan fals pe zonă: deviz, 3D, plan, DXF', () => {
   test('devizul: gips-carton cu manoperă de tavan fals, LED în ml, manopera scafei; LED fără preț verificat = necunoscut', () => {
     const s = blank(); s.floor.ceilingZones = [cz({ led: LED, coveCm: 10, label: 'Masă' })]; const b = computeBOQ(s, cat, mc);
     const board = b.items.find(i => i.key === 'camera-1:ceiling:czone:tavan-1')!, led = b.items.find(i => i.key === 'camera-1:led:czone:tavan-1')!;
-    assert.equal(board.netQty, 3.15); assert.match(board.label, /^Tavan fals pe zonă „Masă” gips-carton · .*placă 1\.8 m² \+ bandă laterală 0\.81 m² \+ scafă 0\.54 m²/);
+    assert.equal(board.netQty, 3.15); assert.match(board.label, /^Tavan fals pe zonă „Masă” gips-carton · .*placă 1,8 m² \+ bandă laterală 0,81 m² \+ scafă 0,54 m²/);
     assert.equal(led.netQty, 5.4); assert.equal(led.unit, 'ml');
     assert.deepEqual(b.labor.filter(l => l.key.endsWith(':czone:tavan-1')).map(l => [l.rateId, l.qty]), [['manopera-rigips-tavan', 3.15], ['manopera-scafa', 5.4]]);
     // vopseaua camerei crește cu banda laterală și scafa (fețele casetei se vopsesc)
@@ -221,7 +221,7 @@ describe('boiserie (casete din baghetă)', () => {
   test('deviz: bagheta în bucăți, manopera în ml; vopseaua peretelui rămâne aceeași', () => {
     const s = withFin(blank(), { wallFeatures: [frames({ fromM: .1, heightM: 1 })] }), b = computeBOQ(s, cat, mc);
     const line = b.items.find(i => i.key === 'camera-1:wall:S:0')!, rects = frameRects(s.floor, s.floor.rooms[0]!, frames({ fromM: .1, heightM: 1 })), mo = frameMoulding(rects, 2);
-    assert.equal(line.unit, 'buc'); assert.equal(line.orderedQty, mo.pieces); assert.match(line.label, /^Boiserie baghetă · Living, perete sud \(5 casete, 0\.1–1 m\): 14\.6 ml, 9 bucăți de 2 m$/);
+    assert.equal(line.unit, 'buc'); assert.equal(line.orderedQty, mo.pieces); assert.match(line.label, /^Boiserie baghetă · Living, perete sud \(5 casete, 0,1–1 m\): 14,6 ml, 9 bucăți de 2 m$/);
     assert.deepEqual(b.labor.filter(l => l.key.includes('frames')).map(l => [l.rateId, l.qty]), [['manopera-bagheta', 14.6]]);
     const paint = (x: Snapshot) => computeBOQ(x, cat, mc).items.find(i => i.key === 'camera-1:paint')!.netQty;
     assert.equal(paint(s), paint(blank()));
