@@ -107,3 +107,11 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Step 3: SKILL.md 4G documents the spawn ladder, normalization, new stems and the same-user E1 residual. Next: combined runs, pin seq 10.
 - Verification (commit 712550bd1 code): combined brief command, temp HOME on E: `1091 passed in 377.63s (0:06:17)`; real HOME (read-only, no test files appeared in ~/.claude/cache): `1091 passed in 392.27s (0:06:32)`. test_cost_router_pinned_update.py after the pin: 59 passed.
 - DONE: release pin seq 10 (f821bd24e) pins 712550bd1. Flag stays OFF; installed copy under ~/.claude not updated. Residual: same-user edits of receipts/spawn record (documented SKILL.md 4G); golden 99/100 ("EU AI act timeline" now hints dfir-analyst because of the new "timeline" trigger). Opus review of the residual delta still pending.
+
+## Status 2026-11-22 (main session, after M11 residuals)
+- Installed globally at release seq 10 (pin commit 712550bd1); `--verify --require-hooks` exit 0; `rules.fable_executor.enabled` = false. Backups: E:\claude-workackups\cost-router-global-*.
+- M1-M11 done. Reviews: M1-M4 (2 rounds + main-session verification with probes), M5-M8, M10, M11 (VERIFIED, GO). The M11-residuals delta (5dfb156b0..f2950e75e) only tightens the gate and is NOT yet Opus-reviewed.
+- Before anyone sets rules.fable_executor.enabled = true: (1) Opus vault-reviewer on 5dfb156b0..f2950e75e; (2) accept the E1 residual (same-user process can edit receipts/spawn log) in writing.
+- Small follow-ups: trigger "timeline" makes "EU AI act timeline" pick dfir-analyst (golden 99/100): scope it ("event timeline", "forensic timeline"); registry_compile.fold should strip Unicode Cf like the hook normalizer.
+- Full suite on this branch once before merging #404 -> #409 (check-runner, temp HOME and basetemp on E:).
+- Disk: C: was at 98.6%; freed by moving VS-installer temp copies to E:\.curatenie-cos and removing 11 clean pushed worktrees. Something still fills C: quickly (8.8 -> 3.2 GB in ~20 min during test runs): put pytest basetemp on E:.
