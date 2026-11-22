@@ -305,3 +305,48 @@ def test_a_failed_run_resumes_its_own_partial_children(setup, monkeypatch):
     assert second["status"] == "APPLIED"
     actions = {ch["index"]: ch["action"] for ch in second["children"]}
     assert actions[0] == "already_applied" and actions[1] == "resumed"
+
+
+# --- security review round 2 ----------------------------------------------------------------------
+
+def test_a_child_attested_by_admin_resumes_under_human(setup, monkeypatch):
+    """F1: any owner principal's attestation is the owner's; it is never archived on resume."""
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    target = plan["children"][0]["child_id_proposed"]
+    real_promote = c.promote
+
+    def fail_once(principal, note_id):
+        if note_id == target and principal == Principal.ADMIN:
+            raise RuntimeError("transient")
+        return real_promote(principal, note_id)
+
+    monkeypatch.setattr(c, "promote", fail_once)
+    first = apply_split(c, plan, principal=Principal.ADMIN, confirm=_yes)
+    assert first["status"] == "FAILED" and first["failed_child"]["remediation"] is None
+    second = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert second["status"] == "APPLIED"
+    assert c.storage.get(target)["verification_source"] == "admin"
+
+
+def test_confidence_changed_on_a_raw_child_is_a_conflict(setup, monkeypatch):
+    """F2: every field the tool writes is checked, confidence included."""
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    target = plan["children"][0]["child_id_proposed"]
+    real_attest = c.attest
+
+    def fail_attest(principal, note_id, **kw):
+        if note_id == target:
+            raise RuntimeError("stop before attestation")
+        return real_attest(principal, note_id, **kw)
+
+    monkeypatch.setattr(c, "attest", fail_attest)
+    apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    monkeypatch.setattr(c, "attest", real_attest)
+    c.update(Principal.AI_AGENT, target, {"confidence": "low"})
+    again = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert again["status"] == "FAILED" and "conflict" in again["failed_child"]["error"]
+    assert c.storage.get(target)["verification"] == "unverified"

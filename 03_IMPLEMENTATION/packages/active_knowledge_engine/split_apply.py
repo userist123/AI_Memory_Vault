@@ -134,7 +134,7 @@ def _child_note(parent: Dict[str, Any], child: Dict[str, Any], piece: str) -> Di
     }
 
 
-_CHECKED_FIELDS = ("type", "category", "tags", "relations")
+_CHECKED_FIELDS = ("type", "category", "tags", "relations", "confidence")
 
 
 def _mismatch(stored: Dict[str, Any], expected: Dict[str, Any]) -> List[str]:
@@ -210,7 +210,9 @@ def apply_split(controller, manifest: Dict[str, Any], *, principal: Principal,
                 bad.append("lifecycle")
             if final.get("verification") != "verified":
                 bad.append("verification")
-            if final.get("verification_source") != principal.value:
+            # any owner principal's attestation is the owner's (an ADMIN-attested child may be
+            # resumed by HUMAN; attest() keeps the first stamp when state and hash already match)
+            if final.get("verification_source") not in {p.value for p in OWNER_PRINCIPALS}:
                 bad.append("verification_source")
             if final.get("attested_content_sha256") != ch["content_sha256"]:
                 bad.append("attested_content_sha256")
