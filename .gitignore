@@ -123,3 +123,6 @@ account-statement*
 
 # Build metadata left by `pip wheel .` / `pip install -e .` (WP-17)
 *.egg-info/
+
+# cross-process lock of the controller audit log (security program 2026-11-22)
+*.jsonl.lock

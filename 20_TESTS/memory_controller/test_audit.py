@@ -89,7 +89,7 @@ def test_audit_read_success_and_fail():
     assert logs[0]["target_id"] == "11111111-1111-1111-1111-111111111111"
     
     # Fail (ValueError)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as read_error:
         # Actually, let's use a non-existent note for ValueError
         controller.read(Principal.ADMIN, "99999999-9999-9999-9999-999999999999")
         
@@ -100,8 +100,11 @@ def test_audit_read_success_and_fail():
     assert logs[1]["outcome"] == "error"
     assert logs[1]["target_id"] == "99999999-9999-9999-9999-999999999999"
     assert "metadata" in logs[1]
-    assert "error" in logs[1]["metadata"]
-    assert "99999999-9999-9999-9999-999999999999" in logs[1]["metadata"]["error"]
+    # Since 2026-11-22 (security program, path 4) the audit log keeps the exception type and a digest of
+    # its message, never the text (it can quote note content); the digest is bound to the exact exception.
+    assert logs[1]["metadata"]["error_type"] == "ValueError"
+    assert logs[1]["metadata"]["error_sha256"] == hashlib.sha256(str(read_error.value).encode("utf-8")).hexdigest()[:16]
+    assert "error" not in logs[1]["metadata"]
 
 def test_audit_search_success_and_fail():
     query = "test search"
@@ -227,15 +230,15 @@ def test_audit_archive_success_and_fail():
 def test_audit_permission_error_explicit():
     # Explicitly test that unauthorized operation -> PermissionError -> success=False
     with patch.object(controller.authorizer, 'is_allowed', return_value=False):
-        with pytest.raises(PermissionError):
+        with pytest.raises(PermissionError) as denied:
             controller.read(Principal.HUMAN, "11111111-1111-1111-1111-111111111111")
             
     logs = read_logs()
     assert len(logs) == 1
     assert logs[0]["outcome"] == "error"
     assert "metadata" in logs[0]
-    assert "error" in logs[0]["metadata"]
-    assert "PermissionError" in logs[0]["metadata"]["error"] or "not allowed" in logs[0]["metadata"]["error"]
+    assert logs[0]["metadata"]["error_type"] == "PermissionError"
+    assert logs[0]["metadata"]["error_sha256"] == hashlib.sha256(str(denied.value).encode("utf-8")).hexdigest()[:16]
 
 def test_audit_hash_chaining_and_tamper_detection():
     logger = logger_module._logger_instance

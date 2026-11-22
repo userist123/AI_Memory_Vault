@@ -1,3 +1,4 @@
+import hashlib
 import pytest
 import os
 import json
@@ -343,7 +344,7 @@ def test_supersession_audit_failure(temp_vault, test_audit_log):
     id_old = str(uuid.uuid4())
     id_new = str(uuid.uuid4())
     
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as supersede_error:
         controller.supersede(Principal.ADMIN, id_old, id_new, "evidence info")
         
     entries = read_audit_entries(test_audit_log)
@@ -352,4 +353,7 @@ def test_supersession_audit_failure(temp_vault, test_audit_log):
     assert len(failure_entries) == 1
     assert failure_entries[0]["target_id"] == id_new
     assert failure_entries[0]["metadata"]["old_id"] == id_old
-    assert "error" in failure_entries[0]["metadata"]
+    # exception type + digest bound to the exact exception, never its text (security program, path 4)
+    assert failure_entries[0]["metadata"]["error_type"] == "ValueError"
+    assert failure_entries[0]["metadata"]["error_sha256"] == hashlib.sha256(
+        str(supersede_error.value).encode("utf-8")).hexdigest()[:16]
