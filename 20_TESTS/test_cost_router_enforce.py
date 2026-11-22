@@ -243,7 +243,11 @@ def test_policy_local_section_names_the_measured_models():
     assert loc["models"]["text"][0] == "qwen2.5:7b-instruct"
 
 
-def test_stale_user_scope_agent_hook_blocks_project_spawn(tmp_path):
+def test_user_scope_copy_with_other_bytes_but_equal_release_seq_answers_instead_of_blocking(tmp_path):
+    """Was test_stale_user_scope_agent_hook_blocks_project_spawn: byte inequality blocked every spawn (P2, denial of
+    service by any project copy). The shadow check now compares release-pin seq: equal seq -> the installed copy
+    answers and the project copy stays silent. The 'project seq higher -> exit 2' case is in
+    test_cost_router_global_boundary.py."""
     home = tmp_path / "home"
     assert _run([INSTALL, "--home", home]).returncode == 0
     policy_copy = home / ".claude" / "skills" / "cost-router" / "policy.json"
@@ -254,8 +258,8 @@ def test_stale_user_scope_agent_hook_blocks_project_spawn(tmp_path):
         "tool_input": {"subagent_type": "fable-consultant", "prompt": "bounded second opinion"},
     })
     result = _run([AGENT_HOOK], payload, home=home)
-    assert result.returncode == 2
-    assert "user-scope Agent hook is stale" in result.stderr
+    assert result.returncode == 0, result.stderr
+    assert "stale" not in result.stderr
 
 
 def test_fable_guard_is_not_disabled_by_router_enforcement_override(tmp_path):

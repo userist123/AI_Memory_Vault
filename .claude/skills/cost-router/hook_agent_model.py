@@ -24,7 +24,7 @@ receipt and allows; BLOCKED or an unavailable router denies (delegated is not se
 Bash (state.vault_routed, set by hook_enforce_route.py) also passes. "#direct" and
 COST_ROUTER_ENFORCE=0 skip that gate (they do NOT disable the Fable guard). Outside the Vault it is never required.
 The `vault-router: ...` / `subagent model x -> y` context line is emitted only with COST_ROUTER_VERBOSE_ROUTE=1 (denials always carry their reason). A read-only subagent type (an agent file whose frontmatter `tools` are all in the read-only allowlist: Read, Grep, Glob, LS, WebFetch, WebSearch, the vault-memory read tools; the project's Explore has Bash and is NOT read-only) is clamped in the explore class (haiku, cap one tier above) only for briefs with no risk rule and a class outside review/design/frontier (COST_ROUTER_READONLY_FLOOR=1 restores the old floor).
-Fable consultant routing fails closed when its policy cannot be loaded, and malformed Agent hook payloads exit 2. The Agent hook is configured with onFailure=block; the installed copy shadows the project hook only when registered as blocking and its hook, route code, model router, and policy match the project copy.
+Fable consultant routing fails closed when its policy cannot be loaded, and malformed Agent hook payloads exit 2. The Agent hook is configured with onFailure=block; the installed copy shadows the project hook when registered as blocking and the project's release-pin seq is not higher than the installed one (equal or lower or no pin: the installed copy answers; higher: exit 2, stale install).
 """
 from __future__ import annotations
 
@@ -247,30 +247,34 @@ def _requests_fable(value) -> bool:
     return "fable" in str(value or "").strip().lower()
 
 
-def _user_copy_is_current(hook_file: Path) -> bool:
-    """Do not let an out-of-date user-scope copy shadow a newer project guard."""
+def _pin_seq(skill_dir: Path):
+    """seq of the release pin inside a skill directory, or None (absent, unreadable or invalid)."""
+    try:
+        import release_pin  # noqa: E402  (lib/ is on sys.path)
+        return release_pin.load_pin(skill_dir / release_pin.PIN_NAME)["seq"]
+    except Exception:
+        return None
+
+
+def _shadow_verdict(hook_file: Path):
+    """The project copy of this hook next to a registered user-scope install: ("defer", None) when the installed copy
+    answers (the project copy stays silent), ("stale", message) when the install is older than this project's release.
+
+    Compared by release-pin `seq`, never by bytes: a project on another commit of the vault (or a copy that merely
+    differs) must not block every agent. Equal seq -> the installed copy answers; project seq higher -> stale install,
+    block with a message that names both; no readable pin in the project, or a lower one -> the installed copy answers."""
     home_claude = Path.home() / ".claude"
-    try:
-        hook_file.resolve().relative_to(home_claude.resolve())
-        return False
-    except ValueError:
-        pass
-    project_skill = hook_file.parent
-    project_root = project_skill.parents[2]
     user_skill = home_claude / "skills" / "cost-router"
-    pairs = (
-        (user_skill / hook_file.name, hook_file),
-        (user_skill / "lib" / "route.py", project_skill / "lib" / "route.py"),
-        (user_skill / "lib" / "route_state.py", project_skill / "lib" / "route_state.py"),
-        (user_skill / "lib" / "claude_model_router.py",
-         project_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"),
-        (user_skill / "policy.json", project_root / "04_CONFIG" / "claude_model_routing.json"),
-    )
-    try:
-        return all(user.is_file() and project.is_file() and user.read_bytes() == project.read_bytes()
-                   for user, project in pairs)
-    except OSError:
-        return False
+    if not (user_skill / hook_file.name).is_file():
+        return "stale", "the installed hook file is missing"
+    project_seq = _pin_seq(hook_file.parent)
+    if project_seq is None:
+        return "defer", None
+    installed_seq = _pin_seq(user_skill)
+    if installed_seq is None or project_seq > installed_seq:
+        return "stale", (f"this project ships release seq {project_seq}, the installed copy has "
+                         f"{installed_seq if installed_seq is not None else 'no release pin'}")
+    return "defer", None
 
 
 def _user_agent_hook_is_registered(settings_path=None) -> bool:
@@ -758,9 +762,11 @@ def _main() -> int:
     try:
         from route import _load_router, is_shadowed, policy_path  # noqa: E402
         if is_shadowed(Path(__file__)) and _user_agent_hook_is_registered():
-            if _user_copy_is_current(Path(__file__)):
+            verdict, why = _shadow_verdict(Path(__file__))
+            if verdict == "defer":
                 return 0
-            print("cost-router: registered user-scope Agent hook is stale; reinstall cost-router before spawning agents",
+            print(f"cost-router: registered user-scope Agent hook is stale ({why}); run "
+                  "`python .claude/skills/cost-router/install.py` from the updated checkout before spawning agents",
                   file=sys.stderr)
             return 2
     except Exception:

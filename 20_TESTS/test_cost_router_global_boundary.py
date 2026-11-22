@@ -214,3 +214,66 @@ def test_p1_install_pins_this_checkout_and_keeps_pins_across_reinstalls(tmp_path
     _write_route(home)
     r = _run(_installed_skill(home) / "hook_agent_model.py", stdin=json.dumps(_spawn(extra)), home=home, cwd=extra)
     assert r.returncode == 0 and (tmp_path / "wt.sentinel").exists()
+
+
+# ---- P2 (M3): shadow check by release-pin seq, not by byte equality ----------------------------------------------
+
+def _project_copy(tmp_path: Path, seq: int | None) -> Path:
+    """A project's own copy of the skill (an attacker-controlled or merely different-commit tree) with pin `seq`."""
+    import shutil
+    dst = tmp_path / "proj" / ".claude" / "skills" / "cost-router"
+    shutil.copytree(SKILL, dst, ignore=shutil.ignore_patterns("__pycache__"))
+    pin = dst / "release_pin.json"
+    if seq is None:
+        pin.unlink()
+    else:
+        data = json.loads(pin.read_text(encoding="utf-8"))
+        data["seq"] = seq
+        pin.write_text(json.dumps(data), encoding="utf-8")
+    return dst
+
+
+def _benign_spawn(proj: Path) -> str:
+    return json.dumps({"session_id": SID, "hook_event_name": "PreToolUse", "tool_name": "Agent", "cwd": str(proj),
+                       "tool_input": {"description": "list files", "prompt": "list the files", "subagent_type": "Explore"}})
+
+
+def _installed_seq(home: Path) -> int:
+    return json.loads((_installed_skill(home) / "release_pin.json").read_text(encoding="utf-8"))["seq"]
+
+
+def test_p2_equal_seq_with_different_bytes_defers_silently(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    seq = _installed_seq(home)
+    proj = _project_copy(tmp_path, seq)
+    hook = proj / "hook_agent_model.py"
+    hook.write_text(hook.read_text(encoding="utf-8") + "\n# another commit of the same release\n", encoding="utf-8")
+    (proj / "policy.json").write_text("{}", encoding="utf-8")  # not even the policy matches
+    r = _run(hook, stdin=_benign_spawn(tmp_path / "proj"), home=home, cwd=tmp_path / "proj")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout == "" and r.stderr == ""  # the installed copy answers; the project copy stays silent
+
+
+def test_p2_project_without_a_pin_or_with_a_lower_seq_defers(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    for seq in (None, _installed_seq(home) - 1 or None):
+        import shutil
+        shutil.rmtree(tmp_path / "proj", ignore_errors=True)
+        proj = _project_copy(tmp_path, seq)
+        r = _run(proj / "hook_agent_model.py", stdin=_benign_spawn(tmp_path / "proj"), home=home, cwd=tmp_path / "proj")
+        assert r.returncode == 0 and r.stdout == "" and r.stderr == "", (seq, r.stdout, r.stderr)
+
+
+def test_p2_project_seq_higher_than_installed_blocks_with_a_clear_message(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    newer = _installed_seq(home) + 1
+    proj = _project_copy(tmp_path, newer)
+    r = _run(proj / "hook_agent_model.py", stdin=_benign_spawn(tmp_path / "proj"), home=home, cwd=tmp_path / "proj")
+    assert r.returncode == 2
+    assert "stale" in r.stderr and str(newer) in r.stderr and "install.py" in r.stderr
