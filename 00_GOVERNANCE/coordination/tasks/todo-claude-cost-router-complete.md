@@ -14,7 +14,7 @@ Paths below: `S` = `.claude/skills/cost-router`.
 - [x] M6 Specialist selection in the route line (`spec=<id>`); text picks only an id from the closed set and can only raise risk/tier; golden set ~60 RO/EN prompts >= 90%; 20 injection prompts change nothing.
 - [x] M7 `S/lib/vault_router.py`: on-demand Agent Router for Opus from any project; receipts recognised by `hook_enforce_route`.
 - [x] M8 `S/lib/check.py` acceptance receipts + `check-runner` agent (haiku, no write).
-- [ ] M9 Global install on the PC: backup `~/.claude/settings.json`, pinned user-scope hooks, `--verify` 0, smoke in 2 non-vault projects + 1 vault worktree + 1 resumed session; `--uninstall` restores.
+- [x] M9 Global install on the PC: backup `~/.claude/settings.json`, pinned user-scope hooks, `--verify` 0, smoke in 2 non-vault projects + 1 vault worktree + 1 resumed session; `--uninstall` restores.
 - [ ] M10 Roles: `dfir-analyst` (local_only), `test-author`, `repro-debugger` template; registry entries for analist-juridic, aplicatie-securizata, surse-web, agent-bridge, animatie-3d, clips-kitty, prompt-director (overlay).
 - [ ] M11 `fable-executor`, default off, own threat model + review.
 - [ ] Antigravity branches: Explore inventory with diffstat; port only what passes `20_TESTS/test_cost_router_*.py`.
@@ -67,3 +67,9 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - 3+6 (2fce7ab17): vault_router kills the process tree on timeout, prints one clean line per field; timeout test imports the module by path.
 - 4 (14bca3e2b): check.py refuses cmd metacharacters for .cmd/.bat targets (exit 2). 5 (17dc0e56f): receipt only for one plain command with the installed absolute vault_router.py or -m routing.route_cli (tests updated: chained forms are no longer receipts). 7: self-update residual documented in SKILL.md 4D.
 - Release pin seq 6 pins 17dc0e56f. Not done: pe/pf junction and ph cwd-shadow/huge-output/forged-receipt probes need no change by this brief (junction swap already exit 3 here); ph "cwd shadow git" and session-id traversal are not addressed.
+
+## M9 done 2026-11-22 (main session, live operation on the owner PC)
+- Installed user scope from this worktree: `install.py --source-ref 17dc0e56f... --release-pin <seq 6> --pin-root <main checkout>`; `--verify --require-hooks` exit 0 (hooks registered, Agent hook onFailure=block).
+- Backup of settings.json, CLAUDE.md, the previous skill and agents: `~/.claude/backups/cost-router-global-20261122-193615/`. Rollback: `install.py --uninstall`, then restore that folder.
+- Smoke (real installed hooks): home dir, D:/Projects/AI_AGENT_BRIDGE and a vault worktree: legal prompt -> spec=analist-juridic, fix -> vault-worker/sonnet, Explore -> haiku, `continua` keeps the route.
+- Next: M10 roles, M11 fable-executor (default off), Antigravity branch inventory; residuals from the M5-M8 fix round (check.py session chars, Windows cwd exe resolution, receipt size cap).
