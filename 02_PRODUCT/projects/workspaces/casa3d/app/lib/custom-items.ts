@@ -20,6 +20,13 @@ const v = <T>(fn: () => T) => { try { return fn(); } catch (e: any){ if (e insta
 export async function listCustomItems(projectId: string): Promise<CustomItem[]> {
   const { q } = await getDb(), { rows } = await q('select * from custom_items where project_id=$1 order by created_at', [projectId]); return rows.map(row);
 }
+/** Produsele proprii ale mai multor proiecte dintr-o singură interogare (lib/attention.ts): proiect → produsele lui. */
+export async function listCustomItemsFor(projectIds: string[]): Promise<Map<string, CustomItem[]>> {
+  const out = new Map<string, CustomItem[]>(); if (!projectIds.length) return out;
+  const { q } = await getDb(), { rows } = await q('select * from custom_items where project_id = any($1::uuid[]) order by created_at', [projectIds]);
+  for (const r of rows) out.set(r.project_id, [...(out.get(r.project_id) ?? []), row(r)]);
+  return out;
+}
 export async function addCustomItem(owner: string, projectId: string, input: unknown): Promise<CustomItem> {
   const x = v(() => checkCustomItem(input)) as CustomItemInput; await owned(owner, projectId, x.roomId);
   const { tx } = await getDb();

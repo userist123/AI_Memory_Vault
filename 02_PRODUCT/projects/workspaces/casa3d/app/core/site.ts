@@ -31,4 +31,4 @@ export function sniffImage(b: Uint8Array): 'image/jpeg' | 'image/png' | 'image/w
   if (b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === 'RIFF' && String.fromCharCode(...b.slice(8, 12)) === 'WEBP') return 'image/webp';
   return null;
 }
-export function snagSummary(items: Snag[]){ return { open: items.filter(s => s.status === 'open').length, fixed: items.filter(s => s.status === 'fixed').length, verified: items.filter(s => s.status === 'verified').length }; }
+export function snagSummary(items: Pick<Snag, 'status'>[]){ return { open: items.filter(s => s.status === 'open').length, fixed: items.filter(s => s.status === 'fixed').length, verified: items.filter(s => s.status === 'verified').length }; }

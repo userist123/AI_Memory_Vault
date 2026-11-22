@@ -1098,6 +1098,25 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .home .studio-settings{padding-top:20px;border-top:1px solid var(--line)}
 .home .studio-settings input,.home .studio-settings select{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
 .home .tasks{padding:22px 24px}
+/* „De urmărit azi” pe panoul studioului: contoare pe treaptă și lista scurtă, mobil întâi (treapta e scrisă, nu doar colorată) */
+.attn{display:grid;gap:12px;margin-bottom:34px;padding:22px 24px;border:1px solid var(--line);border-radius:24px 24px 24px 8px;background:var(--surface);color:var(--ink)}
+.attn .home-sec{margin-bottom:6px;flex-wrap:wrap}
+.attn-counts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.attn-count{display:inline-flex;align-items:baseline;gap:8px;min-height:44px;padding:6px 16px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface-2);color:var(--ink-2);font:500 var(--fs-sm) var(--sans);cursor:pointer}
+.attn-count b{font:600 20px/1 var(--sans);font-variant-numeric:tabular-nums}
+.attn-count.sev-urgent b{color:var(--err)} .attn-count.sev-soon b{color:var(--warn)}
+.attn-count[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--surface)} .attn-count[aria-pressed=true] b{color:inherit}
+.attn-count:disabled{opacity:.6;cursor:default}
+.attn-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.attn-item{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:14px 14px 14px 5px;background:var(--surface-2)}
+.attn-item.sev-urgent{border-left-color:var(--err)} .attn-item.sev-soon{border-left-color:var(--warn)}
+.attn-sev{justify-self:start;padding:2px 10px;border-radius:999px;background:var(--bg-2);color:var(--ink-2);font:600 var(--fs-xs)/1.5 var(--sans);letter-spacing:.04em;text-transform:uppercase}
+.attn-item.sev-urgent .attn-sev{background:var(--err-soft);color:var(--err)} .attn-item.sev-soon .attn-sev{background:var(--warn-soft);color:var(--warn)}
+.attn-main{display:grid;gap:3px;min-width:0} .attn-main b{font:600 var(--fs-md)/1.3 var(--sans);overflow-wrap:anywhere} .attn-main small{color:var(--ink-3);font-size:var(--fs-sm);line-height:1.4;overflow-wrap:anywhere} .attn-proj{color:var(--ink-2);font-weight:600} .attn-main time{white-space:nowrap}
+.attn-acts{display:flex;flex-wrap:wrap;gap:8px} .attn-acts .btn{min-height:40px;padding:0 16px}
+.attn-note{margin:0;color:var(--ink-3);font-size:var(--fs-sm)} .attn-more,.attn-all{justify-self:start;min-height:40px;padding:0 16px}
+.attn-fail{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+@media (min-width:760px){ .attn-item{grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px} .attn-sev{min-width:78px;text-align:center} .attn-acts{flex-wrap:nowrap;justify-content:flex-end} }
 .home a{color:inherit}
 .home :focus-visible{outline:2px solid var(--focus);outline-offset:3px}
 .home .btn{border-radius:999px}

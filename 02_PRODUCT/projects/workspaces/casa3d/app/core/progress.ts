@@ -84,7 +84,7 @@ export function computeStatement(base: Baseline, all: StatementInput[], number: 
     totals: { contractValue, prevValue: sum(rows, r => r.prevQty * r.unitPrice), thisValue, cumValue, pct: contractValue > 0 ? r2(cumValue / contractValue * 100) : null, extraThis, advance, retention, vat, payable: r2(thisValue - advance - retention + (vat ?? 0)) } };
 }
 /** Perioadele nu se suprapun și numerele sunt consecutive (1, 2, 3…): ce nu se potrivește, ca avertismente. */
-export function statementIssues(all: StatementInput[]): { code: 'GAP' | 'OVERLAP'; number: number }[] {
+export function statementIssues(all: Pick<StatementInput, 'number' | 'from' | 'to'>[]): { code: 'GAP' | 'OVERLAP'; number: number }[] {
   const s = [...all].sort((a, b) => a.number - b.number), out: { code: 'GAP' | 'OVERLAP'; number: number }[] = [];
   s.forEach((x, i) => { if (x.number !== i + 1) out.push({ code: 'GAP', number: x.number }); const p = s[i - 1]; if (p && x.from <= p.to) out.push({ code: 'OVERLAP', number: x.number }); });
   return out;

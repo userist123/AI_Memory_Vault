@@ -10,10 +10,11 @@ import EmptyState from './EmptyState';
 
 type T = Task & { projectName?: string | null };
 const today = () => new Date().toISOString().slice(0, 10);
-export default function TasksPanel({ projectId, projects }: { projectId?: string; projects?: { id: string; name: string }[] }){
+// `reloadKey`: se schimbă când altcineva a adăugat o sarcină (panoul „De urmărit azi”), ca lista să se reîncarce
+export default function TasksPanel({ projectId, projects, reloadKey = 0 }: { projectId?: string; projects?: { id: string; name: string }[]; reloadKey?: number }){
   const { t, lang } = usePrefs(), [tasks, setTasks] = useState<T[] | null>(null), [title, setTitle] = useState(''), [due, setDue] = useState(''), [pid, setPid] = useState(projectId ?? ''), [err, setErr] = useState('');
   const load = () => fetch(`/api/tasks${projectId ? `?project=${projectId}` : ''}`).then(r => r.ok ? r.json() : null).then(j => j && setTasks(j)).catch(() => {});
-  useEffect(() => { load(); }, [projectId]); // eslint-disable-line
+  useEffect(() => { load(); }, [projectId, reloadKey]); // eslint-disable-line
   const adding = useRef(false), [addBusy, setAddBusy] = useState(false);   // dublul click nu creează două sarcini
   async function add(e: React.FormEvent){ e.preventDefault(); if (adding.current) return; adding.current = true; setAddBusy(true); setErr('');
     try { const r = await fetch('/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title, due: due || null, projectId: pid || null }) }), j = await r.json().catch(() => ({}));

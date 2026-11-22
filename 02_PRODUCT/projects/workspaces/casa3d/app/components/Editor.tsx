@@ -523,6 +523,9 @@ export default function Editor({ id }: { id: string }){
   async function restore(n: number){ if (!(await askConfirm({ title: t('dlg.restoreTitle', { n }), body: t('editor.restoreConfirm', { n }), confirmLabel: t('dlg.restoreOk', { n }) }))) return;
     clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
 
+  // linkurile din „De urmărit azi” (core/attention.ts) deschid proiectul direct la etapa unde se rezolvă: /p/<id>?stage=orders
+  useEffect(() => { const s = new URLSearchParams(location.search).get('stage') as Stage | null, st = STAGES.find(x => x.id === s); if (!st) return;
+    setStageRaw(st.id); setView(st.view === 'split' && isCompact() ? '2d' : st.view); }, [id]); // eslint-disable-line
   // etapa activă rămâne vizibilă în bara de etape (pe tabletă și telefon nu încap toate zece)
   const stageBar = useRef<HTMLElement | null>(null);
   useEffect(() => { const b = stageBar.current?.querySelector<HTMLElement>(`[data-stage="${stage}"]`); try { b?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch { /* browser vechi */ } }, [stage]);

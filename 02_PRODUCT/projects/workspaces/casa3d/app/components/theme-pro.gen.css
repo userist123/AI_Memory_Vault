@@ -173,6 +173,7 @@
 .ws.theme-pro .home .tcard:first-child small{color:#c7c7c7}
 .ws.theme-pro .home .undo-toast{border:1px solid #3d3d3d}
 .ws.theme-pro .home .skel{background:linear-gradient(90deg,#292929 0%,#232323 45%,#292929 90%) 0 0/300% 100%}
+.ws.theme-pro .attn-count[aria-pressed=true]{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
 .ws.theme-pro .home .tgrid::-webkit-scrollbar-thumb{background:#353535}
 .ws.theme-pro{--bg:#1f1f1f;--bg-2:#2b2b2b;--surface:#262626;--surface-2:#313131;--ink:#ffffff;--ink-2:#d3d3d3;--ink-3:#c7c7c7;--ink-num:#c7c7c7;--line:#3e3e3e;--line-strong:#b6b6b6;--accent:#642217;--accent-soft:#3b3b3b;--ok:#27462f;--ok-soft:#2e2e2e;--warn:#584217;--warn-soft:#373430;--err:#53110c;--err-soft:#3c3637;--focus:#7fb3f5;--paper:#242424;--paper-2:#292929;background:#1a1a1a;color-scheme:dark}
 .ws.theme-pro .topbar{border-bottom:1px solid #424242}

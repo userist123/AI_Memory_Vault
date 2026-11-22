@@ -15,6 +15,7 @@ import PlanThumb from '@/components/PlanThumb';
 import PhoneAccess from '@/components/PhoneAccess';
 import ImportExistingProject from '@/components/ImportExistingProject';
 import TasksPanel from '@/components/TasksPanel';
+import AttentionPanel from '@/components/AttentionPanel';
 import StudioProfileForm from '@/components/StudioProfileForm';
 import { PROJECT_STATUSES, daysLeft, type ProjectStatus } from '../core/project-meta';
 type P = { id: string; name: string; updated_at: string; current_revision: number; status: ProjectStatus; client: string | null; dueDate: string | null };
@@ -25,7 +26,9 @@ export default function Home(){
   const [q, setQ] = useState(''), [sort, setSort] = useState<'due' | 'updated' | 'name'>('due'), [trash, setTrash] = useState<{ id: string; name: string; purgeAt: string }[]>([]), [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
   const loadTrash = () => fetch('/api/projects/trash').then(r => r.ok ? r.json() : []).then(setTrash).catch(() => {});
   const thumbs = (ps: P[]) => { for (const p of ps.slice(0, 24)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => m[p.id] ? m : ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); };
-  const reload = () => fetch('/api/projects').then(r => r.ok ? r.json() : Promise.reject(r)).then((ps: P[]) => { if (!Array.isArray(ps)) throw new Error('list'); setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
+  const reload = () => { setAttnKey(k => k + 1); return load(); };
+  const load = () => fetch('/api/projects').then(r => r.ok ? r.json() : Promise.reject(r)).then((ps: P[]) => { if (!Array.isArray(ps)) throw new Error('list'); setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
+  const [taskKey, setTaskKey] = useState(0), [attnKey, setAttnKey] = useState(0);
   const [demo, setDemo] = useState(false), flight = useRef(singleFlight()).current, [pending, setPending] = useState<Record<string, boolean>>({});
   // o singură cerere pe buton: dublul click în același tick nu mai creează două proiecte / copii
   const once = <T,>(key: string, fn: () => Promise<T>, hold?: (r: T) => boolean) => { if (flight.has(key)) return Promise.resolve(undefined); setPending(m => ({ ...m, [key]: true }));
@@ -89,7 +92,8 @@ export default function Home(){
         <ul>{trash.map(x => <li key={x.id}><b>{x.name}</b><small>{t('home.purgeIn', { n: daysTo(x.purgeAt) })}</small>
           <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}
     </section>
-    {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
+    {list !== null && list.length > 0 && <AttentionPanel reloadKey={attnKey} onTaskAdded={() => setTaskKey(k => k + 1)} />}
+    {list !== null && <TasksPanel reloadKey={taskKey} projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <ImportExistingProject projectName={name} />
     <section className="project-create">
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
