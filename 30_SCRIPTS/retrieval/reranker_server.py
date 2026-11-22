@@ -131,7 +131,10 @@ def main() -> int:
     model.predict([("warm", "up")])
     label = f"{args.model}@{args.revision[:12]}{'+fp16' if args.fp16 else ''}"
     server = make_server(args.port, build_handler(model, label, threading.Lock()))
-    print(json.dumps({"listening": f"http://127.0.0.1:{args.port}", "model": label}), flush=True)
+    # The bound port, not the requested one: with --port 0 the OS picks a free port and
+    # reranker_launcher.py forwards only to the port reported on this line.
+    port = server.server_address[1]
+    print(json.dumps({"listening": f"http://127.0.0.1:{port}", "model": label}), flush=True)
     server.serve_forever()
     return 0
 

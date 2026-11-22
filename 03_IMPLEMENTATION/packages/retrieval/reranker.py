@@ -83,6 +83,14 @@ def _is_loopback(url: str) -> bool:
         return False
 
 
+def _error_field(exc: "urllib.error.HTTPError") -> str:
+    try:
+        body = json.loads((exc.read() or b"")[:4096].decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return ""
+    return str(body.get("error") or "") if isinstance(body, dict) else ""
+
+
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
         raise urllib.error.HTTPError(req.full_url, code, "redirects are refused", headers, fp)
@@ -102,6 +110,10 @@ class HttpReranker:
     #: Windows a refused loopback connection takes ~2 s, so without this every
     #: search would pay 2 s while the reranker server is not running.
     RETRY_AFTER_SECONDS = 60.0
+    #: The on-demand launcher (30_SCRIPTS/retrieval/reranker_launcher.py) answers
+    #: 503 {"error": "warming"} while the model process starts. That search keeps
+    #: the production order; the next one after this pause tries again.
+    WARMING_RETRY_SECONDS = 5.0
 
     def __init__(self, url: str, timeout: float = 5.0, k: int = DEFAULT_RERANK_K, clock=time.monotonic):
         parsed = urllib.parse.urlparse(url)
@@ -122,9 +134,14 @@ class HttpReranker:
         try:
             return self._score(query, documents)
         except RerankerError as exc:
+            pause = 0.0
             if str(exc).startswith("reranker unreachable"):
+                pause = self.RETRY_AFTER_SECONDS
+            elif str(exc).startswith("reranker warming"):
+                pause = self.WARMING_RETRY_SECONDS
+            if pause:
                 with self._lock:
-                    self._down_until = self._clock() + self.RETRY_AFTER_SECONDS
+                    self._down_until = self._clock() + pause
             raise
 
     def _score(self, query: str, documents: Sequence[str]) -> List[float]:
@@ -134,6 +151,10 @@ class HttpReranker:
         try:
             with _LOOPBACK_OPENER.open(req, timeout=self.timeout) as resp:
                 payload = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if exc.code == 503 and _error_field(exc) == "warming":
+                raise RerankerError("reranker warming (model process starting)") from exc
+            raise RerankerError(f"reranker unreachable: HTTPError {exc.code}") from exc
         except Exception as exc:  # noqa: BLE001 - any transport failure is "unavailable"
             raise RerankerError(f"reranker unreachable: {type(exc).__name__}") from exc
         if not isinstance(payload, dict):
