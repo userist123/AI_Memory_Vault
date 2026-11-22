@@ -165,7 +165,9 @@ export interface BathSpec { metal?: 'chrome' | 'black' | 'brass' | 'gunmetal'; t
 /** Bucătăria ca sistem: fronturi, mânere, corpuri suspendate, blat, placare între blat și suspendate, chiuvetă, baterie, LED sub suspendate. */
 export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'gloss' | 'wood'; handle?: 'bar' | 'knob' | 'profile' | 'none'; handleColor?: string;
   upper?: 'open' | 'closed' | 'none'; countertop?: string | null; countertopColor?: string; countertopMm?: number;
-  backsplash?: 'tile' | 'countertop' | 'glass' | 'paint'; backsplashColor?: string; sink?: string | null; tap?: string | null; underLed?: string | null ; modules?: import('./kitchen-modules').KitchenModule[] }
+  backsplash?: 'tile' | 'countertop' | 'glass' | 'paint'; backsplashColor?: string; sink?: string | null; tap?: string | null; underLed?: string | null ; modules?: import('./kitchen-modules').KitchenModule[];
+  /** Parametrii listei de debitare (core/kitchen-cut.ts): doar ce diferă de valorile implicite. */
+  cut?: Partial<import('./kitchen-cut').KitchenCutOptions> }
 /** Ce se pune la o fereastră: draperie (pereche de panouri), perdea transparentă, stor/jaluzea; `fullness` = cât de încrețită e draperia. */
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
 /** Ușa aleasă pentru un gol de ușă (produs cu toc), mânerul ei și sistemul (șină, casetă pentru ușa în perete, kit pliant). */

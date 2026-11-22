@@ -23,7 +23,7 @@ export function checkWardrobe(x: unknown): WardrobeSpec {
   const decor = typeof o.decor === 'string' ? o.decor.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80) : undefined;
   return { sections, doors: o.doors, plinthMm: o.plinthMm, edge: o.edge === 'abs04' ? 'abs04' : 'abs2', ...(decor ? { decor } : {}) };
 }
-const hingesFor = (h: number) => h <= 1000 ? 2 : h <= 1600 ? 3 : h <= 2000 ? 4 : 5;
+export const hingesFor = (h: number) => h <= 1000 ? 2 : h <= 1600 ? 3 : h <= 2000 ? 4 : 5;
 const merge = (parts: CutPart[]) => { const m = new Map<string, CutPart>(); for (const p of parts){ const k = `${p.name}|${p.l}|${p.w}|${p.edges.join('')}|${p.material}`; const c = m.get(k); if (c) c.qty += p.qty; else m.set(k, { ...p }); } return [...m.values()]; };
 
 /** Lista de debitare pentru un dulap de W × H × D (mm). */

@@ -536,6 +536,30 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .kmods{display:grid;gap:6px;margin:8px 0} .kmods h4{margin:0} .kmod-elev{width:100%;height:auto;background:#fbfaf7;border:1px solid var(--rule)}
 .kmod-list{margin:0;padding-left:20px;display:grid;gap:4px} .kmod-list li{display:grid;grid-template-columns:minmax(0,1fr) 64px 28px 28px 28px;gap:4px;align-items:center}
 .kmods .btn-x{border:0;background:none;font-size:var(--fs-md);cursor:pointer;color:var(--lead);min-height:32px} .kmod-act{display:flex;gap:6px;flex-wrap:wrap} .kmod-top ul{margin:2px 0;padding-left:18px;font-size:var(--fs-xs)}
+/* lista de debitare și planurile de tăiere (bucătărie + dulap): fereastră mare, tabel pe corpuri, desenul plăcii, tipar */
+.cut-dlg{padding:0;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--ink);width:min(1120px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);box-shadow:var(--shadow-2);overflow:hidden}
+.cut-dlg[open]{display:flex;flex-direction:column} .cut-dlg::backdrop{background:rgb(30 28 25 / .45)}
+.cut-dlg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--rule);flex:none} .cut-dlg-head h2{margin:0;font:500 var(--fs-lg)/1.25 var(--serif)}
+.cut-dlg-body{padding:12px 16px 16px;overflow:auto;min-height:0;font-size:var(--fs-sm)}
+.kcut{display:grid;gap:12px;min-width:0} .kcut h3{margin:6px 0 0;font:500 var(--fs-md)/1.2 var(--serif)} .kcut .small,.cut-plans .small{font-size:var(--fs-xs);margin:0}
+.kcut-params{border:1px solid var(--rule);border-radius:var(--r-sm);padding:8px 12px} .kcut-params summary{cursor:pointer;font-weight:500;min-height:24px} .kcut-params[open] summary{margin-bottom:8px}
+.kcut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px 12px;margin-bottom:8px} .kcut-grid input,.kcut-grid select{min-width:0;width:100%}
+.kcut-sum dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px 16px;margin:0 0 6px} .kcut-sum dt{font-size:var(--fs-xs);color:var(--lead)} .kcut-sum dd{margin:0}
+.kcut-hw{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px 18px}
+.kcut-scroll{overflow-x:auto;min-width:0} .kcut-table{min-width:600px} .kcut-table td{white-space:nowrap}
+.kcut-table .kcut-group th{text-transform:none;font:600 var(--fs-sm) var(--sans);color:var(--ink);padding-top:12px;border-bottom:1px solid var(--line-strong)} .kcut-group small{font-weight:400}
+.kcut-small td:first-child::after{content:" ⚠"} .cut-edge{vertical-align:middle;color:var(--ink)} .kcut-notes{margin:0;padding-left:18px}
+.cut-plans{display:grid;gap:8px;min-width:0} .cut-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap} .cut-nav-btns{display:flex;gap:6px}
+.cut-svg{width:100%;height:auto;max-height:58vh;display:block;border:1px solid var(--line-strong)}
+.cut-key{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center} .cut-sw{display:inline-block;width:14px;height:10px;border:1px solid var(--ink);margin-right:4px;vertical-align:middle;flex:none} .cut-svg-trim{background:repeating-linear-gradient(45deg,#f1efe9 0 3px,#8a8f98 3px 4.5px)}
+.cut-legend{max-width:720px} .cut-print{display:none}
+@media print{
+  body.cut-printing > *:not(.cut-print){display:none!important}
+  body.cut-printing > .cut-print{display:block;color:#000;font:400 11px/1.35 var(--sans)}
+  .cut-print h1{font:600 16px var(--sans);margin:0 0 2px} .cut-print h2{font:600 13px var(--sans);margin:0 0 4px} .cut-print p{margin:0 0 6px}
+  .cut-print .cut-page{break-after:page} .cut-print .cut-page:last-child{break-after:auto}
+  .cut-print .cut-svg{max-height:112mm;border:0} .cut-print .cut-legend{margin-top:4px;font-size:10px;max-width:none} .cut-print .cut-legend tr{break-inside:avoid}
+}
 .pcard-wrap{display:grid;gap:4px;align-content:start} .pcard-tools{display:flex;gap:12px} .pcard-tools .link{font:500 var(--fs-xs) var(--sans);background:none;border:0;padding:4px 0;color:var(--lead);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .pcard-tools .link.danger{color:#9a3b2e} .home-tools{display:flex;gap:8px;margin:-6px 0 16px;flex-wrap:wrap} .home-tools input{flex:1 1 220px;min-height:40px;padding:6px 10px;border:1px solid var(--rule);font:inherit;background:var(--surface)} .home-tools select{min-height:40px;width:auto;flex:0 0 auto}
 .undo-toast{position:sticky;top:8px;z-index:5;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:12px;background:var(--ink);color:#F6F3EE} .undo-toast .btn{background:#F6F3EE;color:var(--ink)}
