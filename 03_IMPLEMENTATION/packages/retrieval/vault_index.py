@@ -97,7 +97,7 @@ def _scan_notes(vault_root: Path, base: Path) -> List[Path]:
     def inside(real: str, folder: str) -> bool:
         return real == folder or real.startswith(folder + os.sep)
 
-    if is_link(base):
+    if is_link(base) or not inside(os.path.normcase(os.path.realpath(base)), real_vault):
         return []
     found: List[Path] = []
     for dirpath, dirnames, filenames in os.walk(base, followlinks=False):

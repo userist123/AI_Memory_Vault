@@ -184,7 +184,8 @@ def test_junction_not_followed_without_os_path_isjunction(tmp_path, monkeypatch)
     if os.name != "nt":
         pytest.skip("junctions exist only on Windows")
     vault = make_vault(tmp_path)
-    outside = tmp_path / "outside"
+    # Target INSIDE the vault (in a folder no scan root covers), so only the link check can stop it.
+    outside = vault / "90_UNSCANNED_TARGET"
     outside.mkdir()
     out_id = str(uuid.uuid4())
     (outside / "n.md").write_text(note_text("Out", "outside", out_id), encoding="utf-8")
@@ -197,6 +198,21 @@ def test_junction_not_followed_without_os_path_isjunction(tmp_path, monkeypatch)
     eng = FileStorageEngine(str(vault))
     assert out_id not in eng.id_to_path
     assert len(eng.load_report["links_not_followed"]) == 1
+
+
+def test_vault_index_root_resolving_outside_vault_is_skipped(tmp_path):
+    """A root that is reached through a link in an ANCESTOR (01_ARCHITECTURE -> outside) is not itself a link."""
+    import shutil
+    from retrieval.vault_index import VaultIndex
+    vault = make_vault(tmp_path)
+    shutil.rmtree(vault / "01_ARCHITECTURE")
+    outside = tmp_path / "outside_arch"
+    (outside / "knowledge").mkdir(parents=True)
+    out_id = str(uuid.uuid4())
+    (outside / "knowledge" / "n.md").write_text(note_text("Out", "outside", out_id), encoding="utf-8")
+    _make_dir_link(vault / "01_ARCHITECTURE", outside)
+    idx = VaultIndex.load(vault, roots=("01_ARCHITECTURE/knowledge",))
+    assert out_id not in set(idx.by_id)
 
 
 def test_get_refuses_changed_file_grown_over_cap(tmp_path, monkeypatch):
