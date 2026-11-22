@@ -170,6 +170,7 @@ def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home, t
     # and would win over a namespace-only fake, so the real router would run instead of this crashing one
     (cli.parent / "__init__.py").write_text("", encoding="utf-8")
     cli.write_text("import sys; sys.exit(1)", encoding="utf-8")
+    iso.pin_vault(home, proj)  # only a pinned vault root runs the in-hook router
     _prompt(home, IMPLEMENT)
     out = _agent(home, project=proj)
     assert out["permissionDecision"] == "deny"
@@ -198,9 +199,18 @@ def test_no_state_allows(home):
 
 @pytest.mark.parametrize("script", [ENFORCE_HOOK, AGENT_HOOK, PROMPT_HOOK])
 @pytest.mark.parametrize("stdin", ["", "not json", "[1, 2]", '{"session_id": 5}'])
-def test_malformed_stdin_exits_zero_silently(home, script, stdin):
-    r = _run(script, stdin, home)
+def test_malformed_stdin_is_silent_or_blocks_agent_spawns(home, script, stdin):
+    env = dict(os.environ)
+    env.update({"HOME": str(home), "USERPROFILE": str(home), "CLAUDE_PROJECT_DIR": str(ROOT)})
+    env.pop("COST_ROUTER_ENFORCE", None)
+    env.pop("COST_ROUTER_OLLAMA_ENDPOINT", None)
+    r = subprocess.run([sys.executable, str(script)], input=stdin, capture_output=True, text=True,
+                       timeout=60, env=env)
     assert r.stdout == ""
+    if script == AGENT_HOOK and stdin in ("", "not json", "[1, 2]"):
+        assert r.returncode == 2 and "blocking spawn" in r.stderr
+    else:
+        assert r.returncode == 0 and r.stderr == ""
 
 
 def test_corrupt_state_file_allows(home):
@@ -271,6 +281,8 @@ def test_settings_and_installer_match_agent_and_task(tmp_path):
     hooks = json.loads((h / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
     agent = [e for e in hooks if "hook_agent_model.py" in json.dumps(e)]
     assert len(agent) == 1 and agent[0]["matcher"] == "Agent|Task"
+    assert agent[0]["hooks"][0]["onFailure"] == "block"
+    assert "exit $?" in agent[0]["hooks"][0]["command"] and "exit 2" in agent[0]["hooks"][0]["command"]
 
 
 @pytest.mark.parametrize("subagent_type", ["vault-reviewer", "code-review", "verifier"])
@@ -288,6 +300,23 @@ def test_worker_with_the_same_brief_stays_cheap(home):
     "echo routing.route_cli route",
     "grep -r 'python -m routing.route_cli route' .",
     "cat notes.txt # routing.route_cli dispatch",
+    # review round 1: a router call that is not the whole command is no receipt
+    "cd /repo && /usr/bin/python3 -m routing.route_cli route --goal x",
+    "export PYTHONPATH=p; python -m routing.route_cli route --goal x",
+    "true; python -m routing.route_cli route --goal x; sed -i s/a/b/ src/*.py",
+    "python -m routing.route_cli route --goal x && rm -rf build",
+    "python -m routing.route_cli route --goal x | sh",
+    "python -c \"import os; os.system('rm -rf build') #routing.route_cli\" -m routing.route_cli route",
+    'python -c "pass #-m routing.route_cli route"',
+    "# python -m routing.route_cli route",
+    "echo python -m routing.route_cli route",
+    'echo "a; python -m routing.route_cli route"',
+    "python -m routing.route_cli route\nsed -i s/a/b/ src/*.py",
+    "python -m routing.route_cli route $(touch x)",
+    "python -m routing.route_cli route `touch x`",
+    "python -m routing.route_cli route > out.txt",
+    "python -m routing.other route",
+    "python -m routing.route_cli status",
 ])
 def test_mentioning_the_router_does_not_mark_vault_routed(home, command):
     _prompt(home, IMPLEMENT)
@@ -298,8 +327,8 @@ def test_mentioning_the_router_does_not_mark_vault_routed(home, command):
 @pytest.mark.parametrize("command", [
     "python -m routing.route_cli route --goal x",
     "PYTHONPATH=03_IMPLEMENTATION/packages python3 -m routing.route_cli dispatch --goal x --execute",
-    "cd /repo && /usr/bin/python3 -m routing.route_cli route --goal x",
-    "export PYTHONPATH=p; python -m routing.route_cli route --goal x",
+    "/usr/bin/python3 -m routing.route_cli route --goal x",
+    'python -m routing.route_cli route --goal "a; b & c | d"',  # separators inside quotes are data
 ])
 def test_invoking_the_router_marks_vault_routed(home, command):
     _prompt(home, IMPLEMENT)
@@ -309,7 +338,7 @@ def test_invoking_the_router_marks_vault_routed(home, command):
 
 def test_policy_doc_states_the_opus_ceiling():
     text = (ROOT / "00_GOVERNANCE" / "protocols" / "Claude_Model_Routing_Policy_V1.md").read_text(encoding="utf-8")
-    assert "Fable is reachable only for the `frontier` class" in text
+    assert "Fable 5.2 is not a route tier" in text
 
 
 # -- re-review fixes ---------------------------------------------------------------

@@ -167,6 +167,10 @@ def test_string_import_refs_each_kind_and_negative(tmp_path):
         "scripts/run.py": 'import subprocess, sys\nsubprocess.run([sys.executable, "-m", "alpha.cli", "x"])\n',
         "docs/note.md": "import this\npython -m alpha.cli\npython -c \"import alpha\"\n",
         "scripts/plain.py": "x = ['-m', 'not a module']\n",
+        "scripts/runner.py": ('CODE = ("import runpy; "\n'
+                              '        "runpy.run_module(\'alpha.cli\', run_name=\'__main__\')")\n'
+                              'OTHER = \'runpy.run_module("beta", alter_sys=True)\'\n'
+                              'BAD = "run_module(not_a_literal)"\n'),
     })
     _, data, md = _run(root, tmp_path)
     refs = {(r["file"], r["kind"], r["module"]): r for r in data["string_import_refs"]}
@@ -178,6 +182,10 @@ def test_string_import_refs_each_kind_and_negative(tmp_path):
     assert refs[("pyproject.toml", "toml_entry", "beta")]["unit"] == "packages/beta"
     r = refs[("scripts/run.py", "py_argv_m", "alpha.cli")]
     assert r["unit"] == "packages/alpha" and r["line"] == 2
+    r = refs[("scripts/runner.py", "py_run_module", "alpha.cli")]
+    assert r["unit"] == "packages/alpha" and r["line"] == 1
+    assert refs[("scripts/runner.py", "py_run_module", "beta")]["unit"] == "packages/beta"
+    assert sorted(k[2] for k in refs if k[0] == "scripts/runner.py") == ["alpha.cli", "beta"]
     assert not any(k[0] in ("docs/note.md", "scripts/plain.py") for k in refs)  # prose / non-module are ignored
     assert "## Importuri din șiruri" in md
 
@@ -188,7 +196,7 @@ def test_real_repo_string_imports_find_known_examples_and_memory_vault_shim(tmp_
     refs = data["string_import_refs"]
     assert any(r["file"] == ".github/workflows/r001-enforcement.yml" and r["kind"] == "python_c"
                and r["module"] == "memory_vault.memory" for r in refs)
-    assert any(r["file"] == ".claude/skills/cost-router/hook_agent_model.py" and r["kind"] == "py_argv_m"
+    assert any(r["file"] == ".claude/skills/cost-router/hook_agent_model.py" and r["kind"] == "py_run_module"
                and r["module"] == "routing.route_cli" and r["unit"] == "packages/routing" for r in refs)
     mv = _unit(data, "packages/memory_vault")
     assert mv["shim_target_source"] == "path_expression"

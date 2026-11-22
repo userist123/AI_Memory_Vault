@@ -95,7 +95,9 @@ def test_agent_hook_never_passes_an_unknown_model_value(tmp_path):
 def test_agent_hook_ignores_other_tools_and_bad_input(tmp_path):
     assert _agent({"command": "ls"}, tmp_path, tool_name="Bash") is None
     r = _run([AGENT_HOOK], "not json", home=tmp_path)
-    assert r.returncode == 0 and r.stdout == ""
+    assert r.returncode == 2 and r.stdout == "" and "blocking spawn" in r.stderr
+    r = _run([AGENT_HOOK], "[1, 2]", home=tmp_path)
+    assert r.returncode == 2 and r.stdout == "" and "JSON object" in r.stderr
 
 
 # -- shadowing: one answer per event --------------------------------------------------
@@ -108,7 +110,7 @@ def test_project_hooks_stay_silent_when_the_user_install_is_registered(tmp_path)
     user_hook = home / ".claude" / "skills" / "cost-router" / "hook_prompt_route.py"
     answer = json.loads(_run([user_hook], prompt, home=home).stdout)  # user copy answers, compact line
     assert answer == {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
-                                             "additionalContext": "cost-router: explore -> Explore subagent, haiku"}}
+                                             "additionalContext": "cost-router: explore -> Explore subagent, haiku spec=explore"}}  # M6: the registry names the specialist
     assert _agent({"prompt": "find which files import X"}, home) is None   # project agent hook shadowed
     user_agent = home / ".claude" / "skills" / "cost-router" / "hook_agent_model.py"
     r = _run([user_agent], json.dumps({"tool_name": "Agent", "tool_input": {"prompt": "find which files import X"}}), home=home)
@@ -123,6 +125,9 @@ def test_installer_registers_both_hooks_once_and_removes_them(tmp_path):
     assert len(hooks["UserPromptSubmit"]) == 1 and len(hooks["PreToolUse"]) == 3
     assert hooks["PreToolUse"][0]["matcher"] == "Agent|Task"
     assert "hook_agent_model.py" in json.dumps(hooks["PreToolUse"][0])
+    assert hooks["PreToolUse"][0]["hooks"][0]["onFailure"] == "block"
+    assert "exit $?" in hooks["PreToolUse"][0]["hooks"][0]["command"]
+    assert "exit 2" in hooks["PreToolUse"][0]["hooks"][0]["command"]
     assert hooks["PreToolUse"][1]["matcher"] == "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"
     assert "hook_enforce_route.py" in json.dumps(hooks["PreToolUse"][1])
     assert hooks["PreToolUse"][2]["matcher"] == "SendMessage"
@@ -137,7 +142,8 @@ def test_project_settings_register_the_agent_hook():
     entry = s["hooks"]["PreToolUse"][0]
     assert entry["matcher"] == "Agent|Task"
     cmd = entry["hooks"][0]["command"]
-    assert "cost-router/hook_agent_model.py" in cmd and cmd.rstrip().endswith("exit 0") and "exit 2" not in cmd
+    assert "cost-router/hook_agent_model.py" in cmd and "exit $?" in cmd and "exit 2" in cmd
+    assert entry["hooks"][0]["onFailure"] == "block"
 
 
 # -- local LLM tier ----------------------------------------------------------------
@@ -235,3 +241,57 @@ def test_policy_local_section_names_the_measured_models():
     assert loc["endpoint"].startswith("http://127.0.0.1:")
     assert loc["classes"] == ["summarize"]
     assert loc["models"]["text"][0] == "qwen2.5:7b-instruct"
+
+
+def test_user_scope_copy_with_other_bytes_but_equal_release_seq_answers_instead_of_blocking(tmp_path):
+    """Was test_stale_user_scope_agent_hook_blocks_project_spawn: byte inequality blocked every spawn (P2, denial of
+    service by any project copy). The shadow check now compares release-pin seq: equal seq -> the installed copy
+    answers and the project copy stays silent. The 'project seq higher -> exit 2' case is in
+    test_cost_router_global_boundary.py."""
+    home = tmp_path / "home"
+    assert _run([INSTALL, "--home", home]).returncode == 0
+    policy_copy = home / ".claude" / "skills" / "cost-router" / "policy.json"
+    policy_copy.write_text(policy_copy.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    payload = json.dumps({
+        "tool_name": "Agent",
+        "model": "opus",
+        "tool_input": {"subagent_type": "fable-consultant", "prompt": "bounded second opinion"},
+    })
+    result = _run([AGENT_HOOK], payload, home=home)
+    assert result.returncode == 0, result.stderr
+    assert "stale" not in result.stderr
+
+
+def test_fable_guard_is_not_disabled_by_router_enforcement_override(tmp_path):
+    tool_input = {
+        "description": "unclassified task",
+        "prompt": "unclassified task",
+        "subagent_type": "general-purpose",
+        "model": "claude-fable-5-2",
+    }
+    result = _run(
+        [AGENT_HOOK],
+        json.dumps({"tool_name": "Agent", "model": "opus", "tool_input": tool_input}),
+        home=tmp_path,
+        extra_env={"COST_ROUTER_ENFORCE": "0"},
+    )
+    assert result.returncode == 0, result.stderr
+    output = json.loads(result.stdout)["hookSpecificOutput"]
+    assert output["updatedInput"]["model"] == "opus"
+
+
+def test_direct_marker_does_not_disable_fable_model_guard(tmp_path):
+    tool_input = {
+        "description": "unclassified task",
+        "prompt": "#direct unclassified task",
+        "subagent_type": "general-purpose",
+        "model": "claude-fable-5-2",
+    }
+    result = _run(
+        [AGENT_HOOK],
+        json.dumps({"tool_name": "Agent", "model": "opus", "tool_input": tool_input}),
+        home=tmp_path,
+    )
+    assert result.returncode == 0, result.stderr
+    output = json.loads(result.stdout)["hookSpecificOutput"]
+    assert output["updatedInput"]["model"] == "opus"

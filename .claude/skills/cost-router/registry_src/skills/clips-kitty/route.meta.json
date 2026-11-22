@@ -1,0 +1,49 @@
+{
+ "schema_version": 1,
+ "id": "clips-kitty",
+ "kind": "skill",
+ "domain": [
+  "media-video"
+ ],
+ "task_classes": [
+  "implement",
+  "explore"
+ ],
+ "triggers": {
+  "ro": [
+   "clipuri din",
+   "clipuri verticale",
+   "taie in clipuri",
+   "clips kitty"
+  ],
+  "en": [
+   "clips from",
+   "make shorts",
+   "vertical clips",
+   "reels from"
+  ]
+ },
+ "summary": "Long video to short vertical clips, locally (clips-kitty MCP).",
+ "run_in": "main",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "sonnet"
+ },
+ "tools": [
+  "mcp__clips-kitty"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": false,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Job finished; clips listed and exported on request.",
+ "risk_ceiling": "low",
+ "privacy": "standard",
+ "priority": 60,
+ "uses": [
+  "clip"
+ ]
+}

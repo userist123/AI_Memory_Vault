@@ -74,10 +74,10 @@ Checkpoints and hard rules (owner, 2026-10-16):
 - Read excerpts, not whole files; run the full suite once before the final push.
 
 Model routing (policy `04_CONFIG/claude_model_routing.json`, procedure `.claude/skills/cost-router/SKILL.md`):
-- If a task does not need this session's model, hand it to a subagent; one-minute edits and answers stay here. A local-LLM answer (`.claude/skills/cost-router/lib/local_llm.py`) is unverified.
-- Reads/inventories → `Explore` (haiku). Bounded spec'd changes with tests → `vault-worker` (sonnet); on failure escalate one tier.
-- Verification, diff and security review → `vault-reviewer` (opus). Design, root cause, multi-file plans → main session.
-- Fable never as a subagent. Risk high/critical: never below Opus for design and verification, `vault-reviewer` before DONE.
+- If a task does not need this session's model, hand it to a subagent (`PreToolUse` on `Agent|Task` enforces route models and fails closed on Fable/malformed payloads); one-minute edits and answers stay here. A local-LLM answer (`.claude/skills/cost-router/lib/local_llm.py`) is unverified.
+- Reads/inventories → `Explore` (haiku). Bounded spec'd changes with tests → `vault-worker` (sonnet); on failure escalate one tier up to Opus.
+- Verification, diff and security review → `vault-reviewer` (opus). Design, root cause, multi-file plans → main session (Opus at `xhigh`).
+- Fable 5.2 ($8/$40 per MTok; requires Claude Code 2.1.321+ and 30-day data retention) is never a main-session model or generic escalation tier; Opus may invoke only the exact read-only `fable-consultant` subagent for a bounded second opinion while retaining implementation, verification and final decision authority. Risk high/critical: never below Opus for design and verification, `vault-reviewer` before DONE.
 
 ## Global Production-Consumer Rule
 

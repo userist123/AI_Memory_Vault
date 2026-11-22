@@ -1,7 +1,6 @@
 # Claude Model Routing Policy V1 — which Claude model runs which work, and why
 
-**Status:** REAL, TEST_VERIFIED (`20_TESTS/test_claude_model_router.py`,
-`20_TESTS/test_cost_router_skill.py`). Applied in Claude Code by the **`cost-router` skill**
+**Status:** IMPLEMENTED, TARGETED_TESTED (223 tests passed across seven relevant suites). Runtime activation is not yet verified: the current host is Claude Code 2.1.304, while Fable 5.2 requires 2.1.321 or later. The full 20_TESTS suite was not completed. Applied in Claude Code by the **`cost-router` skill**
 (`.claude/skills/cost-router/SKILL.md`): the skill carries the protocol, a `UserPromptSubmit` hook
 injects one route line per non-trivial prompt, and the subagents in `.claude/agents/` pin the
 cheaper models. Nothing here calls a provider.
@@ -9,19 +8,21 @@ cheaper models. Nothing here calls a provider.
 **Owner question answered:** "Which model should Claude Code use for what, so the session
 spends fewer tokens-dollars without losing the result?"
 
-## 1. Rate card (Anthropic first-party API, as of 2026-10-06; `04_CONFIG/claude_model_routing.json`)
+## 1. Rate card (Anthropic first-party API, as of 2026-11-09; `04_CONFIG/claude_model_routing.json`)
 
 | Alias | Model | $/MTok in | $/MTok out | cache read | relative to Opus |
-|---|---|---|---|---|---|
-| `fable` | Claude Fable 5.1 | 10.00 | 50.00 | 0.25 | 2.5x |
-| `opus` | Claude Opus 5.5 (Claude Code default) | 4.00 | 20.00 | 0.20 | 1x |
-| `sonnet` | Claude Sonnet 5.5 | 2.00 | 10.00 | 0.20 | 0.5x |
-| `haiku` | Claude Haiku 5.5 (>100K-token prompts cost 5x more) | 0.10 | 0.50 | 0.01 | 0.025x |
+|---|---|---:|---:|---:|---:|
+| `fable` | Claude Fable 5.2 | 8.00 | 40.00 | 0.20 | 2x |
+| `opus` | Claude Opus 5.5 (main Advisor) | 4.00 | 20.00 | 0.20 | 1x |
+| `sonnet` | Claude Sonnet 5.5 | 2.00 | 10.00 | 0.10 | 0.5x |
+| `haiku` | Claude Haiku 5.5 (tiered above 100K input tokens) | 0.10 | 0.50 | 0.01 | 0.025x |
 
-Fable usage can bill to usage credits instead of the plan's included limits; Claude Code asks
-for consent before that happens. Every current model has thinking on; `effort`
-(`low`..`max`) is the only depth control. Opus 5.5, Sonnet 5.5 and Haiku 5.5 default to
-`medium`; Fable to `high`.
+Fable 5.2 cache writes cost $10/MTok (5m) and $16/MTok (1h); cache reads cost $0.20/MTok.
+It has a 1M-token context and 128K max output. Claude Code requires version 2.1.321 or later.
+Fable 5.2 requires 30-day data retention and is unavailable under zero data retention unless
+Anthropic expressly authorizes it. Plan usage and usage-credit treatment depends on the account.
+All current models use adaptive thinking; effort controls depth where the model supports it.
+Fable 5.2 and Sonnet 5.5 default to high effort; Opus 5.5 and Haiku 5.5 to medium. The routing table may set a lower task-specific effort, such as Sonnet/medium for bounded implementation.
 
 ## 2. What the research says (claude-api skill, cost-optimization guide; Claude Code docs)
 
@@ -53,14 +54,16 @@ for consent before that happens. Every current model has thinking on; `effort`
 | `implement` | sonnet / medium | `vault-worker` subagent | spec'd change with tests as the failure signal | run cheap first, escalate failures |
 | `review` | opus / high | `vault-reviewer` subagent | verify DONE claims, review diffs, security review | edge-case reasoning; independent context |
 | `design` | opus / xhigh | main session | architecture, root cause, multi-file plans | a wrong plan costs more than tokens |
-| `frontier` | fable / high | main session only | ambiguous, long-horizon, end-to-end orchestration | the one place Fable earns 2.5x |
+| `frontier` | opus / xhigh | main session | ambiguous, long-horizon, end-to-end orchestration | Opus owns the plan and decision |
 | unclassified | opus / medium (Claude Code default) | — | anything the keywords miss | reported as `confidence: low`, never guessed cheaper |
 
 Rules applied after classification (`rules` in the policy; can only raise a tier):
 - **risk floor**: `high`/`critical` risk (production, credentials, deletes, security boundary)
   never below Opus;
-- **Fable is never a subagent model**; a subagent route that would escalate to Fable hands the
-  step back to the main session;
+- **Fable consultant exception**: Fable 5.2 is not a route tier; it is allowed only through the exact `fable-consultant`
+  subagent, with Read/Grep/Glob only and plan permission mode. It is advisory only, not an
+  implementer, verifier, approver or final decision-maker; every other Fable subagent request is
+  rewritten to Opus;
 - **risk is read from the task text** (`rules.risk_keywords`, English and Romanian: production,
   credentials, secrets, auth, trust boundaries, deletes, git history, ...); a detected `high`/
   `critical` risk raises the route to Opus at `high` effort, keeps it in the main session (the
@@ -68,19 +71,25 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
 - **the verifier is always `vault-reviewer` (Opus, fresh context)**, for every high/critical or
   security task that is not itself a review; Fable is never a verifier;
 - **escalation order on failure**: haiku → sonnet → opus, one notch, after the tests say the
-  cheaper attempt failed. Opus is the ceiling: Fable is reachable only for the `frontier` class,
-  in the main session (owner decision, 2026-10-15); every other class stays on Opus;
+  cheaper attempt failed. Opus is the ceiling for execution and verification; Fable is a separate
+  read-only consultant, never an escalation tier;
 - **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
   recommended_action`, under 300 words, so the main session's context stays small.
 
-## 3A. Enforcement and the local tier (2026-10-10, owner-approved)
+## 3A. Enforcement and the local tier (2026-11-10, owner-approved)
 
-- **Any subagent type, the model per route.** A `PreToolUse` hook on `Agent`
-  (`.claude/skills/cost-router/hook_agent_model.py`) classifies each spawn's brief and rewrites its
-  `model`: none given → the route's model; cheaper than the route → raised; more than one tier
-  above → capped (one-notch escalation stays allowed); risk detected → Opus; Fable → Opus. An
-  unclassified brief without risk is left to the agent's own frontmatter. The hook answers `allow`
-  with `updatedInput`, as the hooks reference requires; deny/ask rules still apply. It never blocks.
+- **Any subagent type, the model per route.** A `PreToolUse` hook on `Agent|Task`
+  (`.claude/skills/cost-router/hook_agent_model.py`) classifies each spawn's brief. Only the exact
+  `fable-consultant` type is eligible for Fable 5.2; explicit non-Fable model overrides are preserved,
+  while explicit Fable requests and Fable frontmatter on all other agents are routed to Opus. Provider-
+  prefixed Fable IDs are recognized, and `inherit` is forced to Opus for non-consultant subagents.
+  The hook resolves agents by declared frontmatter `name`, not filename, and validates the consultant's
+  exact `claude-fable-5-2` model, Read/Grep/Glob-only allowlist, required denials, high effort, plan mode,
+  and absence of extra capability fields. Missing, ambiguous, unreadable, malformed or modified
+  definitions block the spawn. Malformed hook payloads and unexpected errors exit 2. A user-scope hook
+  shadows the project hook only when the blocking `PreToolUse`/`Agent|Task` registration is actually
+  present and the installed copies are current. The settings hook uses `onFailure: block` (Claude Code
+  2.1.295+) and blocks Agent spawns if Python is unavailable.
 - **One route line per prompt.** A project copy of a hook stays silent when the user-scope install
   of the same hook is registered (`is_shadowed` in `lib/route.py`).
 - **Local tier.** `lib/local_llm.py` sends text-in/short-text-out work to Ollama on loopback
@@ -232,23 +241,25 @@ and what the same tokens cost on Fable. `report` reads the local Claude Code tra
 model, with the counterfactual cost on every other model (equal-token assumption: an upper
 bound on savings).
 
-The project `.claude/settings.json` sets `"model": "opus"`, so a session on this repository starts
-on Opus 5.5 unless the owner overrides it (`/model`, `--model` and `ANTHROPIC_MODEL` all rank
-higher): the main-session model is the largest single cost lever (Fable is 2.5x Opus per token)
-and the skill never changes it. Pick Fable deliberately, for the ambiguous long-horizon tail.
+The project `.claude/settings.json` sets `"model": "opus"`, so the session starts on Opus 5.5
+unless the owner explicitly overrides it. Opus remains the main Advisor and final authority;
+Fable is not selected for the main session or as a generic escalation. Opus may invoke
+`fable-consultant` for a bounded second opinion on a difficult, high-impact architecture decision.
+Fable costs 2x Opus per token and requires the 30-day data-retention condition above.
 
-In a session, the main agent (whatever model the owner picked with `/model`) does the
-classification itself with this table and delegates: `Agent(subagent_type="Explore")` for
-reads, `vault-worker` for bounded changes, `vault-reviewer` before claiming DONE. The main
-session keeps design and orchestration. Defaults that keep the bill down regardless of routing:
+In a session, Opus is the main Advisor and uses this table to delegate: `Agent(subagent_type="Explore")`
+for reads, `vault-worker` for bounded changes, and `vault-reviewer` before claiming DONE. Opus
+keeps design, orchestration and final decisions. It invokes `fable-consultant` only for a bounded
+second opinion on difficult, high-impact architecture decisions. Defaults that keep the bill down:
 `/effort medium` on Opus for routine work, `xhigh` only for the hard tail; stable tools and
 system prompt within a session; excerpts, not whole files (CLAUDE.md token-economy rule).
 
 ## 5. Evidence
 
-- Unit tests: `20_TESTS/test_claude_model_router.py` (policy validity, classification, risk
-  floor, Fable-never-subagent, verifier independence, rate-card math, transcript de-duplication,
-  subagent files consistent with the policy, CLI).
+- Unit tests: `20_TESTS/test_claude_model_router.py` and
+  `20_TESTS/test_fable_consultant_routing.py` (policy validity, Opus frontier routing, the exact
+  Fable consultant exception, generic Fable denial/redirection, verifier independence, current and
+  historical rate-card math, installer preservation and uninstall, and read-only agent tools).
 - Measured on the session that built this (2026-10-10, Fable 5.1 main session, after 11
   requests):
 
@@ -269,9 +280,9 @@ claude-fable-5-1        11       292    1807494     171175    33964    5526   91
 - Keyword classification is heuristic. It is meant to make the policy explicit and testable,
   not to replace judgment; the main agent is the classifier in practice.
 - Prices drift; `pricing_as_of` is in the file and must be refreshed with the rate card.
-- The hook only *nudges* (one line of context); the skill body loads when invoked and stays in
-  context for the session (about 1.2K tokens), which is the price of having the protocol present.
-  The main agent still makes the call; a subagent is only as good as the brief it gets.
+- The route hint is advisory, but the Agent model hook rewrites model selection and blocks on
+  failure for Fable-sensitive requests. The consultant's tool allowlist is the effective read-only
+  boundary; its prompt is not treated as a security control.
 - The usage counterfactual assumes equal token counts across models; a cheaper model that
   retries is not cheaper. Judge per completed task.
 - Distinct from `providers/model_tier_router.py` (council tiers, protected core) and

@@ -409,10 +409,12 @@ def test_tamper_injected_non_utf8_bytes_behavior(temp_log_path):
         f.write(b"\xff\xff\xfe\xfe\n")
         f.write(json.dumps(entries[1]).encode("utf-8") + b"\n")
         
-    # verify_integrity with open(..., encoding="utf-8") raises UnicodeDecodeError
-    # when reading invalid UTF-8 bytes from the file stream iterator
-    with pytest.raises(UnicodeDecodeError):
-        logger.verify_integrity()
+    # Since 2026-11-22 (security review of the audit chain) injected non-UTF-8 bytes are reported as a
+    # violation instead of crashing verify_integrity (a crash hid every later finding and, in log(),
+    # blocked all audited operations). Stricter: the tamper is detected and named.
+    valid, violations = logger.verify_integrity()
+    assert valid is False
+    assert any("Line 2" in v for v in violations)
 
 # ==============================================================================
 # 8. CONCURRENCY AND STRESS

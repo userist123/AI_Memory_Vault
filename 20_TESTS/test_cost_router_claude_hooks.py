@@ -384,7 +384,7 @@ def vault_project(tmp_path):
     cli.parent.mkdir(parents=True)
     (cli.parent / "__init__.py").write_text("", encoding="utf-8")  # regular package: wins over an editable install
     cli.write_text("", encoding="utf-8")
-    return tmp_path / "proj"
+    return iso.pin_vault(tmp_path, tmp_path / "proj")  # tmp_path is the HOME of these tests
 
 
 def agent_spawn(proj):
@@ -458,7 +458,7 @@ def fake_vault(tmp_path):
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     (pkg / "route_cli.py").write_text(FAKE_ROUTER, encoding="utf-8")
-    return tmp_path / "proj"
+    return iso.pin_vault(tmp_path, tmp_path / "proj")
 
 
 def run_in_vault(hook, payload, home: Path, proj: Path, status="ROUTED", **extra):
@@ -595,10 +595,11 @@ def test_inhook_router_is_never_launched_through_a_shell(monkeypatch):
 
     monkeypatch.setattr(mod.subprocess, "Popen", fake)
     monkeypatch.setattr(mod.subprocess, "run", fake)
+    monkeypatch.setattr(route_state, "pinned_vault_root", lambda data=None: Path(".").resolve())  # a pinned root
     assert mod._run_vault_router(route_state, {"cwd": "."}, "do it") == (None, "OSError")
     assert seen
     for cmd, kw in seen:
-        assert isinstance(cmd, list) and not kw.get("shell")
+        assert isinstance(cmd, list) and not kw.get("shell") and "-I" in cmd
 
 
 # session model (O-1): delegation is advisory when it would not be cheaper ------------------

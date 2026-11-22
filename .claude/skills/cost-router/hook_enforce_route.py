@@ -9,8 +9,8 @@ the next one is denied (read-only Read/Grep/Glob only get the reason as addition
 Only the main session is bound: a call carrying a non-empty agent_id or agent_type comes from a
 subagent and is allowed without touching any state. Allowed silently as well: no state, route.subagent null (main-session classes, trivial prompts, "#direct"),
 state.delegated true (monotonic for the rest of the prompt once any Agent/Task spawn happened),
-COST_ROUTER_ENFORCE=0. A Bash command that actually invokes `python -m routing.route_cli route` or
-`... dispatch` (at the start or after ; & | &&, not merely mentioned) marks state.vault_routed and
+COST_ROUTER_ENFORCE=0. A Bash command that is ONE plain command (no ; & | redirect, comment or substitution) running
+`python -m routing.route_cli route|dispatch` or the installed lib/vault_router.py route (see invokes_router) marks state.vault_routed and
 is always allowed; it also records the task class in the session's route receipt cache
 (route_state.add_routed_class), which hook_agent_model.py accepts for later prompts of the same
 class. Not counted (`exempt`): one single read-only or one-shot git/gh command (git status/log/diff,
@@ -24,22 +24,67 @@ from __future__ import annotations
 
 import json
 import os
+import posixpath
 import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-# An actual interpreter call of `-m routing.route_cli route|dispatch`, at the command start or after
-# a separator. Accepted launchers: python/python3[.x][.exe] (any path), `py [-3[.x]]`, `uv run python`,
-# `env [VAR=x ...]`, leading VAR=value assignments, and interpreter flags before -m (`-I`, `-X utf8`).
-ROUTER_CALL = re.compile(
-    r"(?:^|[;&|\n(])\s*"
-    r"(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
-    r"(?:uv\s+run\s+)?"
-    r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
-    r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*"  # only -X/-W take a value
-    r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+# A router RECEIPT counts only for a SINGLE command: no ; & | < > backtick $( newline or comment outside/inside quotes
+# (so nothing can ride along), whose interpreter is a recognised launcher (python/python3[.x][.exe] by name, `py [-3]`,
+# `uv run python`, optionally behind `env` and VAR=value assignments) and that runs EITHER
+#   - the INSTALLED lib/vault_router.py (absolute path, `~` and $HOME expanded, compared after realpath + normcase) with
+#     the sub-command `route`, OR
+#   - `-m routing.route_cli route|dispatch` (module form after -m only, never inside a -c string).
+# Anything else (echo, a comment, a project copy of the script, a path elsewhere, `-c`) is not a receipt.
+MAX_COMMAND = 2000
+_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+_PY_NAME = re.compile(r"^(?:python[0-9.]*|py)(?:\.exe)?$", re.I)
+_FLAGS = re.compile(r"^-[IEsSBdOqRuvb]+$")  # value-less interpreter flags; -c, -m and friends are handled explicitly
+
+
+def _tokens(command: str):
+    """Shell-ish words with quotes removed; None when the command is not a single plain command."""
+    if not command or len(command) > MAX_COMMAND or any(c in command for c in "\n\r\x00`") or "$(" in command:
+        return None
+    out: list[str] = []
+    cur: list[str] = []
+    started = False
+    quote = ""
+    for ch in command:
+        if quote:
+            if ch == quote:
+                quote = ""
+            else:
+                cur.append(ch)
+        elif ch in "\"'":
+            quote, started = ch, True
+        elif ch in " \t":
+            if started or cur:
+                out.append("".join(cur))
+                cur, started = [], False
+        elif ch in ";&|<>(){}":
+            return None
+        elif ch == "#" and not (started or cur):
+            return None  # a comment, or a word that starts with #
+        else:
+            cur.append(ch)
+    if quote:
+        return None
+    if started or cur:
+        out.append("".join(cur))
+    return out or None
+
+
+def _norm(path: str) -> str:
+    return os.path.normcase(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+
+
+def _installed_wrappers() -> set:
+    here = Path(__file__).resolve().parent / "lib" / "vault_router.py"
+    home = Path(os.path.expanduser("~")) / ".claude" / "skills" / "cost-router" / "lib" / "vault_router.py"
+    return {_norm(str(here)), _norm(str(home))}
 
 
 # Exempt from the delegation counter (owner rule 2026-10-16): a single read-only or one-shot git/gh
@@ -74,9 +119,42 @@ def exempt(tool_name, tool_input: dict) -> bool:
 
 
 def invokes_router(command: str) -> bool:
-    # A real router call is short; scanning only the head keeps the regex linear-time in practice
-    # (a long run of separators, e.g. inline minified JSON, made it quadratic past the hook timeout).
-    return bool(ROUTER_CALL.search((command or "")[:2000]))
+    try:
+        toks = _tokens(command)
+        if not toks:
+            return False
+        i = 0
+        if toks[i] == "env":
+            i += 1
+        while i < len(toks) and _ASSIGN.match(toks[i]):
+            i += 1
+        if i + 1 < len(toks) and toks[i] == "uv" and toks[i + 1] == "run":
+            i += 2
+        if i >= len(toks) or not _PY_NAME.match(os.path.basename(toks[i].replace("\\", "/"))):
+            return False
+        launcher = os.path.basename(toks[i].replace("\\", "/")).lower()
+        i += 1
+        if launcher.startswith("py") and not launcher.startswith("python") and i < len(toks) and re.match(r"^-[0-9][0-9.]*$", toks[i]):
+            i += 1  # py -3 / py -3.12
+        while i < len(toks):
+            t = toks[i]
+            if t in ("-X", "-W"):
+                i += 2
+            elif _FLAGS.match(t):
+                i += 1
+            else:
+                break
+        if i >= len(toks):
+            return False
+        if toks[i] == "-m":
+            return i + 2 < len(toks) and toks[i + 1] == "routing.route_cli" and toks[i + 2] in ("route", "dispatch")
+        if toks[i].startswith("-"):
+            return False
+        script = os.path.expandvars(os.path.expanduser(toks[i]))
+        return (i + 1 < len(toks) and toks[i + 1] == "route" and os.path.isabs(script)  # absolute only: a relative path is the project's copy
+                and _norm(script) in _installed_wrappers())
+    except Exception:
+        return False
 
 
 def from_subagent(data: dict) -> bool:
@@ -132,6 +210,57 @@ def _advisory_note(sid, state: dict):
         if s_tier and r_tier and policy.rank(r_tier) == policy.rank(s_tier):  # equal tiers only: never relax a
             return (f"cost-router: delegation is advisory here (session model {session} is on the route"  # risk floor
                     f" tier {r_tier})")
+    except Exception:
+        return None
+    return None
+
+
+# --- Best-effort role guard (declared limits of dfir-analyst and test-author) ---------------------------------------
+# Both roles have Bash, so their limits are DECLARED in the agent file; this guard denies the obvious violations when
+# the payload carries agent_type. Bash is Turing-complete (python -c, encoded commands, aliases): this is a speed bump,
+# not a sandbox. It fails open on any error; only the explicit denials below are enforced.
+_CMDPOS = (r"(?:^|[;&|(`]|\$\()\s*(?:(?:sudo|env|time|command|call|start|&)\s+|[A-Za-z_]\w*=\S*\s+)*")
+_DFIR_CMDS = (
+    r"curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod|ssh|scp|sftp|ftp|nc|ncat|npm|npx|pnpm|yarn|"
+    r"pip3?\s+install|python[\d.]*(?:\.exe)?\s+(?:-\w+\s+)*-m\s+(?:http\.server|pip\s+install|ensurepip)|py\s+(?:-[\d.]+\s+)?-m\s+(?:http\.server|pip\s+install)|"
+    r"git(?:\s+-C\s+\S+)?\s+(?:push|fetch|clone|pull)|"
+    r"out-file|set-content|add-content|tee|cp|mv|rm|del|erase|rmdir|copy|move|remove-item|new-item")
+_DFIR_RE = re.compile(_CMDPOS + r"(?:" + _DFIR_CMDS + r")(?![\w.-])", re.I)
+_BS = chr(92)
+_QUOTED = re.compile('"(?:' + _BS * 2 + '.|[^"' + _BS * 2 + '])*"' + "|'[^']*'")
+_SAFE_REDIR = re.compile(r"\d?>&\d|\d?>>?\s*(?:/dev/null|nul|\$null)(?![\w./-])", re.I)
+_REDIR = re.compile(r"(?<![<-])>")
+_TEST_DIRS = {"20_tests", "tests", "test"}
+_TEST_FILE = re.compile(r"(?:^test_.*\.py$|_test\.py$|Tests\.cs$)", re.I)
+
+
+def _deny(reason: str):
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                   "permissionDecisionReason": reason}}
+
+
+def role_guard(data: dict):
+    """A deny payload for an obvious violation by dfir-analyst or test-author, else None. Never raises."""
+    try:
+        role = str(data.get("agent_type") or "").strip().lower()
+        tool = data.get("tool_name")
+        ti = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
+        if role == "dfir-analyst" and tool == "Bash":
+            cmd = ti.get("command")
+            if not isinstance(cmd, str):
+                return None
+            flat = _SAFE_REDIR.sub(" ", _QUOTED.sub('""', cmd))
+            if _DFIR_RE.search(flat) or _REDIR.search(flat):
+                return _deny("cost-router: dfir-analyst is read-only and offline (network none, write none); this Bash"
+                             " command reaches the network or writes a file. Report what you need instead.")
+        elif role == "test-author" and tool in ("Write", "Edit", "NotebookEdit", "MultiEdit"):
+            path = ti.get("file_path") or ti.get("notebook_path")
+            if not isinstance(path, str) or not path.strip():
+                return None
+            parts = [x for x in posixpath.normpath(path.replace("\\", "/")).split("/") if x]
+            if parts and not (_TEST_FILE.search(parts[-1]) or any(x.lower() in _TEST_DIRS for x in parts[:-1])):
+                return _deny("cost-router: test-author writes tests only (a 20_TESTS/tests/test directory, test_*.py,"
+                             " *_test.py, *Tests.cs); this path is production code. Report the needed change instead.")
     except Exception:
         return None
     return None
@@ -214,6 +343,16 @@ def main() -> int:
             return 0
         from route import is_shadowed  # noqa: E402
         if is_shadowed(Path(__file__)):
+            return 0
+        guard = None
+        try:
+            import route_state as _rs2  # noqa: E402
+            if not _rs2.enforcement_disabled():
+                guard = role_guard(data)
+        except Exception:
+            guard = None
+        if guard:
+            print(json.dumps(guard))
             return 0
         reason = decide(data)
     except Exception:

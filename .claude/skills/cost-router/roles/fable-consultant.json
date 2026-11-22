@@ -1,0 +1,56 @@
+{
+ "schema_version": 1,
+ "id": "fable-consultant",
+ "kind": "agent",
+ "domain": [
+  "code",
+  "security"
+ ],
+ "task_classes": [
+  "design",
+  "frontier",
+  "review"
+ ],
+ "triggers": {
+  "ro": [
+   "a doua parere",
+   "parere externa",
+   "compromis arhitectural",
+   "trade-off arhitectural"
+  ],
+  "en": [
+   "second opinion",
+   "architecture trade-off",
+   "architectural trade-off",
+   "design critique"
+  ]
+ },
+ "summary": "Read-only second opinion on hard architecture; never implements.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "fable",
+  "default": "fable",
+  "max": "fable"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": false,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Bounded critique with risks; Opus decides.",
+ "risk_ceiling": "critical",
+ "privacy": "standard",
+ "priority": 50,
+ "subagent_type": "fable-consultant",
+ "effort": "high",
+ "cost": {
+  "class": "L",
+  "typical_usd": null
+ }
+}

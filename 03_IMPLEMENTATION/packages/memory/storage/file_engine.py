@@ -154,12 +154,15 @@ class FileStorageEngine:
         self.load_report["links_not_followed"].append(entry)
         audit_event("storage_skipped", "system", "unknown", success=False, details=dict(entry))
 
-    def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
+    def _relative_to_root(self, filepath: str) -> str:
         try:
             rel = os.path.relpath(filepath, self.vault_root)
         except ValueError:
             rel = os.path.basename(filepath)
-        rel = rel.replace("\\", "/")
+        return rel.replace("\\", "/")
+
+    def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
+        rel = self._relative_to_root(filepath)
         entry = {"path": rel, "reason": reason,
                  "exception": type(exc).__name__ if exc is not None else None}
         self.load_report["skipped"].append(entry)
@@ -290,7 +293,9 @@ class FileStorageEngine:
                         raise e
                     if "Malformed YAML" in str(e):
                         audit_event("storage_error", "system", "unknown", success=False,
-                                    details={"error": "Malformed YAML", "path": filepath, "message": str(e)})
+                                    details={"error": "Malformed YAML",
+                                             "path": self._relative_to_root(filepath),
+                                             "error_type": type(e).__name__})
                         self._record_skip(filepath, "malformed_yaml", e)
                         continue
                     if isinstance(e, TypeError) and "invalid id" in str(e):

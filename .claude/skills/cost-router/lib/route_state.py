@@ -353,6 +353,64 @@ def record_resume(session_id, agent_id: str) -> bool:
         return _write_json(path, counts)
 
 
+def reserve_fable_executor(session_id, max_per_session: int):
+    """Take one fable-executor slot for this session: (True, count after) when count < max_per_session, else
+    (False, count). Read-modify-write under the same cross-process lock as the resume counter, so concurrent Agent
+    hooks never exceed the budget. Fails closed: (False, -1) when the session id, the lock or the write fails."""
+    path = _session_json(session_id, ".fable_executor")
+    if path is None or type(max_per_session) is not int or max_per_session < 1:
+        return False, -1
+    with _Locked(path) as lk:
+        if not lk.acquired:
+            return False, -1
+        count = 0
+        if path.exists():
+            try:  # a corrupted or foreign counter never reopens the budget
+                data = json.loads(path.read_text(encoding="utf-8"))
+                count = data["count"]
+                if type(count) is not int:
+                    return False, -1
+            except Exception:
+                return False, -1
+        if count < 0:
+            return False, -1
+        if count >= max_per_session:
+            return False, count
+        if not _write_json(path, {"count": count + 1, "ts": int(time.time())}):
+            return False, -1
+        return True, count + 1
+
+
+SPAWNS_MAX = 64
+
+
+def record_spawn(session_id, epoch: str, tier: str, stype: str, writer: bool) -> bool:
+    """Append one real spawn the Agent hook ALLOWED (its resolved tier, the prompt epoch, whether the agent can write)
+    to route-<sid>.spawns, under the same cross-process lock as the resume counter (no lost append under concurrent
+    hooks). Bounded to the last SPAWNS_MAX entries. False when the session id, the lock or the write fails.
+    Evidence for the fable-executor gate (condition d). It lives in the user cache like every route state: a project
+    file cannot create it, but a same-user process (or the main session itself) can edit it (residual, threat E1)."""
+    path = _session_json(session_id, ".spawns")
+    if path is None or not isinstance(epoch, str) or not epoch:
+        return False
+    with _Locked(path) as lk:
+        if not lk.acquired:
+            return False
+        data = _read_json(path, {})
+        items = data.get("spawns") if isinstance(data, dict) else None
+        items = [e for e in items if isinstance(e, dict)] if isinstance(items, list) else []
+        items.append({"epoch": epoch, "tier": str(tier or "")[:16], "stype": str(stype or "")[:64],
+                      "writer": bool(writer), "ts": int(time.time())})
+        return _write_json(path, {"spawns": items[-SPAWNS_MAX:]})
+
+
+def spawns(session_id) -> list:
+    """The recorded real spawns of this session (oldest first); [] when missing or corrupt."""
+    data = _read_json(_session_json(session_id, ".spawns"), {})
+    items = data.get("spawns") if isinstance(data, dict) else None
+    return [e for e in items if isinstance(e, dict)] if isinstance(items, list) else []
+
+
 SEEN_MAX = 500
 USAGE_MAX = 200
 
@@ -444,8 +502,61 @@ def project_dir(data: Optional[dict] = None) -> Path:
     return Path(cwd) if cwd else Path.cwd()
 
 
-def in_vault(data: Optional[dict] = None) -> bool:
+CONFIG_NAME = "config.json"  # machine-local; written by install.py next to the INSTALLED skill, from a trusted checkout
+ROUTE_CLI_REL = ("03_IMPLEMENTATION", "packages", "routing", "route_cli.py")
+
+
+def normalize_root(path) -> str:
+    """The comparison form of a vault root: absolute, symlinks resolved, case-normalized (Windows)."""
+    return os.path.normcase(os.path.realpath(str(path)))
+
+
+def pinned_vault_roots() -> list:
+    """Vault roots pinned at install time, from ~/.claude/skills/cost-router/config.json ONLY. Never read from the
+    project or from the directory of the running hook: a project copy of the skill is attacker-controlled input.
+    Unreadable / malformed / non-absolute entries are dropped (fail closed: no pin, no router run)."""
     try:
-        return (project_dir(data) / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py").is_file()
+        cfg = Path.home() / ".claude" / "skills" / "cost-router" / CONFIG_NAME
+        data = json.loads(cfg.read_text(encoding="utf-8"))
+        roots = data.get("vault_roots") if isinstance(data, dict) else None
+        # the STORED string is the reference (written at install as the normcased realpath): it is never re-resolved
+        # here, or a pinned directory swapped for a junction would resolve to the attacker's tree and match it
+        return [os.path.normcase(r) for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
     except Exception:
+        return []
+
+
+def _is_link(path: Path) -> bool:
+    """A symlink or (Windows) junction / reparse point. Stdlib only; an unreadable path counts as a link (fail closed)."""
+    try:
+        if path.is_symlink():
+            return True
+        is_junction = getattr(path, "is_junction", None)
+        if is_junction is not None:
+            return bool(is_junction())
+        if os.name == "nt":  # Python < 3.12: the reparse-point attribute
+            return bool(os.lstat(path).st_file_attributes & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
         return False
+    except (OSError, AttributeError):
+        return True
+
+
+def pinned_vault_root(data: Optional[dict] = None) -> Optional[Path]:
+    """The real path of the project when it IS a pinned vault root and still has the router entry point; else None."""
+    try:
+        root = project_dir(data)
+        real = normalize_root(root)  # the project's realpath, compared with the stored string
+        if real not in pinned_vault_roots():
+            return None
+        if _is_link(Path(real)) or normalize_root(real) != real:
+            return None  # the pinned path is (or sits behind) a link now: it is not the directory that was pinned
+        if not Path(os.path.realpath(str(root)), *ROUTE_CLI_REL).is_file():
+            return None
+        return Path(os.path.realpath(str(root)))
+    except Exception:
+        return None
+
+
+def in_vault(data: Optional[dict] = None) -> bool:
+    """True only for a vault root pinned at install time (not merely a directory shaped like the vault)."""
+    return pinned_vault_root(data) is not None

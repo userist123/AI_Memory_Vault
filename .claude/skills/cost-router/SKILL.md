@@ -47,7 +47,7 @@ entrepreneur does:
 | implement | spec is clear and tests/lint are the failure signal | subagent on sonnet (`vault-worker` fits) | run cheap first; escalate only failures |
 | review | verify a DONE claim, review a diff, security check | subagent on opus (`vault-reviewer` fits) | edge cases; independent context |
 | design | architecture, root cause unknown, multi-file plan | you, at `high`/`xhigh` effort | a wrong plan costs more than tokens |
-| frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Fable only if the owner chose it | the one place 2.5x Opus pays |
+| frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Opus at xhigh; consult Fable selectively | Opus owns the plan; Fable supplies only a bounded second opinion |
 | unclear | keywords don't match | you, session default | say so; never guess cheaper |
 
 Risk `high`/`critical` (production, credentials, secrets, deletes, auth, trust boundaries, git
@@ -56,18 +56,40 @@ history): design, root cause and verification never below Opus, and always an in
 Romanian). Owner rule 2026-10-16: the *implementer* of risky code stays on Sonnet (high effort)
 because that Opus review is mandatory afterwards; the floor binds the reviewer, not the worker
 (policy `rules.implementer_risk_floor`). Critical risk and live operations (production, deploy,
-delete, rotate, leaks) keep Opus: a review after the fact cannot undo them. Fable is never a subagent or verifier model. Escalation order on a failed check: local → haiku → sonnet → opus → fable,
-one notch, only after the check actually failed.
+delete, rotate, leaks) keep Opus: a review after the fact cannot undo them. Fable 5.2 is allowed only as the exact read-only `fable-consultant` agent; it is never an implementer, verifier, approver or final decision-maker. Escalation order on a failed check: local → haiku → sonnet → opus, one notch, only after the check actually failed.
 
 Optional precise answer: `python3 "<this dir>/lib/route.py" "<task>"` prints class, model, effort,
 subagent and estimated cost. Do not run it for trivial prompts.
 
-**You are the dispatcher.** For every task, decide first whether it needs the session's model at
-all. If not, hand it on: the subagent *type* is free (`Explore`, `general-purpose`, `vault-worker`,
-any other); what the policy fixes is the *model*. A `PreToolUse` hook on `Agent` sets each spawn's
-`model` from the route of its brief (cheaper than the route is raised, more than one tier above is
-capped, risk forces Opus, Fable never). Pass `model` yourself only to escalate one notch after a
-failed check. Keep in the main session only design, root cause, risky decisions and the final check.
+**You are the dispatcher.** Opus remains the main Advisor and owns every decision. For every task,
+decide first whether it needs the main session's model. Delegate bounded exploration to Haiku and
+spec'd implementation to Sonnet; keep design, root cause, risky decisions, integration and final
+verification on Opus. A PreToolUse hook routes every spawn from its brief. Fable is permitted only
+through the exact `fable-consultant` agent, invoked explicitly by Opus for a difficult or high-impact
+architecture decision, and only after confirming Claude Code is version 2.1.321 or later and
+the account exposes Fable 5.2. If either prerequisite is missing, do not invoke it; continue on Opus.
+The Agent hook resolves the selected agent by its frontmatter `name` (not its filename) and fails
+closed unless the exact consultant definition is pinned to `claude-fable-5-2`, exposes exactly
+Read/Grep/Glob, denies execution/delegation/write/MCP/web tools, uses high effort and plan mode,
+and has no extra frontmatter capability fields. Missing, ambiguous, unreadable, malformed or modified
+definitions block the spawn; unexpected hook errors and malformed hook payloads exit 2. With no
+explicit model override, the exact model ID in frontmatter is preserved; explicit non-Fable overrides
+are respected. Provider-prefixed Fable IDs are detected, while `inherit` on any other subagent is
+forced to Opus, and so is `inherit` (tool input or agent frontmatter) or NO model at all (no tool-input model, none in
+the agent frontmatter: general-purpose, built-ins, project agents without `model:`) in a Fable session: all of these count
+as Fable-sensitive even with `COST_ROUTER_OFF=1`. `CLAUDE_CODE_SUBAGENT_MODEL` resolving to a Fable model is DENIED
+(exit 2) for every spawn except the pinned `fable-consultant` and the gated `fable-executor` (4G), because the variable may override any model key, so a
+rewritten `model` would not hold. Privileged definitions (`fable-consultant`, `fable-executor`, `vault-reviewer`) must match the sha256 in
+`agents.pinned.json` (written at install; line endings normalized to LF before hashing, so CRLF checkouts match). Every
+file in a project `.claude/agents/` must carry exactly one plain `name: <[A-Za-z0-9_-]+>` line (trailing `# comment`
+allowed; no quotes, escapes, tags, anchors, block scalars, flow mappings, `? name`); a file that does not may claim a
+privileged name and blocks a Fable-sensitive spawn, naming the file. Only files whose name or stem equals the spawned
+agent (plus `fable-consultant` on a Fable-sensitive spawn) are compared with the pins; a differing file blocks a
+Fable-sensitive spawn and adds a note to an Opus reviewer; a missing `agents.pinned.json` blocks the consultant. A user-scope hook shadows the project hook only when the actual blocking
+`PreToolUse`/`Agent|Task` registration is present; a project copy whose release-pin `seq` is above the installed one
+is a stale install (exit 2), otherwise the installed copy answers (shadow by `seq`, never by bytes). The consultant's
+recommendation is not verification or approval. Pass a model yourself only to escalate one notch
+after a failed check.
 Do it yourself when the work is a one-minute edit or answer: a subagent starts empty and re-reads.
 
 **Local tier (owner's PC only, free).** For text in, short text out (summarize, extract, classify,
@@ -148,8 +170,9 @@ context, 78% of it inside long-lived subagents. Therefore:
 
 ## 4A. Enforcement (the route is binding, not advisory)
 
-- **Escalation ceiling**: Opus is the top of the ladder; a route escalates to Fable only for the
-  `frontier` class in the main session. The route line says "stay on Opus" otherwise.
+- **Escalation ceiling**: Opus is the top of the execution and verification ladder. The `frontier`
+  class remains on Opus at xhigh effort. Fable 5.2 is not a route tier; it is a bounded, read-only
+  second-opinion consultant available only through `fable-consultant` (requiring an `opus` session).
 - **Route state**: the prompt hook stores the route per session in
   `~/.claude/cache/cost-router/route-<session_id>.json`. A short follow-up (`continua`, `ok`, under
   4 words, a slash command) keeps it; only a new non-trivial prompt replaces it. `delegated` and
@@ -168,8 +191,11 @@ context, 78% of it inside long-lived subagents. Therefore:
   timeout, `PYTHONPATH=03_IMPLEMENTATION/packages`; the goal is never stored). ROUTED/PLANNED records the
   receipt and allows (context line `vault-router: <status> -> <subagent_type>`, only with COST_ROUTER_VERBOSE_ROUTE=1); BLOCKED, a crash, a
   timeout or unparsable output denies and sets `delegation_denied` (fallback text: run the router
-  in Bash). A Bash call of `routing.route_cli route|dispatch` (at the command start or after a
-  separator; a mention does not count) still marks the router as run, so no second run happens.
+  in Bash). A Bash call counts as a router receipt only when it is ONE plain command (no `;` `&` `|` redirect,
+  backtick, `$(`, newline or comment) whose interpreter is a recognised launcher (python/python3/py [-3], `uv run python`,
+  behind `env`/`VAR=x`) and that runs `-m routing.route_cli route|dispatch` (module form only, never inside `-c`) or the
+  INSTALLED absolute `lib/vault_router.py route`; a mention, a chain, a project copy of the script or a relative path does
+  not count. It then marks the router as run, so no second run happens.
   The call is also recorded per session as a route receipt for the prompt's task class; a later
   prompt of the same class reuses it instead of running the router again. Inside Claude Code
   (`CLAUDECODE=1`) the router offers `vault-worker`, `vault-reviewer` and `Explore` as runtimes
@@ -198,12 +224,16 @@ context, 78% of it inside long-lived subagents. Therefore:
   Teammates, other sessions and unknown names are left alone when the session's subagents directory exists;
   when the transcript cannot be resolved the resume is counted by the named agent id (no fail-open). The counter
   is a read-modify-write under a lock file (`route-<sid>.resumes.lock`), so concurrent hooks lose no increment.
-- **Overrides**: `#direct` in the prompt, even a short one such as `#direct do it` (owner: the
-  main session does it itself), or
-  `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
-- **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) makes every hook return at once: exit 0, no stdout, no
-  state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
-  CLAUDE.md, project MCP and skills and differ only in the hook layer). `hook_agent_usage.py --report` still works.
+- **Overrides**: `#direct` in the prompt and `COST_ROUTER_ENFORCE=0` bypass the Vault
+  router-first gate only. They do not disable the Fable model guard. The Agent hook blocks when its
+  policy cannot be validated for a Fable-sensitive spawn, when the registered user-scope copy is
+  stale, or when the hook cannot execute (the Agent handler uses `onFailure: block`). Other
+  legacy hooks retain their existing fail-open behavior.
+- **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) switches off the efficiency behaviour of every hook: exit 0,
+  no stdout, no state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
+  CLAUDE.md, project MCP and skills and differ only in the hook layer). It does NOT make the Fable guard inert: a
+  Fable-sensitive Agent spawn (fable-consultant, an explicit Fable model, `CLAUDE_CODE_SUBAGENT_MODEL=fable`, `inherit` in a
+  Fable session) is still validated and rewritten. `hook_agent_usage.py --report` still works.
 
 ### 4B. Subagent usage telemetry and idempotency
 
@@ -261,7 +291,8 @@ context, 78% of it inside long-lived subagents. Therefore:
 - Unknown session model = cheapest tier (note: set ANTHROPIC_MODEL). The transcript's last model beats a stored one.
   A model known only from a settings file (`route_state.resolve_session_model_ex` source `settings`/`none`) is a guess and counts
   as unknown for escalation; payload, transcript, stored and env `ANTHROPIC_MODEL` are trusted.
-- `COST_ROUTER_OFF=1` stays inert for every hook, including `install.py --session-start`.
+- `COST_ROUTER_OFF=1` stays inert for every hook, including `install.py --session-start`, except the Agent hook's Fable
+  guard (see Kill switch); the installed hooks run `python -I`.
 - `COST_ROUTER_NO_SELF_INSTALL=1` makes `hook_self_update.py` and `install.py --session-start/--self-update` inert:
   no git, no network, no write under `~/.claude`.
 - Hook-driven refresh is OFF by default (owner, 2026-10-22): `install.py --session-start/--self-update` and
@@ -289,6 +320,126 @@ the commit it pins.
 Every install (also `--session-start`) writes `VERSION`: line 1 is the source commit (`git rev-parse HEAD`, `+dirty`, or `unknown`; the
 self-update ref when given), line 2 the sha256 of the file manifest. `python install.py --verify [--json] [--home <dir>]` is read-only:
 it lists missing/extra/differing files and both VERSION lines; exit 0 only when identical, 1 on any difference or a missing VERSION.
+It also checks the trust data: `config.json` (pinned vault roots, listed) and `agents.pinned.json` against `pins.sha256.json`
+(what install wrote), the privileged agent files in `~/.claude/agents` against the pins, and (with a source) the pins against the
+source agents; `--require-hooks` needs the exact command of the installed copy, not a substring.
+Residual: `pins.sha256.json` and `config.json` are not authenticated. An attacker who can write `~/.claude` can rewrite
+both together (and could replace the hooks themselves anyway), so `--verify` detects accidental drift and project-level
+tampering, not a same-user attacker with write access to `~/.claude`.
+
+## 4D. Specialist registry (which agent or skill gets the task)
+
+Small metadata, never frontmatter: `route.meta.json` per skill (shipped under `registry_src/skills/<id>/`, installed next
+to the skills) and `roles/<id>.json` per agent. `lib/registry_compile.py` (stdlib, run by `install.py`, never in a hook)
+validates schema v1 (unknown key, duplicate id, a trigger that looks like a regex, tools or model that disagree with the
+agent file: all errors; `*.bak-*` dirs skipped) and writes `registry.json` (<= 16 KB, deterministic) plus
+`registry.hashes.json` (sha256 of every sidecar and artifact; `--verify` checks both).
+
+Trust split. TRUSTED: `registry_src/` and `roles/` (pinned with the release); any error there fails the install.
+UNTRUSTED: any other `~/.claude/skills/*/route.meta.json`. A malformed, unknown-key, duplicate-id, oversize (> 4 KB) or
+privileged-name sidecar is skipped and listed in the install output and in `--verify`; it never aborts an install or a
+self-update. A kept untrusted entry is hint-only and clamped: only id, triggers, task classes and run_in/subagent_type are
+used; tier max sonnet, authority none, privacy standard, priority capped at 10 (a trusted entry wins ties); its
+acceptance/summary/not_for text is never emitted into hook context; it cannot take a shipped id or name
+`fable-consultant`, `vault-reviewer` or any opus/fable agent. For all entries a trigger must be >= 4 characters after
+folding and not made only of common RO/EN stopwords (trusted: compile error; untrusted: the trigger is dropped).
+Accepted residual: the opt-in SessionStart self-update (off by default) runs `install.py`, which compiles the registry
+inside a hook. `--verify` recompiles it. `lib/specialists.py` picks at most one id (plus an overlay) for the prompt by
+folded literal trigger match, then task-class fit, then priority; the hook prints ` spec=<id>` and, in the long form,
+the specialist's acceptance check. The hint is advisory: prompt text can only select an id of the closed set, never
+changes the route state, tier, tools or authority, and a missing or corrupt registry means no hint (fail open, the Fable
+guard is separate). Not a gate: the route class and the hooks of section 4A stay binding.
+
+Specialist roles (M10): `dfir-analyst` (Sonnet; Read, Grep, Glob, Bash; privacy local_only, network none, write none:
+every finding cites artifact path + sha256 + record id, a missing artifact is UNKNOWN, evidence is never executed) and
+`test-author` (Sonnet; adds Write/Edit; authority write tests: `git diff --name-only` lists only test files and the red
+run is shown) are agents with a sidecar each; neither is privileged. `repro-debugger` is a BRIEF TEMPLATE, not an
+agent: `roles/repro-debugger.json` is kind overlay, run_in subagent, subagent_type `vault-worker`. The compiler accepts
+an overlay role only without an agent file of its own, on an existing non-privileged agent role, at most Sonnet, and
+with tools and authority within its target's (its artifact hash is the target agent file), privacy and risk_ceiling no
+looser than its target's, and no `uses`/`escalates_to` naming a privileged id. The hook of an overlay lead pick names the
+agent to spawn: `<overlay-id> (overlay) on <subagent_type>`.
+
+Declared, not enforced: the `dfir-analyst` limits (network none, write none) and the `test-author` tests-only scope are
+declarations in the agent file and the sidecar. Both agents have Bash, so nothing in the tools allowlist enforces them;
+the allowlist really removes only Write/Edit/Web*/MCP from `dfir-analyst`. A best-effort guard in
+`hook_enforce_route.py` (same PreToolUse hook and matcher, keyed on the payload's `agent_type`) denies the obvious
+violations: for `dfir-analyst`, Bash that starts a network command (curl, wget, Invoke-WebRequest/iwr,
+Invoke-RestMethod/irm, ssh, scp, ftp, nc, `python -m http.server`, pip install, npm, git push/fetch/clone) or writes a
+file (`>`/`>>`, Out-File, Set-Content, Add-Content, tee, cp/mv/rm/del/Remove-Item, New-Item); for `test-author`,
+Write/Edit/NotebookEdit to a path outside a `20_TESTS`/`tests`/`test` directory or a `test_*.py`, `*_test.py`,
+`*Tests.cs` file. Bash is Turing-complete (`python -c`, encoded commands, aliases, a script written elsewhere), so this
+is a speed bump and not a sandbox: it fails open on any hook error, and only the explicit denials above are enforced.
+
+## 4E. Vault Agent Router on demand (Opus as main advisor)
+
+Opus as main advisor runs `python -I <installed cost-router>/lib/vault_router.py route --goal "<text>" [--json]` when it
+wants the Agent Router's decision, from any project. The vault root is the first root pinned in the installed
+`config.json` that still passes the M2 link/realpath check, never the cwd or the project; nothing configured is exit 3.
+It runs the vault's `routing.route_cli route` (argv list, no shell, cwd = pinned root, 20 s timeout; `-I` ignores
+PYTHONPATH, so the child puts the pinned packages dir on `sys.path` itself) and prints status, primary agent, verifier and
+`execute_via`. Exit 0 ROUTED/PLANNED, 4 BLOCKED, 5 timeout or crash. The goal is one argv element and is never logged. A
+project-local `routing/route_cli.py` is never executed. `hook_enforce_route` counts this call as a router receipt, like
+`python -m routing.route_cli route|dispatch`. The automatic in-hook router gate stays inside pinned vault roots only;
+outside them nothing calls the router unless the advisor runs the wrapper. On timeout the wrapper kills the whole
+process tree (Windows `taskkill /T /F`, POSIX process group) and prints each field as one control-character-free line.
+
+### 4F. Acceptance receipts (`lib/check.py`) and the `check-runner` agent
+
+`python -I <S>/lib/check.py run [--session <id>] --label <name> -- <command...>` runs the command (argv list, no shell),
+keeps the exit code, duration, last 40 output lines and the sha256 of the command line in
+`~/.claude/cache/cost-router/checks/<session-or-pid>-<epoch>.json`, and prints `check <label>: exit=<n> pass|fail
+(<pytest or dotnet summary>)`. `check.py last [--label]` prints the newest receipt. The `check-runner` agent (Haiku;
+Read, Grep, Glob, Bash; sidecar `roles/check-runner.json`, write none) runs one given check this way and quotes the
+receipt line and the failing lines verbatim, never interpreting causes. When the Agent hook escalates a spawn one tier it
+appends `after failed check <label> exit=<n>` if the session (matched by `--session`) has a failing receipt: informational
+only. Receipts are forgeable by the main session and never grant authority or relax any gate. A `.cmd`/`.bat` target
+is started by cmd.exe, which re-parses the command line: `check.py` refuses (exit 2) when any argument holds `& | < > ^ %`
+a double quote or a newline. `--session` must match `[A-Za-z0-9_-]{1,64}` (exit 2 otherwise); a bare command name is
+resolved on PATH without the cwd (Windows: a name found only in the cwd is refused, exit 2); `last` and the escalation note
+never read a receipt file over 256 KB. Residual: the list is a denylist (a `!` for delayed expansion is not refused) and a shim that evaluates its own arguments stays the caller's risk; run untrusted shims through an `.exe`.
+`--tier sonnet|opus` (any other value: exit 2) records the tier of the attempt whose work is checked; every receipt also
+records the session's current prompt epoch (`prompt_epoch`, from the route state; null without one).
+
+### 4G. `fable-executor` (M11, DEFAULT OFF)
+
+`.claude/agents/fable-executor.md`: Fable 5.2 (`claude-fable-5-2`), tools exactly Read, Grep, Glob, Bash, Edit, Write
+(Agent/Task, MCP, WebFetch/WebSearch, NotebookEdit denied), checked by its own exact validator
+(`_valid_fable_executor_frontmatter`; the consultant validator is unchanged), pinned in `agents.pinned.json`, privileged
+(an edited copy is backed up and replaced at install; a project file claiming the name blocks). Sidecar
+`roles/fable-executor.json` has no triggers and `selectable: false`: text never selects it. Owner rule: Haiku/Sonnet
+execute, Opus advises and reviews, Opus or Fable execute only after the cheaper tiers failed.
+The Agent hook allows a `fable-executor` spawn only when ALL hold, else exit 2 naming the condition:
+(a) `rules.fable_executor.enabled` is `true` in the INSTALLED `~/.claude/skills/cost-router/policy.json` whose sha256
+equals the one install.py recorded in `pins.sha256.json` (never the project copy, an env var, prompt text or a user-scope
+sidecar; `max_per_session` int 1..10); (b) the session model is Opus (payload/transcript/stored/env, never a settings
+guess; not Fable); (c) the definition matches its pin and the validator, no project file claims the name, no explicit
+non-Fable model; (d) this session and prompt epoch hold a FAILED receipt of the same check label from `--tier sonnet` and
+from `--tier opus`, and the newest receipt of that label still fails, AND the Agent hook itself recorded a real allowed
+spawn of a writing (not read-only, not reviewer) agent resolved to sonnet and one resolved to opus in that epoch
+(`route-<sid>.spawns`, appended under the resume-counter lock; receipts alone never count); (e) fewer than `max_per_session` executor spawns this
+session (counter `route-<sid>.fable_executor` under the same lock as the resume counter); (f) no critical risk (brief or
+prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_for_stems` plus the hook's
+`EXECUTOR_LIVE_PATTERNS`: push, apply, drop, upload, ship, release, rollout, migrate, truncate, `rm -rf`, force-push;
+deploy/rotate/publish match inside compounds such as autodeploy/redeploy), matched on the brief after
+`specialists.normalize/fold` (NFKC, Cf/zero-width removed, cedilla ş/ţ -> ș/ț, diacritics folded, casefold, whitespace
+collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the brief (same
+normalization), and the installed registry is readable; the prompt hook records the local_only scan on every path,
+`#direct` override and router error included; (h)
+`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
+vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
+spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
+Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` under `rules.fable_executor` in
+`04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
+(`python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n+1> --out <pin>`, commit the
+pin), then re-run `python .claude/skills/cost-router/install.py --source-ref <sha> --release-pin <pin>` and
+`install.py --verify --require-hooks` (exit 0, `policy_ok` true). Editing the installed `policy.json` by hand changes its
+hash and keeps the executor disabled (and fails `--verify`). Disable: the same steps with `false`.
+Threat residuals: receipts, route state, the spawn record `route-<sid>.spawns` and `pins.sha256.json` live in the user
+cache and are writable by the same user, so a same-user process (or a hostile main session with Bash) can still forge the
+ladder by editing these files; the spawn record only raises the cost of a forgery from one check.py call to editing JSON
+by hand. The gate limits induced overspend; it does not stop a hostile Opus main session (E1). The stem and trigger lists
+are denylists.
 
 ## 5. Report shape (end of task)
 
@@ -300,4 +451,4 @@ delegation that happened (which subagent, which model) in one line. Nothing else
 - The route line prints only when (class, model, subagent) changes, on risk >= high, or with `COST_ROUTER_VERBOSE_ROUTE=1` (long form, always). State is written every prompt either way.
 - The repo map is injected on `startup` only (`COST_ROUTER_REPO_MAP=always`: also clear/compact); compact gets a one-line state. Cap 1500 chars (`COST_ROUTER_REPO_MAP_MAX_CHARS`).
 - The Agent hook emits no allow-path context (only the denial reason, or `COST_ROUTER_VERBOSE_ROUTE=1`); read-only agent types (strict allowlist: a project `.claude/agents/<type>.md` whose frontmatter `tools` are all in Read, Grep, Glob, LS, WebFetch, WebSearch or vault-memory read MCP tools; the built-in Explore without such a file, or the project Explore with Bash, is NOT read-only) are clamped to the explore class (haiku, cap one tier above) on non-risky, non-review/design briefs only (review/verify/design or risk >= high keep the old floor); `COST_ROUTER_READONLY_FLOOR=1` restores the old floor. The subagent `prompt` is never modified.
-- `COST_ROUTER_OFF=1` makes every hook inert. Evidence: the phase-3 benchmark dir under `07_EVALUATION/reports/` (to be produced).
+- `COST_ROUTER_OFF=1` makes every hook inert (the Fable guard of the Agent hook excepted). Evidence: the phase-3 benchmark dir under `07_EVALUATION/reports/` (to be produced).

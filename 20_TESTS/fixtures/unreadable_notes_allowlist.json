@@ -1250,6 +1250,12 @@
       "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-complete.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-document-uman.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

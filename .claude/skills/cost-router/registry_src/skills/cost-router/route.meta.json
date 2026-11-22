@@ -1,0 +1,50 @@
+{
+ "schema_version": 1,
+ "id": "cost-router",
+ "kind": "overlay",
+ "domain": [
+  "ops"
+ ],
+ "task_classes": [
+  "explore",
+  "summarize",
+  "implement",
+  "review",
+  "design",
+  "frontier"
+ ],
+ "triggers": {
+  "ro": [
+   "economiseste tokens",
+   "ruteaza modelul",
+   "consuma putin"
+  ],
+  "en": [
+   "save tokens",
+   "route the model",
+   "token budget",
+   "cheapest model"
+  ]
+ },
+ "summary": "Overlay: cheapest adequate model, prove before DONE.",
+ "run_in": "main",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "opus"
+ },
+ "tools": [
+  "Read",
+  "Bash"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Route class stated; result proven by a run.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 1
+}

@@ -627,3 +627,41 @@ def test_send_message_resume_idempotent_on_same_step(tmp_path):
     res3 = _handle_send_message(payload, tool_args)
     assert res3.get("decision") == "deny"
     assert "was already resumed 1 time(s)" in res3.get("reason", "")
+
+
+def test_antigravity_route_state_write_json_retries_permission_error_and_cleans_tmp(tmp_path, monkeypatch):
+    import sys as _sys
+    test_dir = str(Path(__file__).resolve().parent)
+    if test_dir not in _sys.path:
+        _sys.path.insert(0, test_dir)
+    import cost_router_isolation as iso
+
+    lib_dir = (Path(__file__).resolve().parents[1] / ".agents" / "skills" / "cost-router" / "lib").resolve()
+    iso.enter(lib_dir)
+    try:
+        import route_state as agy_rs
+        target = tmp_path / "state.json"
+        attempts = {"n": 0}
+        real_replace = os.replace
+
+        def flaky_replace(src, dst):
+            attempts["n"] += 1
+            if attempts["n"] < 3:
+                raise PermissionError("locked by concurrent hook")
+            return real_replace(src, dst)
+
+        monkeypatch.setattr(agy_rs.os, "replace", flaky_replace)
+        monkeypatch.setattr(agy_rs.time, "sleep", lambda _s: None)
+        assert agy_rs._write_json(target, {"ok": True}) is True
+        assert attempts["n"] == 3
+        assert json.loads(target.read_text(encoding="utf-8")) == {"ok": True}
+        assert list(tmp_path.glob("*.tmp")) == []
+
+        def always_locked(src, dst):
+            raise PermissionError("permanently locked")
+
+        monkeypatch.setattr(agy_rs.os, "replace", always_locked)
+        assert agy_rs._write_json(target, {"ok": False}) is False
+        assert list(tmp_path.glob("*.tmp")) == []
+    finally:
+        iso.leave(lib_dir)

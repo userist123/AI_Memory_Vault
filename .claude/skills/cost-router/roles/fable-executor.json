@@ -1,0 +1,47 @@
+{
+ "schema_version": 1,
+ "id": "fable-executor",
+ "kind": "agent",
+ "domain": [
+  "code"
+ ],
+ "task_classes": [
+  "implement"
+ ],
+ "triggers": {
+  "ro": [],
+  "en": []
+ },
+ "selectable": false,
+ "summary": "Executor of last resort (default off): only after a sonnet and an opus attempt failed the same check; Opus review mandatory.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "fable",
+  "default": "fable",
+  "max": "fable"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash",
+  "Edit",
+  "Write"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "The failing acceptance check passes; an Opus vault-reviewer pass on the diff before DONE.",
+ "risk_ceiling": "high",
+ "privacy": "standard",
+ "priority": 0,
+ "subagent_type": "fable-executor",
+ "effort": "high",
+ "cost": {
+  "class": "L",
+  "typical_usd": null
+ }
+}

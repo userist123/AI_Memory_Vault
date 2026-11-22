@@ -1,0 +1,54 @@
+{
+ "schema_version": 1,
+ "id": "animatie-3d",
+ "kind": "skill",
+ "domain": [
+  "media-3d",
+  "media-video"
+ ],
+ "task_classes": [
+  "implement",
+  "design",
+  "summarize"
+ ],
+ "triggers": {
+  "ro": [
+   "animatie 3d",
+   "logo 3d",
+   "logo animat",
+   "intro animat",
+   "turntable"
+  ],
+  "en": [
+   "3d animation",
+   "3d logo",
+   "logo reveal",
+   "3d intro",
+   "3d scene",
+   "blender",
+   "three.js"
+  ]
+ },
+ "summary": "New 3D animation rendered locally to MP4 or three.js.",
+ "run_in": "main",
+ "tier": {
+  "min": "sonnet",
+  "default": "sonnet",
+  "max": "opus"
+ },
+ "tools": [
+  "Bash",
+  "Write",
+  "Read"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Rendered frames inspected before delivery.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 60
+}

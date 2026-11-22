@@ -127,7 +127,8 @@ def _alias_for(policy: ClaudeModelPolicy, model_id: str) -> Optional[str]:
     for alias, spec in policy.models.items():
         if spec.model_id == model_id:
             return alias
-    return None
+    historical = policy.historical_models.get(model_id)
+    return historical[0] if historical is not None else None
 
 
 def priced_report(policy: ClaudeModelPolicy, usage: dict[str, ModelUsage]) -> dict[str, Any]:
@@ -143,10 +144,21 @@ def priced_report(policy: ClaudeModelPolicy, usage: dict[str, ModelUsage]) -> di
             "cache_hit_ratio": m.cache_hit_ratio, "usd": None, "same_tokens_on": {},
         }
         if alias is not None:
-            cost = (
-                estimate_cost(policy, alias, m.input_tokens, m.output_tokens, m.cache_read_tokens, m.cache_write_5m_tokens, "5m").usd
-                + estimate_cost(policy, alias, 0, 0, 0, m.cache_write_1h_tokens, "1h").usd
-            )
+            if alias in policy.models:
+                cost = (
+                    estimate_cost(policy, alias, m.input_tokens, m.output_tokens, m.cache_read_tokens, m.cache_write_5m_tokens, "5m").usd
+                    + estimate_cost(policy, alias, 0, 0, 0, m.cache_write_1h_tokens, "1h").usd
+                )
+            else:
+                # Historical IDs are priced at their own frozen rate card, never today's alias price.
+                _, price = policy.historical_models[model_id]
+                cost = (
+                    m.input_tokens * price.input
+                    + m.output_tokens * price.output
+                    + m.cache_read_tokens * price.cache_read
+                    + m.cache_write_5m_tokens * price.cache_write_5m
+                    + m.cache_write_1h_tokens * price.cache_write_1h
+                ) / 1_000_000
             row["usd"] = round(cost, 4)
             total += cost
             for other in policy.models:

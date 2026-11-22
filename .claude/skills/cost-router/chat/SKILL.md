@@ -9,8 +9,9 @@ Upload once (Settings > Capabilities > Skills > Upload skill, this folder zipped
 every chat. Chat has no hooks and cannot switch its own model, so this skill advises and keeps the
 conversation lean; the owner picks the model in the model selector.
 
-Rate card (per million tokens, input/output, as of 2026-10-06): Fable 5.1 $10/$50, Opus 5.5 $4/$20,
-Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50.
+Rate card (per million tokens, input/output, as of 2026-11-09): Fable 5.2 $8/$40, Opus 5.5 $4/$20,
+Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50. Fable 5.2 requires 30-day data retention and is
+unavailable under zero-data retention unless Anthropic expressly authorizes it.
 
 ## 1. Classify the request first (one line, silently unless the model is wrong)
 
