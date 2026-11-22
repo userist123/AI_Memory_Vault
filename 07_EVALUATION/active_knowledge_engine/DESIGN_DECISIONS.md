@@ -206,6 +206,14 @@ Review round 1 (`vault-reviewer`) returned CHANGES_REQUIRED. All findings were r
 
 The three real results were re-checked under the stricter definition and are unchanged.
 
+Review round 2 confirmed the round-1 fixes. It reproduced one remaining defect: a long run of blank lines gave a false diagnosis. The plan still failed closed, but it named the wrong line. Under the two-round rule the main session decided and fixed it test-first:
+- Blank lines are ordinary lines for cutting.
+- A whitespace-only child is merged into a neighbour.
+- A blank run larger than the target gets its own outcome, `BLANK_RUN_TOO_LARGE`, with the exact line range, so the owner knows what to trim.
+- `UNSPLITTABLE` never names a blank line.
+
+The real results are unchanged: 4 children, 159 children, and UNSPLITTABLE at line 5 (27,900 chars).
+
 | Note | Result |
 |---|---|
 | `02_PRODUCT/projects/Continuity_Handoff.md` (21,576 chars) | **PLANNED**: 4 children of 5,173-5,696 chars, coverage proven |

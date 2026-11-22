@@ -13,7 +13,8 @@ proves:
   ``cognitive_read``'s rule for an ACTIVE note (``allow_unverified=True``) **and comes back whole**:
   a child the pack shortens does not fit.
 
-Fail-closed outcomes: ``NEEDS_PROVENANCE`` (the parent has no provenance, so the egress contract
+Fail-closed outcomes: ``BLANK_RUN_TOO_LARGE`` (a whitespace-only run larger than the pack; it
+can only be served attached to text, which makes that child too large), ``NEEDS_PROVENANCE`` (the parent has no provenance, so the egress contract
 would drop every child), ``UNSPLITTABLE`` (one line does not fit the pack even on its own), and
 ``DOES_NOT_FIT`` (children of whole lines cannot be made to fit; the first failing child is named).
 Creating, attesting and promoting the children is the owner's step; nothing here writes a note.
@@ -87,53 +88,52 @@ def _fits(controller, parent: Dict[str, Any], piece: str, child_id: str) -> bool
 def _pack_greedy(lines, blocks, target: int) -> List[Tuple[int, int]]:
     """Greedy packing of whole lines into children of about `target` chars.
 
-    A section is kept whole when it fits the target; a larger section is packed line by line; a
-    single line longer than the target becomes a child of its own (the pack decides whether it
-    fits). A whitespace-only run never becomes a child: it joins the previous child, or the next
-    one when it is at the very start.
+    A section is kept whole when it fits the target; a larger section is packed line by line, and
+    a single line longer than the target becomes a child of its own (the pack decides whether it
+    fits). Blank lines are ordinary lines here, so a cut may fall inside a blank run; afterwards a
+    whitespace-only child is merged into its neighbour (the pack rejects an empty child).
     """
     children: List[Tuple[int, int]] = []
     cur_start, cur_len = None, 0
-
-    def flush(end: int) -> None:
-        nonlocal cur_start, cur_len
-        if cur_start is None or cur_start >= end:
-            cur_start, cur_len = None, 0
-            return
-        if _blank(lines, cur_start, end):
-            if children:
-                children[-1] = (children[-1][0], end)
-                cur_start, cur_len = None, 0
-            return  # leading blank run: carried into the next child
-        children.append((cur_start, end))
-        cur_start, cur_len = None, 0
-
-    def add_line_range(a: int, b: int, length: int) -> None:
-        nonlocal cur_start, cur_len
-        if cur_start is not None and cur_len + length > target and not _blank(lines, cur_start, a):
-            flush(a)
-        if cur_start is None:
-            cur_start = a
-        cur_len += length
-
     for a, b in blocks:
         block_len = lines[b - 1][1] - lines[a][0]
-        if block_len <= target:
-            add_line_range(a, b, block_len)
-            continue
-        for i in range(a, b):
-            ln = lines[i][1] - lines[i][0]
-            if ln > target:
-                flush(i)
-                carried = cur_start  # a leading blank run stays in front of the long line
-                children.append((carried if carried is not None else i, i + 1))
+        units = [(a, b, block_len)] if block_len <= target else             [(i, i + 1, lines[i][1] - lines[i][0]) for i in range(a, b)]
+        for ua, _ub, ul in units:
+            if cur_start is not None and cur_len + ul > target:
+                children.append((cur_start, ua))
                 cur_start, cur_len = None, 0
-                continue
-            add_line_range(i, i + 1, ln)
-    flush(len(lines))
-    if cur_start is not None and cur_start < len(lines):  # trailing blank run, no child before it
+            if cur_start is None:
+                cur_start = ua
+            cur_len += ul
+    if cur_start is not None:
         children.append((cur_start, len(lines)))
-    return children
+    merged: List[Tuple[int, int]] = []
+    pending: Optional[int] = None  # start of a leading whitespace-only run
+    for a, b in children:
+        if _blank(lines, a, b):
+            if merged:
+                merged[-1] = (merged[-1][0], b)
+            elif pending is None:
+                pending = a
+            continue
+        merged.append((pending if pending is not None else a, b))
+        pending = None
+    return merged
+
+
+def _longest_blank_run(lines, a: int, b: int) -> Optional[Tuple[int, int, int]]:
+    """(first_line_index, last_line_index_exclusive, chars) of the longest whitespace-only run."""
+    best, start = None, None
+    for i in range(a, b + 1):
+        if i < b and not lines[i][2].strip():
+            start = i if start is None else start
+            continue
+        if start is not None:
+            chars = lines[i - 1][1] - lines[start][0]
+            if best is None or chars > best[2]:
+                best = (start, i, chars)
+            start = None
+    return best
 
 
 def _heading_lines(lines) -> List[List[int]]:
@@ -213,7 +213,18 @@ def plan_split(controller, note_id: str) -> Dict[str, Any]:
             return manifest
         first_failure = {"index": bad["index"], "chars": bad["chars"], "line_start": bad["line_start"],
                          "line_end": bad["line_end"], "target_chars": target}
-        if bad["line_end"] - bad["line_start"] == 0 or _single_content_line(lines, bad):
+        run = _longest_blank_run(lines, bad["line_start"] - 1, bad["line_end"])
+        if run is not None and run[2] > target:
+            # a whitespace-only run larger than the target can only be served attached to text,
+            # which makes that child too large at any target: the owner trims the run
+            manifest.update(
+                status="BLANK_RUN_TOO_LARGE",
+                reason="a run of blank lines is larger than the context pack allows; trim it, then re-plan",
+                blank_run={"line_start": run[0] + 1, "line_end": run[1], "chars": run[2]},
+                first_failing_child=first_failure,
+            )
+            return manifest
+        if _single_content_line(lines, bad):
             # the failing child is one line (plus blank lines): no smaller target can help
             content_line = _longest_line(lines, bad["line_start"] - 1, bad["line_end"])
             manifest.update(
@@ -239,4 +250,6 @@ def _single_content_line(lines, child: Dict[str, Any]) -> bool:
 
 
 def _longest_line(lines, a: int, b: int) -> int:
-    return max(range(a, b), key=lambda i: lines[i][1] - lines[i][0])
+    """The longest non-blank line (a blank line is never named as the blocking line)."""
+    candidates = [i for i in range(a, b) if lines[i][2].strip()] or list(range(a, b))
+    return max(candidates, key=lambda i: lines[i][1] - lines[i][0])

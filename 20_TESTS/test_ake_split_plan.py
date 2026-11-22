@@ -250,3 +250,47 @@ def test_a_blank_only_body_is_refused(vault):
     _write(vault, "blank.md", nid, chr(10) * 50)
     with pytest.raises(ValueError):
         plan_split(_controller(vault), nid)
+
+
+# --- review round 2: blank runs must never produce a false diagnosis ------------------------------
+
+def test_a_blank_run_larger_than_the_pack_is_named_as_such(vault):
+    nid = str(uuid.uuid4())
+    _write(vault, "blanks.md", nid, (chr(10) * 20000) + _sections())
+    plan = plan_split(_controller(vault), nid)
+    assert plan["status"] == "BLANK_RUN_TOO_LARGE"
+    run = plan["blank_run"]
+    assert run["line_start"] == 1 and run["chars"] >= 20000
+    assert "blocking_line" not in plan
+
+
+def test_whitespace_lines_count_as_a_blank_run(vault):
+    nid = str(uuid.uuid4())
+    _write(vault, "spaces.md", nid, _sections() + ((" " * 10 + chr(10)) * 2000) + "tail" + chr(10))
+    plan = plan_split(_controller(vault), nid)
+    assert plan["status"] == "BLANK_RUN_TOO_LARGE"
+
+
+def test_a_moderate_blank_run_before_a_long_line_still_plans(vault):
+    nid = str(uuid.uuid4())
+    long_line = "plain " * 1200
+    body = _sections() + (chr(10) * 100) + long_line + chr(10) + _sections()
+    _write(vault, "mixed.md", nid, body)
+    c = _controller(vault)
+    parent = c.storage.get(nid)["content"]
+    plan = plan_split(c, nid)
+    assert plan["status"] == "PLANNED"
+    assert "".join(parent[ch["char_start"]:ch["char_end"]] for ch in plan["children"]) == parent
+    assert all(parent[ch["char_start"]:ch["char_end"]].strip() for ch in plan["children"])
+
+
+def test_unsplittable_names_a_content_line_never_a_blank_one(vault):
+    nid = str(uuid.uuid4())
+    body = "# Map" + chr(10) + (chr(10) * 50) + "MUST " + ("[[link]] " * 4000) + chr(10)
+    _write(vault, "map2.md", nid, body)
+    c = _controller(vault)
+    parent = c.storage.get(nid)["content"]
+    plan = plan_split(c, nid)
+    assert plan["status"] == "UNSPLITTABLE"
+    line_no = plan["blocking_line"]["line_number"]
+    assert parent.split(chr(10))[line_no - 1].strip().startswith("MUST")
