@@ -1,8 +1,8 @@
 """Audit integrity hardening: threat model T1-T5.
 
 T1 chain fork across processes, T2 exception text leaking into audit details,
-T3 storage_error leaking absolute path / parser message, T4 lock timeout is a hard
-failure (no unchained entry), T5 logs written by the previous algorithm still verify.
+T3 storage_error leaking absolute path / parser message, T4 a held lock spools the entry
+(chained later, reported by verify), a torn tail never blocks logging, T5 logs written by the previous algorithm still verify.
 """
 from __future__ import annotations
 
@@ -64,16 +64,58 @@ def test_t1_cache_is_not_trusted_across_instances(tmp_path):
 
 
 # ---------------------------------------------------------------- T4
-def test_t4_lock_timeout_raises_and_writes_nothing(tmp_path):
+def test_t4_lock_held_elsewhere_spools_the_entry_then_chains_it(tmp_path):
+    """Review round 1 (finding 2): a held lock no longer fails the audited operation (no false
+    error, no lock-holding denial of service) and no record is lost: the entry is spooled and
+    the next writer that gets the lock chains it."""
     log = str(tmp_path / "a.jsonl")
     holder = AuditLogger(log)
     waiter = AuditLogger(log, lock_timeout=0.3)
     with holder._file_lock():
-        with pytest.raises(logger_module.AuditLockTimeout):
-            waiter.log("x", "op", "t")
+        waiter.log("x", "op", "spooled-1")          # returns, does not raise
     assert _entries(log) == []
-    waiter.log("x", "op", "t")  # lock released: works again
-    assert len(_entries(log)) == 1
+    ok, violations = waiter.verify_integrity()
+    assert not ok and any("pending" in v for v in violations)  # unchained entries are reported
+    waiter.log("x", "op", "after")                 # lock free: spool merged first, then this
+    targets = [e["target_id"] for e in _entries(log)]
+    assert targets == ["spooled-1", "after"]
+    assert _entries(log)[0].get("spooled") is True
+    assert waiter.verify_integrity() == (True, [])
+
+
+def test_t4_torn_multibyte_tail_never_blocks_logging(tmp_path):
+    """Review round 1 (finding 1): a writer killed inside a multi-byte character used to make
+    every later log() raise UnicodeDecodeError."""
+    log = tmp_path / "a.jsonl"
+    lg = AuditLogger(str(log))
+    lg.log("x", "op", "before", metadata={"reason": "decizie"})
+    with open(log, "ab") as f:
+        f.write('{"actor": "x", "reason": "'.encode("utf-8") + "ș".encode("utf-8")[:1])  # torn s-comma
+    lg2 = AuditLogger(str(log))
+    lg2.log("x", "op", "after")                    # must not raise
+    ok, violations = lg2.verify_integrity()        # must not raise either
+    assert not ok and violations
+    assert _entries_tolerant(log)[-1]["target_id"] == "after"
+
+
+def _entries_tolerant(path):
+    out = []
+    for line in Path(path).read_bytes().decode("utf-8", errors="replace").splitlines():
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            continue
+    return out
+
+
+def test_t4_controller_operation_is_not_blocked_by_a_held_lock(tmp_path, monkeypatch):
+    log = str(tmp_path / "audit.jsonl")
+    holder = AuditLogger(log)
+    monkeypatch.setattr(logger_module, "_logger_instance", AuditLogger(log, lock_timeout=0.3))
+    with holder._file_lock():
+        logger_module.audit_event("read", "human", "note-1", success=True)
+    logger_module.audit_event("read", "human", "note-2", success=True)
+    assert [e["target_id"] for e in _entries(log)] == ["note-1", "note-2"]
 
 
 # ---------------------------------------------------------------- T5

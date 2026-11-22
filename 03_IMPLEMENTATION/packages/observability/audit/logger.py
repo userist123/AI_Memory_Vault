@@ -138,9 +138,10 @@ class AuditLogger:
                 return entry["entry_hash"]
         except Exception:
             pass
-        # Unparsable tail: fall back to the last valid entry hash, as before.
+        # Unparsable tail: fall back to the last valid entry hash, as before. errors="replace":
+        # a writer killed inside a multi-byte character must not make every later log() raise.
         last_hash = "GENESIS"
-        with open(self.log_path, "r", encoding="utf-8") as f:
+        with open(self.log_path, "r", encoding="utf-8", errors="replace") as f:
             for raw in f:
                 raw = raw.strip()
                 if not raw:
@@ -153,23 +154,75 @@ class AuditLogger:
                     continue
         return last_hash
 
+    # ------------------------------------------------------------------ pending spool
+    # When the chain lock cannot be taken within the bound (another process holds it, possibly
+    # on purpose), the entry is not lost and the audited operation does not fail: it is appended
+    # to this process's spool file and chained by the next writer that gets the lock. Until then
+    # verify_integrity() reports the pending entries (security review 2026-11-22, finding 2).
+    def _spool_path(self) -> str:
+        return f"{self.log_path}.pending.{os.getpid()}.jsonl"
+
+    def _spool(self, entry: Dict[str, Any]) -> None:
+        spooled = dict(entry, spooled=True)
+        with open(self._spool_path(), "a", encoding="utf-8") as f:
+            f.write(json.dumps(spooled, ensure_ascii=False, cls=EnumEncoder) + "\n")
+
+    def _pending_files(self) -> List[str]:
+        folder = os.path.dirname(os.path.abspath(self.log_path)) or "."
+        prefix = os.path.basename(self.log_path) + ".pending."
+        try:
+            names = os.listdir(folder)
+        except OSError:
+            return []
+        return sorted(os.path.join(folder, n) for n in names if n.startswith(prefix) and n.endswith(".jsonl"))
+
+    def _merge_pending(self) -> None:
+        """Chain spooled entries (called under the file lock). A spool another process is still
+        writing cannot be renamed on Windows and is left for a later writer."""
+        for path in self._pending_files():
+            claimed = path + ".merging"
+            try:
+                os.replace(path, claimed)
+            except OSError:
+                continue
+            with open(claimed, "r", encoding="utf-8", errors="replace") as f:
+                lines = [ln for ln in f.read().splitlines() if ln.strip()]
+            for raw in lines:
+                try:
+                    pending = json.loads(raw)
+                except ValueError:
+                    pending = {"actor": "system", "operation": "audit_spool_corrupt", "target_id": "unknown",
+                               "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                               "outcome": "error", "spooled": True}
+                pending.pop("prev_hash", None)
+                pending.pop("entry_hash", None)
+                self._append_chained(pending)
+            os.remove(claimed)
+
+    def _append_chained(self, entry: Dict[str, Any]) -> None:
+        prev_hash = self._get_last_entry_hash()
+        entry["prev_hash"] = prev_hash
+
+        # Calculate entry hash over canonical JSON representation
+        canonical_bytes = json.dumps(entry, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
+        computed_hash = hashlib.sha256(canonical_bytes).hexdigest()
+        entry["entry_hash"] = computed_hash
+        self._last_hash = computed_hash
+
+        _, ends_nl = self._read_last_line() if os.path.exists(self.log_path) else (None, True)
+        with open(self.log_path, "a", encoding="utf-8") as f:
+            if not ends_nl:
+                f.write("\n")  # never glue onto a torn last line
+            f.write(json.dumps(entry, ensure_ascii=False, cls=EnumEncoder) + "\n")
+
     def _write_entry(self, entry: Dict[str, Any]):
         with self._lock:
-            with self._file_lock():
-                prev_hash = self._get_last_entry_hash()
-                entry["prev_hash"] = prev_hash
-
-                # Calculate entry hash over canonical JSON representation
-                canonical_bytes = json.dumps(entry, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
-                computed_hash = hashlib.sha256(canonical_bytes).hexdigest()
-                entry["entry_hash"] = computed_hash
-                self._last_hash = computed_hash
-
-                _, ends_nl = self._read_last_line() if os.path.exists(self.log_path) else (None, True)
-                with open(self.log_path, "a", encoding="utf-8") as f:
-                    if not ends_nl:
-                        f.write("\n")  # never glue onto a torn last line
-                    f.write(json.dumps(entry, ensure_ascii=False, cls=EnumEncoder) + "\n")
+            try:
+                with self._file_lock():
+                    self._merge_pending()
+                    self._append_chained(entry)
+            except AuditLockTimeout:
+                self._spool(entry)
 
     def verify_integrity(self) -> Tuple[bool, List[str]]:
         """Verifies the SHA-256 tamper-evident hash chain across the audit log."""
@@ -181,7 +234,14 @@ class AuditLogger:
             expected_prev_hash = "GENESIS"
             line_num = 0
 
-            with open(self.log_path, "r", encoding="utf-8") as f:
+            pending = 0
+            for path in self._pending_files():
+                with open(path, "r", encoding="utf-8", errors="replace") as pf:
+                    pending += sum(1 for ln in pf if ln.strip())
+            if pending:
+                violations.append(f"{pending} pending audit entries not yet chained (spooled while the lock was held)")
+
+            with open(self.log_path, "r", encoding="utf-8", errors="replace") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
