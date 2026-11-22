@@ -40,6 +40,8 @@ def gateway(tmp_path):
     """The real server, on an empty vault so start-up is instant, token set so auth is live."""
     port = _free_port()
     env = dict(os.environ, AI_MEMORY_VAULT_ROOT=str(tmp_path), AI_MEMORY_VAULT_API_TOKEN="t" * 32,
+               MEMORY_CONTROLLER_HMAC_SECRET="s" * 48,  # the gateway refuses to start without one;
+               # set here so the test does not depend on another test leaking it into os.environ
                PYTHONUNBUFFERED="1")
     proc = subprocess.Popen([sys.executable, str(SERVER), str(port)], env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
