@@ -255,12 +255,15 @@ class FileStorageEngine:
         if str(note_id) != str(yaml_id):
             raise ValueError(f"ID mismatch: storage key '{note_id}' must equal YAML id '{yaml_id}'")
         target_path = self._target_path_for(note_id, data)
-        serialized_content = serialize(data)
+        # LF on every platform (.gitattributes `* text=auto eol=lf`): normalise CRLF/CR and write
+        # with newline='' so Windows text mode does not turn "\r\n" into "\r\r\n"
+        # (20_TESTS/test_file_engine_writes_lf.py).
+        serialized_content = serialize(data).replace("\r\n", "\n").replace("\r", "\n")
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
         dir_name = os.path.dirname(target_path)
         fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix=".tmp_")
         try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(fd, 'w', encoding='utf-8', newline='') as f:
                 f.write(serialized_content)
                 f.flush()
                 os.fsync(f.fileno())
@@ -275,7 +278,11 @@ class FileStorageEngine:
                 os.remove(existing_path)
         self.id_to_path[note_id] = target_path
         mtime = os.path.getmtime(target_path)
-        self._cache[note_id] = (mtime, data)
+        cached = dict(data)
+        if isinstance(cached.get("content"), str):
+            # the file holds LF only: cache what a reload would return
+            cached["content"] = cached["content"].replace("\r\n", "\n").replace("\r", "\n")
+        self._cache[note_id] = (mtime, cached)
 
     def delete(self, note_id: str) -> None:
         filepath = self.id_to_path.get(note_id)
