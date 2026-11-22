@@ -6,7 +6,10 @@
 - Internet research by Codex, with sources, on five tracks: agent/MCP, web, Windows desktop/daemon/Python, supply chain/CI, red team. The tracks are listed in the Evidence section.
 - A threat model of this repository's real code by `fable-consultant`.
 - Opus synthesised both and checked the key claims independently.
-- The planned Gemini half of the research did not run. The agent bridge disabled its Antigravity transport ("agy disabled: agent produced events before its init/tool list"), so every external claim below rests on one external source plus Opus's own web check. Re-run the tracks when Gemini is back.
+- Second, independent source: Gemini (Hydrogen and Neon) on the same five tracks.
+  - The first Gemini attempt failed: the agent bridge had disabled its transport, and a daemon restart fixed it.
+  - The two sources were compared track by track. Agreements, disagreements and claims that could not be verified are in section 5.
+  - Opus checked the key claims independently.
 
 Statuses: **DONE** (implemented and tested, branch named), **OPEN** (planned), **OWNER** (needs an owner decision).
 
@@ -71,6 +74,11 @@ Sources: OWASP LLM Top 10 2025, OWASP Agentic AI Threats & Mitigations, OWASP MC
 - [ ] Tool descriptions and server configuration are pinned and reviewed; a change requires consent (rug-pull defence).
 - [ ] Authority actions (attest, promote, approve) need fresh user presence bound to the exact content hash. See item 2 of the threat model.
 - [ ] Tests: adversarial fixtures (instruction override, encoded, multilingual, multi-turn) prove that no state changes and no withheld content is served.
+- [ ] **Agent-output exfiltration (both sources).** No external Markdown images, links or raw HTML in rendered agent output. No outbound tool in a session that read private notes. A canary-secret test. Real case: EchoLeak, CVE-2025-32711, zero-click exfiltration from Microsoft 365 Copilot; verified.
+- [x] **Unicode canonicalisation before scanning.** NFKC, HTML unescape until stable, format characters stripped (soft hyphen, zero-width), Cyrillic/Greek/Latin look-alikes folded, line breaks collapsed. Done for `memory_propose` and the read flag in PR #401. Still open: tag characters U+E0000-E007F, bidi controls, and a CI check on instruction and skill files.
+- [ ] **Separation over filtering (Gemini).** The stronger defence is capability / information-flow separation (CaMeL, FIDES preprints): untrusted text never selects tools or destinations. A lexical scanner stays a signal.
+- [ ] **Separate, audience-bound tokens per caller** (MCP Security Best Practices). Test that an agent token gets 403 on owner routes.
+- [ ] **Poisoning by crowding (NIST AI 100-2).** Test whether near-duplicate poisoned notes push trusted notes out of the top results.
 
 ### 3.2 Web applications and sites
 Sources: OWASP Top 10:2025 (A01 Broken Access Control, A02 Security Misconfiguration, A03 Software Supply Chain Failures; verified on owasp.org), ASVS 5.0.0, OWASP Cheat Sheets, MDN, CISA 2025 npm advisory.
@@ -80,7 +88,14 @@ Sources: OWASP Top 10:2025 (A01 Broken Access Control, A02 Security Misconfigura
 - [ ] HSTS, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy` that disables unused features, and SRI on any CDN script.
 - [ ] Cookies `__Host-`, `Secure; HttpOnly; SameSite=Lax`, plus CSRF tokens or Origin checks on state changes; rate limits on login, recovery and costly endpoints.
 - [ ] No secret in a client bundle (public build variables are public); dev servers bound to localhost; never Vite `allowedHosts: true`.
-- [ ] Gate: locked install, dependency audit, secret scan, CodeQL/Semgrep, ZAP Baseline on staging, and a header-assertion script against the deployed URL.
+- [ ] Gate: locked install, dependency audit, secret scan, CodeQL/Semgrep, ZAP Baseline on staging, MDN HTTP Observatory, and a header-assertion script against the deployed URL.
+- [ ] **Authorization in the data layer**, never only in middleware. Real case: Next.js CVE-2025-29927, where an `x-middleware-subrequest` header skipped the middleware; verified on NVD. Patch frameworks promptly.
+- [ ] **SSRF:** resolve the address at connect time; reject loopback, private, link-local and metadata IPs; re-check every redirect. Also validate open redirects against a local-path or host allowlist.
+- [ ] **Uploads:** check magic bytes, cap size, use random names, store outside the executable web root.
+- [ ] **Markdown:** if `rehype-raw` is used, follow it with `rehype-sanitize`, plus a URL allowlist that blocks `javascript:` links.
+- [ ] **GitHub Pages cannot send response headers,** and a meta-tag CSP cannot enforce `frame-ancestors`. Use Vercel `vercel.json` headers or a CDN in front.
+- [ ] **3D assets:** untrusted glTF/Draco models get a validator, size caps and a Worker.
+- [ ] **AI-suggested packages:** check that every package exists and is the intended one before installing it (slopsquatting, USENIX Security 2025).
 
 ### 3.3 Windows desktop (.NET), local daemons, Python tools
 Sources: Microsoft DLL security, BinaryFormatter security guide, ZIP/TAR best practices, MSI custom-action guidance, OWASP WSTG DNS rebinding, MITRE ATT&CK T1574.001.
@@ -89,7 +104,11 @@ Sources: Microsoft DLL security, BinaryFormatter security guide, ZIP/TAR best pr
 - [ ] Evidence files and archives are hostile input: canonical paths, link handling, entry and size limits (zip bombs), extraction into a fresh controlled directory.
 - [ ] Local daemons: loopback only; `Host` and `Origin` validated; token on every request, stored with DPAPI or a restrictive ACL, never in URLs or logs; refuse to start if the bind fails (port squatting); named pipes get an explicit DACL.
 - [ ] Python: `yaml.safe_load`, never pickle from others, `subprocess` without `shell=True`, atomic writes, LF line endings (fixed in PR #398 and branch `claude/lf-writers-audit-log`), `pip --require-hashes` or `uv.lock`.
-- [ ] Gate: .NET security analyzers (CA2300, CA3003, CA3006, CA3011), BinSkim on PE files, Bandit/Semgrep, pip-audit/OSV, malicious-archive tests, daemon tests (forged Host, foreign Origin, no or invalid token).
+- [ ] Gate: .NET security analyzers (CA2300, CA2326 for Newtonsoft `TypeNameHandling`, CA3003, CA3006, CA3011), BinSkim on PE files, Bandit/Semgrep, pip-audit/OSV, malicious-archive tests, daemon tests (forged Host, foreign Origin, no or invalid token).
+- [ ] **Process start-up:** `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32)`. Never launch `.bat`/`.cmd` with arguments: `shell=False` does not protect them on Windows (BatBadBut class). Call `.exe` files directly.
+- [ ] **Local listeners:** bind with `SO_EXCLUSIVEADDRUSE` (port squatting). Named pipes get `PIPE_REJECT_REMOTE_CLIENTS` and `FILE_FLAG_FIRST_PIPE_INSTANCE`. Check regularly that nothing listens on 0.0.0.0 (MCP Inspector, CVE-2025-49596).
+- [ ] **Secrets and DPAPI (resolved disagreement).** DPAPI does **not** isolate a secret from other processes of the same Windows user, and the owner and agents share one user here (section 2). Never put tokens in command-line arguments or inherited environments. Real isolation needs a user-presence key or a separate account (threat-model item 2).
+- [ ] **Signed updaters** verify the hash and Authenticode before running anything.
 
 ### 3.4 Supply chain, GitHub and CI
 Sources: GitHub Actions secure-use docs, OpenSSF Scorecard, SLSA v1.1, Sigstore, CISA ESF; incidents tj-actions/changed-files (2025), xz-utils (2024), npm worm campaigns (2025); Snyk ToxicSkills (2026: 76 confirmed malicious skills out of 3,984 audited, verified on snyk.io).
@@ -101,7 +120,14 @@ Sources: GitHub Actions secure-use docs, OpenSSF Scorecard, SLSA v1.1, Sigstore,
 - [ ] Branch ruleset on `main`: PRs only, required checks, no force-push. **OWNER:** a human reviewer for merges, since an agent approving its own PR is not review. Also enable secret scanning push protection in the repository settings.
 - [ ] Agents with repository write access: issue, PR and comment text is adversarial input; no secrets in agent jobs; agents never merge.
 - [ ] Imported skills and instruction packs are quarantined: static review, no execution on ingest, a pinned checksum, promotion only by the owner (the existing ingestion pipeline does this; keep it).
-- [ ] Changes to instruction files (CLAUDE.md, AGENTS.md, skills, memory) are reviewed as security-sensitive (red-team chain 9).
+- [ ] Changes to instruction files (CLAUDE.md, AGENTS.md, skills, memory) are reviewed as security-sensitive (red-team chain 9). A pre-commit check rejects zero-width and bidi characters in them (Rules File Backdoor class). Integrity alerts cover `.claude/`, `.mcp.json` and environment overrides of API base URLs.
+- [x] **Dependabot for GitHub Actions** on `claude/security-program`: weekly, grouped, 7-day cooldown (the GitHub default is 3 days since July 2026; verified in the GitHub docs). Before this, nothing refreshed the SHA pins. **OWNER:** version updates for the other ecosystems (pull-request volume from the imported projects).
+- [ ] **Dependency intake:**
+  - `npm ci --ignore-scripts` with `minimumReleaseAge`;
+  - NuGet Package Source Mapping with `RestoreLockedMode=true`;
+  - never a bare `--extra-index-url`.
+- [ ] **Actions:** template values reach `run:` only through `env:`; the OIDC `sub` claim is bound to a branch or environment; `harden-runner` egress allowlists on jobs that run agents; gate on individual Scorecard checks, not the aggregate score.
+- [ ] **Releases:** SBOM plus provenance attestations for artefacts (SLSA 1.1, PyPI attestations).
 
 ## 4. Red-team chains to rehearse (safe tests only)
 
@@ -137,10 +163,29 @@ Highest-leverage controls across all ten:
 | Supply chain | `c53f9119-6da8-4d9c-b87f-f60d9767fb07` | Codex done; Gemini Argon failed |
 | Red team | `2fcd80b9-deee-464c-b064-9137829e11bc` | Codex done; Gemini Hydrogen failed |
 | Gemini Flash retry | `b88597ff-dcf2-436a-b8e9-1e52e79a2675` | failed with the same transport error |
+| Gemini, after the daemon restart | `195de1d9` (agent/MCP, Hydrogen), `c5a2e206` (web, Neon), `3b80aa57` (desktop, Hydrogen), `1780c71f` (supply chain, Neon), `19213199` (red team, Hydrogen) | all completed |
+
+**Where the two sources agree:** every core control in section 3.
+
+**Disagreements, resolved:**
+- **DPAPI:** Gemini is right for this threat model (one shared Windows user).
+- **`os.replace` atomicity on Windows:** Codex is closer to the Python docs, which promise it for POSIX only; test on the real filesystem.
+- **Signed commits:** the difference is emphasis only.
+- **Blanket human approval vs. sandboxes:** Gemini warns of approval fatigue. Keep human approval for authority and publishing actions, and sandbox the rest.
+- **CSP `base-uri 'none'` vs `'self'`:** both are acceptable.
+
+**Not used as fact (unverified or wrong):**
+- Gemini's red-team links that resolve only through search redirects.
+- CVE-2024-24576, which Gemini attributes to Python; it is a Rust standard-library CVE, though the Windows batch-file risk is real.
+- CVE-2026-21852, CVE-2025-68146, CVE-2025-66414, ATLAS AML.T0099/T0110, "Trusted Types in Firefox 148", and MCP spec version "2026-07-28".
+- Vendor statistics such as MINJA success rates, Veracode's 45% and Snyk's 280+.
 
 Independent checks by Opus (web search, 2026-11-22):
 - the OWASP Top 10:2025 order;
 - CVE-2025-66416 / GHSA-9h52-p55h-vw2f (fixed in MCP Python SDK 1.23.0);
-- Snyk ToxicSkills numbers.
+- Snyk ToxicSkills numbers;
+- CVE-2025-32711 (EchoLeak, Microsoft 365 Copilot, CVSS 9.3);
+- CVE-2025-29927 (Next.js middleware bypass);
+- the Dependabot `cooldown` option, with a 3-day default since 2026-07-14.
 
 The threat model was checked against the code before each fix: path 1 was reproduced by failing tests.
