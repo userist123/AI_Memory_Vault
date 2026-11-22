@@ -185,9 +185,12 @@ def run(argv, label: str, session: str = "", timeout: float = 1800.0):
     start = time.time()
     exe = resolve_exe(argv[0]) or argv[0]  # resolve .cmd/.exe shims like a shell would, never from the cwd
     code, text = 127, ""
+    env = dict(os.environ)
+    if os.name == "nt":
+        env["NoDefaultCurrentDirectoryInExePath"] = "1"  # cmd.exe and children never search the cwd for programs
     try:
         proc = subprocess.run([exe, *argv[1:]], shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, timeout=timeout)
+                              stderr=subprocess.STDOUT, timeout=timeout, env=env)
         code, text = proc.returncode, proc.stdout.decode("utf-8", "replace")
     except subprocess.TimeoutExpired as exc:
         code = 124
@@ -265,6 +268,8 @@ def main(argv=None) -> int:
             print("check: give the command after --")
             return 2
         refusal = cwd_refusal(cmd) or shim_refusal(cmd)
+        if not refusal and not os.path.dirname(cmd[0]) and resolve_exe(cmd[0]) is None:
+            refusal = f"check: refused: executable {os.path.basename(cmd[0])!r} not found on PATH"
         if refusal:
             print(refusal)
             return 2

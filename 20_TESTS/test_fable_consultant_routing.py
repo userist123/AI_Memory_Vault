@@ -343,6 +343,8 @@ def test_frontmatter_fable_request_fails_closed_when_policy_is_unavailable(tmp_p
     import io
     import route as route_module
 
+    monkeypatch.setenv("HOME", str(tmp_path))  # never read the real profile's pins
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
     project = tmp_path / "project"
     agents = project / ".claude" / "agents"
     agents.mkdir(parents=True)

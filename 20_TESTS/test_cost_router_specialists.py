@@ -758,6 +758,38 @@ def test_overlay_role_cannot_exceed_or_hide_its_target_agent(tree, change, match
         rc.compile_registry(s_dir, skills, agents)
 
 
+@pytest.mark.parametrize("change,match", [
+    (lambda d: d.update(risk_ceiling="critical"), "risk_ceiling"),
+    (lambda d: d.update(uses=["vault-reviewer"]), "privileged"),
+    (lambda d: d.update(uses=["fable-consultant"]), "privileged"),
+    (lambda d: d.update(escalates_to="fable-consultant"), "privileged"),
+    (lambda d: d.update(escalates_to="vault-reviewer"), "privileged"),
+], ids=["looser-risk", "uses-reviewer", "uses-fable", "escalates-fable", "escalates-reviewer"])
+def test_overlay_role_cannot_loosen_risk_or_name_a_privileged_id(tree, change, match):
+    s_dir, skills, agents = tree
+    p = _role(s_dir, "repro-debugger")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    change(d)
+    p.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(rc.RegistryError, match=match):
+        rc.compile_registry(s_dir, skills, agents)
+
+
+def test_overlay_role_cannot_be_less_private_than_its_target(tree):
+    s_dir, skills, agents = tree
+    p = _role(s_dir, "vault-worker")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    d["privacy"] = "local_only"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(rc.RegistryError, match="privacy"):
+        rc.compile_registry(s_dir, skills, agents)
+
+
+def test_overlay_hint_names_the_agent_to_spawn(homes):
+    ctx, _, _ = _hook(homes["with"], "give me a minimal repro and a deterministic repro for the parser crash", verbose=True)
+    assert "repro-debugger (overlay) on vault-worker" in ctx
+
+
 def test_overlay_role_with_its_own_agent_file_fails(tree):
     s_dir, skills, agents = tree
     (agents / "repro-debugger.md").write_text("---\nname: repro-debugger\ntools: Read\nmodel: sonnet\n---\n",

@@ -106,7 +106,7 @@ def test_no_shell_and_missing_command(home, tmp_path):
              f"x; touch {sentinel} && echo > {sentinel}")
     assert r.returncode == 0 and not sentinel.exists()
     r = _run(home, "run", "--label", "gone", "--", "definitely-not-a-command-xyz")
-    assert r.returncode == 127 and r.stdout.strip().startswith("check gone: exit=127 fail")
+    assert r.returncode == 2 and "not found" in r.stdout.lower()  # F4: refused up front, no receipt
 
 
 def test_usage_errors_and_last_without_receipt(home):
@@ -315,3 +315,25 @@ def test_receipt_over_256_kb_is_ignored_by_last_and_last_failing(home, monkeypat
     small = _plant_receipt(home, "s7-2000000001.json", dict(big, label="small", t=2_000_000_001.0), pad=10)
     assert small.stat().st_size < 256 * 1024
     assert check.last_failing("s7")["label"] == "small"
+
+
+def test_unresolvable_executable_is_refused_with_exit_2_and_no_receipt(home):
+    r = _run(home, "run", "--label", "nf", "--", "zzcr-no-such-command-xyz", "--version")
+    assert r.returncode == 2 and "not found" in r.stdout.lower()
+    assert _receipts(home) == []
+
+
+def test_child_environment_sets_no_default_cwd_exe_path_on_windows(monkeypatch):
+    seen = {}
+
+    class _P:
+        returncode, stdout = 0, b"ok\n"
+
+    def fake_run(argv, **kw):
+        seen["env"] = kw.get("env")
+        return _P()
+
+    monkeypatch.setattr(check.subprocess, "run", fake_run)
+    check.run([sys.executable, "-c", "pass"], "envt")
+    if os.name == "nt":
+        assert seen["env"] is not None and seen["env"].get("NoDefaultCurrentDirectoryInExePath") == "1"

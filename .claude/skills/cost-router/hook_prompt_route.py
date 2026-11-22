@@ -288,7 +288,8 @@ def main() -> int:
             ctx += " Enforced: after 3 direct tool calls the main session must delegate (unless the Agent gate itself refused the spawn)."
     if sel:
         kind = {"agent": "agent", "overlay": "overlay skill"}.get(sel["kind"], "skill")
-        ctx += (f" Specialist hint (advisory, from the registry): {sel['id']} ({kind})"
+        who = f"{sel['id']} (overlay) on {sel['subagent_type']}" if sel["kind"] == "overlay" and sel.get("subagent_type")             else f"{sel['id']} ({kind})"
+        ctx += (f" Specialist hint (advisory, from the registry): {who}"
                 + (f" + overlay {sel['overlay']}" if sel.get("overlay") else "")
                 + (f". Acceptance: {sel['acceptance']}" if sel.get("acceptance") else "."))
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:

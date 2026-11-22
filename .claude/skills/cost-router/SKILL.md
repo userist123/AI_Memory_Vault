@@ -356,7 +356,20 @@ every finding cites artifact path + sha256 + record id, a missing artifact is UN
 run is shown) are agents with a sidecar each; neither is privileged. `repro-debugger` is a BRIEF TEMPLATE, not an
 agent: `roles/repro-debugger.json` is kind overlay, run_in subagent, subagent_type `vault-worker`. The compiler accepts
 an overlay role only without an agent file of its own, on an existing non-privileged agent role, at most Sonnet, and
-with tools and authority within its target's (its artifact hash is the target agent file).
+with tools and authority within its target's (its artifact hash is the target agent file), privacy and risk_ceiling no
+looser than its target's, and no `uses`/`escalates_to` naming a privileged id. The hook of an overlay lead pick names the
+agent to spawn: `<overlay-id> (overlay) on <subagent_type>`.
+
+Declared, not enforced: the `dfir-analyst` limits (network none, write none) and the `test-author` tests-only scope are
+declarations in the agent file and the sidecar. Both agents have Bash, so nothing in the tools allowlist enforces them;
+the allowlist really removes only Write/Edit/Web*/MCP from `dfir-analyst`. A best-effort guard in
+`hook_enforce_route.py` (same PreToolUse hook and matcher, keyed on the payload's `agent_type`) denies the obvious
+violations: for `dfir-analyst`, Bash that starts a network command (curl, wget, Invoke-WebRequest/iwr,
+Invoke-RestMethod/irm, ssh, scp, ftp, nc, `python -m http.server`, pip install, npm, git push/fetch/clone) or writes a
+file (`>`/`>>`, Out-File, Set-Content, Add-Content, tee, cp/mv/rm/del/Remove-Item, New-Item); for `test-author`,
+Write/Edit/NotebookEdit to a path outside a `20_TESTS`/`tests`/`test` directory or a `test_*.py`, `*_test.py`,
+`*Tests.cs` file. Bash is Turing-complete (`python -c`, encoded commands, aliases, a script written elsewhere), so this
+is a speed bump and not a sandbox: it fails open on any hook error, and only the explicit denials above are enforced.
 
 ## 4E. Vault Agent Router on demand (Opus as main advisor)
 

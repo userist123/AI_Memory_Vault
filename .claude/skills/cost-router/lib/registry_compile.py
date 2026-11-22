@@ -299,12 +299,24 @@ WRITE_ORDER = ("none", "scratch", "tests", "workspace")
 NETWORK_ORDER = ("none", "fetch", "bridge")
 
 
+def _privileged_by_default(found: dict) -> frozenset:
+    """Like _privileged_names, but an agent that merely MAY escalate to opus (tier.max, e.g. vault-worker) is not
+    privileged: only the closed set and agents whose default tier is opus/fable. Overlays run on the former."""
+    names = set(PRIVILEGED_IDS)
+    for e in found.values():
+        if e["kind"] == "agent" and e["tier"]["default"] in ("opus", "fable"):
+            names.add(e["id"])
+            names.add(str(e.get("subagent_type", "")).lower())
+    return frozenset(names)
+
+
 def _check_overlay_role(e: dict, found: dict) -> None:
     """An overlay role (roles/<id>.json, kind overlay) is a brief template run on an existing trusted agent role. It
     can never name a privileged agent, run above sonnet, or claim a tool or authority its target agent lacks."""
     where = f"{e['id']}.json"
     target_name = str(e["subagent_type"]).lower()
-    if target_name in PRIVILEGED_IDS:
+    privileged = _privileged_by_default(found)
+    if target_name in privileged:
         raise RegistryError(f"{where}: an overlay role cannot run on the privileged agent {target_name!r}")
     target = found.get(target_name)
     if target is None or target["kind"] != "agent":
@@ -316,6 +328,13 @@ def _check_overlay_role(e: dict, found: dict) -> None:
     extra = sorted(set(e["tools"]) - set(target["tools"]))
     if extra:
         raise RegistryError(f"{where}: tools {extra} are not tools of {target_name!r}")
+    if e["privacy"] == "standard" and target["privacy"] == "local_only":
+        raise RegistryError(f"{where}: privacy is looser than that of {target_name!r}")
+    if RISKS.index(e["risk_ceiling"]) > RISKS.index(target["risk_ceiling"]):
+        raise RegistryError(f"{where}: risk_ceiling is higher than that of {target_name!r}")
+    for ref in [*e.get("uses", []), *([e["escalates_to"]] if "escalates_to" in e else [])]:
+        if str(ref).lower() in privileged:
+            raise RegistryError(f"{where}: an overlay role cannot name the privileged id {ref!r}")
     a, t = e["authority"], target["authority"]
     if (WRITE_ORDER.index(a["write"]) > WRITE_ORDER.index(t["write"])
             or NETWORK_ORDER.index(a["network"]) > NETWORK_ORDER.index(t["network"])

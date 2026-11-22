@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import posixpath
 import re
 import sys
 from pathlib import Path
@@ -214,6 +215,57 @@ def _advisory_note(sid, state: dict):
     return None
 
 
+# --- Best-effort role guard (declared limits of dfir-analyst and test-author) ---------------------------------------
+# Both roles have Bash, so their limits are DECLARED in the agent file; this guard denies the obvious violations when
+# the payload carries agent_type. Bash is Turing-complete (python -c, encoded commands, aliases): this is a speed bump,
+# not a sandbox. It fails open on any error; only the explicit denials below are enforced.
+_CMDPOS = (r"(?:^|[;&|(`]|\$\()\s*(?:(?:sudo|env|time|command|call|start|&)\s+|[A-Za-z_]\w*=\S*\s+)*")
+_DFIR_CMDS = (
+    r"curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod|ssh|scp|sftp|ftp|nc|ncat|npm|npx|pnpm|yarn|"
+    r"pip3?\s+install|python[\d.]*(?:\.exe)?\s+(?:-\w+\s+)*-m\s+(?:http\.server|pip\s+install|ensurepip)|py\s+(?:-[\d.]+\s+)?-m\s+(?:http\.server|pip\s+install)|"
+    r"git(?:\s+-C\s+\S+)?\s+(?:push|fetch|clone|pull)|"
+    r"out-file|set-content|add-content|tee|cp|mv|rm|del|erase|rmdir|copy|move|remove-item|new-item")
+_DFIR_RE = re.compile(_CMDPOS + r"(?:" + _DFIR_CMDS + r")(?![\w.-])", re.I)
+_BS = chr(92)
+_QUOTED = re.compile('"(?:' + _BS * 2 + '.|[^"' + _BS * 2 + '])*"' + "|'[^']*'")
+_SAFE_REDIR = re.compile(r"\d?>&\d|\d?>>?\s*(?:/dev/null|nul|\$null)(?![\w./-])", re.I)
+_REDIR = re.compile(r"(?<![<-])>")
+_TEST_DIRS = {"20_tests", "tests", "test"}
+_TEST_FILE = re.compile(r"(?:^test_.*\.py$|_test\.py$|Tests\.cs$)", re.I)
+
+
+def _deny(reason: str):
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                   "permissionDecisionReason": reason}}
+
+
+def role_guard(data: dict):
+    """A deny payload for an obvious violation by dfir-analyst or test-author, else None. Never raises."""
+    try:
+        role = str(data.get("agent_type") or "").strip().lower()
+        tool = data.get("tool_name")
+        ti = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
+        if role == "dfir-analyst" and tool == "Bash":
+            cmd = ti.get("command")
+            if not isinstance(cmd, str):
+                return None
+            flat = _SAFE_REDIR.sub(" ", _QUOTED.sub('""', cmd))
+            if _DFIR_RE.search(flat) or _REDIR.search(flat):
+                return _deny("cost-router: dfir-analyst is read-only and offline (network none, write none); this Bash"
+                             " command reaches the network or writes a file. Report what you need instead.")
+        elif role == "test-author" and tool in ("Write", "Edit", "NotebookEdit", "MultiEdit"):
+            path = ti.get("file_path") or ti.get("notebook_path")
+            if not isinstance(path, str) or not path.strip():
+                return None
+            parts = [x for x in posixpath.normpath(path.replace("\\", "/")).split("/") if x]
+            if parts and not (_TEST_FILE.search(parts[-1]) or any(x.lower() in _TEST_DIRS for x in parts[:-1])):
+                return _deny("cost-router: test-author writes tests only (a 20_TESTS/tests/test directory, test_*.py,"
+                             " *_test.py, *Tests.cs); this path is production code. Report the needed change instead.")
+    except Exception:
+        return None
+    return None
+
+
 READ_TOOLS = ("Read", "Grep", "Glob")
 
 
@@ -291,6 +343,16 @@ def main() -> int:
             return 0
         from route import is_shadowed  # noqa: E402
         if is_shadowed(Path(__file__)):
+            return 0
+        guard = None
+        try:
+            import route_state as _rs2  # noqa: E402
+            if not _rs2.enforcement_disabled():
+                guard = role_guard(data)
+        except Exception:
+            guard = None
+        if guard:
+            print(json.dumps(guard))
             return 0
         reason = decide(data)
     except Exception:
