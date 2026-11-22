@@ -62,7 +62,8 @@ describe('registrul de comenzi', () => {
     for (const [k, tk] of Object.entries(map)){
       assert.equal(matchCommand(ev(k)), `tool.${tk}`, k); assert.equal(matchCommand(ev(k.toUpperCase())), `tool.${tk}`, k.toUpperCase());
       for (const m of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]){ assert.equal(matchCommand(ev(k, m)), null, `${k} ${JSON.stringify(m)}`); assert.equal(matchCommand(ev(k.toUpperCase(), m)), null); }
-      const want = shifted[k] ? `tool.${shifted[k]}` : null;
+      // singura excepție care nu e unealtă: Shift+O oglindește piesa (core/mirror.ts)
+      const want = shifted[k] ? `tool.${shifted[k]}` : k === 'o' ? 'mirror' : null;
       assert.equal(matchCommand(ev(k, { shiftKey: true })), want, `Shift+${k}`); assert.equal(matchCommand(ev(k.toUpperCase(), { shiftKey: true })), want, `Shift+${k.toUpperCase()}`);
       // Shift împreună cu alt modificator rămâne fără comandă
       for (const m of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]) assert.equal(matchCommand(ev(k, { shiftKey: true, ...m })), null, `Shift+${k} ${JSON.stringify(m)}`);
@@ -125,7 +126,7 @@ describe('meniul contextual din registru', () => {
   });
   test('ce se aplică fiecărui tip', () => {
     assert.deepEqual(contextCommands('wall'), ['wall.length', 'frame', 'delete']);
-    assert.deepEqual(contextCommands('placement'), ['rotate', 'duplicate', 'view3d', 'frame', 'delete']);
+    assert.deepEqual(contextCommands('placement'), ['rotate', 'mirror', 'duplicate', 'view3d', 'frame', 'delete']);
     assert.deepEqual(contextCommands('room'), ['room.furnish', 'room.split', 'frame', 'delete']);
     assert.deepEqual(contextCommands('column'), ['rotate', 'column.shape', 'frame', 'delete']);
   });

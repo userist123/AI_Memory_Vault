@@ -58,6 +58,8 @@ export const COMMANDS: CommandDef[] = [
   { id: 'delete', label: 'help.delete', menuLabel: 'ctx.delete', group: 'edit', domain: 'editor', helpKeys: 'help.deleteKeys', shortcuts: [{ key: 'Delete', ...ANY }, { key: 'Backspace', ...ANY }] },
   { id: 'rotate', label: 'help.rotate', menuLabel: 'ctx.rotate', group: 'edit', domain: 'editor', shortcuts: [{ key: 'r', shift: 'any' }] },
   { id: 'duplicate', label: 'help.duplicate', menuLabel: 'ctx.duplicate', group: 'edit', domain: 'editor', helpKeys: 'help.duplicateKeys', shortcuts: [{ key: 'd', ctrlOrMeta: true, shift: 'any', alt: 'any' }] },
+  // oglindirea piesei (core/mirror.ts): Shift+O, de la „oglindește”; O simplu rămâne unealta Fereastră
+  { id: 'mirror', label: 'help.mirror', menuLabel: 'ctx.mirror', group: 'edit', domain: 'editor', shortcuts: [{ key: 'o', shift: true }] },
   { id: 'nudge', label: 'help.nudge', group: 'edit', domain: 'editor', helpKeys: 'help.arrowKeys', shortcuts: ARROWS.map(key => ({ key })) },
   { id: 'nudge.big', label: 'help.nudgeBig', group: 'edit', domain: 'editor', helpKeys: 'help.shiftArrowKeys', shortcuts: ARROWS.map(key => ({ key, shift: true })) },
   { id: 'escape', label: 'help.escape', group: 'nav', domain: 'editor', shortcuts: [{ key: 'Escape', ...ANY }] },
@@ -112,7 +114,7 @@ export const commandHint = (id: string, o: { mac: boolean }) => { const s = comm
 /** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
 export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing' | 'mep_run';
 const CONTEXT: Record<ContextKind, string[]> = {
-  wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
+  wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'mirror', 'duplicate', 'view3d', 'frame', 'delete'],
   room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
   stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
   niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete'],

@@ -32,7 +32,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     const size = p.size ? itemSizeCm(catalog, p) : null, variant = vv ? { ...vv, model: g.model, s: itemStyle(snap, p, vv.s, g.model ?? ''), ...(size ? { w: size.w, d: size.d, h: size.h } : {}) } : null;
     // veioza sau planta mică pusă pe o piesă joasă stă pe fața ei de sus (`y` doar când nu e 0, ca proiectele vechi să dea aceeași intrare)
     const y = surfaceUnder(snap, catalog, p);
-    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant, ...(y > 0 ? { y } : {}) }; });
+    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant, ...(y > 0 ? { y } : {}), ...(p.mirrored === true ? { mirrored: true as const } : {}) }; });
   const rise = snap.floor.ceilingHeight + SLAB;
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;

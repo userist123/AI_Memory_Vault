@@ -66,6 +66,8 @@ import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
+import { toggleMirror } from '@/core/mirror';
+import { isLocked, firstLocked, toggleLock, hasPinnedPieces } from '@/core/lock';
 import { arrayGroup, groupIds, arrangeItems, alignPieces, distributePieces, applyMoves, nudgeGroup, rotateGroup, duplicateGroup, type AlignMode, type GroupResult } from '@/core/arrange';
 import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel, type TextExtra } from './PlanView';
@@ -339,7 +341,7 @@ export default function Editor({ id }: { id: string }){
         if (changedRooms.length > 0) {
           let updated = cur;
           for (const cr of changedRooms) {
-            const hasManual = updated.placements.some(p => p.roomId === cr.id && p.source === 'manual');
+            const hasManual = hasPinnedPieces(updated, cr.id);
             if (!hasManual) {
               const relaid = autoLayout(updated, catalog, { roomId: cr.id });
               updated = { ...updated, placements: relaid.snapshot.placements };
@@ -366,7 +368,7 @@ export default function Editor({ id }: { id: string }){
           Math.abs(old.rect.z0 - nr.rect.z0) > 0.01 || Math.abs(old.rect.z1 - nr.rect.z1) > 0.01;
       });
       for (const cr of changedRooms) {
-        const hasManual = s.placements.some(p => p.roomId === cr.id && p.source === 'manual');
+        const hasManual = hasPinnedPieces(s, cr.id);
         if (!hasManual) {
           const relaid = autoLayout(s, catalog, { roomId: cr.id });
           s.placements = relaid.snapshot.placements;
@@ -377,7 +379,7 @@ export default function Editor({ id }: { id: string }){
     catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
   const undo = () => { if (!house || dragStart.current) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
-  const del = () => { if (!sel) return; mutate(s => {
+  const del = () => { if (!sel) return; if (sel.kind === 'placement' && snap && firstLocked(snap, group)){ say(t('edit.locked')); return; } mutate(s => {
     if (sel.kind === 'placement') s.placements = s.placements.filter(p => !group.includes(p.id));   // cu selecție multiplă: toate piesele grupului
     // peretele șters își ia și nișele
     if (sel.kind === 'wall'){ s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id); if (s.floor.niches){ s.floor.niches = s.floor.niches.filter(n => n.wallId !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; }
@@ -397,7 +399,7 @@ export default function Editor({ id }: { id: string }){
     // camera ștearsă își ia piesele și zonele de pardoseală
     if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id);
       removeRoomZones(s.floor, sel.id); removeRoomCeilingZones(s.floor, sel.id); } }); setSel(null); };
-  const rotate = (pid: string) => { if (!snap || !catalog) return; const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
+  const rotate = (pid: string) => { if (!snap || !catalog) return; if (isLocked(snap, pid)){ say(t('edit.locked')); return; } const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
     const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss, discard: () => hist.current.discardLast() }); };
   // ---- niveluri și scări ----
   // un traseu început pe alt nivel nu se continuă aici: schimbarea nivelului închide desenul (unealta revine la Selectează)
@@ -438,6 +440,12 @@ export default function Editor({ id }: { id: string }){
     groupDone(applyMoves(snap, catalog, k === 'distributeX' ? distributePieces(items, 'x') : k === 'distributeZ' ? distributePieces(items, 'z') : alignPieces(items, k as AlignMode)), 'editor.positionRefused'); };
   const rotateSel = () => { if (!sel) return; if (group.length > 1) groupRotate(); else if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); };
   const duplicateSel = () => { if (group.length > 1) groupDuplicate(); else if (sel?.kind === 'placement') duplicate(sel.id); };
+  // oglindirea (core/mirror.ts): comută `mirrored` pe piesa aleasă sau pe fiecare piesă din grup, într-un singur pas de anulare; amprenta nu se schimbă, deci nu e nimic de validat
+  const mirrorIds = () => group.length ? group : sel?.kind === 'placement' ? [sel.id] : [];
+  // blocarea piesei: comutare pe piesa aleasă sau pe tot grupul; o piesă blocată nu se oglindește, nu se mută, nu se șterge
+  const lockSel = () => { if (!snap || preview || !group.length) return; const r = toggleLock(snap, group); commit(r.snapshot); say(t(r.locked ? 'lock.locked' : 'lock.unlocked', { n: r.count })); };
+  const mirrorSel = () => { if (!snap || preview) return; if (firstLocked(snap, mirrorIds())){ say(t('edit.locked')); return; } const r = toggleMirror(snap, mirrorIds()); if (!r.changed) return; commit(r.snapshot);
+    say(r.changed > 1 ? t('mirror.group', { n: r.changed }) : t(r.snapshot.placements.find(q => q.id === mirrorIds()[0])?.mirrored ? 'mirror.on' : 'mirror.off')); };
   // tastatura din plan (core/plan-keys.ts): săgețile mută piesa, scara sau camera aleasă, R rotește, Delete șterge
   const onPlanKey = (a: PlanKeyAction) => { if (!a || !sel || preview) return;
     if (a.type === 'deselect'){ if (multi.length) setMultiRaw({ anchor: '', ids: [] }); else setSel(null); }   // Esc: întâi grupul, apoi selecția
@@ -475,6 +483,7 @@ export default function Editor({ id }: { id: string }){
         const ndx = e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, ndz = e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0; if (group.length > 1) groupNudge(ndx, ndz); else nudge(sel.id, ndx, ndz); } break;
       case 'delete': del(); break;
       case 'rotate': rotateSel(); break;
+      case 'mirror': if (mirrorIds().length){ e.preventDefault(); mirrorSel(); } break;
       case 'escape': setMultiRaw({ anchor: '', ids: [] }); setTool('select'); setHelp(false); setCalib(null); setShowHealth(false); setShowLab(false); setActiveImpact(null); break;
       default: { const tk = commandById(cid)?.tool; if (tk && STAGES.find(x => x.id === stage)?.tools.includes(tk)) setTool(tk); } } };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
@@ -777,6 +786,8 @@ export default function Editor({ id }: { id: string }){
         hint: room, run: () => { setTool('select'); setSel({ kind: 'placement', id: pl.id }); } }; })),
     ...(sel?.kind === 'placement' ? [{ id: 'frame-other', group: t('cmdk.group.actions'), label: t('cmdk.frameOther'), keywords: ['3d', 'plan', 'frame', t('hud.frame3d'), t('viewer.showInPlan')], run: () => (view === '3d' ? frameInPlan(sel.id) : frameIn3d(sel.id)) }] : []),
     // așezarea pieselor selectate: alinierea de la 2 piese, distribuirea de la 3 (lib/commands.ts arrangeCommands); apar și în meniul Editare
+    ...(stageDef.page || !group.length || !snap ? [] : [{ id: 'lock', group: t('cmdk.group.actions'), label: group.length > 1 ? t('lock.cmdGroup') : t(isLocked(snap, group[0]!) ? 'lock.cmdUnlock' : 'lock.cmdLock'), keywords: ['lock', 'blocheaza', 'lacat', 'unlock'], run: lockSel }]),
+    ...(stageDef.page || !mirrorIds().length ? [] : [{ id: 'mirror', group: t('cmdk.group.actions'), label: t('help.mirror'), hint: hint('mirror'), keywords: ['mirror', 'flip', 'oglinda', 'oglindire', 'stanga', 'dreapta'], run: mirrorSel }]),
     ...(stageDef.page || !group.length ? [] : [{ id: 'array', group: t('cmdk.group.actions'), label: t('array.cmd'), keywords: ['array', 'matrice', 'repeta', 'rand', 'row'], run: () => setArrayOpen(true) }]),
     ...(stageDef.page ? [] : arrangeCommands(group.length).map(cid => ({ id: cid, group: t('cmdk.group.actions'), label: t(cid), keywords: [t('cmdk.kw.arrange')], run: () => arrange(cid) }))),
     { id: 'health', group: t('cmdk.group.actions'), label: t('cmdk.health'), keywords: [t('cmdk.kw.health')], run: () => setShowHealth(true) },
@@ -911,10 +922,11 @@ export default function Editor({ id }: { id: string }){
           onAddStairAt={preview ? undefined : onAddStairAt}
           onRotateSelected={rotateSel}
           onDuplicateSelected={duplicateSel}
+          onMirrorSelected={preview ? undefined : mirrorSel}
           onDeleteSelected={del}
           onSetWallLength={preview ? undefined : onSetWallLength}
           onToggleColumnShape={() => { if (sel?.kind === 'column') mutate(s => { const c = s.floor.columns?.find(x => x.id === sel.id); if (c) c.shape = c.shape === 'round' ? 'rect' : 'round'; }); }}
-          onAutoFurnishRoom={(roomId: string) => { const r = autoLayout(snap, catalog, { roomId }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: snap.floor.rooms.find(x => x.id === roomId)?.name ?? '' })); }}
+          onAutoFurnishRoom={(roomId: string) => { const r = autoLayout(snap, catalog, { roomId }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : r.displaced.length ? t('editor.lockedDisplaced', { n: r.displaced.length }) : t('editor.roomAutoApplied', { room: snap.floor.rooms.find(x => x.id === roomId)?.name ?? '' })); }}
           onSplitRoom={(roomId: string, axis: 'x' | 'z') => { const r = snap.floor.rooms.find(x => x.id === roomId); if (!r) return; try { const mid = axis === 'x' ? r3((r.rect.x0 + r.rect.x1) / 2) : r3((r.rect.z0 + r.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, r.id, axis, mid, { id: nid, name: `${r.name} B`, type: r.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
           calib={preview ? null : calib}
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
@@ -982,7 +994,7 @@ export default function Editor({ id }: { id: string }){
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} focusFeature={cladFocus?.room === selRoom.id ? cladFocus : null} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
-            onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
+            onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : r.displaced.length ? t('editor.lockedDisplaced', { n: r.displaced.length }) : t('editor.roomAutoApplied', { room: selRoom.name })); }}
             onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => resizeSel(selRoom.id, rect)}
             onSplit={(axis: 'x' | 'z') => { try { const mid = axis === 'x' ? r3((selRoom.rect.x0 + selRoom.rect.x1) / 2) : r3((selRoom.rect.z0 + selRoom.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, selRoom.id, axis, mid, { id: nid, name: `${selRoom.name} B`, type: selRoom.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
             onMerge={(otherId: string) => { try { const nf = mergeRooms(snap.floor, selRoom.id, otherId); mutate(s => { s.floor = nf; s.placements = s.placements.map(p => p.roomId === otherId ? { ...p, roomId: selRoom.id } : p); }); } catch (e: any) { say(e?.message || 'Error'); } }} num={num} />}
@@ -1054,9 +1066,9 @@ export default function Editor({ id }: { id: string }){
           {/* inspector:end */}
           {selPl && showSel && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num} onFocusIssue={focusIssue}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))}
-            onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
+            onMove={(x, z) => { if (isLocked(snap, selPl.id)){ say(t('edit.locked')); return; } const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
               if (severityOf(iss) === 'ERROR'){ say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); }}
-            onRotate={() => rotate(selPl.id)} onDuplicate={() => duplicate(selPl.id)} onDelete={del} />}
+            onRotate={() => rotate(selPl.id)} onMirror={mirrorSel} onLock={lockSel} onDuplicate={() => duplicate(selPl.id)} onDelete={del} />}
           {selPl && showSel && stage === 'ffe' && selPl.group === 'dulap' && <WardrobePanel p={selPl} snap={snap} catalog={catalog} onChange={spec => mutate(s => { const j = { ...(s.joinery ?? {}) }; if (spec) j[selPl.id] = spec; else delete j[selPl.id]; if (Object.keys(j).length) s.joinery = j; else delete s.joinery; })} />}
           {selPl && showSel && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
@@ -1284,7 +1296,7 @@ export default function Editor({ id }: { id: string }){
             </button>
           </div>
           {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
-          <button className="btn" onClick={async () => { if (!(await askConfirm({ title: t('dlg.autoTitle'), body: t('editor.autoConfirm'), confirmLabel: t('dlg.autoOk') }))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
+          <button className="btn" onClick={async () => { if (!(await askConfirm({ title: t('dlg.autoTitle'), body: t('editor.autoConfirm'), confirmLabel: t('dlg.autoOk') }))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : r.displaced.length ? t('editor.lockedDisplaced', { n: r.displaced.length }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
           {catalog && mc && (
             <TraceabilityPanel
               snap={snap}
@@ -1442,7 +1454,7 @@ function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, 
   </>);
 }
 // inspector:placement
-function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onDuplicate, onDelete, onFocusIssue }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onDuplicate(): void; onDelete(): void; onFocusIssue(i: Issue): void }){
+function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onMirror, onLock, onDuplicate, onDelete, onFocusIssue }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onMirror(): void; onLock?(): void; onDuplicate(): void; onDelete(): void; onFocusIssue(i: Issue): void }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), inField = (m: number) => cmToInput(m * 100, units);
   const rv = resolve(catalog, p.variantId)!, room = snap.floor.rooms.find(r => r.id === p.roomId), g = G[groupOf(p.variantId)];
   return (<>
@@ -1451,10 +1463,10 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
     {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: rv.offer.provenance.confidence ?? '', dimConf: rv.variant.dimensionsConfidence, stock: rv.offer.availability === 'UNKNOWN' ? t('common.unknown') : rv.offer.availability })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
     {issues.length ? issues.map((i, k) => { const tg = issueTarget(i, snap.floor, snap.placements); return <div key={k} className={`issue ${i.severity}`} role={tg ? 'button' : undefined} tabIndex={tg ? 0 : undefined} style={tg ? { cursor: 'pointer' } : undefined} onClick={tg ? () => onFocusIssue(i) : undefined} onKeyDown={tg ? e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onFocusIssue(i); } } : undefined}>{iT(i)}</div>; }) : <div className="issue PASS">{t('editor.positionValid')}</div>}
     <div className="grid2">
-      <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
-      <label className="f"><span>{t('editor.zField', { u })}</span><input type="number" value={inField(p.z)} onChange={e => num(e.target.value, (z: number) => onMove(p.x, z / 100), -1e9)} /></label>
+      <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" readOnly={p.locked === true} value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
+      <label className="f"><span>{t('editor.zField', { u })}</span><input type="number" readOnly={p.locked === true} value={inField(p.z)} onChange={e => num(e.target.value, (z: number) => onMove(p.x, z / 100), -1e9)} /></label>
     </div>
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title={commandHint('duplicate', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{onLock && <button className="btn" aria-pressed={p.locked === true} title={t('lock.title')} onClick={onLock}>{p.locked ? `🔒 ${t('lock.badge')}` : t('lock.cmdLock')}</button>}<button className="btn" disabled={p.locked === true} onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" disabled={p.locked === true} aria-pressed={p.mirrored === true} onClick={onMirror} title={commandHint('mirror', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.mirror')}</button><button className="btn" onClick={onDuplicate} title={commandHint('duplicate', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
     <h4>{t('editor.variantsOnly', { n: g.variants.length })}</h4>
     {g.variants.map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm;
       return <button key={v.id} className="var" aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}</small></button>; })}

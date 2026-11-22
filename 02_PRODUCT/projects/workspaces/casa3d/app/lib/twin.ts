@@ -40,10 +40,16 @@ export function snapshotToTwin(snap: Snapshot, cat: Catalog, twinId = 'project')
 export const twinFingerprint = (snap: Snapshot, cat: Catalog): string => fingerprint(snapshotToTwin(snap, cat));
 
 /** Piesele twin-ului, înapoi în formatul aplicației. Piesele existente își păstrează id-ul și sursa; cele noi sunt 'auto'. */
+/** Piesele blocate (`locked`) se întorc exact cum erau în proiect (id, poziție, rotație, variantă, oglindire), orice ar fi făcut
+ *  solver-ul cu ele (MOVE / REPLACE / REMOVE); dacă se lovesc de piesele noi, validatorul aplicației oprește varianta. Oglindirea se păstrează. */
 /** `ids` (opțional) primește corespondența id solver → id aplicație, ca BOQ-ul și problemele să poată fi raportate pe id-urile finale. */
 export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin, ids?: Map<string, string>): FurniturePlacement[] {
   const existing = new Map(snap.placements.map(p => [p.id, p]));
-  return twin.placements.flatMap((q): FurniturePlacement[] => {
+  const inTwin = new Set(twin.placements.map(q => q.id));
+  // blocatele pe care solver-ul le-a scos (cele fără dimensiuni nu ajung în twin: le păstrează untwinnablePlacements)
+  const lost = snap.placements.filter(p => p.locked === true && !inTwin.has(p.id) && !!resolve(cat, p.variantId)?.w && !!resolve(cat, p.variantId)?.d);
+  return [...twin.placements.flatMap((q): FurniturePlacement[] => {
+    const pinned = existing.get(q.id); if (pinned?.locked === true){ ids?.set(q.id, q.id); return [pinned]; }
     const rv = resolve(cat, q.catalogId); if (!rv) return [];
     // dimensiunile din twin (egale cu ale variantei, sau cele pe comandă pentru piesele existente cu `size`)
     const swap = q.rotation === 90 || q.rotation === 270, qw = q.w || rv.w, qd = q.d || rv.d;
@@ -51,8 +57,8 @@ export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin, ids
     const prev = existing.get(q.id);
     // Piesele noi primesc un UUID, ca la orice piesă a aplicației: id-urile generate de solver nu ajung în proiect.
     const id = prev ? q.id : globalThis.crypto.randomUUID(); ids?.set(q.id, id);
-    return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto', ...(prev?.size ? { size: prev.size } : {}) }];
-  });
+    return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto', ...(prev?.size ? { size: prev.size } : {}), ...(prev?.mirrored === true ? { mirrored: true as const } : {}) }];
+  }), ...lost];
 }
 
 /** Piesele pe care twin-ul nu le poate reprezenta (fără dimensiuni în catalog). Se păstrează neatinse la aplicare. */

@@ -68,7 +68,11 @@ export interface Floor { id: string; name: string; ceilingHeight: number; rooms:
   /** trasee de instalații (core/mep.ts) și fundații (ghidul BIM §3.4–3.5) */
   mepRuns?: MepRun[]; footings?: Footing[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
-export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
+export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number };
+  /** oglindită față de axa ei de lățime (canapea de colț stânga ↔ dreapta); lipsă = ca în catalog */
+  mirrored?: true;
+  /** blocată: nu se mută, nu se rotește, nu se șterge și nu se aliniază până nu e deblocată */
+  locked?: true }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
 export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */

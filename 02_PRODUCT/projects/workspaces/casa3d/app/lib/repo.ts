@@ -121,6 +121,8 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   for (const p of s.placements){ if (p.size == null){ delete p.size; continue; }
     if (!(cm(p.size?.w) && cm(p.size?.d) && cm(p.size?.h))) throw new HttpError(400, `Dimensiunile pe comandă trebuie să fie între ${SIZE_LIMITS_CM.min} și ${SIZE_LIMITS_CM.max} cm.`);
     p.size = { w: Math.round(p.size.w), d: Math.round(p.size.d), h: Math.round(p.size.h) }; } // doar w/d/h, în cm întregi
+  // oglindirea și blocarea piesei: doar `true` se păstrează (orice altă valoare = câmp absent)
+  for (const p of s.placements){ if (p.mirrored !== true) delete p.mirrored; if (p.locked !== true) delete p.locked; }
   for (const f of fls) for (const w of f.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
     if (o.sill != null && !(num(o.sill) && o.sill >= 0 && o.sill <= 2)) throw new HttpError(400, 'Parapetul ferestrei trebuie să fie între 0 și 200 cm.');
     if (o.hinge != null && o.hinge !== 'start' && o.hinge !== 'end') throw new HttpError(400, 'Balamaua ușii este invalidă.');

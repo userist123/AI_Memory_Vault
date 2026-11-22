@@ -16,7 +16,8 @@ import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
 import { pinchViewBox, midpoint, distance, type Pt } from '@/core/gesture';
 import { stairGeometry, SLAB } from '@/core/levels';
-import { planSymbol, symbolAngle } from '@/core/plan-symbols';
+import { planSymbol } from '@/core/plan-symbols';
+import { symbolTransform } from '@/core/mirror';
 import { doorSwing } from '@/core/doors';
 import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
@@ -85,6 +86,8 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onAddStairAt?(x: number, z: number): void;
   onRotateSelected?(): void;
   onDuplicateSelected?(): void;
+  /** oglindește piesa sau piesele selectate (core/mirror.ts) */
+  onMirrorSelected?(): void;
   onDeleteSelected?(): void;
   onToggleColumnShape?(): void;
   onAutoFurnishRoom?(roomId: string): void;
@@ -336,6 +339,8 @@ export default function PlanView(p: Props){
     else if (kind === 'redge'){ drag.current = { kind, id, edge: t.dataset.edge, start: pt, moved: false, orig: null }; }
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
     // o piesă din grup: selecția rămâne, tragerea mută tot grupul; un clic fără tragere o alege doar pe ea (în up)
+    // piesa blocată (sau un grup care conține una) se alege, dar nu se trage (core/lock.ts)
+    else if (kind === 'placement' && (p.snap.placements.find(q => q.id === id)?.locked || (inMulti(id) && group.some(g => p.snap.placements.find(q => q.id === g)?.locked)))){ if (!inMulti(id)) p.onSelect({ kind: 'placement', id }); return; }
     else if (kind === 'placement' && inMulti(id)){ drag.current = { kind, id, start: pt, moved: false, orig: null, group }; }
     // traseul de instalații se alege, dar nu se trage (punctele lui au și cotă; se editează în panou)
     else if (kind === 'mep_run'){ p.onSelect({ kind: 'mep_run', id }); return; }
@@ -526,13 +531,13 @@ export default function PlanView(p: Props){
     if (m == null || !p.onSetWallLength?.(dim.wallId, m)){ setDim({ ...dim, bad: true }); return; } setDim(null); svg.current?.focus({ preventScroll: true }); };
   // comenzile meniului: aceleași acțiuni ca bara piesei și tastele (lib/commands.ts dă eticheta și scurtătura)
   const runCommand = (id: string) => { const s = p.sel; setMenu(null); svg.current?.focus({ preventScroll: true }); if (!s) return;
-    if (id === 'rotate') p.onRotateSelected?.(); else if (id === 'duplicate') p.onDuplicateSelected?.(); else if (id === 'delete') p.onDeleteSelected?.();
+    if (id === 'rotate') p.onRotateSelected?.(); else if (id === 'mirror') p.onMirrorSelected?.(); else if (id === 'duplicate') p.onDuplicateSelected?.(); else if (id === 'delete') p.onDeleteSelected?.();
     else if (id === 'frame'){ if (!frameSel(s)) fitAll(); } else if (id === 'view3d') p.onFrameOther?.(s.id); else if (id === 'column.shape') p.onToggleColumnShape?.();
     else if (id.startsWith('arrange.')) p.onArrange?.(id);
     else if (id === 'room.furnish') p.onAutoFurnishRoom?.(s.id); else if (id === 'room.split') p.onSplitRoom?.(s.id, 'x'); else if (id === 'wall.length') openDim(s.id); };
   // ce oferă meniul acum: comenzile fără acțiune legată (ex. 3D în vederea doar-plan) nu apar
   const available = (id: string) => ({ view3d: !!p.onFrameOther, 'wall.length': !!p.onSetWallLength, 'room.furnish': !!p.onAutoFurnishRoom, 'room.split': !!p.onSplitRoom,
-    'column.shape': !!p.onToggleColumnShape, rotate: !!p.onRotateSelected, duplicate: !!p.onDuplicateSelected, delete: !!p.onDeleteSelected } as Record<string, boolean>)[id] ?? true;
+    'column.shape': !!p.onToggleColumnShape, rotate: !!p.onRotateSelected, mirror: !!p.onMirrorSelected, duplicate: !!p.onDuplicateSelected, delete: !!p.onDeleteSelected } as Record<string, boolean>)[id] ?? true;
   // clic dreapta: în timpul desenării anulează segmentul; în Selecție alege obiectul de sub cursor și deschide meniul
   function contextMenu(e: React.MouseEvent){ e.preventDefault();
     if (p.tool === 'mep_run' && preview){ finishMep(); return; }   // clic dreapta termină traseul (ce s-a desenat se păstrează)
@@ -582,11 +587,14 @@ export default function PlanView(p: Props){
       const w = pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, d = pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, sym = planSymbol(pl.group, w, d, rv?.variant.chairs ?? 4);
       const ink = sv === 'PASS' ? (on || also ? '#8B6A45' : '#3a352f') : SEV[sv], sw = on ? .03 : also ? .022 : .015;
       return (<g key={pl.id}><title>{rv ? `${rv.product.name} — ${rv.variant.name}` : pl.group}</title>
-        <g transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} pointerEvents="none" fill="none" stroke={ink} strokeLinejoin="round">
+        <g transform={symbolTransform(pl)} pointerEvents="none" fill="none" stroke={ink} strokeLinejoin="round">
           {sym.outline && <path d={sym.outline} fill={sym.fill === 'soft' ? '#fffdf8' : '#fffdfa'} fillOpacity={.92} strokeWidth={sw * 1.4} />}
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
-        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on || also ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : also ? .07 : sv === 'PASS' ? 0 : .12} stroke={on || also ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={also ? .75 : hov && !on ? .7 : 1} strokeWidth={also ? .014 : .02} strokeDasharray={on || also || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
-          onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
+        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on || also ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : also ? .07 : sv === 'PASS' ? 0 : .12} stroke={on || also ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={also ? .75 : hov && !on ? .7 : 1} strokeWidth={also ? .014 : .02} strokeDasharray={on || also || hov ? '.06 .04' : undefined} style={{ cursor: pl.locked ? 'default' : 'move' }}
+          onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} />
+        {/* lacătul piesei blocate (core/lock.ts): în colțul din dreapta-sus al amprentei, nu prinde clicuri */}
+        {pl.locked && (() => { const s = Math.min(.22, (fp.x1 - fp.x0) / 3, (fp.z1 - fp.z0) / 3), x = fp.x1 - s * 1.2, z = fp.z0 + s * .2;
+          return <g pointerEvents="none" aria-hidden="true"><rect x={x} y={z + s * .45} width={s} height={s * .6} rx={s * .1} fill="#5a4a3a" /><path d={`M${x + s * .22} ${z + s * .45}V${z + s * .25}a${s * .28} ${s * .28} 0 0 1 ${s * .56} 0V${z + s * .45}`} fill="none" stroke="#5a4a3a" strokeWidth={s * .12} /></g>; })()}</g>); })}
     {/* covoarele camerelor (stratul de finisaje): dreptunghi textil punctat sub piese, cu numărul covorului când sunt mai multe */}
     {p.showFinishes && p.mc && floor.rooms.flatMap(r => { const rugs = roomRugs(finishesOf(p.snap, r));
       return rugs.map((c, i) => { const m = p.mc!.materials.find(x => x.id === c.material), s = m ? rugSize(r, m, c.rotate) : null; if (!s) return null; const q = rugRectAt(r, s, c);

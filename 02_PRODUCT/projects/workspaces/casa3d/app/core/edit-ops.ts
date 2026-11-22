@@ -2,6 +2,7 @@
 import { validatePlacement, severityOf } from './validate';
 import { r3, wallLength } from './geometry';
 import type { Catalog, Issue, Snapshot } from './types';
+import { isLocked, unlockedCopy } from './lock';
 
 export const DUPLICATE_STEP_CM = 30;
 export const NUDGE_CM = 5, NUDGE_BIG_CM = 50;
@@ -20,13 +21,13 @@ export function duplicatePlacement(snap: Snapshot, cat: Catalog, id: string, new
   let fallback: { x: number; z: number; issues: Issue[] } | null = null;
   for (let k = 1; k <= DUPLICATE_MAX_STEPS; k++) for (const [dx, dz] of DIRS){
     const d = k * DUPLICATE_STEP_CM / 100, x = r3(src.x + dx * d), z = r3(src.z + dz * d);
-    const probe = { ...structuredClone(src), id: newId, x, z, source: 'manual' as const };
+    const probe = unlockedCopy({ ...structuredClone(src), id: newId, x, z, source: 'manual' as const });
     const issues = validatePlacement({ ...snap, placements: [...snap.placements, probe] }, cat, probe), sev = severityOf(issues);
     if (sev === 'ERROR') continue;
     if (sev === 'PASS') return build(snap, src.id, probe, issues);
     fallback ||= { x, z, issues };
   }
-  if (fallback) return build(snap, src.id, { ...structuredClone(src), id: newId, x: fallback.x, z: fallback.z, source: 'manual' }, fallback.issues);
+  if (fallback) return build(snap, src.id, unlockedCopy({ ...structuredClone(src), id: newId, x: fallback.x, z: fallback.z, source: 'manual' }), fallback.issues);
   return { ok: false, message: 'Nu am găsit loc liber pentru copie lângă piesă.', key: 'edit.noFreeSpot' };
 }
 function build(snap: Snapshot, srcId: string, copy: Snapshot['placements'][number], issues: Issue[]): EditResult {
@@ -38,6 +39,7 @@ function build(snap: Snapshot, srcId: string, copy: Snapshot['placements'][numbe
 /** Mută piesa cu (dxCm, dzCm), validat ca la tragere: ERROR refuză. */
 export function nudgePlacement(snap: Snapshot, cat: Catalog, id: string, dxCm: number, dzCm: number): EditResult {
   if (!snap.placements.some(p => p.id === id)) return { ok: false, message: 'Piesa nu există.', key: 'edit.noPiece' };
+  if (isLocked(snap, id)) return { ok: false, message: 'Piesa e blocată.', key: 'edit.locked' };
   const n = structuredClone(snap), q = n.placements.find(p => p.id === id)!;
   q.x = r3(q.x + dxCm / 100); q.z = r3(q.z + dzCm / 100); q.source = 'manual';
   const issues = validatePlacement(n, cat, q), err = issues.find(i => i.severity === 'ERROR');

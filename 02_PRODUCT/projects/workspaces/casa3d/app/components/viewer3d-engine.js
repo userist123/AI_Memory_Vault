@@ -23,6 +23,7 @@ const LI = Math.PI;
 const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
 import { elementIdOf } from '../core/scene-ids';
+import { contactQuadIndices } from '../core/mirror';
 import { isNavKey, pressKey, releaseKey, stillMoving, settled, wakeDt } from '../core/render-demand';
 import { TIER_PARAMS, adaptTier, gpuKind, ADAPT_SAMPLES } from '../core/viewport-tiers';
 import { batchStatic, HIDDEN_LAYER } from './static-batch.js';
@@ -974,7 +975,7 @@ function model(it){
     const put = (key, x, y, z, rotY) => { const m = decoModel(key); if (!m) return; const o = m.clone(); o.position.set(x, y, z); o.rotation.y = rotY || 0; o.userData.deco = DECO[key][0]; decor.add(o); };
     const back = r => [-Math.sin(r), -Math.cos(r)], fps = items.filter(i => i.fp).map(i => i.fp);
     for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
-      const [bx, bz] = back(it.rotation), side = Math.abs(bx) > .5 ? (bx > 0 ? 'E' : 'W') : (bz > 0 ? 'S' : 'N');
+      const [bx, bz] = back(it.rotation), mx = it.mirrored ? -1 : 1, side = Math.abs(bx) > .5 ? (bx > 0 ? 'E' : 'W') : (bz > 0 ? 'S' : 'N');
       // pe un perete placat (riflaj, cărămidă, piatră, lambriu) tabloul stă în fața placării
       const u = side === 'N' || side === 'S' ? it.x - room.x0 : it.z - room.z0;
       const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind) && (!w.along || (u > w.along[0] && u < w.along[1]))) ? .06 : 0, k = .02 + clad;
@@ -982,9 +983,9 @@ function model(it){
       // tabloul automat nu se pune pe o latură unde designerul a pus deja un tablou sau un TV (Floor.wallItems)
       const explicit = (plan.obiectePerete || []).some(o => o.room === room.id && o.fata === side && (o.kind === 'art' || o.kind === 'tv'));
       if (it.group === 'canapea' || it.group === 'pat'){ if (!explicit){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); } }
-      else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
+      else if (it.group === 'comodaTv') put('vase', it.x - mx * Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + mx * Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
       else if (it.group === 'masa') put('jug', it.x, h, it.z, 0);
-      else if (it.group === 'noptiera') put('photo', it.x + Math.cos(it.rotation) * .12, h, it.z - Math.sin(it.rotation) * .12, it.rotation + .35);
+      else if (it.group === 'noptiera') put('photo', it.x + mx * Math.cos(it.rotation) * .12, h, it.z - mx * Math.sin(it.rotation) * .12, it.rotation + mx * .35);
       else if (it.group === 'biblioteca' && h > .8) put('succulent', it.x, h, it.z, 0);
       void d; }
     // planta: în colțul liber al livingului și al holului (departe de mobilier și de uși)
@@ -1044,7 +1045,7 @@ function model(it){
       // dreptunghiul de sub piesă acoperă doar partea folosită a celulei (S × S, cu piesa în colțul de sus)
       const x0 = ox, x1 = ox + w + 2 * mar, z0 = oz, z1 = oz + d + 2 * mar, base = pos.length / 3;
       [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].forEach(([x, z]) => { v.set(x, 0, z).applyMatrix4(m.matrixWorld); pos.push(v.x, .004, v.z); uv.push((cx + (x - ox) * s) / N, 1 - (cy + (z - oz) * s) / N); });
-      idx.push(base, base + 2, base + 1, base, base + 3, base + 2); });
+      idx.push(...contactQuadIndices(base, m.matrixWorld.determinant() < 0)); });   // piesa oglindită: ordinea întoarsă, ca fața să rămână în sus
     const tex = new THREE.CanvasTexture(atlas); tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
     const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: tex }, strength: { value: .55 } }, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
@@ -1053,7 +1054,8 @@ function model(it){
     contact = new THREE.Mesh(g, mat); contact.name = 'contact'; contact.userData = { noExport: true }; contact.matrixAutoUpdate = false; contact.renderOrder = 1; scene.add(contact); }
   let furnBatch = null;   // mobilierul unit pe material (static-batch.js); originalele rămân pentru selecție și export
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
-    for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, it.y || 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
+    for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, it.y || 0, it.z); m.rotation.y = it.rotation; if (it.mirrored) m.scale.x = -1;   // oglindită în sistemul piesei, înainte de rotație; three.js întoarce singur fețele la determinant negativ, iar static-batch.js lasă piesa neunită
+      m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
       if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); }
     lastItems = items; freeze(furniture); if (furnBatch){ disposeGroup(furnBatch); scene.remove(furnBatch); } furnBatch = batchStatic(furniture, { cell: 4 }); scene.add(furnBatch); buildContact(); buildDecor(items); refreshMarks(); applyElementView(); dirty(); }
 

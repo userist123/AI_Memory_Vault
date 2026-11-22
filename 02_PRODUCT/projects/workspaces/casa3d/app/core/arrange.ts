@@ -4,6 +4,7 @@
 import { footprintOf, validatePlacement } from './validate';
 import { r3 } from './geometry';
 import { DUPLICATE_STEP_CM } from './edit-ops';
+import { firstLocked, unlockedCopy } from './lock';
 import type { Catalog, FurniturePlacement, Issue, Snapshot } from './types';
 
 export interface Box { x0: number; x1: number; z0: number; z1: number }
@@ -66,7 +67,9 @@ export function distributePieces(items: readonly ArrangeItem[], axis: Axis): Pie
   return items.map(i => { const d = shift.get(i.id) ?? 0; return { id: i.id, x: axis === 'x' ? r3(i.x + d) : i.x, z: axis === 'z' ? r3(i.z + d) : i.z }; });
 }
 
-export type GroupResult = { ok: true; snapshot: Snapshot; ids: string[]; issues: Issue[]; changed: boolean } | { ok: false; cause?: Issue; key: string };
+export type GroupResult = { ok: true; snapshot: Snapshot; ids: string[]; issues: Issue[]; changed: boolean } | { ok: false; cause?: Issue; key: string; id?: string };
+// o piesă blocată (core/lock.ts) oprește mutarea, alinierea și rotirea întregului grup; dublarea și repetarea sunt permise (copiile pornesc deblocate)
+const lockedStop = (snap: Pick<Snapshot, 'placements'>, ids: readonly string[]): GroupResult | null => { const id = firstLocked(snap, ids); return id ? { ok: false, key: 'edit.locked', id } : null; };
 
 // validarea grupului în starea finală: o singură piesă cu ERROR refuză toată operația (ca la mutarea unei singure piese)
 function checked(n: Snapshot, cat: Catalog, ids: string[], changed: boolean): GroupResult {
@@ -77,6 +80,7 @@ function checked(n: Snapshot, cat: Catalog, ids: string[], changed: boolean): Gr
 }
 /** Pune piesele la pozițiile date (aliniere, distribuire), validat pe tot grupul. Piesele nemișcate nu devin „manuale”. */
 export function applyMoves(snap: Snapshot, cat: Catalog, moves: readonly PieceMove[]): GroupResult {
+  const stop = lockedStop(snap, moves.filter(m => { const p = snap.placements.find(q => q.id === m.id); return p && (p.x !== m.x || p.z !== m.z); }).map(m => m.id)); if (stop) return stop;
   const n = structuredClone(snap), ids: string[] = []; let changed = false;
   for (const m of moves){ const p = n.placements.find(q => q.id === m.id); if (!p) continue; ids.push(p.id);
     if (p.x !== m.x || p.z !== m.z){ p.x = m.x; p.z = m.z; p.source = 'manual'; changed = true; } }
@@ -89,6 +93,7 @@ export function nudgeGroup(snap: Snapshot, cat: Catalog, ids: readonly string[],
 }
 /** Rotește fiecare piesă cu 90° în jurul centrului ei (pozițiile rămân). */
 export function rotateGroup(snap: Snapshot, cat: Catalog, ids: readonly string[]): GroupResult {
+  const stop = lockedStop(snap, ids); if (stop) return stop;
   const n = structuredClone(snap), done: string[] = [];
   for (const id of ids){ const p = n.placements.find(q => q.id === id); if (!p) continue; p.rotation = r3((p.rotation + Math.PI / 2) % (Math.PI * 2)); p.source = 'manual'; done.push(id); }
   if (!done.length) return { ok: false, key: 'edit.noPiece' };
@@ -105,7 +110,7 @@ export function duplicateGroup(snap: Snapshot, cat: Catalog, ids: readonly strin
   const src = ids.flatMap(id => snap.placements.filter(p => p.id === id)); if (!src.length) return { ok: false, key: 'edit.noPiece' };
   const copyIds = src.map((_, i) => newId(i)); let fallback: GroupResult | null = null;
   for (let k = 1; k <= MAX_STEPS; k++) for (const [dx, dz] of DIRS){ const d = k * DUPLICATE_STEP_CM / 100, n = structuredClone(snap);
-    src.forEach((s, i) => { n.placements.push({ ...structuredClone(s), id: copyIds[i]!, x: r3(s.x + dx * d), z: r3(s.z + dz * d), source: 'manual' });
+    src.forEach((s, i) => { n.placements.push(unlockedCopy({ ...structuredClone(s), id: copyIds[i]!, x: r3(s.x + dx * d), z: r3(s.z + dz * d), source: 'manual' }));
       const look = n.appearance?.items?.[s.id]; if (look) n.appearance!.items![copyIds[i]!] = { ...look }; });
     const r = checked(n, cat, copyIds, true); if (!r.ok) continue;
     if (!r.issues.length) return r; fallback ||= r; }
@@ -126,7 +131,7 @@ export function arrayGroup(snap: Snapshot, cat: Catalog, ids: readonly string[],
   if (!Number.isInteger(count) || count < ARRAY_LIMITS.countMin || count > ARRAY_LIMITS.countMax || !okNum(stepXCm) || !okNum(stepZCm) || (stepXCm === 0 && stepZCm === 0)) return { ok: false, key: 'edit.arrayBad' };
   const n = structuredClone(snap), copyIds: string[] = []; let i = 0;
   for (let k = 1; k <= count; k++) for (const s of src){ const id = newId(i++); copyIds.push(id);
-    n.placements.push({ ...structuredClone(s), id, x: r3(s.x + k * stepXCm / 100), z: r3(s.z + k * stepZCm / 100), source: 'manual' });
+    n.placements.push(unlockedCopy({ ...structuredClone(s), id, x: r3(s.x + k * stepXCm / 100), z: r3(s.z + k * stepZCm / 100), source: 'manual' }));
     const look = n.appearance?.items?.[s.id]; if (look) n.appearance!.items![id] = { ...look }; }
   return checked(n, cat, copyIds, true);
 }
