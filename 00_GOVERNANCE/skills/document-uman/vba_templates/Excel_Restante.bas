@@ -10,7 +10,7 @@ Attribute VB_Name = "Excel_Restante"
 '           Datele: foaia "Restante", coloane Apartament, Titular, Suma, Scadenta.
 ' Modifica: creeaza/inlocuieste foaia "Calcul" (cu confirmare). Foaia "Restante"
 '           nu se modifica.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
@@ -86,9 +86,9 @@ Public Function CalculeazaPenalitati(ByVal inlocuieste As Boolean) As String
     For j = 1 To nC
         out(1, j) = d(1, j)
     Next j
-    out(1, nC + 1) = "Zile intarziere"
+    out(1, nC + 1) = RO("Zile {i^}nt{a^}rziere")
     out(1, nC + 2) = "Penalitate"
-    out(1, nC + 3) = "Total de plata"
+    out(1, nC + 3) = RO("Total de plat{a~}")
     For i = 2 To nR
         For j = 1 To nC
             out(i, j) = d(i, j)
@@ -103,19 +103,19 @@ Public Function CalculeazaPenalitati(ByVal inlocuieste As Boolean) As String
             suma = CDbl(d(i, cSuma))
             zile = dataCalc - Int(CDate(d(i, cScad)))
             If zile < 0 Then zile = 0
-            pen = Round(suma * cota / 100 * zile, 2)
-            If pen > Round(suma * plafon / 100, 2) Then pen = Round(suma * plafon / 100, 2)
+            pen = R2(suma * cota / 100 * zile)
+            If pen > R2(suma * plafon / 100) Then pen = R2(suma * plafon / 100)
             out(i, nC + 1) = zile
             out(i, nC + 2) = pen
-            out(i, nC + 3) = Round(suma + pen, 2)
+            out(i, nC + 3) = R2(suma + pen)
             totSuma = totSuma + suma
             totPen = totPen + pen
         End If
     Next i
     out(nR + 1, 1) = "TOTAL"
-    out(nR + 1, cSuma) = Round(totSuma, 2)
-    out(nR + 1, nC + 2) = Round(totPen, 2)
-    out(nR + 1, nC + 3) = Round(totSuma + totPen, 2)
+    out(nR + 1, cSuma) = R2(totSuma)
+    out(nR + 1, nC + 2) = R2(totPen)
+    out(nR + 1, nC + 3) = R2(totSuma + totPen)
 
     If FoaieExista(FOAIE_REZ) Then ThisWorkbook.Worksheets(FOAIE_REZ).Delete
     Set ws = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.Count))
@@ -152,7 +152,7 @@ Private Sub CreeazaParametri()
     End If
     ws.Cells(1, 1).Value = "Data calculului": ws.Cells(1, 2).Value = Date
     ws.Cells(2, 1).Value = "Cota penalizare pe zi (%)": ws.Cells(2, 2).Value = 0.2
-    ws.Cells(3, 1).Value = "Plafon (% din suma)": ws.Cells(3, 2).Value = 100
+    ws.Cells(3, 1).Value = RO("Plafon (% din sum{a~})"): ws.Cells(3, 2).Value = 100
     ws.Cells(1, 2).NumberFormat = "dd.mm.yyyy"
     ThisWorkbook.Names.Add Name:=N_DATA, RefersTo:="='" & FOAIE_PARAM & "'!$B$1"
     ThisWorkbook.Names.Add Name:=N_COTA, RefersTo:="='" & FOAIE_PARAM & "'!$B$2"
@@ -179,4 +179,23 @@ Private Function FoaieExista(ByVal nume As String) As Boolean
     For Each ws In ThisWorkbook.Worksheets
         If StrComp(ws.Name, nume, vbTextCompare) = 0 Then FoaieExista = True: Exit Function
     Next ws
+End Function
+
+' Rotunjire la 2 zecimale "de la jumatate in sus" (ca ROUND din Excel). Round() din
+' VBA rotunjeste la par (0,125 -> 0,12), gresit pentru sume de plata.
+Private Function R2(ByVal x As Double) As Double
+    R2 = Application.WorksheetFunction.Round(x, 2)
+End Function
+
+' Text cu diacritice pentru celule si documente, scris in cod doar cu litere ASCII
+' (editorul VBA citeste .bas in pagina de cod ANSI). Jetoane: {a~} {A~} = a/A cu
+' caciula rotunda, {a^} {A^} {i^} {I^} = cu caciula ascutita, {s,} {S,} {t,} {T,}
+' = cu virgula dedesubt. MsgBox si InputBox raman fara diacritice: sunt ANSI.
+Private Function RO(ByVal s As String) As String
+    Dim p As Variant, kv() As String
+    For Each p In Split("a~:103 A~:102 a^:E2 A^:C2 i^:EE I^:CE s,:219 S,:218 t,:21B T,:21A", " ")
+        kv = Split(p, ":")
+        s = Replace(s, "{" & kv(0) & "}", ChrW(CLng("&H" & kv(1))))
+    Next p
+    RO = s
 End Function

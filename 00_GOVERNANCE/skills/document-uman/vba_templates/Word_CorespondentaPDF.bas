@@ -9,7 +9,7 @@ Attribute VB_Name = "Word_CorespondentaPDF"
 '           Alt+F8 > CorespondentaPDF > numele coloanei > folderul de rezultat.
 ' Modifica: creeaza PDF-uri in folderul ales (existentele se sar, daca nu
 '           confirmati suprascrierea). Documentul principal nu se modifica.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
@@ -96,6 +96,9 @@ Public Function ImbinaInPDF(ByVal doc As Document, ByVal camp As String, ByVal d
         mm.DataSource.ActiveRecord = i
         nume = NumeFisierSigur(CStr(mm.DataSource.DataFields(camp).Value))
         If vazute.Exists(LCase$(nume)) Then nume = nume & "_" & i ' doua randuri cu acelasi nume
+        Do While vazute.Exists(LCase$(nume))
+            nume = nume & "_"
+        Loop
         vazute(LCase$(nume)) = True
         fis = dest & prefix & "_" & nume & ".pdf"
         If Len(Dir(fis)) > 0 And Not suprascrie Then
@@ -138,8 +141,11 @@ Private Function ExistaCamp(ByVal mm As MailMerge, ByVal camp As String) As Bool
 End Function
 
 Private Function NumeFisierSigur(ByVal s As String) As String
-    Dim c As Variant
-    For Each c In Array("\", "/", ":", "*", "?", """", "<", ">", "|", vbTab, vbCr, vbLf)
+    Dim c As Variant, k As Long
+    For k = 0 To 31
+        s = Replace(s, Chr(k), "_")
+    Next k
+    For Each c In Array("\", "/", ":", "*", "?", """", "<", ">", "|")
         s = Replace(s, c, "_")
     Next c
     s = Trim$(s)

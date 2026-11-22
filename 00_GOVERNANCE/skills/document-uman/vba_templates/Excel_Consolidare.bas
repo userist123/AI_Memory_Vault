@@ -4,16 +4,17 @@ Attribute VB_Name = "Excel_Consolidare"
 ' Scop:     Aduna intr-o singura foaie datele din toate fisierele Excel dintr-un
 '           folder (aceeasi structura de coloane), cu o coloana "Fisier sursa".
 ' Rulare:   Alt+F8 > Consolidare > alegeti folderul. Fisierele sursa se deschid
-'           doar pentru citire, cu macrourile lor dezactivate.
+'           doar pentru citire, cu macrourile lor dezactivate. Registrul cu
+'           macroul si registrele deschise acum se sar (raportate la final).
 ' Modifica: doar foaia "Consolidat" din acest registru (o creeaza; daca exista,
 '           cere confirmare inainte de a o inlocui). Sursele nu se modifica.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
 Private Const FOAIE_REZULTAT As String = "Consolidat"
 Private Const RAND_ANTET As Long = 1
-Private Const COL_SURSA As String = "Fisier sursa"
+Private Const COL_SURSA As String = "Fi{s,}ier surs{a~}" ' scris prin RO()
 
 ' Macroul pentru utilizator: alege folderul, confirma, afiseaza rezultatul.
 Public Sub Consolidare()
@@ -44,7 +45,7 @@ Public Function ConsolideazaFolder(ByVal folder As String, ByVal numeFoaie As St
     Dim date_ As Variant, antet As Variant, blocuri As New Collection, surse As New Collection
     Dim sarite As String, nrFis As Long, totalRanduri As Long, nrCol As Long
     Dim rez() As Variant, bloc As Variant, i As Long, j As Long, k As Long, r As Long
-    Dim wsOut As Worksheet
+    Dim wsOut As Worksheet, deschise As String
 
     If Right$(folder, 1) <> "\" Then folder = folder & "\"
     If Len(Dir(folder, vbDirectory)) = 0 Then
@@ -67,7 +68,11 @@ Public Function ConsolideazaFolder(ByVal folder As String, ByVal numeFoaie As St
 
     fisier = Dir(folder & "*.xls*")
     Do While Len(fisier) > 0
-        If StrComp(folder & fisier, ThisWorkbook.FullName, vbTextCompare) <> 0 And Left$(fisier, 2) <> "~$" Then
+        If Left$(fisier, 2) = "~$" Then
+            ' fisier de blocare Office: nu e registru
+        ElseIf RegistruDeschis(folder & fisier, fisier) Then
+            deschise = deschise & vbLf & "  " & fisier
+        Else
             Set wb = Workbooks.Open(Filename:=folder & fisier, UpdateLinks:=0, ReadOnly:=True, AddToMru:=False)
             Set ws = Nothing
             date_ = Empty
@@ -110,7 +115,8 @@ Public Function ConsolideazaFolder(ByVal folder As String, ByVal numeFoaie As St
     Loop
 
     If nrFis = 0 Then
-        ConsolideazaFolder = "EROARE: niciun fisier cu date in " & folder & sarite
+        ConsolideazaFolder = "EROARE: niciun fisier cu date in " & folder & sarite & _
+            IIf(Len(deschise) > 0, vbLf & "Sarite (deschise acum):" & deschise, "")
         GoTo Curatare
     End If
 
@@ -119,7 +125,7 @@ Public Function ConsolideazaFolder(ByVal folder As String, ByVal numeFoaie As St
     For j = 1 To nrCol
         rez(1, j) = antet(j)
     Next j
-    rez(1, nrCol + 1) = COL_SURSA
+    rez(1, nrCol + 1) = RO(COL_SURSA)
     r = 1
     For k = 1 To blocuri.Count
         bloc = blocuri(k)
@@ -140,7 +146,8 @@ Public Function ConsolideazaFolder(ByVal folder As String, ByVal numeFoaie As St
     wsOut.Columns.AutoFit
 
     ConsolideazaFolder = "OK: " & totalRanduri & " randuri din " & nrFis & " fisiere in foaia '" & _
-                         FOAIE_REZULTAT & "'." & IIf(Len(sarite) > 0, vbLf & "Sarite:" & sarite, "")
+                         FOAIE_REZULTAT & "'." & IIf(Len(sarite) > 0, vbLf & "Sarite:" & sarite, "") & _
+                         IIf(Len(deschise) > 0, vbLf & "Sarite (deschise acum in Excel, inclusiv registrul cu macroul):" & deschise, "")
 
 Curatare:
     Application.AutomationSecurity = secAuto
@@ -171,4 +178,30 @@ Private Function AntetIdentic(ByVal date_ As Variant, ByVal antet As Variant) As
         If StrComp(Trim$(CStr(date_(1, j))), Trim$(CStr(antet(j))), vbTextCompare) <> 0 Then Exit Function
     Next j
     AntetIdentic = True
+End Function
+
+' Registrul cu macroul, un registru deschis acum sau unul cu acelasi nume (Excel nu
+' deschide doua registre cu acelasi nume) nu se deschide si nu se inchide.
+Private Function RegistruDeschis(ByVal cale As String, ByVal nume As String) As Boolean
+    Dim w As Workbook
+    If StrComp(cale, ThisWorkbook.FullName, vbTextCompare) = 0 Then RegistruDeschis = True: Exit Function
+    For Each w In Workbooks
+        If StrComp(w.FullName, cale, vbTextCompare) = 0 Or StrComp(w.Name, nume, vbTextCompare) = 0 Then
+            RegistruDeschis = True
+            Exit Function
+        End If
+    Next w
+End Function
+
+' Text cu diacritice pentru celule si documente, scris in cod doar cu litere ASCII
+' (editorul VBA citeste .bas in pagina de cod ANSI). Jetoane: {a~} {A~} = a/A cu
+' caciula rotunda, {a^} {A^} {i^} {I^} = cu caciula ascutita, {s,} {S,} {t,} {T,}
+' = cu virgula dedesubt. MsgBox si InputBox raman fara diacritice: sunt ANSI.
+Private Function RO(ByVal s As String) As String
+    Dim p As Variant, kv() As String
+    For Each p In Split("a~:103 A~:102 a^:E2 A^:C2 i^:EE I^:CE s,:219 S,:218 t,:21B T,:21A", " ")
+        kv = Split(p, ":")
+        s = Replace(s, "{" & kv(0) & "}", ChrW(CLng("&H" & kv(1))))
+    Next p
+    RO = s
 End Function

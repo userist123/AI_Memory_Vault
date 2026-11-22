@@ -21,25 +21,61 @@ Rule of thumb: VBA when the person who presses the button is the owner, inside O
 ## 2. Security rules (blocking - `vba_ro.py verifica` FAILs them)
 
 A macro written by this skill never:
-- runs programs or scripts: `Shell`, `WScript.*`, PowerShell, `cmd`, `mshta`, `rundll32`;
-- touches the network: `URLDownloadToFile`, `XMLHTTP`, `WinHttp`, URLs in code;
-- deletes files or folders (`Kill`, `RmDir`, `DeleteFile`) - outputs go to a folder the user chose;
-  a temporary sheet the macro created itself may be deleted;
+- runs programs or scripts: `Shell` (in any form - `Shell x`, `VBA.Shell`, `Interaction.Shell`),
+  `WScript.*`, `Shell.Application`, `.Run` on an object or `Application.Run` with a computed name
+  (`Application.Run "Literal"` is a WARN), PowerShell, `cmd`, `mshta`, `rundll32`, `schtasks`;
+- executes text as code: `Evaluate`, `[ ]` evaluation (`[A1]`, `[CALL(...)]`), `ExecuteExcel4Macro`,
+  Excel 4 macro sheets, `CallByName`, `MacScript`;
+- schedules or hooks itself: `OnTime`, `OnKey`, `OnEntry`; installs add-ins (`AddIns.Add`,
+  `.Installed`); writes to the Startup folders, `XLSTART`, `PERSONAL.XLSB`, `Normal.dotm` /
+  `NormalTemplate` or uses `StartupPath`;
+- touches the network: `URLDownloadToFile`, `XMLHTTP`, `WinHttp`, URLs in code, UNC paths
+  (`\\server\share` - also leaks the Windows password hash), `DDE*`, `FollowHyperlink`, `WEBSERVICE`;
+- deletes, renames or moves files (`Kill`, `RmDir`, `DeleteFile`, `Name ... As`, `.Delete` on a
+  FileSystemObject File/Folder) - outputs go to a folder the user chose; `.Delete` on a sheet the macro
+  created itself is a WARN, as are `FileCopy`/`CopyFile`, `Open ... For Output/Append` and
+  `CreateTextFile` (check path and overwrite rule);
 - writes the registry (`SaveSetting`, `RegWrite`), uses `SendKeys`;
 - declares Windows API calls (`Declare PtrSafe`), unless a documented need is written on the same line
   as `' vba_ro:allow-declare <reason>` (then WARN, and the reviewer decides);
 - runs by itself: no `AutoOpen`, `Auto_Open`, `AutoExec`, `AutoNew`, `AutoClose`, `Document_Open`,
-  `Document_New`, `Workbook_Open`, `Workbook_BeforeClose`. Macros run only when the user starts them;
-- hides things: no very hidden sheets, no code that edits VBA projects (`VBProject`, `CodeModule`),
-  no `CallByName`/`ExecuteExcel4Macro`/`StrReverse`, no long `Chr()` chains or base64 strings,
-  no password on the VBA project, no `GetObject`;
-- calls `CreateObject` for anything except `Scripting.Dictionary`, `Scripting.FileSystemObject`,
-  `Word.Application`, `Excel.Application`.
+  `Document_New`, `Workbook_Open`, `Workbook_BeforeClose`, ActiveX events that fire on open
+  (`*_Painted`, `*_GotFocus`, `*_Layout`...). Macros run only when the user starts them;
+- lowers `AutomationSecurity` to 1 (that lets the macros of files it opens run);
+- hides things: no very hidden sheets (`xlSheetVeryHidden`, `xlVeryHidden`, `Visible = 2`), no code that
+  edits VBA projects (`VBProject`, `CodeModule`, `.VBE`), no `StrReverse`, no `ChrB`, no chains of
+  three `Chr()` calls and no 8 or more `Chr()` calls in a module (use one helper such as `RO()`), no
+  base64 strings, no password on the VBA project, no `GetObject`;
+- calls `CreateObject` for anything except a complete literal `"Scripting.Dictionary"`,
+  `"Scripting.FileSystemObject"`, `"Word.Application"`, `"Excel.Application"` (a concatenated or
+  computed ProgID FAILs).
+
+The checker removes comments, joins `" _"` line continuations before matching (so a keyword split over
+two lines is still seen) and scans string literals for names and paths. It is a pattern filter, not a
+VBA parser: a determined author can still hide a call (for example by building a ProgID from pieces
+the rules do not list). The reviewer reads every module; the checker only catches the known shapes.
+`20_TESTS/test_document_uman_vba.py` holds one probe per rule (each must FAIL or WARN) and checks
+that the 8 templates PASS.
 
 Files the macro opens (sources in a folder) are opened read-only with
 `Application.AutomationSecurity = msoAutomationSecurityForceDisable` (3), so their own macros cannot
 run, and `UpdateLinks:=0` in Excel. That property is a runtime setting of the current session, restored
 in the cleanup block - it is not the macro security level, which a macro never changes.
+Word templates also set `Options.UpdateLinksAtOpen = False` while they open other documents (restored
+in cleanup), so LINK fields do not refresh on open.
+
+Files already open in Office - the document/workbook that holds the macro (`ThisDocument`,
+`ThisWorkbook`) and anything the user has open - are never reopened or closed by a batch macro: they
+are skipped and listed in the result ("Sarite (deschise acum ...)"). Excel also skips a file whose name
+equals an open workbook (Excel cannot open two workbooks with the same name).
+
+Fields that pull content from outside the document (`INCLUDEPICTURE`, `INCLUDETEXT`, `INCLUDE`,
+`IMPORT`, `LINK`, `DDE`, `DDEAUTO`, `DATABASE`, also when nested in an `IF`) are never updated in
+documents the macro did not write: `Word_ActualizeazaCampuri` locks them before `Fields.Update`,
+unlocks afterwards only those it locked, and reports how many it left alone. Updating them would read
+`\\server\...` paths (sending the user's NTLM hash) or start other programs. Residual: Word itself may
+fetch an attached template or a linked picture from a UNC path when a hostile document opens; keep
+batch folders to documents the owner trusts.
 
 ## 3. Professional rules (FAIL/WARN in the checker where testable)
 
@@ -69,8 +105,20 @@ in the cleanup block - it is not the macro security level, which a macro never c
 - `On Error Resume Next` only for one statement (closing a file in cleanup), followed by
   `On Error GoTo 0`.
 - Source text in ASCII: the VBA editor imports .bas files in the ANSI code page (1252 on most machines),
-  so `ș ț ă î â` turn into garbage. Write Romanian without diacritics in code, or build the few
-  user-facing strings with `ChrW` in one helper.
+  so `ș ț ă î â` typed into the source turn into garbage. Text written to cells, documents or UserForms
+  goes through the `RO()` helper with escape tokens: `RO("Fi{s,}ier surs{a~}")` gives "Fișier sursă"
+  (`{a~} {A~}` ă Ă, `{a^} {A^}` â Â, `{i^} {I^}` î Î, `{s,} {S,}` ș Ș, `{t,} {T,}` ț Ț; one `ChrW` call
+  over a code table, so the Chr rule stays quiet). Cells, document text and UserForm captions are
+  Unicode and show the letters correctly (tested: headers read back as "Zile întârziere",
+  "Fișier sursă"; the PDF title as "Situație pentru: 12").
+- Dialogs (`MsgBox`, `InputBox`) stay without diacritics. Decision (2026-11-23): VBA passes their text
+  through the ANSI code page; tested in Excel 16 on code page 1252, `StrConv(..., vbFromUnicode)` - the
+  conversion MsgBox applies - turns "șțăîâ ȘȚĂÎÂ" into "??aîâ ??AÎÂ". Even on a Romanian (1250) PC only
+  the cedilla forms survive. A Unicode `MessageBoxW` via `Declare PtrSafe` would work but adds an API
+  declaration to every delivered file and cannot be tested without a person clicking the dialog; plain
+  letters in dialogs are the safe default. A UserForm is the option when a dialog must show diacritics.
+- Money: VBA `Round` rounds half to even (`Round(0.125, 2)` = 0.12). Amounts to pay use a half-up helper
+  `R2(x) = Application.WorksheetFunction.Round(x, 2)` (Excel's ROUND: 0.13), as in `Excel_Restante`.
 - English identifiers are fine; comments and messages in Romanian.
 
 Performance (measured in the tutorials: 10x-1000x):
@@ -102,22 +150,29 @@ Performance (measured in the tutorials: 10x-1000x):
   `For Each s In doc.StoryRanges: Do ... Set s = s.NextStoryRange: Loop Until s Is Nothing: Next`.
 - Counted replace: `Do While r.Find.Execute(Replace:=wdReplaceOne): n = n + 1: r.Collapse wdCollapseEnd:
   Loop` with `Wrap = wdFindStop`; works even when the new text contains the old one ("ab" -> "abab").
+- Excel converts text written through `.Value` as if it were typed: "1.500" becomes 1.5 and
+  "05.03.2026" may become a date. A value the macro could not (or must not) convert is written with a
+  leading apostrophe (`"'" & v`) so it stays text, next to its error note.
+- Word `Application.Run "Modul.Macro"` looks in the active document's project. When a test opens other
+  documents, open them before the macro document (or call the worker from the macro document).
+- Word `Fields.Add` updates the new field immediately; to test "not refreshed" change the source after
+  inserting the field.
 - Fields: update twice (the second pass fixes page numbers moved by a longer TOC); TOCs need
   `TablesOfContents(i).Update`; broken references show "Error! Reference source not found." - count them
   and report.
 
-## 5. Templates (`vba_templates/`, all tested 2026-11-22 in Word/Excel 16)
+## 5. Templates (`vba_templates/`, tested in Word/Excel 16 on 2026-11-22, re-tested 2026-11-23 after the security review)
 
 | Template | Entry (owner) | Worker (tests, other code) | Does |
 |---|---|---|---|
-| Excel_Consolidare | `Consolidare` | `ConsolideazaFolder(folder, foaie, inlocuieste)` | all workbooks in a folder -> one sheet + "Fisier sursa"; skips files with other columns |
-| Excel_RapoartePDF | `RapoartePDF` | `GenereazaRapoarte(camp, campSuma, folder, prefix, suprascrie)` | one PDF per distinct value (apartment, client) with its rows and a total |
-| Excel_CurataDate | `CurataDate` | `CurataTabel(coloaneSume, coloaneDate, eliminaDuplicate, inlocuieste)` | trims, nbsp, "1.234,56" -> number, "05.03.2026" -> date, duplicates, "Erori" column |
-| Excel_Restante | `CalculRestante` | `CalculeazaPenalitati(inlocuieste)` | days late, penalty per day % with cap %, totals; input sheet "Parametri" with named ranges |
+| Excel_Consolidare | `Consolidare` | `ConsolideazaFolder(folder, foaie, inlocuieste)` | all workbooks in a folder -> one sheet + "Fișier sursă"; skips files with other columns and workbooks open in Excel |
+| Excel_RapoartePDF | `RapoartePDF` | `GenereazaRapoarte(camp, campSuma, folder, prefix, suprascrie)` | one PDF per distinct value (apartment, client) with its rows and a half-up total; colliding names ("14/B", "14_B") get _2 |
+| Excel_CurataDate | `CurataDate` | `CurataTabel(coloaneSume, coloaneDate, eliminaDuplicate, inlocuieste)` | trims, nbsp, "1.234,56" -> number, "05.03.2026" -> date, duplicates, "Erori" column; "1.500" is ambiguous: left as text and flagged |
+| Excel_Restante | `CalculRestante` | `CalculeazaPenalitati(inlocuieste)` | days late, penalty per day % with cap %, totals rounded half-up; input sheet "Parametri" with named ranges |
 | Word_StiluriLot | `StiluriLot` | `AplicaStiluriFolder(model, sursa, dest, suprascrie)` | styles from a model document onto every document in a folder, ro-RO proofing |
 | Word_InlocuireLot | `InlocuireLot` (pairs from a table in the macro document) | `InlocuiesteInFolder(sursa, dest, perechi, majuscule, formatNou, suprascrie)` | find/replace list across a folder, all stories, optional bold/highlight, counts |
 | Word_CorespondentaPDF | `CorespondentaPDF` (active main document) | `ImbinaFisiere(principal, registru, foaie, camp, dest, prefix, suprascrie)` | mail merge, one PDF per record, named from a column |
-| Word_ActualizeazaCampuri | `ActualizeazaCampuri`, `ActualizeazaFolder` | `ActualizeazaFisiere(sursa, dest, suprascrie)` | update all fields/TOC/TOF in all stories, report field errors |
+| Word_ActualizeazaCampuri | `ActualizeazaCampuri`, `ActualizeazaFolder` | `ActualizeazaFisiere(sursa, dest, suprascrie)` | update all fields/TOC/TOF in all stories, report field errors; external fields (INCLUDEPICTURE, LINK, DDE...) locked, not updated |
 
 Adapting a template: change the constants and header names first; keep the two layers, the
 validation, the cleanup block and the overwrite rule. Run `verifica` after every change.
@@ -190,12 +245,29 @@ python -P -E <skill dir>\vba_ro.py ruleaza out.xlsm Modul.Worker arg1 arg2
 python -P -E <skill dir>\vba_ro.py exporta out.xlsm <folder>       (review what is really inside)
 ```
 `construieste` and `exporta` need "Trust access to the VBA project object model". `vba_ro.acces_vbom`
-reads `HKCU\Software\Microsoft\Office\16.0\<Word|Excel>\Security\AccessVBOM`, writes a backup to
-`%TEMP%\vba_ro_vbom_backup.json`, sets 1 only while Office runs, and restores the original value
-(deletes it if it was absent) in `finally` and at exit. After a crash: `vba_ro.py restaureaza-vbom`;
-check with `vba_ro.py stare-vbom` or `reg query`. Never change VBAWarnings, the macro security level or
-Trusted Locations. `ruleaza` does not need AccessVBOM. Office runs as a private invisible instance; a
-watchdog kills only that process if a dialog blocks it.
+guards `HKCU\Software\Microsoft\Office\16.0\<Word|Excel>\Security\AccessVBOM`:
+- one run per app at a time: an exclusive lock file `%TEMP%\vba_ro_vbom\<App>.lock` (created with
+  O_EXCL, holds the owner PID and its process start time). A second run while the owner is alive is
+  refused with "in use by another vba_ro run (PID n)"; a lock whose owner is dead (crash, kill) is
+  moved aside atomically and its backup restored before the new run starts;
+- the backup `%TEMP%\vba_ro_vbom\<App>.backup.json` records the exact original state: which keys
+  existed, whether the value existed, its registry type (DWORD or REG_SZ...) and data. The guard sets
+  DWORD 1 only during the build and restores that state - same type, value deleted if it was absent,
+  Security key deleted again if the guard created it - then checks the result;
+- an exception inside the build is never replaced by a restore error: the restore problem is printed
+  and the backup kept for `vba_ro.py restaureaza-vbom`, which leaves a live run alone.
+Check with `vba_ro.py stare-vbom` or `reg query`. Never change VBAWarnings, the macro security level or
+Trusted Locations.
+
+Office runs as a private invisible instance with `AutomationSecurity = 3` set right after it starts,
+before any file opens: `Workbook_Open`/`Document_Open`/`Auto_Open` of a --baza file cannot run while
+AccessVBOM is 1 (tested: a --baza workbook whose `Workbook_Open` writes a cell did not run; the same
+file opened with macros enabled did). `construieste` exports the whole built project (imported modules
+and any code that came with --baza; empty document modules are skipped) and runs the static check
+before saving: a FAIL aborts the build and nothing is written. `ruleaza` first exports and checks the
+file with macros disabled, refuses it on FAIL, then reopens it with macros enabled (Excel with
+`EnableEvents = False` while opening) to run the macro; `verifica` also accepts a .xlsm/.docm and checks
+its exported modules. A watchdog kills only the Office process it started if a dialog blocks it.
 
 Testing procedure (every macro, before delivery):
 1. `verifica` PASS (fix every FAIL, read every WARN).
@@ -204,7 +276,8 @@ Testing procedure (every macro, before delivery):
 3. Build the .xlsm/.docm, call the worker through COM, check the outputs from outside: values read back,
    files produced, PDFs opened (page count, text of the right record only), sources unchanged, second
    run skips existing files, bad input returns "EROARE: ...".
-4. `exporta` the delivered file and run `verifica` on the exported modules (what ships is what passed).
+4. `verifica out.xlsm` (exports and checks what is really inside; `construieste` already did this).
+   After changing `vba_ro.py` or a template: `python -m pytest 20_TESTS/test_document_uman_vba.py`.
 5. Open the delivered file once in visible Office and run the entry Sub by hand when dialogs changed.
 
 Delivery to the owner:

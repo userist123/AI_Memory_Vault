@@ -4,17 +4,21 @@ Attribute VB_Name = "Excel_CurataDate"
 ' Scop:     Curata si valideaza un tabel: spatii in plus si spatii nedespartibile,
 '           sume scrise ca text ("1.234,56" -> 1234,56), date scrise ca text
 '           ("05.03.2026" -> data), randuri duplicate; marcheaza in coloana
-'           "Erori" valorile care nu pot fi convertite.
+'           "Erori" valorile care nu pot fi convertite si sumele ambigue
+'           ("1.500" = 1500 sau 1,5?), care raman text.
 ' Rulare:   Alt+F8 > CurataDate. Tabelul este in foaia "Date", antet pe randul 1.
 ' Modifica: creeaza foaia "Date_curate" (cere confirmare daca exista). Foaia
 '           "Date" ramane neschimbata, ca sa puteti compara.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
 Private Const FOAIE_SURSA As String = "Date"
 Private Const FOAIE_REZ As String = "Date_curate"
 Private Const COL_ERORI As String = "Erori"
+' Valorile neconvertite se scriu cu apostrof in fata: altfel Excel le-ar interpreta
+' la scriere ("1.500" ar deveni 1,5) si eroarea marcata n-ar mai corespunde celulei.
+Private Const TEXT_PUR As String = "'"
 
 Public Sub CurataDate()
     Dim numerice As String, dateCal As String, rez As String, inloc As Boolean
@@ -37,6 +41,7 @@ Public Function CurataTabel(ByVal coloaneSume As String, ByVal coloaneDate As St
     Dim d As Variant, rez() As Variant, nR As Long, nC As Long, i As Long, j As Long, r As Long
     Dim tip() As Long, v As Variant, err_ As String, cheie As String, vazute As Object
     Dim dup As Long, gresite As Long, ws As Worksheet, numar As Double, data_ As Date, nume As Variant
+    Dim ambiguu As Boolean
 
     If Not FoaieExista(FOAIE_SURSA) Then
         CurataTabel = "EROARE: lipseste foaia '" & FOAIE_SURSA & "'."
@@ -84,9 +89,22 @@ Public Function CurataTabel(ByVal coloaneSume As String, ByVal coloaneDate As St
             v = d(i, j)
             If VarType(v) = vbString Then v = CurataText(CStr(v))
             If tip(j) = 1 And VarType(v) = vbString And Len(v) > 0 Then
-                If TextInNumar(CStr(v), numar) Then v = numar Else err_ = err_ & d(1, j) & " nu e suma; "
+                If TextInNumar(CStr(v), numar, ambiguu) Then
+                    v = numar
+                ElseIf ambiguu Then
+                    err_ = err_ & d(1, j) & RO(" ambigu{a~} (" & v & " = mii sau zecimale?), neconvertit{a~}; ")
+                    v = TEXT_PUR & v
+                Else
+                    err_ = err_ & d(1, j) & RO(" nu e sum{a~}; ")
+                    v = TEXT_PUR & v
+                End If
             ElseIf tip(j) = 2 And VarType(v) = vbString And Len(v) > 0 Then
-                If TextInData(CStr(v), data_) Then v = data_ Else err_ = err_ & d(1, j) & " nu e data; "
+                If TextInData(CStr(v), data_) Then
+                    v = data_
+                Else
+                    err_ = err_ & d(1, j) & RO(" nu e dat{a~}; ")
+                    v = TEXT_PUR & v
+                End If
             End If
             d(i, j) = v
             cheie = cheie & "|" & CStr(v)
@@ -139,11 +157,20 @@ Private Function CurataText(ByVal s As String) As String
     CurataText = Trim$(s)
 End Function
 
-' "1.234,56" / "1234,56" / "1234.56" / "1 234,56 lei" -> numar. Fals daca nu e numar.
-Private Function TextInNumar(ByVal s As String, ByRef numar As Double) As Boolean
-    Dim t As String
+' "1.234,56" / "1234,56" / "1234.56" / "1 234,56 lei" / "1.234.567" -> numar.
+' Fals daca nu e numar. "1.500" (un singur punct urmat de exact 3 cifre) poate fi
+' 1500 sau 1,5: ambiguu = True, nu se converteste - decide utilizatorul.
+Private Function TextInNumar(ByVal s As String, ByRef numar As Double, ByRef ambiguu As Boolean) As Boolean
+    Dim t As String, u As String
+    ambiguu = False
     t = Replace(Replace(Replace(LCase$(s), "lei", ""), "ron", ""), " ", "")
     If Len(t) = 0 Then Exit Function
+    u = t
+    If Left$(u, 1) = "-" Or Left$(u, 1) = "+" Then u = Mid$(u, 2)
+    If Left$(u, 1) <> "0" And (u Like "#.###" Or u Like "##.###" Or u Like "###.###") Then
+        ambiguu = True
+        Exit Function
+    End If
     If InStr(t, ",") > 0 Then
         t = Replace(t, ".", "")
         t = Replace(t, ",", ".")
@@ -187,4 +214,17 @@ Private Function FoaieExista(ByVal nume As String) As Boolean
     For Each ws In ThisWorkbook.Worksheets
         If StrComp(ws.Name, nume, vbTextCompare) = 0 Then FoaieExista = True: Exit Function
     Next ws
+End Function
+
+' Text cu diacritice pentru celule si documente, scris in cod doar cu litere ASCII
+' (editorul VBA citeste .bas in pagina de cod ANSI). Jetoane: {a~} {A~} = a/A cu
+' caciula rotunda, {a^} {A^} {i^} {I^} = cu caciula ascutita, {s,} {S,} {t,} {T,}
+' = cu virgula dedesubt. MsgBox si InputBox raman fara diacritice: sunt ANSI.
+Private Function RO(ByVal s As String) As String
+    Dim p As Variant, kv() As String
+    For Each p In Split("a~:103 A~:102 a^:E2 A^:C2 i^:EE I^:CE s,:219 S,:218 t,:21B T,:21A", " ")
+        kv = Split(p, ":")
+        s = Replace(s, "{" & kv(0) & "}", ChrW(CLng("&H" & kv(1))))
+    Next p
+    RO = s
 End Function

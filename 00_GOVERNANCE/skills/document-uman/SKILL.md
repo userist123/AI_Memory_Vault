@@ -307,4 +307,6 @@ When the owner must re-run a job himself in Office (monthly reports, batch forma
 a folder, mail merge to one PDF per record, consolidation, arrears calculations), deliver a .xlsm/.docm
 instead of a one-off file. Read `vba.md` first: security rules (no Shell, network, deletion, registry,
 auto-run), the entry-Sub/worker-Function pattern, 8 tested templates in `vba_templates/`, build and
-test with `vba_ro.py` (static check must PASS; AccessVBOM is set only during the build and restored).
+test with `vba_ro.py` (static check must PASS, also on the built project; AccessVBOM is set only during
+the build, under an exclusive lock, with the macros of opened files disabled, and restored exactly).
+Dialogs stay without diacritics; text in cells and documents uses the `RO()` helper (`vba.md` section 3).

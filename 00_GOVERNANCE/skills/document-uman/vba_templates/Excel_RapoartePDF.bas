@@ -3,18 +3,19 @@ Attribute VB_Name = "Excel_RapoartePDF"
 ' Modul:    Excel_RapoartePDF
 ' Scop:     Pentru fiecare valoare distincta dintr-o coloana (apartament, client,
 '           angajat) face un raport separat cu randurile ei si un total, salvat
-'           ca PDF: <prefix>_<valoare>.pdf.
+'           ca PDF: <prefix>_<valoare>.pdf (valorile care dau acelasi nume de
+'           fisier, ex. "14/B" si "14_B", primesc _2, _3 ...).
 ' Rulare:   Alt+F8 > RapoartePDF. Datele sunt in foaia "Date", antet pe randul 1.
 ' Modifica: creeaza PDF-uri in folderul ales (fisierele existente se sar, daca
 '           nu confirmati suprascrierea). Foaia temporara de lucru se sterge la
 '           final; foaia "Date" nu se modifica.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
 Private Const FOAIE_DATE As String = "Date"
 Private Const FOAIE_TEMP As String = "_RaportTemp"
-Private Const TITLU As String = "Situatie pentru: "
+Private Const TITLU As String = "Situa{t,}ie pentru: " ' scris prin RO()
 
 Public Sub RapoartePDF()
     Dim folder As String, camp As String, campSuma As String, rasp As VbMsgBoxResult, rez As String
@@ -42,6 +43,7 @@ Public Function GenereazaRapoarte(ByVal camp As String, ByVal campSuma As String
     Dim ws As Worksheet, wsT As Worksheet, date_ As Variant, colKey As Long, colSuma As Long
     Dim chei As Object, cheie As Variant, i As Long, j As Long, n As Long, r As Long
     Dim bloc() As Variant, total As Double, fis As String, facute As Long, sarite As Long
+    Dim folosite As Object, nume As String, baza As String, k As Long
 
     If Right$(folder, 1) <> "\" Then folder = folder & "\"
     If Len(Dir(folder, vbDirectory)) = 0 Then
@@ -86,8 +88,18 @@ Public Function GenereazaRapoarte(ByVal camp As String, ByVal campSuma As String
     Application.EnableEvents = False
 
     If FoaieExista(FOAIE_TEMP) Then ThisWorkbook.Worksheets(FOAIE_TEMP).Delete ' ramasa de la o rulare intrerupta
+    ' Valori diferite pot da acelasi nume de fisier ("14/B" si "14_B"): al doilea
+    ' primeste un numar, ca sa nu se suprascrie rapoartele intre ele.
+    Set folosite = CreateObject("Scripting.Dictionary")
     For Each cheie In chei.Keys
-        fis = folder & prefix & "_" & NumeFisierSigur(CStr(cheie)) & ".pdf"
+        baza = prefix & "_" & NumeFisierSigur(CStr(cheie))
+        nume = baza: k = 1
+        Do While folosite.Exists(LCase$(nume))
+            k = k + 1
+            nume = baza & "_" & k
+        Loop
+        folosite(LCase$(nume)) = True
+        fis = folder & nume & ".pdf"
         If Len(Dir(fis)) > 0 And Not suprascrie Then
             sarite = sarite + 1
         Else
@@ -112,14 +124,14 @@ Public Function GenereazaRapoarte(ByVal camp As String, ByVal campSuma As String
 
             Set wsT = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.Count))
             wsT.Name = FOAIE_TEMP
-            wsT.Cells(1, 1).Value = TITLU & CStr(cheie)
+            wsT.Cells(1, 1).Value = RO(TITLU) & CStr(cheie)
             wsT.Cells(1, 1).Font.Bold = True
             wsT.Cells(1, 1).Font.Size = 14
             wsT.Cells(3, 1).Resize(n + 1, UBound(date_, 2)).Value = bloc
             wsT.Rows(3).Font.Bold = True
             If colSuma > 0 Then
                 wsT.Cells(n + 4, IIf(colSuma > 1, colSuma - 1, colSuma + 1)).Value = "Total"
-                wsT.Cells(n + 4, colSuma).Value = Round(total, 2)
+                wsT.Cells(n + 4, colSuma).Value = R2(total)
                 wsT.Cells(4, colSuma).Resize(n + 1, 1).NumberFormat = "#,##0.00"
                 wsT.Rows(n + 4).Font.Bold = True
             End If
@@ -171,13 +183,36 @@ Private Function FoaieExista(ByVal nume As String) As Boolean
     Next ws
 End Function
 
-' Inlocuieste caracterele interzise in numele de fisier Windows.
+' Inlocuieste caracterele interzise in numele de fisier Windows si caracterele de
+' control (cod 0-31).
 Private Function NumeFisierSigur(ByVal s As String) As String
-    Dim c As Variant
-    For Each c In Array("\", "/", ":", "*", "?", """", "<", ">", "|", vbTab, vbCr, vbLf)
+    Dim c As Variant, k As Long
+    For k = 0 To 31
+        s = Replace(s, Chr(k), "_")
+    Next k
+    For Each c In Array("\", "/", ":", "*", "?", """", "<", ">", "|")
         s = Replace(s, c, "_")
     Next c
     s = Trim$(s)
     If Len(s) = 0 Then s = "fara_nume"
     NumeFisierSigur = Left$(s, 100)
+End Function
+
+' Rotunjire la 2 zecimale "de la jumatate in sus" (ca ROUND din Excel). Round() din
+' VBA rotunjeste la par (0,125 -> 0,12), gresit pentru sume de plata.
+Private Function R2(ByVal x As Double) As Double
+    R2 = Application.WorksheetFunction.Round(x, 2)
+End Function
+
+' Text cu diacritice pentru celule si documente, scris in cod doar cu litere ASCII
+' (editorul VBA citeste .bas in pagina de cod ANSI). Jetoane: {a~} {A~} = a/A cu
+' caciula rotunda, {a^} {A^} {i^} {I^} = cu caciula ascutita, {s,} {S,} {t,} {T,}
+' = cu virgula dedesubt. MsgBox si InputBox raman fara diacritice: sunt ANSI.
+Private Function RO(ByVal s As String) As String
+    Dim p As Variant, kv() As String
+    For Each p In Split("a~:103 A~:102 a^:E2 A^:C2 i^:EE I^:CE s,:219 S,:218 t,:21B T,:21A", " ")
+        kv = Split(p, ":")
+        s = Replace(s, "{" & kv(0) & "}", ChrW(CLng("&H" & kv(1))))
+    Next p
+    RO = s
 End Function

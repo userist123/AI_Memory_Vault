@@ -9,7 +9,7 @@ Attribute VB_Name = "Word_StiluriLot"
 ' Modifica: NU modifica originalele: salveaza copii in folderul de rezultat
 '           (fisierele existente se sar, daca nu confirmati suprascrierea).
 '           Formatarea directa (aldine puse de mana etc.) se pastreaza.
-' Versiune: 1.0
+' Versiune: 1.1
 ' =============================================================================
 Option Explicit
 
@@ -41,7 +41,7 @@ End Sub
 Public Function AplicaStiluriFolder(ByVal model As String, ByVal sursa As String, ByVal dest As String, _
                                     ByVal suprascrie As Boolean) As String
     Dim v As Variant, fis As String, doc As Document, alerte As Long, secAuto As Long, nFis As Long, sarite As Long
-    Dim story As Range
+    Dim story As Range, deschise As String, linkuri As Boolean
 
     If Right$(sursa, 1) <> "\" Then sursa = sursa & "\"
     If Right$(dest, 1) <> "\" Then dest = dest & "\"
@@ -57,15 +57,19 @@ Public Function AplicaStiluriFolder(ByVal model As String, ByVal sursa As String
 
     alerte = Application.DisplayAlerts
     secAuto = Application.AutomationSecurity
+    linkuri = Options.UpdateLinksAtOpen
     On Error GoTo Eroare
     Application.ScreenUpdating = False
     Application.DisplayAlerts = wdAlertsNone
     Application.AutomationSecurity = msoAutomationSecurityForceDisable
+    Options.UpdateLinksAtOpen = False ' legaturile LINK din documentele straine nu se reimprospateaza
 
     For Each v In ListaFisiere(sursa, "*.doc*")
         fis = CStr(v)
         If Left$(fis, 2) <> "~$" And StrComp(sursa & fis, model, vbTextCompare) <> 0 Then
-            If Len(Dir(dest & fis)) > 0 And Not suprascrie Then
+            If DejaDeschis(sursa & fis) Or DejaDeschis(dest & fis) Then
+                deschise = deschise & vbLf & "  " & fis
+            ElseIf Len(Dir(dest & fis)) > 0 And Not suprascrie Then
                 sarite = sarite + 1
             Else
                 Set doc = Documents.Open(FileName:=sursa & fis, ReadOnly:=True, AddToRecentFiles:=False, Visible:=False)
@@ -86,8 +90,10 @@ Public Function AplicaStiluriFolder(ByVal model As String, ByVal sursa As String
     Next v
 
     AplicaStiluriFolder = "OK: stilurile din model au fost aplicate pe " & nFis & " documente." & _
-        IIf(sarite > 0, vbLf & sarite & " copii existente pastrate.", "")
+        IIf(sarite > 0, vbLf & sarite & " copii existente pastrate.", "") & _
+        IIf(Len(deschise) > 0, vbLf & "Sarite (deschise acum in Word, inclusiv documentul cu macroul):" & deschise, "")
 Curatare:
+    Options.UpdateLinksAtOpen = linkuri
     Application.AutomationSecurity = secAuto
     Application.DisplayAlerts = alerte
     Application.ScreenUpdating = True
@@ -117,4 +123,14 @@ Private Function ListaFisiere(ByVal folder As String, ByVal masca As String) As 
         f = Dir()
     Loop
     Set ListaFisiere = c
+End Function
+
+' Documentul cu macroul si orice document deschis acum nu se redeschid si nu se
+' inchid (s-ar inchide documentul utilizatorului): se sar si se raporteaza.
+Private Function DejaDeschis(ByVal cale As String) As Boolean
+    Dim d As Document
+    If StrComp(cale, ThisDocument.FullName, vbTextCompare) = 0 Then DejaDeschis = True: Exit Function
+    For Each d In Documents
+        If StrComp(cale, d.FullName, vbTextCompare) = 0 Then DejaDeschis = True: Exit Function
+    Next d
 End Function
