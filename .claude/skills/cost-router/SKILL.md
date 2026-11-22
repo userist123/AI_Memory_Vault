@@ -415,10 +415,17 @@ equals the one install.py recorded in `pins.sha256.json` (never the project copy
 sidecar; `max_per_session` int 1..10); (b) the session model is Opus (payload/transcript/stored/env, never a settings
 guess; not Fable); (c) the definition matches its pin and the validator, no project file claims the name, no explicit
 non-Fable model; (d) this session and prompt epoch hold a FAILED receipt of the same check label from `--tier sonnet` and
-from `--tier opus`, and the newest receipt of that label still fails; (e) fewer than `max_per_session` executor spawns this
+from `--tier opus`, and the newest receipt of that label still fails, AND the Agent hook itself recorded a real allowed
+spawn of a writing (not read-only, not reviewer) agent resolved to sonnet and one resolved to opus in that epoch
+(`route-<sid>.spawns`, appended under the resume-counter lock; receipts alone never count); (e) fewer than `max_per_session` executor spawns this
 session (counter `route-<sid>.fable_executor` under the same lock as the resume counter); (f) no critical risk (brief or
-prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_for_stems`); (g) no local_only specialist
-(dfir-analyst) recorded for the prompt or triggered by the brief, and the installed registry is readable; (h)
+prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_for_stems` plus the hook's
+`EXECUTOR_LIVE_PATTERNS`: push, apply, drop, upload, ship, release, rollout, migrate, truncate, `rm -rf`, force-push;
+deploy/rotate/publish match inside compounds such as autodeploy/redeploy), matched on the brief after
+`specialists.normalize/fold` (NFKC, Cf/zero-width removed, cedilla ş/ţ -> ș/ț, diacritics folded, casefold, whitespace
+collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the brief (same
+normalization), and the installed registry is readable; the prompt hook records the local_only scan on every path,
+`#direct` override and router error included; (h)
 `COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
 vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
 spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
@@ -428,8 +435,11 @@ Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` 
 pin), then re-run `python .claude/skills/cost-router/install.py --source-ref <sha> --release-pin <pin>` and
 `install.py --verify --require-hooks` (exit 0, `policy_ok` true). Editing the installed `policy.json` by hand changes its
 hash and keeps the executor disabled (and fails `--verify`). Disable: the same steps with `false`.
-Threat residuals: receipts, route state and `pins.sha256.json` are writable by the same user, so the gate limits induced
-overspend; it does not stop a hostile Opus main session (E1). The stem list is a denylist.
+Threat residuals: receipts, route state, the spawn record `route-<sid>.spawns` and `pins.sha256.json` live in the user
+cache and are writable by the same user, so a same-user process (or a hostile main session with Bash) can still forge the
+ladder by editing these files; the spawn record only raises the cost of a forgery from one check.py call to editing JSON
+by hand. The gate limits induced overspend; it does not stop a hostile Opus main session (E1). The stem and trigger lists
+are denylists.
 
 ## 5. Report shape (end of task)
 
