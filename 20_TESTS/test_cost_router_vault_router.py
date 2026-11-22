@@ -195,14 +195,35 @@ def test_enforce_hook_counts_the_wrapper_as_a_router_receipt(tmp_path, monkeypat
     launchers = [
         f'python -I {WRAPPER} route --goal "x"',
         f'python3 -I "{WRAPPER}" route --json --goal x',
-        f'py -3 "C:\\Users\\Some One\\.claude\\skills\\cost-router\\lib\\vault_router.py" route --goal x',
-        "cd /tmp && FOO=1 python3 -I /home/u/.claude/skills/cost-router/lib/vault_router.py route --goal x",
-        "env X=1 uv run python /h/cost-router/lib/vault_router.py route --goal x",
+        f'py -3 "{WRAPPER}" route --goal x',
+        f'FOO=1 python3 -I {WRAPPER} route --goal x',
+        f'env X=1 uv run python {WRAPPER} route --goal x',
+        f'python -X utf8 -I "{WRAPPER}" route --goal "a; b | c"',
     ]
     for cmd in launchers:
         assert hook.invokes_router(cmd), cmd
-    for cmd in ["python other/vault_router.py route --goal x", "python cost-router/lib/vault_router.py status",
-                "echo python cost-router/lib/vault_router.py route", "cat cost-router/lib/vault_router.py"]:
+    not_receipts = [
+        "python other/vault_router.py route --goal x", "python cost-router/lib/vault_router.py status",
+        "echo python cost-router/lib/vault_router.py route", "cat cost-router/lib/vault_router.py",
+        # review round 1 bypass strings (probe pg)
+        f"echo python {WRAPPER} route",
+        f'echo "a; python {WRAPPER} route"',
+        f"# python {WRAPPER} route",
+        f"false && python {WRAPPER} route --goal x",
+        f"true; python {WRAPPER} route; sed -i s/a/b/ src/*.py",
+        f"python {WRAPPER} route --goal x; rm -rf build",
+        f"python {WRAPPER} route --goal x | sh",
+        f"python {WRAPPER} route --goal x\nsed -i s/a/b/ f",
+        f"python {WRAPPER} route --goal $(id)",
+        f"python {WRAPPER} --help",
+        f'python -c "pass #{WRAPPER}" route',
+        "python ./.claude/skills/cost-router/lib/vault_router.py route --goal x",  # relative = a project copy
+        "python /tmp/evil/cost-router/lib/vault_router.py route",
+        r"py -3 C:\Users\M\.claude\skills\cost-router\lib\vault_router.py route --goal x",
+        "cd /tmp && FOO=1 python3 -I /home/u/.claude/skills/cost-router/lib/vault_router.py route --goal x",
+        f"& python {WRAPPER} route",
+    ]
+    for cmd in not_receipts:
         assert not hook.invokes_router(cmd), cmd
     sid = "sess-m7"
     st = route_state.new_state("implement", "sonnet", "vault-worker", "h")

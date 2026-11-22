@@ -9,8 +9,8 @@ the next one is denied (read-only Read/Grep/Glob only get the reason as addition
 Only the main session is bound: a call carrying a non-empty agent_id or agent_type comes from a
 subagent and is allowed without touching any state. Allowed silently as well: no state, route.subagent null (main-session classes, trivial prompts, "#direct"),
 state.delegated true (monotonic for the rest of the prompt once any Agent/Task spawn happened),
-COST_ROUTER_ENFORCE=0. A Bash command that actually invokes `python -m routing.route_cli route` or
-`... dispatch` (at the start or after ; & | &&, not merely mentioned) marks state.vault_routed and
+COST_ROUTER_ENFORCE=0. A Bash command that is ONE plain command (no ; & | redirect, comment or substitution) running
+`python -m routing.route_cli route|dispatch` or the installed lib/vault_router.py route (see invokes_router) marks state.vault_routed and
 is always allowed; it also records the task class in the session's route receipt cache
 (route_state.add_routed_class), which hook_agent_model.py accepts for later prompts of the same
 class. Not counted (`exempt`): one single read-only or one-shot git/gh command (git status/log/diff,
@@ -30,19 +30,60 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-# An actual interpreter call of `-m routing.route_cli route|dispatch`, at the command start or after
-# a separator. Accepted launchers: python/python3[.x][.exe] (any path), `py [-3[.x]]`, `uv run python`,
-# `env [VAR=x ...]`, leading VAR=value assignments, and interpreter flags before -m (`-I`, `-X utf8`).
-_LAUNCH = (r"(?:^|[;&|\n(])\s*"
-           r"(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
-           r"(?:uv\s+run\s+)?"
-           r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
-           r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*")  # only -X/-W take a value
-ROUTER_CALL = re.compile(_LAUNCH + r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
-# The on-demand wrapper (lib/vault_router.py route): same launcher forms; the script must sit in a cost-router/lib dir.
-_VR = r"cost-router[\\/]lib[\\/]vault_router\.py"
-VAULT_ROUTER_CALL = re.compile(
-    _LAUNCH + r"""\s+(?:"[^"]*""" + _VR + r"""\"|'[^']*""" + _VR + r"""'|[^\s"';&|]*""" + _VR + r""")\s+route\b""")
+# A router RECEIPT counts only for a SINGLE command: no ; & | < > backtick $( newline or comment outside/inside quotes
+# (so nothing can ride along), whose interpreter is a recognised launcher (python/python3[.x][.exe] by name, `py [-3]`,
+# `uv run python`, optionally behind `env` and VAR=value assignments) and that runs EITHER
+#   - the INSTALLED lib/vault_router.py (absolute path, `~` and $HOME expanded, compared after realpath + normcase) with
+#     the sub-command `route`, OR
+#   - `-m routing.route_cli route|dispatch` (module form after -m only, never inside a -c string).
+# Anything else (echo, a comment, a project copy of the script, a path elsewhere, `-c`) is not a receipt.
+MAX_COMMAND = 2000
+_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+_PY_NAME = re.compile(r"^(?:python[0-9.]*|py)(?:\.exe)?$", re.I)
+_FLAGS = re.compile(r"^-[IEsSBdOqRuvb]+$")  # value-less interpreter flags; -c, -m and friends are handled explicitly
+
+
+def _tokens(command: str):
+    """Shell-ish words with quotes removed; None when the command is not a single plain command."""
+    if not command or len(command) > MAX_COMMAND or any(c in command for c in "\n\r\x00`") or "$(" in command:
+        return None
+    out: list[str] = []
+    cur: list[str] = []
+    started = False
+    quote = ""
+    for ch in command:
+        if quote:
+            if ch == quote:
+                quote = ""
+            else:
+                cur.append(ch)
+        elif ch in "\"'":
+            quote, started = ch, True
+        elif ch in " \t":
+            if started or cur:
+                out.append("".join(cur))
+                cur, started = [], False
+        elif ch in ";&|<>(){}":
+            return None
+        elif ch == "#" and not (started or cur):
+            return None  # a comment, or a word that starts with #
+        else:
+            cur.append(ch)
+    if quote:
+        return None
+    if started or cur:
+        out.append("".join(cur))
+    return out or None
+
+
+def _norm(path: str) -> str:
+    return os.path.normcase(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+
+
+def _installed_wrappers() -> set:
+    here = Path(__file__).resolve().parent / "lib" / "vault_router.py"
+    home = Path(os.path.expanduser("~")) / ".claude" / "skills" / "cost-router" / "lib" / "vault_router.py"
+    return {_norm(str(here)), _norm(str(home))}
 
 
 # Exempt from the delegation counter (owner rule 2026-10-16): a single read-only or one-shot git/gh
@@ -77,10 +118,42 @@ def exempt(tool_name, tool_input: dict) -> bool:
 
 
 def invokes_router(command: str) -> bool:
-    # A real router call is short; scanning only the head keeps the regex linear-time in practice
-    # (a long run of separators, e.g. inline minified JSON, made it quadratic past the hook timeout).
-    head = (command or "")[:2000]
-    return bool(ROUTER_CALL.search(head) or VAULT_ROUTER_CALL.search(head))
+    try:
+        toks = _tokens(command)
+        if not toks:
+            return False
+        i = 0
+        if toks[i] == "env":
+            i += 1
+        while i < len(toks) and _ASSIGN.match(toks[i]):
+            i += 1
+        if i + 1 < len(toks) and toks[i] == "uv" and toks[i + 1] == "run":
+            i += 2
+        if i >= len(toks) or not _PY_NAME.match(os.path.basename(toks[i].replace("\\", "/"))):
+            return False
+        launcher = os.path.basename(toks[i].replace("\\", "/")).lower()
+        i += 1
+        if launcher.startswith("py") and not launcher.startswith("python") and i < len(toks) and re.match(r"^-[0-9][0-9.]*$", toks[i]):
+            i += 1  # py -3 / py -3.12
+        while i < len(toks):
+            t = toks[i]
+            if t in ("-X", "-W"):
+                i += 2
+            elif _FLAGS.match(t):
+                i += 1
+            else:
+                break
+        if i >= len(toks):
+            return False
+        if toks[i] == "-m":
+            return i + 2 < len(toks) and toks[i + 1] == "routing.route_cli" and toks[i + 2] in ("route", "dispatch")
+        if toks[i].startswith("-"):
+            return False
+        script = os.path.expandvars(os.path.expanduser(toks[i]))
+        return (i + 1 < len(toks) and toks[i + 1] == "route" and os.path.isabs(script)  # absolute only: a relative path is the project's copy
+                and _norm(script) in _installed_wrappers())
+    except Exception:
+        return False
 
 
 def from_subagent(data: dict) -> bool:

@@ -191,8 +191,11 @@ context, 78% of it inside long-lived subagents. Therefore:
   timeout, `PYTHONPATH=03_IMPLEMENTATION/packages`; the goal is never stored). ROUTED/PLANNED records the
   receipt and allows (context line `vault-router: <status> -> <subagent_type>`, only with COST_ROUTER_VERBOSE_ROUTE=1); BLOCKED, a crash, a
   timeout or unparsable output denies and sets `delegation_denied` (fallback text: run the router
-  in Bash). A Bash call of `routing.route_cli route|dispatch` (at the command start or after a
-  separator; a mention does not count) still marks the router as run, so no second run happens.
+  in Bash). A Bash call counts as a router receipt only when it is ONE plain command (no `;` `&` `|` redirect,
+  backtick, `$(`, newline or comment) whose interpreter is a recognised launcher (python/python3/py [-3], `uv run python`,
+  behind `env`/`VAR=x`) and that runs `-m routing.route_cli route|dispatch` (module form only, never inside `-c`) or the
+  INSTALLED absolute `lib/vault_router.py route`; a mention, a chain, a project copy of the script or a relative path does
+  not count. It then marks the router as run, so no second run happens.
   The call is also recorded per session as a route receipt for the prompt's task class; a later
   prompt of the same class reuses it instead of running the router again. Inside Claude Code
   (`CLAUDECODE=1`) the router offers `vault-worker`, `vault-reviewer` and `Explore` as runtimes
@@ -329,8 +332,19 @@ tampering, not a same-user attacker with write access to `~/.claude`.
 Small metadata, never frontmatter: `route.meta.json` per skill (shipped under `registry_src/skills/<id>/`, installed next
 to the skills) and `roles/<id>.json` per agent. `lib/registry_compile.py` (stdlib, run by `install.py`, never in a hook)
 validates schema v1 (unknown key, duplicate id, a trigger that looks like a regex, tools or model that disagree with the
-agent file: all errors; `*.bak-*` dirs skipped) and writes `registry.json` (<= 8 KB, sha256 of every sidecar and artifact,
-deterministic). `--verify` recompiles it. `lib/specialists.py` picks at most one id (plus an overlay) for the prompt by
+agent file: all errors; `*.bak-*` dirs skipped) and writes `registry.json` (<= 16 KB, deterministic) plus
+`registry.hashes.json` (sha256 of every sidecar and artifact; `--verify` checks both).
+
+Trust split. TRUSTED: `registry_src/` and `roles/` (pinned with the release); any error there fails the install.
+UNTRUSTED: any other `~/.claude/skills/*/route.meta.json`. A malformed, unknown-key, duplicate-id, oversize (> 4 KB) or
+privileged-name sidecar is skipped and listed in the install output and in `--verify`; it never aborts an install or a
+self-update. A kept untrusted entry is hint-only and clamped: only id, triggers, task classes and run_in/subagent_type are
+used; tier max sonnet, authority none, privacy standard, priority capped at 10 (a trusted entry wins ties); its
+acceptance/summary/not_for text is never emitted into hook context; it cannot take a shipped id or name
+`fable-consultant`, `vault-reviewer` or any opus/fable agent. For all entries a trigger must be >= 4 characters after
+folding and not made only of common RO/EN stopwords (trusted: compile error; untrusted: the trigger is dropped).
+Accepted residual: the opt-in SessionStart self-update (off by default) runs `install.py`, which compiles the registry
+inside a hook. `--verify` recompiles it. `lib/specialists.py` picks at most one id (plus an overlay) for the prompt by
 folded literal trigger match, then task-class fit, then priority; the hook prints ` spec=<id>` and, in the long form,
 the specialist's acceptance check. The hint is advisory: prompt text can only select an id of the closed set, never
 changes the route state, tier, tools or authority, and a missing or corrupt registry means no hint (fail open, the Fable
@@ -346,7 +360,8 @@ PYTHONPATH, so the child puts the pinned packages dir on `sys.path` itself) and 
 `execute_via`. Exit 0 ROUTED/PLANNED, 4 BLOCKED, 5 timeout or crash. The goal is one argv element and is never logged. A
 project-local `routing/route_cli.py` is never executed. `hook_enforce_route` counts this call as a router receipt, like
 `python -m routing.route_cli route|dispatch`. The automatic in-hook router gate stays inside pinned vault roots only;
-outside them nothing calls the router unless the advisor runs the wrapper.
+outside them nothing calls the router unless the advisor runs the wrapper. On timeout the wrapper kills the whole
+process tree (Windows `taskkill /T /F`, POSIX process group) and prints each field as one control-character-free line.
 
 ### 4F. Acceptance receipts (`lib/check.py`) and the `check-runner` agent
 
@@ -357,7 +372,9 @@ keeps the exit code, duration, last 40 output lines and the sha256 of the comman
 Read, Grep, Glob, Bash; sidecar `roles/check-runner.json`, write none) runs one given check this way and quotes the
 receipt line and the failing lines verbatim, never interpreting causes. When the Agent hook escalates a spawn one tier it
 appends `after failed check <label> exit=<n>` if the session (matched by `--session`) has a failing receipt: informational
-only. Receipts are forgeable by the main session and never grant authority or relax any gate.
+only. Receipts are forgeable by the main session and never grant authority or relax any gate. A `.cmd`/`.bat` target
+is started by cmd.exe, which re-parses the command line: `check.py` refuses (exit 2) when any argument holds `& | < > ^ %`
+a double quote or a newline. Residual: the list is a denylist (a `!` for delayed expansion is not refused) and a shim that evaluates its own arguments stays the caller's risk; run untrusted shims through an `.exe`.
 
 ## 5. Report shape (end of task)
 
