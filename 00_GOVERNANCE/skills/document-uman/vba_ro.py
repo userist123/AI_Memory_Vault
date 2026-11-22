@@ -70,8 +70,11 @@ def _radacina_stare() -> Path:
     env = os.environ.get("LOCALAPPDATA")
     if env:
         return Path(env)
-    home = Path.home() / "AppData" / "Local"
-    return home if home.parent.exists() else Path(tempfile.gettempdir())
+    if sys.platform == "win32":
+        return Path.home() / "AppData" / "Local"
+    # non-Windows (CI, tests): XDG state dir under the home folder - never the temp folder
+    xdg = os.environ.get("XDG_STATE_HOME")
+    return Path(xdg) if xdg else Path.home() / ".local" / "state"
 
 
 STATE_DIR = _radacina_stare() / "vba_ro"

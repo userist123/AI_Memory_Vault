@@ -1248,6 +1248,24 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-document-uman.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/skills/document-uman/genuri.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Reference file of the document-uman skill (genre templates read by the skill on demand); only SKILL.md carries skill frontmatter, so this plain markdown is not a memory note."
+    },
+    {
+      "path": "00_GOVERNANCE/skills/document-uman/vba.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Reference file of the document-uman skill (VBA rules and recipes read by the skill on demand); only SKILL.md carries skill frontmatter, so this plain markdown is not a memory note."
     }
   ]
 }
