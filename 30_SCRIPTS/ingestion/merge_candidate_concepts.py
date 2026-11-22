@@ -297,7 +297,7 @@ def append_candidate_concepts_to_slot(
     rows_to_insert = "\n" + "\n".join(new_rows)
     updated_content = content.replace(header_block, header_block + rows_to_insert)
 
-    with open(slot_file_path, "w", encoding="utf-8") as f:
+    with open(slot_file_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(updated_content)
 
     return added_count

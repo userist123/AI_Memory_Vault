@@ -18,7 +18,7 @@ from .validation.supersession import SupersessionEnforcer
 # Canonical lifecycle authority -- the single source of truth for every
 # lifecycle transition in the runtime. See lifecycle/policy.py.
 from . import policy as lifecycle_policy
-from .audit.logger import audit_event
+from .audit.logger import audit_event, error_details
 from .cache import Cache
 
 # Security utilities
@@ -489,7 +489,7 @@ class MemoryController:
             audit_event('read', principal, note_id, success=True)
             return pack
         except Exception as e:
-            audit_event('read', principal, note_id, success=False, details={'error': str(e)})
+            audit_event('read', principal, note_id, success=False, details=error_details(e))
             raise
 
     # Cognitive Core retrieval — extends read() to include REVIEW notes.
@@ -540,7 +540,7 @@ class MemoryController:
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
         except Exception as e:
-            audit_event('cognitive_read', principal, note_id, success=False, details={'error': str(e)})
+            audit_event('cognitive_read', principal, note_id, success=False, details=error_details(e))
             raise
 
     def search(
@@ -1524,7 +1524,7 @@ class MemoryController:
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
-            audit_event('search', principal, target_id, success=False, details={'error': str(e)})
+            audit_event('search', principal, target_id, success=False, details=error_details(e))
             raise
 
     def search_financial(
@@ -1679,7 +1679,7 @@ class MemoryController:
                 audit_event('propose', principal, note_id, success=True)
                 return note_id
             except Exception as e:
-                audit_event('propose', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('propose', principal, note_id, success=False, details=error_details(e))
                 raise
 
     def review(self, principal: Principal, note_id: str, decision: str, comments: Optional[str] = None) -> None:
@@ -1722,7 +1722,7 @@ class MemoryController:
                 self.cache.invalidate_by_event('memory_updated')
                 audit_event('review', principal, note_id, success=True, details={'decision': decision})
             except Exception as e:
-                audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)})
+                audit_event('review', principal, note_id, success=False, details={'decision': decision, **error_details(e)})
                 raise
 
     def promote(self, principal: Principal, note_id: str) -> None:
@@ -1747,12 +1747,19 @@ class MemoryController:
                     raise ValueError(
                         f'Only REVIEW notes can be promoted [policy: {_promote_decision.reason}]'
                     )
+                # An owner attestation reaches ACTIVE only on the body that was attested. A missing
+                # hash (an attestation made before the binding existed) is refused too: re-attest.
+                if (str(note.get('verification') or '') in self._ATTESTED_STATES
+                        and str(note.get('verification_source') or '') in self._OWNER_ATTESTERS
+                        and note.get('attested_content_sha256') != self._content_sha256(note)):
+                    raise ValueError('Promotion refused: the content differs from what the owner attested '
+                                     '(or the attestation predates content binding); re-attest the note')
                 note['lifecycle'] = Lifecycle.ACTIVE
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
                 audit_event('promote', principal, note_id, success=True)
             except Exception as e:
-                audit_event('promote', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('promote', principal, note_id, success=False, details=error_details(e))
                 raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
@@ -1797,7 +1804,17 @@ class MemoryController:
                         raise PermissionError('AI_AGENT cannot update ACTIVE notes: content and structural fields are immutable to AI agents')
                 if note['lifecycle'] != Lifecycle.ACTIVE:
                     if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
-                        pass
+                        # An owner attestation covers the content the owner read. attest() works on
+                        # any lifecycle, so without this an agent could rewrite an attested note
+                        # that review/promote then carries into ACTIVE as verified
+                        # (20_TESTS/test_attested_note_content_binding.py). Same allowance as on an
+                        # ACTIVE note.
+                        if str(note.get('verification') or 'unverified') not in {'unverified', 'inferred'}:
+                            disallowed = set(updates.keys()) - {'relations', 'confidence', 'verification', 'valid_until'}
+                            if disallowed:
+                                raise PermissionError(
+                                    'AI_AGENT cannot change the content of an attested note: only relations, '
+                                    f'confidence, verification and valid_until (attempted: {sorted(disallowed)})')
                     else:
                         raise ValueError('Updates not permitted for this lifecycle and principal')
 
@@ -1806,6 +1823,12 @@ class MemoryController:
                 has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
 
                 note.update(updates)
+                # An agent changing the verification of an owner-attested note withdraws that
+                # attestation: the owner's stamp must not stay on a state the owner did not set.
+                if (principal == Principal.AI_AGENT and 'verification' in updates
+                        and str(note.get('verification_source') or '') in self._OWNER_ATTESTERS):
+                    for stamp in ('verification_source', 'last_verified', 'attested_content_sha256'):
+                        note.pop(stamp, None)
                 # Force server updated timestamp
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 note['updated'] = now_date
@@ -1822,10 +1845,20 @@ class MemoryController:
                 else:
                     audit_event('update', principal, note_id, success=True)
             except Exception as e:
-                audit_event('update', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('update', principal, note_id, success=False, details=error_details(e))
                 raise
 
-    def attest(self, principal: Principal, note_id: str, verification_reason: str, evidence_reference: str, verification_state: str = "verified") -> None:
+    #: Principals whose attestation the content binding protects (the ATTEST matrix: HUMAN, ADMIN).
+    _OWNER_ATTESTERS = frozenset({Principal.HUMAN.value, Principal.ADMIN.value})
+    _ATTESTED_STATES = frozenset({"verified", "partially_verified"})
+
+    @staticmethod
+    def _content_sha256(note: Dict[str, Any]) -> str:
+        """SHA-256 of a note body with CRLF/CR normalised to LF, the text an owner attests."""
+        body = str(note.get("content") or "").replace(chr(13) + chr(10), chr(10)).replace(chr(13), chr(10))
+        return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+    def attest(self, principal: Principal, note_id: str, verification_reason: str, evidence_reference: str, verification_state: str = "verified", expected_content_sha256: Optional[str] = None) -> None:
         with self._mutation_lock:
             try:
                 self._check_auth(principal, Operation.ATTEST)
@@ -1840,14 +1873,22 @@ class MemoryController:
                     raise ValueError('Note not found')
                 self._refuse_ontology_slot('attest', note_id, note)
 
+                # Bind the attestation to the text the owner read: when the caller passes the hash of
+                # what was read, a body changed in between is refused (20_TESTS/test_attested_note_content_binding.py).
+                content_sha256 = self._content_sha256(note)
+                if expected_content_sha256 is not None and expected_content_sha256 != content_sha256:
+                    raise ValueError('Attestation refused: the note content changed since it was read '
+                                     f'(expected {expected_content_sha256[:12]}, found {content_sha256[:12]})')
+
                 previous_state = note.get('verification', 'unverified')
-                if previous_state == verification_state:
+                if previous_state == verification_state and note.get('attested_content_sha256') == content_sha256:
                     return
 
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 note['verification'] = verification_state
                 note['verification_source'] = principal.value
                 note['last_verified'] = now_date
+                note['attested_content_sha256'] = content_sha256
                 note['updated'] = now_date
 
                 self._validate_note(note)
@@ -1866,7 +1907,7 @@ class MemoryController:
                     'attested_by': principal.value,
                     'reason': verification_reason if 'verification_reason' in locals() else '',
                     'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
-                    'error': str(e)
+                    **error_details(e)
                 })
                 raise
 
@@ -1902,7 +1943,7 @@ class MemoryController:
                     'new_lifecycle': Lifecycle.ARCHIVED.value,
                 })
             except Exception as e:
-                audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
+                audit_event('archive', principal, note_id, success=False, details={'reason': reason, **error_details(e)})
                 raise
 
     def supersede(self, principal: Principal, old_id: str, new_id: str, evidence: str = "") -> None:
@@ -1982,7 +2023,7 @@ class MemoryController:
                 audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence})
                 audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
             except Exception as e:
-                audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
+                audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, **error_details(e)})
                 raise
 
     def prune_synapses(

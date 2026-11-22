@@ -1,5 +1,4 @@
 import os
-import glob
 import tempfile
 import sys
 from typing import Dict, Any, List, Optional, Tuple
@@ -7,6 +6,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from memory_controller.audit.logger import audit_event
 from .serializer import serialize, deserialize
 from .path_resolver import resolve_path
+from vault_access.links import is_link
 
 #: Folders scanned when indexing notes from disk.
 #:
@@ -51,6 +51,43 @@ LEGACY_WRITE_ROOTS = (
 
 CANONICAL_FOLDERS = CONTENT_ROOTS + LEGACY_WRITE_ROOTS
 
+#: Index-time size cap for one note. Larger files are skipped ("too_large"), never read.
+MAX_NOTE_BYTES = 8 * 1024 * 1024
+
+#: Imported skills are untrusted data, never canonical notes (vault-relative; vault_domains.yaml
+#: marks EXTERNAL_SKILLS `trust: untrusted`). Closed by LOCATION only.
+_EXCLUDED_IMPORT_DIRS = (
+    "01_KNOWLEDGE/EXTERNAL_SKILLS",
+    "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS",
+)
+
+#: skip reasons that are policy decisions, not corruption.
+_NON_CORRUPT_REASONS = ("excluded_import", "too_large", "link_not_followed")
+
+
+class NoteTooLarge(Exception):
+    """A note file is over MAX_NOTE_BYTES (checked before open and again on the bytes read)."""
+
+
+def read_note_bounded(filepath: str) -> str:
+    """The one bounded note reader (index scan and get()): size check before open, then at most
+    MAX_NOTE_BYTES+1 bytes; newlines normalised as text mode did. Raises NoteTooLarge."""
+    if os.path.getsize(filepath) > MAX_NOTE_BYTES:
+        raise NoteTooLarge(filepath)
+    with open(filepath, 'rb') as f:
+        raw = f.read(MAX_NOTE_BYTES + 1)
+    if len(raw) > MAX_NOTE_BYTES:
+        raise NoteTooLarge(filepath)  # grew between stat and read
+    return raw.decode('utf-8').replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _real(path: str) -> str:
+    return os.path.normcase(os.path.realpath(path))
+
+
+def _inside(real: str, folder: str) -> bool:
+    return real == folder or real.startswith(folder + os.sep)
+
 _TREE_LABELS = {root: "content root" for root in CONTENT_ROOTS}
 _TREE_LABELS.update({root: "legacy write root" for root in LEGACY_WRITE_ROOTS})
 
@@ -65,7 +102,14 @@ class FileStorageEngine:
         #: type -- never the content). Each skip also leaves a ``storage_skipped``
         #: audit event. Before this existed, unreadable or id-less notes vanished
         #: from the index without a trace (D-01).
-        self.load_report: Dict[str, Any] = {"scanned": 0, "indexed": 0, "skipped": []}
+        #: Directories/roots not entered (links, junctions, realpath outside the vault) are listed
+        #: in ``links_not_followed``, NOT in ``skipped``: they are not files, so they are not
+        #: counted in ``scanned`` and scanned == indexed + len(skipped) keeps holding.
+        self.load_report: Dict[str, Any] = {"scanned": 0, "indexed": 0, "skipped": [],
+                                            "links_not_followed": []}
+        self._real_vault = _real(vault_root)
+        self._excluded_real = tuple(_real(os.path.join(vault_root, d)) for d in _EXCLUDED_IMPORT_DIRS)
+        self._read_too_large: Dict[str, str] = {}
         #: Indexed notes whose file could not be read/parsed at the last
         #: query()/store read (id -> relative path). Lets a caller tell a degraded
         #: result from a genuinely empty one.
@@ -85,16 +129,40 @@ class FileStorageEngine:
     def skip_report(self, cap: int = 20) -> Dict[str, Any]:
         """Corrupt/unreadable note files seen so far: load-time skips plus
         read-time failures. Paths only, capped; never raises."""
-        paths = [e.get("path") for e in self.load_report.get("skipped", [])]
+        entries = self.load_report.get("skipped", [])
+        paths = [e.get("path") for e in entries if e.get("reason") not in _NON_CORRUPT_REASONS]
         paths += [p for p in self._read_skips.values() if p not in paths]
-        return {"skipped_corrupt": len(paths), "skipped_paths": paths[:cap]}
 
-    def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
+        def count(reason: str) -> int:
+            return sum(1 for e in entries if e.get("reason") == reason)
+
+        return {"skipped_corrupt": len(paths), "skipped_paths": paths[:cap],
+                "skipped_excluded_import": count("excluded_import"),
+                "skipped_too_large": count("too_large") + len(self._read_too_large),
+                "skipped_link_not_followed": count("link_not_followed")
+                + len(self.load_report.get("links_not_followed", []))}
+
+    def _rel(self, filepath: str) -> str:
         try:
             rel = os.path.relpath(filepath, self.vault_root)
         except ValueError:
             rel = os.path.basename(filepath)
-        rel = rel.replace("\\", "/")
+        return rel.replace("\\", "/")
+
+    def _record_link_skip(self, path: str) -> None:
+        entry = {"path": self._rel(path), "reason": "link_not_followed", "exception": None}
+        self.load_report["links_not_followed"].append(entry)
+        audit_event("storage_skipped", "system", "unknown", success=False, details=dict(entry))
+
+    def _relative_to_root(self, filepath: str) -> str:
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            rel = os.path.basename(filepath)
+        return rel.replace("\\", "/")
+
+    def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
+        rel = self._relative_to_root(filepath)
         entry = {"path": rel, "reason": reason,
                  "exception": type(exc).__name__ if exc is not None else None}
         self.load_report["skipped"].append(entry)
@@ -119,25 +187,71 @@ class FileStorageEngine:
         label = _TREE_LABELS.get(top)
         return f"{label} ({top})" if label else f"unrecognized root ({top})"
 
+    def _is_external_import(self, filepath: str) -> bool:
+        """True for anything under an EXTERNAL_SKILLS import folder. Compared on the resolved real
+        path, so a link elsewhere pointing into the folder cannot bypass it; the lexical
+        vault-relative prefix (case-insensitive) is kept as well."""
+        if any(_inside(_real(filepath), e) for e in self._excluded_real):
+            return True
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            return False
+        rel = rel.replace("\\", "/").lower() + "/"
+        return any(rel.startswith(d.lower() + "/") for d in _EXCLUDED_IMPORT_DIRS)
+
+    def _scan_markdown(self, folder_path: str) -> List[str]:
+        """Sorted .md files under `folder_path`, never descending into directory
+        symlinks or junctions (each skipped directory is reported once as
+        ``link_not_followed``). Dot-prefixed names are skipped, as glob did."""
+        found: List[str] = []
+        for dirpath, dirnames, filenames in os.walk(folder_path, followlinks=False):
+            keep = []
+            for d in sorted(dirnames):
+                full = os.path.join(dirpath, d)
+                if d.startswith("."):
+                    continue
+                if "RAW_IMPORTS" in full or "Obsidian" in full:
+                    continue
+                if is_link(full) or not _inside(_real(full), self._real_vault):
+                    self._record_link_skip(full)
+                    continue
+                keep.append(d)
+            dirnames[:] = keep
+            for name in filenames:
+                if name.startswith("."):
+                    continue
+                if name.endswith(".md") or (os.name == "nt" and name.lower().endswith(".md")):
+                    found.append(os.path.join(dirpath, name))
+        return sorted(found)
+
     def _initialize_index(self):
         # Scan canonical folders to build the UUID -> Path index
         # EXPLICIT EXCLUSIONS: "06_INBOX" and "90_TEMPLATES" are NOT included
         canonical_folders = list(CANONICAL_FOLDERS)
         for folder in canonical_folders:
             folder_path = os.path.join(self.vault_root, folder)
-            if not os.path.exists(folder_path):
+            if not os.path.lexists(folder_path):
                 continue
-            
-            found_files = set(glob.glob(os.path.join(folder_path, "*.md"))).union(
-                set(glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True))
-            )
-            for filepath in sorted(found_files):
+            if is_link(folder_path) or not _inside(_real(folder_path), self._real_vault):
+                self._record_link_skip(folder_path)
+                continue
+
+            for filepath in self._scan_markdown(folder_path):
                 if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
                 self.load_report["scanned"] += 1
+                if os.path.islink(filepath):
+                    self._record_skip(filepath, "link_not_followed", None)
+                    continue
+                if self._is_external_import(filepath):
+                    self._record_skip(filepath, "excluded_import", None)
+                    continue
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                    content = read_note_bounded(filepath)
+                except NoteTooLarge:
+                    self._record_skip(filepath, "too_large", None)
+                    continue
                 except UnicodeDecodeError as e:
                     self._record_skip(filepath, "decode_error", e)
                     continue
@@ -179,7 +293,9 @@ class FileStorageEngine:
                         raise e
                     if "Malformed YAML" in str(e):
                         audit_event("storage_error", "system", "unknown", success=False,
-                                    details={"error": "Malformed YAML", "path": filepath, "message": str(e)})
+                                    details={"error": "Malformed YAML",
+                                             "path": self._relative_to_root(filepath),
+                                             "error_type": type(e).__name__})
                         self._record_skip(filepath, "malformed_yaml", e)
                         continue
                     if isinstance(e, TypeError) and "invalid id" in str(e):
@@ -198,11 +314,19 @@ class FileStorageEngine:
             cached = self._cache.get(note_id)
             if cached and cached[0] == mtime:
                 return dict(cached[1])
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = read_note_bounded(filepath)
             data = deserialize(content)
             self._cache[note_id] = (mtime, dict(data))
+            self._read_too_large.pop(note_id, None)
             return dict(data)
+        except NoteTooLarge:
+            # same outcome as a vanished file: not available; the skip is recorded
+            self._cache.pop(note_id, None)
+            if note_id not in self._read_too_large:
+                self._read_too_large[note_id] = self._rel(filepath)
+                audit_event("storage_skipped", "system", "unknown", success=False,
+                            details={"path": self._rel(filepath), "reason": "too_large", "exception": None})
+            return None
         except Exception:
             return None
 
@@ -255,12 +379,15 @@ class FileStorageEngine:
         if str(note_id) != str(yaml_id):
             raise ValueError(f"ID mismatch: storage key '{note_id}' must equal YAML id '{yaml_id}'")
         target_path = self._target_path_for(note_id, data)
-        serialized_content = serialize(data)
+        # LF on every platform (.gitattributes `* text=auto eol=lf`): normalise CRLF/CR and write
+        # with newline='' so Windows text mode does not turn "\r\n" into "\r\r\n"
+        # (20_TESTS/test_file_engine_writes_lf.py).
+        serialized_content = serialize(data).replace("\r\n", "\n").replace("\r", "\n")
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
         dir_name = os.path.dirname(target_path)
         fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix=".tmp_")
         try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(fd, 'w', encoding='utf-8', newline='') as f:
                 f.write(serialized_content)
                 f.flush()
                 os.fsync(f.fileno())
@@ -275,7 +402,11 @@ class FileStorageEngine:
                 os.remove(existing_path)
         self.id_to_path[note_id] = target_path
         mtime = os.path.getmtime(target_path)
-        self._cache[note_id] = (mtime, data)
+        cached = dict(data)
+        if isinstance(cached.get("content"), str):
+            # the file holds LF only: cache what a reload would return
+            cached["content"] = cached["content"].replace("\r\n", "\n").replace("\r", "\n")
+        self._cache[note_id] = (mtime, cached)
 
     def delete(self, note_id: str) -> None:
         filepath = self.id_to_path.get(note_id)

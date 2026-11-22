@@ -1,0 +1,398 @@
+{
+  "as_of_utc_date": "2026-11-21",
+  "code_fingerprint": {
+    "controller_class": "cognitive_core.controller.MemoryController",
+    "files": 137,
+    "sha256": "168f7e7555764d011ab09714e8effc9c1a3717087122dcea5e19a29310d476ee"
+  },
+  "context": "R016 (07_EVALUATION/heldout_retrieval_benchmark_v2/r016_production_arms_report.json) reports the same count, 2/29 graph-off context recall, but on different cases (exact 1/5 + one-hop 1/12 there; H01 exact + H13 synonym here) and at a different operating point (HUMAN owner view over the whole non-RAW corpus, page 10, RANKING_ARM_BASELINE). It is not a corroboration of this baseline.",
+  "controller": {
+    "classifier_filter_arm": "None",
+    "enable_cognitive_core": "False",
+    "enable_graph_expansion": "False",
+    "graph_expansion_budget": "None",
+    "ranking_arm": "None",
+    "strict_graph_expansion": "False"
+  },
+  "purpose": "AKE Loop B baseline: held-out v2 through MemoryController.search as AI_AGENT, k=5. Compare a later job with: python -m active_knowledge_engine compare <this file> <job record>",
+  "repository_head": "aa42387f2 + AKE branch",
+  "source_job_id": "ake-6815a303cd5e3e45892d24b6",
+  "source_snapshot_sha256": "0cc9f57f1683ec232b46cc4637976485b89b9cf1edf84e967c4753103d7ebf2b",
+  "stages": [
+    {
+      "component": "memory/controller.py::search (AI_AGENT)",
+      "name": "retrieval_quality",
+      "output": {
+        "benchmark": {
+          "digest": "0222d5e858dfca5bbae6db4559eafe0d43b133380a912664aaa7e4ea6c0d8418",
+          "file": "heldout.json",
+          "name": "r009b-v2-heldout"
+        },
+        "cases": [
+          {
+            "class": "exact_identifier_lookup",
+            "cut_rank": null,
+            "fused_rank": 4,
+            "gold_readable": true,
+            "hit": 1,
+            "id": "H01",
+            "miss_class": null,
+            "rank_in_page": 4
+          },
+          {
+            "class": "exact_identifier_lookup",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H02",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "exact_identifier_lookup",
+            "cut_rank": null,
+            "fused_rank": 8,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H03",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "exact_identifier_lookup",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H04",
+            "miss_class": "NEVER_CANDIDATE",
+            "rank_in_page": null
+          },
+          {
+            "class": "exact_identifier_lookup",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H05",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "paraphrase",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H06",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "paraphrase",
+            "cut_rank": null,
+            "fused_rank": 10,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H07",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "paraphrase",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H08",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "paraphrase",
+            "cut_rank": null,
+            "fused_rank": 111,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H09",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "synonym_substitution",
+            "cut_rank": null,
+            "fused_rank": 8,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H10",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "synonym_substitution",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H11",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "synonym_substitution",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H12",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "synonym_substitution",
+            "cut_rank": null,
+            "fused_rank": 2,
+            "gold_readable": true,
+            "hit": 1,
+            "id": "H13",
+            "miss_class": null,
+            "rank_in_page": 2
+          },
+          {
+            "class": "lexical_trap",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H14",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "lexical_trap",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H15",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "lexical_trap",
+            "cut_rank": 326,
+            "fused_rank": null,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H16",
+            "miss_class": "CANDIDATE_LIMIT_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "lexical_trap",
+            "cut_rank": null,
+            "fused_rank": 31,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H17",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H18",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H19",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": 263,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H20",
+            "miss_class": "CANDIDATE_LIMIT_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": 15,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H21",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H22",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": 14,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H23",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H24",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": 9,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H25",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": 22,
+            "gold_readable": true,
+            "hit": 0,
+            "id": "H26",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": 7,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H27",
+            "miss_class": "PAGINATION_CUT",
+            "rank_in_page": null
+          },
+          {
+            "class": "unanswerable",
+            "fused_rank": null,
+            "hit": null,
+            "id": "H28",
+            "miss_class": "ABSTAIN_UNMEASURABLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "unanswerable",
+            "fused_rank": null,
+            "hit": null,
+            "id": "H29",
+            "miss_class": "ABSTAIN_UNMEASURABLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "unanswerable",
+            "fused_rank": null,
+            "hit": null,
+            "id": "H30",
+            "miss_class": "ABSTAIN_UNMEASURABLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": null,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H31",
+            "miss_class": "GOLD_NOT_AGENT_ELIGIBLE",
+            "rank_in_page": null
+          },
+          {
+            "class": "one_hop_graph_expansion",
+            "cut_rank": 320,
+            "fused_rank": null,
+            "gold_readable": false,
+            "hit": 0,
+            "id": "H32",
+            "miss_class": "NO_LEXICAL_SIGNAL",
+            "rank_in_page": null
+          }
+        ],
+        "summary": {
+          "by_class": {
+            "exact_identifier_lookup": {
+              "hits": 1,
+              "n": 5
+            },
+            "lexical_trap": {
+              "hits": 0,
+              "n": 4
+            },
+            "one_hop_graph_expansion": {
+              "hits": 0,
+              "n": 12
+            },
+            "paraphrase": {
+              "hits": 0,
+              "n": 4
+            },
+            "synonym_substitution": {
+              "hits": 1,
+              "n": 4
+            }
+          },
+          "gold_unreadable_by_memory_get": 20,
+          "hit_rate": 0.06896551724137931,
+          "hit_rate_ci95": [
+            0.019121266169433354,
+            0.21964580150275695
+          ],
+          "hit_rate_scorable": 0.125,
+          "hits": 2,
+          "k": 5,
+          "miss_classes": {
+            "ABSTAIN_UNMEASURABLE": 3,
+            "CANDIDATE_LIMIT_CUT": 2,
+            "GOLD_NOT_AGENT_ELIGIBLE": 13,
+            "NEVER_CANDIDATE": 1,
+            "NO_LEXICAL_SIGNAL": 1,
+            "PAGINATION_CUT": 10
+          },
+          "mrr_at_k": 0.02586206896551724,
+          "n": 32,
+          "n_measurable": 29,
+          "n_scorable": 16,
+          "principal": "AI_AGENT"
+        }
+      },
+      "status": "COMPLETED"
+    }
+  ],
+  "status": "COMPLETED_WITH_SKIPS"
+}

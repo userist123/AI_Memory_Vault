@@ -1016,6 +1016,12 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-ake.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint (CLAUDE.md token-economy rule), same format as the other todo-*.md files; not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-antigravity-casa3d.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

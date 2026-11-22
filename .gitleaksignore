@@ -6,3 +6,8 @@
 # sanctions list URL on the owner's loganalyzer branch; documented public value, no secret. Checked
 # 2026-10-12; exception approved by the owner ("Modifici la toate").
 21241d38ca97d08978d56fca39bc34286fab2768:02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_PROVENIENTA_BIBLIOTECI.md:generic-api-key:49
+# generic-api-key matched a public Windows audit-subcategory GUID ("Credential Validation",
+# {0CCE923F-69AE-11D9-BED3-505054503030}, documented by Microsoft for auditpol) in a C# constant on
+# the owner's loganalyzer branch; a well-known identifier, no secret. Checked 2026-11-21 against the
+# commit content; it failed the history scan of every pull request. Owner standing instruction.
+674ca0e62f2231b0d9f8742c6b5183988dd9279b:02_PRODUCT/projects/workspaces/loganalyzer-dfir/LogAnalyzer.Dfir.Core/Analysis/LocalSecurityAudit.cs:generic-api-key:21

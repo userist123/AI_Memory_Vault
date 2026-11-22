@@ -415,7 +415,7 @@ def purge_rows(
             new_table_text = "\n".join(retained_lines)
             new_content = content.replace(section_header + table_text, section_header + new_table_text)
             if apply:
-                with open(file_path, "w", encoding="utf-8") as f:
+                with open(file_path, "w", encoding="utf-8", newline="\n") as f:
                     f.write(new_content)
 
     return {
