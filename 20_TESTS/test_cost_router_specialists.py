@@ -110,6 +110,16 @@ def test_triggers_are_folded_and_diacritics_stripped(tree):
     assert "hotararea de guvern" in e["triggers"] and "stiu legea" in e["triggers"]
 
 
+@pytest.mark.parametrize("raw, want", [
+    ("f​orensic", "forensic"), ("tri­age", "triage"), ("﻿amcache", "amcache"),
+    ("ｅｖｔｘ", "evtx"), ("Ș‍TIU legea", "stiu legea"),
+])
+def test_compile_fold_matches_the_brief_normalizer(raw, want):
+    # compiled triggers and the hook's brief normalizer (specialists.fold) must agree, else a trigger never matches
+    assert rc.fold(raw) == want
+    assert rc.fold(raw) == sp.fold(raw)
+
+
 @pytest.mark.parametrize("mutate", [
     lambda d: d.update(bogus=1),
     lambda d: d.update(approve=True),
