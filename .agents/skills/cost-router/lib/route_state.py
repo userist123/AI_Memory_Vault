@@ -156,16 +156,35 @@ def _read_json(path: Optional[Path], default):
 
 
 def _write_json(path: Optional[Path], value) -> bool:
+    """Atomic JSON write. On Windows os.replace raises PermissionError while another hook process holds
+    the target, so it is retried with a short backoff (10 ms * 2**i, up to 8 tries, 0.3 s in total);
+    the temp file is always removed on failure."""
     if path is None:
         return False
+    tmp = None
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_name(path.name + f".{uuid.uuid4().hex[:8]}.tmp")
         tmp.write_text(json.dumps(value), encoding="utf-8")
-        os.replace(tmp, path)
-        return True
+        waited = 0.0
+        for i in range(8):
+            try:
+                os.replace(tmp, path)
+                return True
+            except PermissionError:
+                delay = min(0.01 * 2 ** i, 0.3 - waited)
+                if i == 7 or delay <= 0:
+                    raise
+                time.sleep(delay)
+                waited += delay
     except Exception:
-        return False
+        pass
+    if tmp is not None:
+        try:
+            tmp.unlink(missing_ok=True)
+        except Exception:
+            pass
+    return False
 
 
 def add_routed_class(session_id, task_class) -> bool:

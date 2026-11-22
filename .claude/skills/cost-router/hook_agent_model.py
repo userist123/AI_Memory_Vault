@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """PreToolUse hook (matcher "Agent|Task") for the cost-router skill.
 
-Sets the model of every subagent spawn from the policy route of its brief (description + prompt),
-whatever the subagent type is:
+Sets the model of every subagent spawn from the policy route of its brief (description + prompt):
+  - the exact `fable-consultant` agent -> Fable 5.2, read-only and advisory only (requires an opus session);
+  - every other Fable alias/model ID -> Opus (or capped to session tier), including unclassified briefs;
   - no model given             -> the route's model;
   - a model given              -> kept between the route's model and one tier above it (a one-notch
                                   escalation is allowed; a model cheaper than the route is raised);
   - risk detected in the brief -> never below the risk floor (Opus);
-  - Fable is never a subagent model -> Opus;
   - a reviewer/verifier subagent_type ("review"/"verif" in it) -> never below Opus.
 A brief that matches no task class and carries no risk is left alone (the subagent's own
-frontmatter model applies) unless that default is above the session tier or UNKNOWN (a plugin `a:b` type, a
-type with no project/user agent file that is not a built-in, an unreadable file or an unrecognised `model:`), which
-is capped to the session tier with a note. An explicit model the policy does not recognise (alias, exact id, alias
-with a `[..]` suffix, longest model_id prefix) is never passed through: on a risky/review brief the floor applies,
-on a classified brief the route model, on an unclassified brief the session tier (with a note).
+frontmatter model applies, except `inherit` / Fable which are forced to Opus) unless that default is
+above the session tier or UNKNOWN (a plugin `a:b` type, a type with no project/user agent file that
+is not a built-in, an unreadable file or an unrecognised `model:`), which is capped to the session
+tier with a note. An explicit model the policy does not recognise (alias, exact id, alias with a
+`[..]` suffix, longest model_id prefix) is never passed through: on a risky/review brief the floor
+applies, on a classified brief the route model, on an unclassified brief the session tier (with a note).
 Route state (lib/route_state.py): every spawn sets state.delegated=true, which unlocks the main
 session for hook_enforce_route.py. Inside the AI Memory Vault (the project has
 03_IMPLEMENTATION/packages/routing/route_cli.py) a spawn for an implement/review/design/frontier
 route first runs the Vault router in-hook (`routing.route_cli route`, 5 s): ROUTED/PLANNED records the
 receipt and allows; BLOCKED or an unavailable router denies (delegated is not set then). A receipt from
 Bash (state.vault_routed, set by hook_enforce_route.py) also passes. "#direct" and
-COST_ROUTER_ENFORCE=0 skip that gate. Outside the Vault it is never required.
+COST_ROUTER_ENFORCE=0 skip that gate (they do NOT disable the Fable guard). Outside the Vault it is never required.
 The `vault-router: ...` / `subagent model x -> y` context line is emitted only with COST_ROUTER_VERBOSE_ROUTE=1 (denials always carry their reason). A read-only subagent type (an agent file whose frontmatter `tools` are all in the read-only allowlist: Read, Grep, Glob, LS, WebFetch, WebSearch, the vault-memory read tools; the project's Explore has Bash and is NOT read-only) is clamped in the explore class (haiku, cap one tier above) only for briefs with no risk rule and a class outside review/design/frontier (COST_ROUTER_READONLY_FLOOR=1 restores the old floor).
-Any other error: no output, exit 0; apart from that gate this hook only rewrites `model`.
+Fable consultant routing fails closed when its policy cannot be loaded, and malformed Agent hook payloads exit 2. The Agent hook is configured with onFailure=block; the installed copy shadows the project hook only when registered as blocking and its hook, route code, model router, and policy match the project copy.
 """
 from __future__ import annotations
 
@@ -40,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 RISK_PREFIXES = ("risk_detected", "risk_floor")
 SPAWN_TOOLS = ("Agent", "Task")  # "Task" is the legacy name of the spawn tool
+FABLE_CONSULTANT = "fable-consultant"
 REVIEWER_MARKS = ("review", "verif")  # vault-reviewer, code-review, verifier: never below Opus
 # vault-worker, implementer: routed as implement; on risky code the floor moves to the mandatory
 # Opus reviewer (policy rules.implementer_risk_floor), so the worker stays on Sonnet.
@@ -233,6 +235,191 @@ def _model_label(value) -> str:
     return repr(" ".join(str(value).split())[:40])
 
 
+def _requests_fable(value) -> bool:
+    """Recognize first-party aliases and provider-prefixed Fable model IDs."""
+    return "fable" in str(value or "").strip().lower()
+
+
+def _user_copy_is_current(hook_file: Path) -> bool:
+    """Do not let an out-of-date user-scope copy shadow a newer project guard."""
+    home_claude = Path.home() / ".claude"
+    try:
+        hook_file.resolve().relative_to(home_claude.resolve())
+        return False
+    except ValueError:
+        pass
+    project_skill = hook_file.parent
+    project_root = project_skill.parents[2]
+    user_skill = home_claude / "skills" / "cost-router"
+    pairs = (
+        (user_skill / hook_file.name, hook_file),
+        (user_skill / "lib" / "route.py", project_skill / "lib" / "route.py"),
+        (user_skill / "lib" / "route_state.py", project_skill / "lib" / "route_state.py"),
+        (user_skill / "lib" / "claude_model_router.py",
+         project_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"),
+        (user_skill / "policy.json", project_root / "04_CONFIG" / "claude_model_routing.json"),
+    )
+    try:
+        return all(user.is_file() and project.is_file() and user.read_bytes() == project.read_bytes()
+                   for user, project in pairs)
+    except OSError:
+        return False
+
+
+def _user_agent_hook_is_registered(settings_path=None) -> bool:
+    """Confirm the user-scope Agent hook is actually registered as a blocking PreToolUse hook."""
+    path = Path(settings_path) if settings_path else Path.home() / ".claude" / "settings.json"
+    try:
+        settings = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    hooks = settings.get("hooks") if isinstance(settings, dict) else None
+    entries = hooks.get("PreToolUse") if isinstance(hooks, dict) else None
+    if not isinstance(entries, list):
+        return False
+    for entry in entries:
+        if not isinstance(entry, dict) or entry.get("matcher") not in {"Agent|Task", "Task|Agent"}:
+            continue
+        commands = entry.get("hooks")
+        if not isinstance(commands, list):
+            continue
+        for hook in commands:
+            if not isinstance(hook, dict) or hook.get("type") != "command":
+                continue
+            command = str(hook.get("command") or "").replace("\\", "/")
+            if "cost-router/hook_agent_model.py" in command and hook.get("onFailure") == "block":
+                return True
+    return False
+
+
+FABLE_CONSULTANT_FRONTMATTER_KEYS = frozenset({
+    "name", "description", "tools", "disallowedTools", "model", "effort", "permissionMode",
+})
+FABLE_CONSULTANT_TOOLS = frozenset({"Read", "Grep", "Glob"})
+FABLE_CONSULTANT_REQUIRED_DENIALS = frozenset({
+    "Agent", "Bash", "PowerShell", "Edit", "Write", "NotebookEdit", "Skill",
+    "WebFetch", "WebSearch", "ToolSearch", "mcp__*",
+})
+
+
+def _read_agent_frontmatter(path: Path):
+    """Read scalar YAML frontmatter; preserve invalid/unreadable states for fail-closed routing."""
+    try:
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+    except (OSError, UnicodeError):
+        return {"__invalid__": True, "__unreadable__": True, "model": "fable-unresolved"}
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    if not lines or lines[0].strip() != "---":
+        return None
+    fields = {}
+    closed = False
+    for line in lines[1:]:
+        if line.strip() == "---":
+            closed = True
+            break
+        value = line.strip()
+        if not value or value.startswith("#"):
+            continue
+        key, sep, raw = value.partition(":")
+        key = key.strip()
+        if not sep or not key or key in fields:
+            fields["__invalid__"] = True
+            continue
+        fields[key] = raw.strip().strip("\"'")
+    if not closed:
+        fields["__invalid__"] = True
+    return fields
+
+
+def _agent_frontmatter(subagent_type: str):
+    """Resolve a subagent by declared name; unreadable/ambiguous scope is not trusted."""
+    raw_type = str(subagent_type or "").strip()
+    name = raw_type.split(":")[-1].lower()
+    if not name:
+        return None
+    project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()).resolve()
+    cwd = Path.cwd().resolve()
+    try:
+        cwd.relative_to(project)
+        roots = [cwd]
+        while roots[-1] != project:
+            roots.append(roots[-1].parent)
+    except ValueError:
+        roots = [project]
+        if cwd != project:
+            roots.append(cwd)
+    roots.append(Path.home())
+    roots = tuple(dict.fromkeys(roots))
+    plugin = raw_type.split(":", 1)[0].lower() if ":" in raw_type else None
+    bases = [(root / ".claude" / "agents", None) for root in roots]
+    if plugin:
+        bases.extend((root / ".claude" / "plugins", plugin) for root in roots)
+    for base, plugin_scope in bases:
+        if not base.is_dir():
+            continue
+        matches = []
+        unreadable = False
+        try:
+            candidates = sorted(path for path in base.rglob("*.md") if path.is_file())
+        except OSError:
+            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}
+        for candidate in candidates:
+            try:
+                fields = _read_agent_frontmatter(candidate)
+            except Exception:
+                unreadable = True
+                continue
+            if fields and fields.get("__unreadable__"):
+                unreadable = True
+                continue
+            if fields is None or str(fields.get("name") or "").strip().lower() != name:
+                continue
+            if plugin_scope:
+                try:
+                    if plugin_scope not in candidate.resolve().as_posix().lower():
+                        continue
+                except OSError:
+                    unreadable = True
+                    continue
+            matches.append(fields)
+        if unreadable:
+            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            return {"__invalid__": True, "name": name, "model": "fable-ambiguous"}
+    return None
+
+
+def _agent_frontmatter_model(subagent_type: str):
+    fields = _agent_frontmatter(subagent_type)
+    return fields.get("model") if fields else None
+
+
+def _csv_values(value) -> frozenset[str]:
+    if not isinstance(value, str):
+        return frozenset()
+    return frozenset(item.strip() for item in value.split(",") if item.strip())
+
+
+def _valid_fable_consultant_frontmatter(fields) -> bool:
+    """Require the exact, pinned, read-only consultant definition before granting Fable."""
+    if not isinstance(fields, dict) or fields.get("__invalid__"):
+        return False
+    if set(fields) != FABLE_CONSULTANT_FRONTMATTER_KEYS:
+        return False
+    return (
+        fields.get("name") == FABLE_CONSULTANT
+        and bool(str(fields.get("description") or "").strip())
+        and _csv_values(fields.get("tools")) == FABLE_CONSULTANT_TOOLS
+        and FABLE_CONSULTANT_REQUIRED_DENIALS <= _csv_values(fields.get("disallowedTools"))
+        and fields.get("model") == "claude-fable-5-2"
+        and fields.get("effort") == "high"
+        and fields.get("permissionMode") == "plan"
+    )
+
+
 READ_ONLY_TOOLS = frozenset({"Read", "Grep", "Glob", "LS", "WebFetch", "WebSearch"})
 READ_ONLY_MCP = re.compile(r"mcp__vault-memory__(?:memory_search|memory_get|vault_read|vault_resolve|vault_list"
                            r"|vault_search|vault_get_metadata|vault_check_quotes)")
@@ -350,7 +537,7 @@ def _tier(policy, value):
 
 
 def apply_session_policy(policy, d, reviewer: bool, target, tool_input: dict, session, authorized: bool,
-                         agent_default=None):
+                         agent_default=None, stype: str = ""):
     """Owner escalation policy (R1-R5). Returns (target, deny_reason_or_None, note_or_None). Downward routing
     (session above the target) is unchanged; a model choice in tool_input is never an authorization."""
     s_tier = _tier(policy, session)
@@ -359,6 +546,10 @@ def apply_session_policy(policy, d, reviewer: bool, target, tool_input: dict, se
         s_tier = min(policy.models, key=policy.rank)  # R5: unknown session -> cheapest tier (fail closed)
         note = "session model unknown; set ANTHROPIC_MODEL"
     s_name = session if session and _tier(policy, session) else "unknown"
+    if stype == FABLE_CONSULTANT and target == "fable":
+        if s_tier in ("opus", "fable"):
+            return "fable", None, note
+        return None, f"cost-router: {FABLE_CONSULTANT} requires an opus session; session is {s_name}", note
     raw = tool_input.get("model")
     unknown_explicit = raw is not None and _resolve_model(policy, raw) is None
     req = required_tier(policy, d, reviewer)
@@ -371,15 +562,15 @@ def apply_session_policy(policy, d, reviewer: bool, target, tool_input: dict, se
                       f" #escalate in the prompt or run the session on {req}"), note
     if req == "opus":  # session already >= opus: the mandatory floor stays
         return target, None, note
+    if unknown_explicit:  # R2-2: never passed through; #escalate cannot authorize a model the policy cannot rank
+        out = target if (target and policy.rank(target) <= policy.rank(s_tier)) else s_tier
+        cap = f"unrecognised model {_model_label(raw)}; capped to {out}"
+        return out, None, cap + (f"; {note}" if note else "")
     if target and policy.rank(target) > policy.rank(s_tier):
         if authorized:
             return target, None, f"escalated {s_name} -> {target} (authorized by #escalate)" + (f"; {note}" if note else "")
         cap = f"not escalated: session {s_name}; #escalate allows {target}"
         return s_tier, None, cap + (f"; {note}" if note else "")
-    if unknown_explicit:  # R2-2: never passed through; #escalate cannot authorize a model the policy cannot rank
-        out = target or s_tier
-        cap = f"unrecognised model {_model_label(raw)}; capped to {out}"
-        return out, None, cap + (f"; {note}" if note else "")
     if not target and raw is None:
         if agent_default is UNKNOWN_DEFAULT:  # R2-1: plugin / unresolvable agent default -> the session tier
             cap = f"agent default unknown; capped to session tier {s_tier}"
@@ -389,9 +580,16 @@ def apply_session_policy(policy, d, reviewer: bool, target, tool_input: dict, se
             if dt is None:  # F3: an unrankable default is capped even with #escalate (like an explicit model)
                 cap = f"agent default {_model_label(agent_default)} unrecognised; capped to session tier {s_tier}"
                 return s_tier, None, cap + (f"; {note}" if note else "")
+            if dt == "fable" and stype != FABLE_CONSULTANT:
+                if not authorized and policy.rank("opus") > policy.rank(s_tier):
+                    cap = f"not escalated: agent default {dt} above session {s_name}; #escalate allows opus"
+                    return s_tier, None, cap + (f"; {note}" if note else "")
+                return "opus", None, note
             if not authorized and policy.rank(dt) > policy.rank(s_tier):
                 cap = f"not escalated: agent default {dt} above session {s_name}; #escalate allows {dt}"
                 return s_tier, None, cap + (f"; {note}" if note else "")
+        elif s_tier == "fable" and stype != FABLE_CONSULTANT:
+            return "opus", None, note
     return target, None, note
 
 
@@ -443,7 +641,7 @@ def _agent_default_model(stype: str, data: dict | None):
 def choose(policy, mod, tool_input: dict, data: dict | None = None):
     """Return (target_alias_or_None, route_decision)."""
     brief = f"{tool_input.get('description') or ''} {str(tool_input.get('prompt') or '')[:2000]}"
-    stype = str(tool_input.get("subagent_type") or "").lower()
+    stype = str(tool_input.get("subagent_type") or "").strip().lower()
     reviewer = any(m in stype for m in REVIEWER_MARKS)
     role = "reviewer" if reviewer else ("implementer" if any(m in stype for m in WORKER_MARKS) else None)
     try:
@@ -451,7 +649,19 @@ def choose(policy, mod, tool_input: dict, data: dict | None = None):
     except TypeError:  # a router copy older than the role parameter
         d = mod.route(policy, brief, for_subagent=True)
     risky = any(r.startswith(RISK_PREFIXES) for r in d.applied_rules)
-    explicit = _alias(policy, tool_input.get("model"))
+    requested_model = tool_input.get("model")
+    explicit = _alias(policy, requested_model)
+    if stype == FABLE_CONSULTANT:
+        allowlist = {str(value).strip().lower() for value in policy.rules.get("fable_subagent_allowlist", ())}
+        if stype not in allowlist:
+            return "opus", d
+        if str(requested_model or "").strip().lower() == "inherit":
+            return "opus", d
+        if explicit == "unknown":
+            return ("fable" if _requests_fable(requested_model) else "opus"), d
+        return (explicit or "fable"), d
+    if _requests_fable(requested_model) or str(requested_model or "").strip().lower() == "inherit":
+        return "opus", d
     if explicit == "unknown":
         if not needs_opus(d, reviewer) and d.task_class == "unclassified" and not risky:
             return None, d  # apply_session_policy caps it to the session tier (R2-2)
@@ -473,6 +683,13 @@ def choose(policy, mod, tool_input: dict, data: dict | None = None):
     if d.task_class == "unclassified" and not risky:
         if reviewer and (explicit is None or policy.rank(explicit) < policy.rank("opus") or explicit == "fable"):
             return "opus", d
+        if explicit is None:
+            frontmatter_model = _agent_frontmatter_model(stype)
+            if (_requests_fable(frontmatter_model)
+                    or str(frontmatter_model or "").strip().lower() == "inherit"
+                    or _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"))):
+                return "opus", d
+            return None, d
         # HIGH-A: an explicit model is never passed through unchecked; apply_session_policy caps it (R3/R5)
         return (explicit if explicit in policy.models else None), d
     lo = d.model
@@ -495,7 +712,7 @@ def _verbose() -> bool:
     return os.environ.get("COST_ROUTER_VERBOSE_ROUTE", "").strip() == "1"
 
 
-def main() -> int:
+def _main() -> int:
     try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch; no output, no state
         import route_state as _rs  # noqa: E402
         if _rs.disabled_by_env():
@@ -505,17 +722,44 @@ def main() -> int:
     try:
         data = json.load(sys.stdin)
     except Exception:
-        return 0
-    if not isinstance(data, dict) or data.get("tool_name") not in SPAWN_TOOLS:
+        print("cost-router: invalid Agent hook input; blocking spawn", file=sys.stderr)
+        return 2
+    if not isinstance(data, dict):
+        print("cost-router: Agent hook input must be a JSON object; blocking spawn", file=sys.stderr)
+        return 2
+    if data.get("tool_name") not in SPAWN_TOOLS:
         return 0
     tool_input = data.get("tool_input")
     if not isinstance(tool_input, dict):
-        return 0
+        print("cost-router: malformed Agent tool input; blocking spawn", file=sys.stderr)
+        return 2
+    stype = str(tool_input.get("subagent_type") or "").strip().lower()
+    agent_frontmatter = (
+        _agent_frontmatter(stype)
+        if stype == FABLE_CONSULTANT or not tool_input.get("model") else None
+    )
+    frontmatter_model = agent_frontmatter.get("model") if agent_frontmatter else None
+    fable_sensitive = (
+        stype == FABLE_CONSULTANT
+        or _requests_fable(tool_input.get("model"))
+        or _requests_fable(frontmatter_model)
+    )
+    if stype == FABLE_CONSULTANT and not _valid_fable_consultant_frontmatter(agent_frontmatter):
+        print("cost-router: fable-consultant definition is missing or violates the read-only agent contract; blocking spawn",
+              file=sys.stderr)
+        return 2
     try:
         from route import _load_router, is_shadowed, policy_path  # noqa: E402
-        if is_shadowed(Path(__file__)):
-            return 0
+        if is_shadowed(Path(__file__)) and _user_agent_hook_is_registered():
+            if _user_copy_is_current(Path(__file__)):
+                return 0
+            print("cost-router: registered user-scope Agent hook is stale; reinstall cost-router before spawning agents",
+                  file=sys.stderr)
+            return 2
     except Exception:
+        if fable_sensitive:
+            print("cost-router: cannot validate Fable routing; blocking spawn", file=sys.stderr)
+            return 2
         return 0
     try:
         mod = _load_router()
@@ -527,15 +771,18 @@ def main() -> int:
         session, source = route_state.resolve_session_model_ex(sid, data, data.get("transcript_path"))
         if source not in ("payload", "transcript", "stored", "env"):
             session = None  # MED-C: a settings-file model is a guess -> unknown session, fail closed (R5)
-        stype_l = str(tool_input.get("subagent_type") or "").lower()
-        reviewer = any(m in stype_l for m in REVIEWER_MARKS)
+        reviewer = any(m in stype for m in REVIEWER_MARKS)
         target, deny, pnote = apply_session_policy(policy, d, reviewer, target, tool_input, session,
                                                    state.get("escalation_authorized") is True,
-                                                   agent_default=_agent_default_model(stype_l, data))
+                                                   agent_default=_agent_default_model(stype, data),
+                                                   stype=stype)
         given = tool_input.get("model")
         if target and given is not None and _resolve_model(policy, given) == target:
             target = given  # same tier: keep the owner's spelling (`opus[1m]`, a dated id), no rewrite
     except Exception:
+        if fable_sensitive:
+            print("cost-router: Fable routing policy unavailable; blocking spawn", file=sys.stderr)
+            return 2
         target, d, deny, pnote = None, None, None, None  # fail open: only the Vault-router gate still applies
     if deny:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
@@ -547,6 +794,14 @@ def main() -> int:
                                                  "permissionDecisionReason": reason}}))
         return 0
     if d is None:
+        return 0
+    if target == "fable" and stype == FABLE_CONSULTANT and not tool_input.get("model"):
+        # The Agent tool schema accepts only the short "fable" alias. Keep the
+        # exact claude-fable-5-2 pin in the consultant's frontmatter instead of
+        # injecting an invalid full model ID into updatedInput.model.
+        ctx = "\n".join(x for x in (pnote, _ROUTER_NOTE if _verbose() else "") if x)
+        if ctx:
+            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": ctx}}))
         return 0
     if not target or target == tool_input.get("model"):
         ctx = "\n".join(x for x in (pnote, _ROUTER_NOTE if _verbose() else "") if x)
@@ -569,6 +824,17 @@ def main() -> int:
         **({"additionalContext": ctx} if (_verbose() or pnote) else {}),  # the policy note is always visible
     }}))
     return 0
+
+
+def main() -> int:
+    try:
+        return _main()
+    except Exception as exc:
+        print(
+            f"cost-router: unexpected error while validating Agent spawn ({type(exc).__name__}); blocking spawn",
+            file=sys.stderr,
+        )
+        return 2
 
 
 if __name__ == "__main__":

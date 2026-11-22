@@ -198,9 +198,18 @@ def test_no_state_allows(home):
 
 @pytest.mark.parametrize("script", [ENFORCE_HOOK, AGENT_HOOK, PROMPT_HOOK])
 @pytest.mark.parametrize("stdin", ["", "not json", "[1, 2]", '{"session_id": 5}'])
-def test_malformed_stdin_exits_zero_silently(home, script, stdin):
-    r = _run(script, stdin, home)
+def test_malformed_stdin_is_silent_or_blocks_agent_spawns(home, script, stdin):
+    env = dict(os.environ)
+    env.update({"HOME": str(home), "USERPROFILE": str(home), "CLAUDE_PROJECT_DIR": str(ROOT)})
+    env.pop("COST_ROUTER_ENFORCE", None)
+    env.pop("COST_ROUTER_OLLAMA_ENDPOINT", None)
+    r = subprocess.run([sys.executable, str(script)], input=stdin, capture_output=True, text=True,
+                       timeout=60, env=env)
     assert r.stdout == ""
+    if script == AGENT_HOOK and stdin in ("", "not json", "[1, 2]"):
+        assert r.returncode == 2 and "blocking spawn" in r.stderr
+    else:
+        assert r.returncode == 0 and r.stderr == ""
 
 
 def test_corrupt_state_file_allows(home):
@@ -271,6 +280,8 @@ def test_settings_and_installer_match_agent_and_task(tmp_path):
     hooks = json.loads((h / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
     agent = [e for e in hooks if "hook_agent_model.py" in json.dumps(e)]
     assert len(agent) == 1 and agent[0]["matcher"] == "Agent|Task"
+    assert agent[0]["hooks"][0]["onFailure"] == "block"
+    assert "exit $?" in agent[0]["hooks"][0]["command"] and "exit 2" in agent[0]["hooks"][0]["command"]
 
 
 @pytest.mark.parametrize("subagent_type", ["vault-reviewer", "code-review", "verifier"])
@@ -309,7 +320,7 @@ def test_invoking_the_router_marks_vault_routed(home, command):
 
 def test_policy_doc_states_the_opus_ceiling():
     text = (ROOT / "00_GOVERNANCE" / "protocols" / "Claude_Model_Routing_Policy_V1.md").read_text(encoding="utf-8")
-    assert "Fable is reachable only for the `frontier` class" in text
+    assert "Fable 5.2 is not a route tier" in text
 
 
 # -- re-review fixes ---------------------------------------------------------------

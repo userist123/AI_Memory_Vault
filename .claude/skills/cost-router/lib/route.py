@@ -69,7 +69,7 @@ def one_line(d) -> str:
     if d.escalate_to:
         line += f"; on failed check escalate to {d.escalate_to}"
     elif d.model == "opus":
-        line += "; on failed check stay on Opus (Fable only for frontier sessions)"
+        line += "; on failed check stay on Opus (Fable is a separate read-only consultant)"
     return line
 
 

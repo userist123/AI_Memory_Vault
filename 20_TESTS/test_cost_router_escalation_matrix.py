@@ -277,7 +277,11 @@ def test_t7_malformed_input_fails_open(env, hook):
     for raw in ("{not json", "[]", "null", ""):
         r = subprocess.run([sys.executable, str(HOOKS / hook)], input=raw, capture_output=True, text=True,
                            timeout=60, env=e, encoding="utf-8")
-        assert r.returncode == 0 and r.stdout.strip() == "" and "Traceback" not in r.stderr
+        assert r.stdout.strip() == "" and "Traceback" not in r.stderr
+        if hook == "hook_agent_model.py":
+            assert r.returncode == 2 and "blocking spawn" in r.stderr
+        else:
+            assert r.returncode == 0
 
 
 def test_t6_off_switch_keeps_the_agent_hook_inert(env):
@@ -535,11 +539,17 @@ def test_r2_2_unrecognised_explicit_model_is_capped_to_the_session_tier(env, ses
 
 @pytest.mark.parametrize("given,tier", [("opus[1m]", "opus"), ("claude-opus-5-5-20261001", "opus"),
                                         ("claude-opus-5-5[1m]", "opus"), ("FABLE", "fable"),
-                                        ("claude-fable-5-1", "fable")])
+                                        ("claude-fable-5-2", "fable")])
 @pytest.mark.parametrize("session", ["haiku", "sonnet"])
 def test_r2_2_recognised_variants_above_the_session_are_capped(env, session, given, tier):
     out = _spawn_raw(env, session, UNCLASSIFIED_BRIEFS[3], model=given)
     assert final_model(out) == session and "not escalated" in note(out), out
+
+
+@pytest.mark.parametrize("session", ["haiku", "sonnet", "opus"])
+def test_r2_2_historical_fable_51_id_is_capped_and_never_passed_through(env, session):
+    out = _spawn_raw(env, session, UNCLASSIFIED_BRIEFS[3], model="claude-fable-5-1")
+    assert final_model(out) == session and "unrecognised model 'claude-fable-5-1'" in note(out), out
 
 
 @pytest.mark.parametrize("given", ["opus[1m]", "claude-opus-5-5-20261001", "opus"])
