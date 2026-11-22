@@ -228,7 +228,7 @@ A first run marked the catalogue UNSPLITTABLE for a false reason. The body start
 
 ### Step 2 built, not run: the owner tool `apply-split` (2026-11-22)
 
-`active_knowledge_engine/split_apply.py` (CLI `apply-split --manifest PLAN.json [--execute]`) is the owner's step. It is built and tested but **was not run on the real vault**: creating and attesting notes is the owner's authority.
+`ake_owner_tools/split_apply.py` (CLI `python -m ake_owner_tools apply-split --manifest PLAN.json [--execute]`; a separate package, so the write-free AST guard on the engine holds) is the owner's step. It is built and tested but **was not run on the real vault**: creating and attesting notes is the owner's authority.
 - It runs only as HUMAN/ADMIN. `--execute` also needs an interactive terminal (stdin and stdout; on Windows NUL reports `isatty()`) and the parent id typed back.
 - It re-checks the manifest against the parent as it is now. A stale or tampered manifest is refused before any write.
 - For each child, in order, it:
@@ -247,4 +247,4 @@ Security review round 1 (`vault-reviewer`) returned CHANGES_REQUIRED, all reprod
 - **Resume.** A re-run picks up the tool's own partial children from the state they are in.
 - **Authority limit, stated plainly.** The principal is an argument, as for every controller call in this vault, because the runtime authority layer is not wired. Any code that imports the module can pass HUMAN. The terminal check and the typed parent id guard against piped or scripted runs; they do not prove the owner is present.
 
-**Owner pilot:** `python -m active_knowledge_engine split-plan --note-id 8c7d5c90-9c29-450b-b5a9-e2b2024db502`, then `apply-split --manifest <plan> --execute` in your own terminal. Supersede or keep the parent afterwards; that is a separate owner decision.
+**Owner pilot:** `python -m active_knowledge_engine split-plan --note-id 8c7d5c90-9c29-450b-b5a9-e2b2024db502`, then `python -m ake_owner_tools apply-split --manifest <plan> --execute` in your own terminal. Supersede or keep the parent afterwards; that is a separate owner decision.

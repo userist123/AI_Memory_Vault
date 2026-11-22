@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from active_knowledge_engine.split_apply import ManifestError, apply_split
+from ake_owner_tools.split_apply import ManifestError, apply_split
 from active_knowledge_engine.split_plan import plan_split
 
 REPO = Path(__file__).resolve().parents[1]
@@ -182,7 +182,7 @@ def test_cli_dry_run_writes_nothing_and_execute_needs_a_terminal(setup, tmp_path
     manifest.write_text(json.dumps(plan), encoding="utf-8")
     env = {**os.environ, "PYTHONPATH": str(REPO / "03_IMPLEMENTATION" / "packages"),
            "AI_MEMORY_VAULT_HOME": str(tmp_path / "state")}
-    base = [sys.executable, "-m", "active_knowledge_engine", "apply-split", "--manifest", str(manifest),
+    base = [sys.executable, "-m", "ake_owner_tools", "apply-split", "--manifest", str(manifest),
             "--vault-root", str(vault)]
     dry = subprocess.run(base, capture_output=True, text=True, timeout=300, env=env, stdin=subprocess.DEVNULL)
     assert dry.returncode == 0, dry.stderr
