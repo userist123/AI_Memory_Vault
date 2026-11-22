@@ -41,7 +41,7 @@ export async function getCommercial(owner: string, id: string, now = today()){
   const p = await getProject(owner, id), data = await getCommercialData(owner, id), { budget: b, custom } = await projectBudget(p);
   const fee = feeFor(await contractContext(owner, id, now, { p, budget: b }));
   // aceleași linii ca bugetul (core/commercial.ts commercialSources): produse, produse proprii, manoperă, transport și montaj
-  const { items, labor, extras } = commercialSources(b, custom);
+  const { items, labor, extras } = commercialSources(b, custom, p.draft.laborContract);
   const report = profitReport(data, items, labor, fee.net, fee.vat, extras), schedule = paymentSchedule(data.milestones, report.totals.client, now);
   const chain = projectChain(report, b.settings.contingencyPct);
   return { name: p.name, meta: p.meta, data, report, schedule, labor, extras, chain, fee: { kind: fee.kind, net: fee.net, vat: fee.vat, gross: fee.gross, vatPayer: fee.vatPayer, reason: fee.reason ?? null },

@@ -2,6 +2,8 @@
 // proiectul și reviziile în JSON, comenzile și devizul în CSV, pozele de pe șantier și randările ca fișiere.
 // Chestionarul clientului (lib/client-brief.ts) nu intră în arhivă: nici răspunsurile, nici pozele de inspirație ale clientului;
 // ce a preluat designerul din el e deja în brief-ul din proiect.json.
+// Cererile de ofertă către meseriași (lib/rfq.ts) nu intră nici ele: ofertele sunt datele meseriașilor; prețurile contractate la
+// atribuire sunt deja în proiect.json (laborContract).
 // Linkurile clientului apar fără cheie (doar revizia și datele), ca arhiva să nu deschidă nimic dacă ajunge la altcineva.
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

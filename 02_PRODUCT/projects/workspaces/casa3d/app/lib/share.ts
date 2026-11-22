@@ -53,7 +53,9 @@ export async function resolveShare(token: unknown): Promise<SharedView> {
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
   await q(`update shares set last_access_at = date_trunc('hour', now()) where token=$1 and (last_access_at is null or last_access_at < date_trunc('hour', now()))`, [token]);
   // Numele vine din revizia partajată: o redenumire ulterioară a proiectului nu apare pe linkurile vechi.
-  return { projectName: String(rows[0].snapshot?.name ?? ''), revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot: rows[0].snapshot as Snapshot, readOnly: true };
+  // prețurile de manoperă contractate cu meseriașii (core/rfq.ts) sunt doar ale designerului: nu ajung pe linkul clientului
+  const snapshot = rows[0].snapshot as Snapshot; if (snapshot) delete snapshot.laborContract;
+  return { projectName: String(snapshot?.name ?? ''), revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot, readOnly: true };
 }
 
 /** Adresa publică a aplicației (CASA3D_PUBLIC_URL, ex. tunelul spre acest calculator); fără ea linkul folosește adresa din browser. */

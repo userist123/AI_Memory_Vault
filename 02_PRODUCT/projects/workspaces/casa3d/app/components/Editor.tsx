@@ -63,6 +63,7 @@ import { DesignerChanges } from './ChangeOrders';
 import OrdersPage from './OrdersPage';
 import CommercialPanel from './CommercialPanel';
 import ProgressPanel from './ProgressPanel';
+import RfqPanel from './RfqPanel';
 import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
@@ -211,6 +212,8 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'orders', view: '2d', tools: [], page: true },
   { id: 'site', view: '2d', tools: [], page: true }
 ];
+/** Prețurile de manoperă contractate nu țin de istoricul desenului: anularea / refacerea unui pas le păstrează pe cele curente. */
+function keepContract(s: Snapshot, from: Pick<Snapshot, 'laborContract'>): Snapshot { const { laborContract: _old, ...rest } = s; return from.laborContract ? { ...rest, laborContract: from.laborContract } : rest; }
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
@@ -382,8 +385,8 @@ export default function Editor({ id }: { id: string }){
     });
     if (r.clamped) say(t('editor.resizeClamped')); }
     catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
-  const undo = () => { if (!house || dragStart.current) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
-  const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
+  const undo = () => { if (!house || dragStart.current) return; const s0 = hist.current.undo(house), s = s0 && keepContract(s0, house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
+  const redo = () => { if (!house || dragStart.current) return; const s0 = hist.current.redo(house), s = s0 && keepContract(s0, house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; if (sel.kind === 'placement' && snap && firstLocked(snap, group)){ say(t('edit.locked')); return; } mutate(s => {
     if (sel.kind === 'placement') s.placements = s.placements.filter(p => !group.includes(p.id));   // cu selecție multiplă: toate piesele grupului
     // peretele șters își ia și nișele
@@ -505,6 +508,9 @@ export default function Editor({ id }: { id: string }){
   const onApplied = (s: Snapshot, n: number, draftRev?: number | null) => { clearTimeout(timer.current); hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null);
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); loadRevs(); };
   const onBrief = (brief: Snapshot['brief'], draftRev?: number | null) => { if (!house) return; const h = { ...(latest.current ?? house), brief }; setHouse(h); latest.current = h;
+    if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
+  // prețurile de manoperă contractate (cereri de ofertă către meseriași) se scriu pe server: editorul le preia și continuă de la versiunea nouă
+  const onContract = (c: Snapshot['laborContract'], draftRev?: number | null) => { if (!house) return; const h = keepContract(latest.current ?? house, { laborContract: c && Object.keys(c).length ? c : undefined }); setHouse(h); latest.current = h;
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
   async function restore(n: number){ if (!(await askConfirm({ title: t('dlg.restoreTitle', { n }), body: t('editor.restoreConfirm', { n }), confirmLabel: t('dlg.restoreOk', { n }) }))) return;
     clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
@@ -1364,6 +1370,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {stage === 'quote' && <CommercialPanel id={id} cur={cur} say={say} />}
         {stage === 'quote' && <ProgressPanel id={id} cur={cur} say={say} />}
+        {stage === 'quote' && <RfqPanel id={id} cur={cur} say={say} flush={flushDraft} onContract={onContract} />}
         {stage === 'present' && !showSel && <ClientPanel id={id} cur={cur} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a><a className="docrow" href={`/p/${id}/board`} target="_blank" rel="noopener"><b>{t('board.open')}</b><small>{t('board.openSub')}</small></a></div>}

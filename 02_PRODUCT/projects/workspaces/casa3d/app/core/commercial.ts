@@ -4,7 +4,9 @@
 // Prețurile din catalog sunt prețuri de listă de magazin, cu TVA inclus (aceeași bază ca bugetul din core/boq.ts):
 //   cost designer = listă × (1 − discount),  preț client = listă × (1 + adaos),  profit = preț client − cost.
 // Un preț necunoscut rămâne necunoscut (null), niciodată 0: linia nu intră în totaluri și e numărată separat.
-// Manopera e trecută la client fără adaos (cost = preț client, profit 0).
+// Manopera e trecută la client fără adaos (cost = preț client, profit 0) cât timp nu are preț contractat. După atribuirea unei
+// cereri de ofertă (core/rfq.ts, Snapshot.laborContract), COSTUL manoperei contractate e cantitatea curentă × prețul contractat
+// (cu TVA dacă meseriașul e plătitor); prețul către client rămâne estimarea aleasă în buget — diferența apare ca profit / pierdere.
 //
 // Convenția de TVA (aceeași în contract, raport și proformă):
 //   * produsele (catalog și produse proprii) au prețuri de listă CU TVA inclus; proforma extrage TVA-ul din ele;
@@ -16,6 +18,7 @@
 // Proforma nu e factură fiscală și nu trece prin e-Factura: e o cerere de plată pentru client.
 import type { BoqCategory, Budget } from './boq';
 import { safeCell, quoteCell } from './csv-safe';
+import { contractCost, type LaborContract } from './rfq';
 
 const r2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 
@@ -116,7 +119,9 @@ export function termsFor(d: Pick<CommercialData, 'defaults' | 'suppliers'>, supp
 export type LineCategory = BoqCategory | 'custom';
 /** `costTotal`: costul real al liniei (produs propriu cu preț de achiziție); lipsă/null → din discountul furnizorului. */
 export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null }
-export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number }
+/** `costTotal`: costul contractat al liniei (manoperă cu ofertă atribuită); lipsă → costul e chiar `amount` (trecere fără adaos).
+ *  `contract`: prețul contractat pe unitate și echipa, pentru afișare lângă estimare. */
+export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number; costTotal?: number; contract?: { unitPrice: number; vatPayer: boolean; label: string } }
 export interface ProfitLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string;
   list: number | null; cost: number | null; client: number | null; profit: number | null; clientUnit: number | null; discountPct: number; markupPct: number }
 export interface ProfitGroup { list: number | null; cost: number | null; client: number | null; profit: number | null; lines: number; unknown: number }
@@ -131,7 +136,8 @@ export function profitLine(d: Pick<CommercialData, 'defaults' | 'suppliers'>, s:
 }
 export interface ProfitReport { lines: ProfitLine[]; bySupplier: Record<string, ProfitGroup>; byCategory: Record<string, ProfitGroup>; goods: ProfitGroup;
   /** onorariul NET (fără TVA) și TVA-ul lui (0 dacă studioul nu e plătitor) */
-  labor: number; /** transport și montaj cunoscute (din buget), trecute la client fără adaos */ extras: number; fee: number | null; feeVat: number; totals: { cost: number; client: number; profit: number; marginPct: number | null }; unknownLines: number; feeUnknown: boolean }
+  labor: number; /** costul manoperei: egal cu `labor` fără prețuri contractate; altfel liniile contractate intră la costul contractat */ laborCost: number;
+  /** transport și montaj cunoscute (din buget), trecute la client fără adaos */ extras: number; fee: number | null; feeVat: number; totals: { cost: number; client: number; profit: number; marginPct: number | null }; unknownLines: number; feeUnknown: boolean }
 /**
  * Profitul pe linie, pe furnizor, pe categorie și pe proiect. Totalurile proiectului adună doar valorile cunoscute;
  * `unknownLines` spune câte linii lipsesc, `feeUnknown` că onorariul nu se poate estima (de ex. pe oră).
@@ -142,10 +148,10 @@ export function profitReport(d: Pick<CommercialData, 'defaults' | 'suppliers'>, 
   const group = (m: Map<string, ProfitGroup>, k: string) => { let g = m.get(k); if (!g) m.set(k, g = newG()); return g; };
   for (const l of lines){ addG(group(sup, l.supplier), l); addG(group(cat, l.category), l); addG(goods, l); }
   const bySupplier: Record<string, ProfitGroup> = Object.fromEntries(sup), byCategory: Record<string, ProfitGroup> = Object.fromEntries(cat);
-  const lab = r2(labor.reduce((a, l) => a + l.amount, 0)), f = fee ?? 0, fv = fee == null ? 0 : r2(feeVat);
+  const lab = r2(labor.reduce((a, l) => a + l.amount, 0)), labCost = r2(labor.reduce((a, l) => a + (l.costTotal ?? l.amount), 0)), f = fee ?? 0, fv = fee == null ? 0 : r2(feeVat);
   const ex = r2(extras.reduce((a, l) => a + l.amount, 0));
-  const cost = r2((goods.cost ?? 0) + lab + ex), client = r2((goods.client ?? 0) + lab + ex + f + fv), profit = r2((goods.profit ?? 0) + f);
-  return { lines, bySupplier, byCategory, goods, labor: lab, extras: ex, fee, feeVat: fv, totals: { cost, client, profit, marginPct: client > 0 ? r2(profit / client * 100) : null }, unknownLines: goods.unknown, feeUnknown: fee == null };
+  const cost = r2((goods.cost ?? 0) + labCost + ex), client = r2((goods.client ?? 0) + lab + ex + f + fv), profit = r2((goods.profit ?? 0) + f + (lab - labCost));
+  return { lines, bySupplier, byCategory, goods, labor: lab, laborCost: labCost, extras: ex, fee, feeVat: fv, totals: { cost, client, profit, marginPct: client > 0 ? r2(profit / client * 100) : null }, unknownLines: goods.unknown, feeUnknown: fee == null };
 }
 
 // ---------- graficul de plăți ----------
@@ -221,12 +227,15 @@ export interface CustomSource { id: string; name: string; supplier: string; qty:
  * Liniile devizului din buget: produsele din catalog și cele proprii, manopera (scenariul ales, dacă e inclusă) și
  * transportul / montajul cunoscute. Aceeași funcție pe server (raport, proformă) și în buget, deci aceleași sume.
  */
-export function commercialSources(b: Budget, custom: CustomSource[] = []): { items: SourceLine[]; labor: SourceLabor[]; extras: SourceLabor[] } {
+export function commercialSources(b: Budget, custom: CustomSource[] = [], laborContract?: LaborContract | null): { items: SourceLine[]; labor: SourceLabor[]; extras: SourceLabor[] } {
   const items: SourceLine[] = b.items.map(i => ({ key: i.key, category: i.category, label: i.label, supplier: i.supplier, qty: i.orderedQty, unit: i.unit, unitPrice: i.unitPrice, total: i.total }));
   // produsele proprii: `price` e prețul de listă / către client (cu TVA, ca în catalog); costul real, dacă e cunoscut, e costPrice
   for (const c of custom) items.push({ key: 'c|' + c.id, category: 'custom', label: c.name, supplier: c.supplier, qty: c.qty, unit: c.unit,
     unitPrice: c.price, total: c.price == null ? null : r2(c.price * c.qty), costTotal: c.costPrice == null ? null : r2(c.costPrice * c.qty) });
-  const labor: SourceLabor[] = b.settings.includeLabor ? b.labor.map(l => ({ key: l.key, label: l.label, qty: l.qty, unit: l.unit, amount: l[b.settings.laborScenario] })) : [];
+  // prețul contractat (dacă există pe tariful liniei) schimbă doar costul; `amount` rămâne prețul către client din scenariul ales
+  const contractOf = (rateId: string) => laborContract && Object.prototype.hasOwnProperty.call(laborContract, rateId) ? laborContract[rateId]! : null;
+  const labor: SourceLabor[] = b.settings.includeLabor ? b.labor.map(l => { const c = contractOf(l.rateId), base = { key: l.key, label: l.label, qty: l.qty, unit: l.unit, amount: l[b.settings.laborScenario] };
+    return c ? { ...base, costTotal: contractCost(c, l.qty, b.vatRate), contract: { unitPrice: c.unitPrice, vatPayer: c.vatPayer, label: c.label } } : base; }) : [];
   const extras: SourceLabor[] = b.extras.filter(e => e.amount != null && e.amount > 0).map(e => ({ key: e.key, label: e.label, qty: 1, unit: 'serv', amount: e.amount as number }));
   return { items, labor, extras };
 }

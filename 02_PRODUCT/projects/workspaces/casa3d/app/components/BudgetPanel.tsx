@@ -8,7 +8,7 @@ import { computeBudget, type BoqItem } from '@/core/boq';
 import { relFor, freshness } from '@/core/outbound';
 import { WASTE, PAINT_COATS, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2 } from '@/core/rules.boq';
 import { usePrefs } from '@/lib/prefs';
-import { formatMoney, formatLength, formatArea, catalogCurrency } from '@/core/format';
+import { formatMoney, formatPrice, formatLength, formatArea, catalogCurrency } from '@/core/format';
 import { formatNumber } from '@/lib/i18n';
 import { formatNumber as fmtNum, qtyDecimals } from '@/core/format';
 import { commercialSources, profitReport, projectChain, type CustomSource, type Terms } from '@/core/commercial';
@@ -88,8 +88,9 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : '—'}</b>
       <small>{qn(i.netQty, i.unit)} {unit(i.unit)} {t('budget.net')}{i.wastePct ? ` + ${Math.round(i.wastePct * 100)}% = ` : ' · '}{i.packs != null ? `${i.packs} × ${i.packLabel} (${qn(i.orderedQty, i.unit)} ${unit(i.unit)})` : `${qn(i.orderedQty, i.unit)} ${unit(i.unit)}`} · {formatMoney(i.unitPrice || 0, cur, lang)}/{unit(i.unit)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="acc" onClick={() => setOpen(open === 'lab' ? null : 'lab')} aria-expanded={open === 'lab'}>{t('budget.laborSection', { n: b.labor.length })}</button>
-    {open === 'lab' && <div className="tbl">{b.labor.map(l => <div key={l.key} className="trow"><span>{l.label} · {roomName(l.roomId)}</span><b className="mono">{lei(l.expected)}</b>
-      <small>{qn(l.qty, l.unit)} {unit(l.unit)} · {t('budget.range', { low: lei(l.low), high: lei(l.high) })} · {t('budget.sources')}: {l.sources.map((x, k) => <a key={k} href={x.url} target="_blank" rel="noopener noreferrer">{x.name}</a>).reduce((a: any, el, k) => k ? [...a, '; ', el] : [el], [])}</small></div>)}</div>}
+    {open === 'lab' && <div className="tbl">{b.labor.map((l, i) => { const c = snap.laborContract && Object.hasOwn(snap.laborContract, l.rateId) ? snap.laborContract[l.rateId] : null; return <div key={`${l.key}:${i}`} className="trow"><span>{l.label} · {roomName(l.roomId)}</span><b className="mono">{lei(l.expected)}</b>
+      {c && <small className="contracted">{t('rfq.contracted', { price: formatPrice(c.unitPrice, cur, lang), unit: unit(l.unit), vat: c.vatPayer ? t('rfq.contracted.vat') : '', team: c.label })}</small>}
+      <small>{qn(l.qty, l.unit)} {unit(l.unit)} · {t('budget.range', { low: lei(l.low), high: lei(l.high) })} · {t('budget.sources')}: {l.sources.map((x, k) => <a key={k} href={x.url} target="_blank" rel="noopener noreferrer">{x.name}</a>).reduce((a: any, el, k) => k ? [...a, '; ', el] : [el], [])}</small></div>; })}</div>}
     <button className="acc" onClick={() => setOpen(open === 'mob' ? null : 'mob')} aria-expanded={open === 'mob'}>{t('budget.furnitureSection', { n: b.items.filter(i => ['furniture', 'sanitary', 'appliances'].includes(i.category)).length })}</button>
     {open === 'mob' && <div className="tbl">{b.items.filter(i => ['furniture', 'sanitary', 'appliances'].includes(i.category)).map(i => <div key={i.key} className="trow">
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : t('common.unknown')}</b><small>{roomName(i.roomId)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}

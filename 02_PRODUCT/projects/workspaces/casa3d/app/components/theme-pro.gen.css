@@ -323,3 +323,4 @@
 .ws.theme-pro .cbf progress::-webkit-progress-value{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
 .ws.theme-pro .cbf progress::-moz-progress-bar{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
 .ws.theme-pro .cbf-opt[aria-pressed=true]{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}
+.ws.theme-pro .rof-opt[aria-pressed=true]{background:#4a4a4a;border-color:#5c5c5c;color:#ffffff}

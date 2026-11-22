@@ -123,4 +123,12 @@ create table if not exists brief_photos(id uuid primary key default gen_random_u
   data bytea not null, bytes int not null, width int not null, height int not null, verdict text check (verdict in ('love','ok','dislike')),
   note text not null default '' check (char_length(note) <= 200), created_at timestamptz not null default now());
 create index if not exists brief_photos_token on brief_photos(token, created_at);
+-- cererile de ofertă către meseriași (core/rfq.ts): lista de cantități înghețată la creare și câte un link (token) pe meseriaș,
+-- cu oferta lui (data), versiunea pentru salvarea automată (rev) și starea linkului. awarded_invite = oferta aleasă
+create table if not exists rfq_requests(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade, title text not null,
+  trades jsonb not null, lines jsonb not null, note text not null default '', site_city text, due_date date, created_at timestamptz not null default now(), closed_at timestamptz, awarded_invite text);
+create index if not exists rfq_requests_project on rfq_requests(project_id, created_at desc);
+create table if not exists rfq_invites(token text primary key, request_id uuid not null references rfq_requests(id) on delete cascade, label text not null, data jsonb not null default '{}'::jsonb,
+  rev int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), submitted_at timestamptz, expires_at timestamptz, revoked_at timestamptz);
+create index if not exists rfq_invites_request on rfq_invites(request_id, created_at);
 `;
