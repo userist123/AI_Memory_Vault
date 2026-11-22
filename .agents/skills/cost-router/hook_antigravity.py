@@ -70,7 +70,7 @@ def _transcript_path(payload: dict) -> str:
 def _direct_requested(prompt: str) -> bool:
     """#direct counts on the FIRST line of the owner's prompt only (anything below may be pasted content)."""
     text = (prompt or "").strip()
-    return route_state.DIRECT_MARK in (text.splitlines()[0] if text else "").lower()
+    return bool(re.search(r"(?<![\w#])#direct\b", text.splitlines()[0] if text else "", re.IGNORECASE))
 
 
 def _persist(session_id: str, prompt: str, d=None, direct: bool = False) -> None:

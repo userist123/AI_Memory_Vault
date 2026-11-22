@@ -117,6 +117,7 @@ def is_synthetic_turn(prompt: str) -> bool:
 
 ESCALATE_RE = re.compile(r"(?<![\w#])#escalate\b", re.IGNORECASE)
 DIRECT_MARK = "#direct"
+DIRECT_RE = re.compile(r"(?<![\w#])#direct\b", re.IGNORECASE)  # a whole marker: not #directory
 
 
 def first_line(prompt: str) -> str:
@@ -127,7 +128,7 @@ def first_line(prompt: str) -> str:
 
 
 def direct_requested(prompt: str) -> bool:
-    return DIRECT_MARK in first_line(prompt).lower()
+    return bool(DIRECT_RE.search(first_line(prompt)))
 
 
 def escalation_authorized(prompt: str) -> bool:

@@ -646,3 +646,18 @@ def test_r1_p6_require_hooks_needs_the_exact_installed_command(tmp_path):
     settings.write_text(text.replace(inst_posix, "/elsewhere/project/.claude/skills/cost-router"), encoding="utf-8")
     r, rep = _verify(home, "--require-hooks")
     assert r.returncode == 1 and rep["hooks_registered"] is False and rep["agent_hook_on_failure_block"] is False
+
+
+# ---- review round 1, item 6: #direct is a whole marker, not a prefix of #directory ----------------------------------
+
+def test_r1_p5_direct_does_not_match_directory_or_other_longer_words(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    for text in ("#directory listing: " + TASK, TASK + " see #directions in the readme", "x#direct " + TASK):
+        _prompt(home, text)
+        st = _state(home)
+        assert st["direct"] is False and st["subagent"] is not None, text
+    _prompt(home, TASK + " #direct")
+    assert _state(home)["direct"] is True
+    _prompt(home, "#DIRECT, " + TASK)
+    assert _state(home)["direct"] is True
