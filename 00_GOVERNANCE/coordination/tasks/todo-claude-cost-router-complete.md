@@ -38,3 +38,10 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - P5 residual: `#direct` is a whole marker (0af0f842d, also hook_antigravity). SKILL.md updated (9a8b9826b).
 - Release pin: seq 2 pins 9a8b9826b, committed separately (55f97436c). TODO owner: any later change to S needs a new pin; push both.
 - Not done / residuals: `.agents` mirror of route_state not synced (its in_vault only denies); an agent with NO model key in a Fable session is not treated as Fable-sensitive under OFF; a missing pin file now adds a note on every vault-reviewer spawn on a machine without an install.
+
+## Review round 2 fixes (2026-11-22, same branch; 20_TESTS/test_cost_router_global_boundary.py, now 33 tests)
+- P3: a spawn with no model in tool_input and none in the agent frontmatter is Fable-sensitive in a Fable session, also under OFF (4d37d7aad). `CLAUDE_CODE_SUBAGENT_MODEL` resolving to Fable now DENIES (exit 2) every spawn except the pinned fable-consultant, instead of rewriting (affc60e79).
+- P4: project agent files need exactly one plain `name:` line or they block Fable-sensitive spawns (file named); agent definitions are hashed with LF-normalized line endings (hook and install.py); only files named/stemmed like the spawned agent (plus fable-consultant on Fable-sensitive spawns) are compared with the pins (df8a5fc86).
+- SKILL.md states the residual: pins.sha256.json and config.json are unauthenticated; --verify does not stop a same-user writer of ~/.claude (09d632ca6).
+- Release pin seq 3 pins 09d632ca6, committed separately (9fce0a8b0). Any later change to S needs a new pin.
+- Tests: the 6 requested paths, 775 passed. Residual: a Fable-session spawn of an agent without a model key is capped by routing (sonnet/opus), never left on Fable.
