@@ -762,10 +762,26 @@ def test_g_residual_dfir_repros_are_local_only(tmp_path, text):
 
 
 @pytest.mark.parametrize("trigger", ["amcache", "shimcache", "prefetch", "srum", "lnk file", "jumplist", "intrusion",
-                                     "security log", "event log", "malware execution", "triage", "timeline"])
+                                     "security log", "event log", "malware execution", "triage", "event timeline",
+                                     "forensic timeline", "timeline of events", "super timeline"])
 def test_g_dfir_analyst_carries_the_privacy_triggers(trigger):
     meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
     assert trigger in meta["triggers"]["en"]
+
+
+def test_g_dfir_timeline_triggers_are_scoped():
+    # a bare "timeline" made "EU AI act timeline" a local_only DFIR prompt; only scoped phrases remain
+    meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
+    assert "timeline" not in meta["triggers"]["en"]
+    assert "cronologie evenimente" in meta["triggers"]["ro"]
+
+
+def test_g_eu_ai_act_timeline_is_not_local_only(tmp_path):
+    home = _ready(tmp_path)
+    reg = sp.load(_skill(home) / "registry.json")
+    assert "dfir-analyst" not in sp.local_only_hits("summarize the new EU AI act timeline", reg)
+    for text in DFIR_REPROS + ["build a super timeline of the host", "cronologie evenimente din jurnal"]:
+        assert "dfir-analyst" in sp.local_only_hits(text, reg)
 
 
 # E1 hardening: the Agent hook records each real spawn it allowed (resolved tier, prompt epoch); the executor gate

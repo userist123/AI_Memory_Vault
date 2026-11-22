@@ -23,7 +23,8 @@
    "raspuns la incident",
    "indicatori de compromis",
    "loganalyzer",
-   "probe digitale"
+   "probe digitale",
+   "cronologie evenimente"
   ],
   "en": [
    "forensic",
@@ -45,7 +46,10 @@
    "event log",
    "malware execution",
    "triage",
-   "timeline"
+   "event timeline",
+   "forensic timeline",
+   "timeline of events",
+   "super timeline"
   ]
  },
  "summary": "Local-only forensic analysis of Windows evidence and logs; cites path, sha256 and record id; never writes.",

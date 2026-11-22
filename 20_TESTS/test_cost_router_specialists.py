@@ -346,6 +346,10 @@ GOLDEN = [
     ("triaj dfir pe imaginea de disc montata, ce procese au rulat", "dfir-analyst"),
     ("analyze the evtx file and list failed logons with record ids", "dfir-analyst"),
     ("do a forensic timeline of the incident from the Windows event logs", "dfir-analyst"),
+    ("build a super timeline of the compromised host", "dfir-analyst"),
+    ("fa o cronologie evenimente pentru incidentul de aseara", "dfir-analyst"),
+    # a bare "timeline" is not DFIR: no analist-juridic trigger names the act, so no specialist (and no local_only)
+    ("explain the EU AI act timeline", None),
     ("incident response: check these logs for IOC matches", "dfir-analyst"),
     ("dfir triage of the prefetch and SRUM artifacts", "dfir-analyst"),
     ("extrage din jurnal de evenimente toate evenimentele 4625 cu EventRecordID", "dfir-analyst"),
@@ -384,7 +388,7 @@ def test_golden_set_accuracy(registry, capsys):
         print(f"\nGOLDEN accuracy {acc:.1%} ({len(GOLDEN) - len(misses)}/{len(GOLDEN)})")
         for m in misses:
             print("  MISS:", ascii(m))
-    assert acc >= 0.95, misses
+    assert not misses, misses  # the golden set is kept at 100%
 
 
 def test_overlap_priority_and_overlay_pairing(registry):
