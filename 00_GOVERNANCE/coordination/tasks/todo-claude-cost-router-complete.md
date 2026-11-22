@@ -61,3 +61,9 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Tests: 783 passed (new files + specialists + global_boundary + test_cost_router_*.py + test_fable_consultant_routing.py + test_hook_antigravity.py).
 - Release pin seq 5 pins c0309bc01. Not done: M9-M11, Antigravity branches; installed copy under ~/.claude untouched.
 
+
+## M5-M8 review fixes done (2026-11-22, same branch)
+- 1+2 (2c64afcf0): registry trust split. TRUSTED = S/registry_src + S/roles (errors fatal); UNTRUSTED = other ~/.claude/skills/*/route.meta.json: malformed/unknown key/duplicate or shipped id/oversize (>4 KB)/privileged name -> skipped, reported by install and --verify. Kept untrusted entries are hint-only and clamped (tier<=sonnet, no authority, priority<=10, no acceptance text; trusted wins ties). Trigger >=4 chars and no stopword-only phrases for all entries; shipped trigger "oug" became "ordonanta de urgenta" + "analizeaza oug". Cap 16384; sha256 moved to registry.hashes.json (checked by --verify).
+- 3+6 (2fce7ab17): vault_router kills the process tree on timeout, prints one clean line per field; timeout test imports the module by path.
+- 4 (14bca3e2b): check.py refuses cmd metacharacters for .cmd/.bat targets (exit 2). 5 (17dc0e56f): receipt only for one plain command with the installed absolute vault_router.py or -m routing.route_cli (tests updated: chained forms are no longer receipts). 7: self-update residual documented in SKILL.md 4D.
+- Release pin seq 6 pins 17dc0e56f. Not done: pe/pf junction and ph cwd-shadow/huge-output/forged-receipt probes need no change by this brief (junction swap already exit 3 here); ph "cwd shadow git" and session-id traversal are not addressed.
