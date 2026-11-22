@@ -32,7 +32,10 @@ _TEMPLATE_REASON = "uses website templates/components/theme (not vendored)"
 FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/__init__.py", "core/studio_core/__init__.py", ""),
     ("core/studio_core/policy.py", "core/studio_core/policy.py", ""),
-    ("core/studio_core/audit.py", "core/studio_core/audit.py", ""),
+    ("core/studio_core/audit.py", "core/studio_core/audit.py",
+     "AAS value redaction: audit.redact now also runs activity.redact_text over string values (tokens, sk-/ghp_/AKIA "
+     "keys, JWT, PEM, high-entropy runs, the live owner token), so audit rows, tool_executions and approval params "
+     "never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added; no other change."),
     ("core/studio_core/workspace.py", "core/studio_core/workspace.py", ""),
     ("core/studio_core/services.py", "core/studio_core/services.py",
      "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; "
@@ -42,11 +45,19 @@ FILES: list[tuple[str, str, str]] = [
      "via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited "
      "operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, "
      "set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry "
-     "components instead of re-validating them with component_model."),
-    ("core/studio_core/db.py", "core/studio_core/db.py", ""),
+     "components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and "
+     "project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, "
+     "Studio.operation also records a tool.call activity event (activity.record_operation, never raises), and "
+     "get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings."),
+    ("core/studio_core/db.py", "core/studio_core/db.py",
+     "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
+     "(activity_events, app_settings) live in aas_models.py, not here."),
     ("core/studio_core/ids.py", "core/studio_core/ids.py", ""),
     ("core/studio_core/errors.py", "core/studio_core/errors.py", ""),
-    ("core/studio_core/config.py", "core/studio_core/config.py", ""),
+    ("core/studio_core/config.py", "core/studio_core/config.py",
+     "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, "
+     "AAS_DATABASE_URL); AWS_* is ignored; data root %LOCALAPPDATA%/AIAppStudio; api_port 17875, new preview_port "
+     "17880."),
     ("core/studio_core/migrations.py", "core/studio_core/migrations.py", ""),
     ("core/studio_core/gitrepo.py", "core/studio_core/gitrepo.py", ""),
     ("core/studio_core/alembic/env.py", "core/studio_core/alembic/env.py", ""),
@@ -67,6 +78,9 @@ FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/visual/ocr.py", "core/studio_core/visual/ocr.py", ""),
     ("core/studio_core/ai/__init__.py", "core/studio_core/ai/__init__.py", ""),
     ("core/studio_core/ai/providers.py", "core/studio_core/ai/providers.py", ""),
+    ("apps/backend/security.py", "apps/backend/security.py",
+     "AAS boundary: X-AAS-Token header and 'aas.token.' WebSocket subprotocol replace the AWS ones (the AWS names "
+     "are not accepted), BoundaryMiddleware refuses a token shorter than 32 characters; no other change."),
     ("tests/__init__.py", "tests/__init__.py", ""),
     ("tests/conftest.py", "tests/conftest.py", ""),
     ("tests/vendored/unit/__init__.py", "tests/unit/__init__.py", ""),
@@ -102,6 +116,12 @@ FILES: list[tuple[str, str, str]] = [
 
 LOCAL_FILES: list[tuple[str, str]] = [
     ("core/studio_core/project_kind.py", "AAS-owned ProjectKind seam: Protocol, registry, NullKind"),
+    ("core/studio_core/appfiles.py", "AAS-owned positive write allow-list (src/** and public/**)"),
+    ("core/studio_core/app_kind.py", "AAS-owned 'app' ProjectKind and the blank template"),
+    ("core/studio_core/activity.py", "AAS-owned activity recorder: kinds enum, field allow-list, sanitiser, redaction"),
+    ("core/studio_core/aas_models.py", "AAS-owned ORM tables activity_events and app_settings"),
+    ("core/studio_core/alembic/versions/0003_app_kind_activity_settings.py",
+     "AAS-owned migration: projects.kind, activity_events, app_settings"),
     ("tests/vendored/__init__.py", "AAS-owned package marker"),
     ("tests/vendored/conftest.py", "AAS-owned: runs vendored tests against NullKind"),
 ]

@@ -42,12 +42,21 @@ def _is_link(p: Path) -> bool:
 
 
 def _walk(base: Path) -> list[Path]:
-    """Every entry under base, without following any link."""
+    """Every entry under base. Links (symlinks AND junctions) are listed but never descended into: os.walk
+    follows junctions on Python 3.12 even with followlinks=False, so a self-parent junction would recurse."""
     out: list[Path] = []
-    for dirpath, dirnames, filenames in os.walk(base, followlinks=False):
-        d = Path(dirpath)
-        out.extend(d / n for n in dirnames)  # links to dirs appear here and are not descended into
-        out.extend(d / n for n in filenames)
+    stack = [base]
+    while stack:
+        d = stack.pop()
+        try:
+            entries = list(os.scandir(d))
+        except OSError:
+            continue
+        for e in entries:
+            p = Path(e.path)
+            out.append(p)
+            if not _is_link(p) and e.is_dir(follow_symlinks=False):
+                stack.append(p)
     return sorted(out)
 
 
@@ -125,6 +134,11 @@ def check(root: Path, upstream_repo: Path | None = None) -> list[str]:
     for rel in sorted(owned - {None}):
         if not (root / str(rel)).is_file():
             errors.append(f"{rel}: listed in local_files but missing")
+    residuals = manifest.get("residuals")  # CI mode trusts the manifest's upstream hashes: it must say so
+    if not isinstance(residuals, list) or not residuals or not all(
+            isinstance(r, dict) and r.get("id") and str(r.get("text", "")).strip() for r in residuals):
+        errors.append(f"{MANIFEST}: 'residuals' block is required (non-empty list of {{id, text}}); CI mode trusts "
+                      "the recorded upstream hashes")
     if not isinstance(manifest.get("dropped_tests"), list):
         errors.append(f"{MANIFEST}: 'dropped_tests' must be a list")
     else:

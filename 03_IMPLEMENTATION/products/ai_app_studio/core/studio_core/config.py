@@ -1,4 +1,5 @@
-"""Runtime configuration. Paths default to <repo>/data and can be overridden by AWS_DATA_DIR."""
+"""Runtime configuration. AAS identity: only AAS_* environment variables are read (AWS_* is ignored on purpose);
+the data root is %LOCALAPPDATA%\\AIAppStudio unless AAS_DATA_DIR overrides it."""
 
 from __future__ import annotations
 
@@ -8,13 +9,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_API_PORT = 17875
+DEFAULT_PREVIEW_PORT = 17880
 
 
 @dataclass(frozen=True)
 class Settings:
     data_dir: Path
     api_host: str = "127.0.0.1"
-    api_port: int = 17865
+    api_port: int = DEFAULT_API_PORT
+    preview_port: int = DEFAULT_PREVIEW_PORT
     max_body_bytes: int = 2 * 1024 * 1024
     allowed_origins: tuple[str, ...] = (
         "tauri://localhost",
@@ -37,7 +41,7 @@ class Settings:
 
     @property
     def db_url(self) -> str:
-        """SQLite by default; AWS_DATABASE_URL (e.g. postgresql+psycopg://...) selects another engine."""
+        """SQLite by default; AAS_DATABASE_URL (e.g. postgresql+psycopg://...) selects another engine."""
         return self.database_url or f"sqlite:///{self.db_path.as_posix()}"
 
     @property
@@ -61,8 +65,15 @@ class Settings:
         return path.read_text(encoding="utf-8").strip()
 
 
+def default_data_dir() -> Path:
+    local = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+    return Path(local) / "AIAppStudio"
+
+
 def load_settings() -> Settings:
-    data_dir = Path(os.environ.get("AWS_DATA_DIR", REPO_ROOT / "data")).resolve()
-    port = int(os.environ.get("AWS_API_PORT", "17865"))
-    agent = os.environ.get("AWS_AGENT_ID", "claude-code")
-    return Settings(data_dir=data_dir, api_port=port, agent_id=agent, database_url=os.environ.get("AWS_DATABASE_URL") or None)
+    data_dir = Path(os.environ.get("AAS_DATA_DIR") or default_data_dir()).resolve()
+    port = int(os.environ.get("AAS_API_PORT", str(DEFAULT_API_PORT)))
+    preview = int(os.environ.get("AAS_PREVIEW_PORT", str(DEFAULT_PREVIEW_PORT)))
+    agent = os.environ.get("AAS_AGENT_ID", "claude-code")
+    return Settings(data_dir=data_dir, api_port=port, preview_port=preview, agent_id=agent,
+                    database_url=os.environ.get("AAS_DATABASE_URL") or None)

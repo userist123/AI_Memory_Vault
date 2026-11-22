@@ -22,7 +22,7 @@ from typing import Any, TypeVar
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from . import audit, project_kind
+from . import activity, audit, project_kind
 from .config import Settings
 from .db import (
     Approval,
@@ -103,7 +103,7 @@ def component_to_dict(c: Component) -> dict[str, Any]:
 
 def project_to_dict(p: Project) -> dict[str, Any]:
     return {
-        "id": p.id, "name": p.name, "description": p.description, "template": p.template,
+        "id": p.id, "name": p.name, "description": p.description, "template": p.template, "kind": p.kind,
         "revision": p.revision, "status": p.status, "settings": dict(p.settings or {}),
         "createdAt": iso(p.created_at), "updatedAt": iso(p.updated_at),
     }
@@ -223,6 +223,9 @@ class Studio:
             self.events.publish({"type": "operation", "operationId": op_id, "tool": tool, "status": status,
                                  "projectId": project_id, "actor": actor.label,
                                  "revision": ctx.result_revision if ctx else None})
+            # AAS: server-side activity timeline entry (never raises into the operation)
+            activity.record_operation(self, tool=tool, operation_id=op_id, status=status, actor=actor.label,
+                                      project_id=project_id, params=safe_params)
 
     # ------------------------------------------------------------------ approvals
     def request_approval(self, actor: Actor, operation: str, params: dict[str, Any],
@@ -356,7 +359,7 @@ class Studio:
             s = ctx.session
             if s.execute(select(Project).where(Project.name == name)).scalar_one_or_none():
                 raise ValidationFailed("a project with this name already exists", name=name)
-            p = Project(id=new_id("prj"), name=name, description=description[:2000], template=template,
+            p = Project(id=new_id("prj"), name=name, description=description[:2000], template=template, kind=self.kind.name,
                         revision=0, settings=initial)
             s.add(p)
             s.flush()
@@ -511,6 +514,9 @@ class Studio:
 
         def change(s: Session, p: Project) -> dict[str, Any]:
             files = dict((p.settings or {}).get("files", {}))
+            folded = path.casefold()  # AAS: a path that differs from an existing one only by case is refused
+            if any(k != path and k.casefold() == folded for k in files):
+                raise ValidationFailed("a file whose name differs only by letter case already exists", path=path)
             if path not in files and len(files) >= kind.max_files:
                 raise ValidationFailed(f"at most {kind.max_files} code files per project")
             files[path] = {"content": content, **info}
@@ -563,7 +569,7 @@ class Studio:
 
     def _git_model(self, p: Project, snap: dict[str, Any]) -> dict[str, Any]:
         return {"schema": "aws.project/1", "revision": p.revision,
-                "project": {"id": p.id, "name": p.name, "description": p.description, "template": p.template,
+                "project": {"id": p.id, "name": p.name, "description": p.description, "template": p.template, "kind": p.kind,
                             "status": p.status, "settings": dict(p.settings or {})},
                 "components": snap["components"]}
 
@@ -689,6 +695,30 @@ class Studio:
             ok, n = audit.verify_chain(s)
             anchor = audit.check_anchor(s, self.settings.data_dir / "audit" / "anchor.json")
             return {"valid": ok and anchor["ok"], "eventsChecked": n, "chainValid": ok, "anchor": anchor}
+
+    # ------------------------------------------------------------------ owner-only settings (AAS)
+    EXTERNAL_MCP_KEY = "external_mcp_enabled"
+
+    def get_external_mcp(self) -> bool:
+        from .aas_models import AppSetting
+        with self.session() as s:
+            row = s.get(AppSetting, self.EXTERNAL_MCP_KEY)
+            return row is not None and row.value == "1"
+
+    def set_external_mcp(self, actor: Actor, enabled: bool) -> dict[str, Any]:
+        """Owner-only (PX1): the external MCP server refuses every tool while this is off (the default)."""
+        from .aas_models import AppSetting
+        if not actor.is_owner:
+            raise PolicyDenied("only the authenticated human owner can change external MCP access")
+        with self.audit_session() as s:
+            row = s.get(AppSetting, self.EXTERNAL_MCP_KEY)
+            if row is None:
+                row = AppSetting(key=self.EXTERNAL_MCP_KEY, value="0")
+                s.add(row)
+            row.value = "1" if enabled else "0"
+            row.updated_at = utcnow()
+            audit.record(s, actor, "settings.external_mcp", "enabled" if enabled else "disabled")
+        return {"enabled": bool(enabled)}
 
     def site_dir(self, project_id: str) -> Path:
         return self.workspace(project_id).resolve("site")

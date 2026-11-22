@@ -135,3 +135,37 @@ def test_symlinked_file_fails(copy: Path, tmp_path: Path) -> None:
         pytest.skip(f"cannot create a file symlink here: {e}")
     r = run(copy)
     assert r.returncode == 1 and "core/studio_core/evil.py: symlink/junction" in r.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="junctions are Windows-only")
+def test_self_parent_junction_finishes_fast_and_fails(copy: Path) -> None:
+    """L1: a junction pointing at its own parent must not be descended into (os.walk follows junctions on 3.12)."""
+    parent = copy / "core/studio_core"
+    link = parent / "loop"
+    r0 = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(parent)],  # noqa: S603,S607
+                        capture_output=True, check=False)
+    assert r0.returncode == 0, r0.stderr
+    try:
+        r = subprocess.run([sys.executable, str(SCRIPT), "--root", str(copy)],  # noqa: S603
+                           capture_output=True, text=True, check=False, timeout=20)
+    finally:
+        os.rmdir(link)  # remove the junction itself, never its target
+    assert r.returncode == 1 and "core/studio_core/loop: symlink/junction" in r.stderr
+    assert r.stderr.count("symlink/junction") == 1  # nothing below the junction was reported
+    assert (parent / "policy.py").is_file()
+
+
+def test_ci_mode_requires_residuals_block(copy: Path) -> None:
+    """L2: CI mode (no --upstream-repo) trusts the manifest, so the manifest must state that residual."""
+    m = json.loads((copy / "VENDORED.json").read_text(encoding="utf-8"))
+    assert m["residuals"], "real manifest must carry residuals"
+    del m["residuals"]
+    (copy / "VENDORED.json").write_text(json.dumps(m), encoding="utf-8")
+    r = run(copy)
+    assert r.returncode == 1 and "residuals" in r.stderr
+    m["residuals"] = []
+    (copy / "VENDORED.json").write_text(json.dumps(m), encoding="utf-8")
+    assert run(copy).returncode == 1  # empty block is as bad as none
+    m["residuals"] = [{"id": "manifest-trust", "text": "CI trusts the manifest hashes"}]
+    (copy / "VENDORED.json").write_text(json.dumps(m), encoding="utf-8")
+    assert run(copy).returncode == 0  # positive control

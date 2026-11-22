@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from .activity import redact_text
 from .db import AuditEvent
 from .ids import iso, new_id, utcnow
 from .policy import Actor
@@ -25,8 +26,10 @@ def redact(value: Any) -> Any:
                 for k, v in value.items()}
     if isinstance(value, list):
         return [redact(v) for v in value[:100]]
-    if isinstance(value, str) and len(value) > 2000:
-        return value[:2000] + "...[truncated]"
+    if isinstance(value, str):
+        value = redact_text(value[:20000])[0]  # AAS: value redaction (tokens, keys, JWT, PEM, high entropy)
+        if len(value) > 2000:
+            return value[:2000] + "...[truncated]"
     return value
 
 

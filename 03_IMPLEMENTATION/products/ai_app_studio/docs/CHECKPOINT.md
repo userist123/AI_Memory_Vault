@@ -54,14 +54,25 @@ Done
   CI uses uv sync --locked. uv run pytest -q: 97 passed on Windows; check_vendored OK with and without
   --upstream-repo E:/claude-work/ai-website-studio; gen_vendored --check OK.
 
+- S2 done (2026-11-23, local commits only): AAS identity in the patched config.py (AAS_* only, AWS_* ignored,
+  %LOCALAPPDATA%\AIAppStudio, 17875/17880); app ProjectKind (core/studio_core/app_kind.py, appfiles.py positive allow-list,
+  blank template, projects.kind + alembic 0003, no DB CHECK on kind because the NullKind tests use another kind);
+  activity.py (ActivityKind enum of 24, per-kind field allow-list, caps, sanitiser, value redaction also in audit.redact,
+  prev_seq chain + find_gaps, Studio.operation writes tool.call); apps/backend (security.py vendored+patched, main.py: REST
+  projects/files/activity/settings, WS /api/v1/events with aas.token subprotocol, replay afterSeq + gap marker, 127.0.0.1 only,
+  token >= 32 from stdin); apps/mcp-app/server.py (8 tools, all refused unless the owner enabled external MCP, owner-only REST
+  route PUT /api/v1/settings/external-mcp); backlog L1 (junction-safe walk), L2 (residuals required), L4 (OCR regions test).
+  uv run pytest -q: 229 passed; check_vendored OK both modes; gen_vendored --check OK; live backend checked on 127.0.0.1:17875.
+  Deviations: hex runs >= 40 chars are redacted at entropy > 3.0 (random hex tops out at 4.0); path prefix must be exactly
+  lowercase src/public; activity_events has no artifact/audit writers yet; create_project tool.call has no project_id.
+
 Next (in order)
 5. Probes as failing tests (test-author), then implementation slices by one vault-worker at a time, each
    followed by vault-reviewer; then delivery gate (aplicatie-securizata step 7). First app slice: register the
    "app" kind (kinds/app.py or project_kind), projects.kind column + migration 0003, appfiles.py validate.
-   Pending from S1: config.py still reads AWS_* env and port 17865 (separate identity AAS_*/17875 not done);
-   visual/service.py keeps website BIM-viewport helpers (unreachable in AAS, patch when wiring).
+   Pending from S1: visual/service.py keeps website BIM-viewport helpers (unreachable in AAS, patch when wiring).
    Before merging any vendored change: gen_vendored.py --check and check_vendored.py --upstream-repo on the owner PC.
-   Backlog for slice S2 (S1 review residuals):
+   Backlog for slice S2 (S1 review residuals; L1, L2, L4 DONE in S2):
    - L1: check_vendored `_walk` must not descend into junctions (os.walk follows them on Python 3.12; a
      self-parent junction recurses); test with a junction to its own parent.
    - L2: CI mode of check_vendored must require the `residuals` block in VENDORED.json (fail when absent).
@@ -69,7 +80,15 @@ Next (in order)
      (tests/vendored/visual/test_ocr.py).
 
 Key facts
+- Owner rule (2026-11-23): everything is built and tested on the PC until the app is fully complete; nothing is pushed
+  before. Final gate before upload: (1) fable-consultant verifies the complete app; (2) its open questions go via
+  agent-bridge to Codex (ChatGPT) and Gemini; (3) fix and repeat until clean; (4) only then push + PR + vault CI + merge.
 - WSL2 NAT mode. Never touch AVD s9emu, ~/debug.keystore, ~/android/**, the owner's ~/.android.
 - WSL listeners relayed to Windows loopback (1080, 8080 open-webui, 9001, 11434, *:8123 docker).
 - Git Bash has no python3; use the AWS venv or PowerShell. wsl.exe from Git Bash needs MSYS_NO_PATHCONV=1.
 - Bridge: Gemini output must stay under 8000-char summary / 4000-char finding.
+
+Next after S2 (appended)
+- S3 = build pipeline (Docker, offline web build with the studio-owned kit) + preview server (17880) + CSP header.
+- Then device host/emulator, runner, desktop UI as in DESIGN.md; each slice local only.
+- Last: final gate as in Key facts (fable-consultant, then Codex/Gemini via agent-bridge, repeat until clean), then push + PR + CI + merge.

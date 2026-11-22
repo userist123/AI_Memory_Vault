@@ -43,6 +43,7 @@ class Project(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="")
     template: Mapped[str] = mapped_column(String(40), default="blank")
+    kind: Mapped[str] = mapped_column(String(24), default="app", server_default="app", nullable=False)  # AAS: project kind (migration 0003)
     revision: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="active")  # active | archived
     settings: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

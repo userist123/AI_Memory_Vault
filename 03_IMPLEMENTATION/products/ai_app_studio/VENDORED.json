@@ -26,9 +26,9 @@
       "upstream_path": "core/studio_core/audit.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "0c006251c2cf141ea3592b84e51e54b79a15ea5989c80632b9960f605af47e71",
-      "local_sha256": "0c006251c2cf141ea3592b84e51e54b79a15ea5989c80632b9960f605af47e71",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "42c0968c71741878f713b69037ddfe2c36720d652de724c6a9d12e8a3d7a6a70",
+      "patched": true,
+      "patch_reason": "AAS value redaction: audit.redact now also runs activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live owner token), so audit rows, tool_executions and approval params never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added; no other change."
     },
     {
       "path": "core/studio_core/workspace.py",
@@ -44,18 +44,18 @@
       "upstream_path": "core/studio_core/services.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "8af4717ebbcf2efff2cd47bd05522c2d489ef38e2d81fe5acc95795aa6c36d24",
-      "local_sha256": "d6e834d647c966a19bb6ca8c0a425f7c36cb133c7a5ef326b80dd433ffcd1ee1",
+      "local_sha256": "c5b29ad29f13262d8acb277472a676d99bec9ab38d35f5673f7863e62d02d30c",
       "patched": true,
-      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model."
+      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, Studio.operation also records a tool.call activity event (activity.record_operation, never raises), and get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings."
     },
     {
       "path": "core/studio_core/db.py",
       "upstream_path": "core/studio_core/db.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "86847a7dcabb8927c0f4fd9eed967e035b24fe5bf0c4095f027ec8f8af65173b",
-      "local_sha256": "86847a7dcabb8927c0f4fd9eed967e035b24fe5bf0c4095f027ec8f8af65173b",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "3b92c97659c86609e0d8878d4aa786f1d0657b167b9d12ae31cd752e6742ea7d",
+      "patched": true,
+      "patch_reason": "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables (activity_events, app_settings) live in aas_models.py, not here."
     },
     {
       "path": "core/studio_core/ids.py",
@@ -80,9 +80,9 @@
       "upstream_path": "core/studio_core/config.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "232d9aa9cd028ac0787047bae0dcf97e5ad999c3457224dec0610ed770148cbe",
-      "local_sha256": "232d9aa9cd028ac0787047bae0dcf97e5ad999c3457224dec0610ed770148cbe",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "8b39293e9beb5c95ce1720bd11b1e87004b9a12858fea4da7f76b3c2d6cbdc3e",
+      "patched": true,
+      "patch_reason": "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, AAS_DATABASE_URL); AWS_* is ignored; data root %LOCALAPPDATA%/AIAppStudio; api_port 17875, new preview_port 17880."
     },
     {
       "path": "core/studio_core/migrations.py",
@@ -220,6 +220,15 @@
       "patch_reason": ""
     },
     {
+      "path": "apps/backend/security.py",
+      "upstream_path": "apps/backend/security.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "86aff83d9b7109e60cbb33ddca322b7dc076f94926e1c46e71d7dc3ccf968978",
+      "local_sha256": "d46e781b17684502f554c1e2611c4fc7d83417a8e04b8ed309eabd28afadcc78",
+      "patched": true,
+      "patch_reason": "AAS boundary: X-AAS-Token header and 'aas.token.' WebSocket subprotocol replace the AWS ones (the AWS names are not accepted), BoundaryMiddleware refuses a token shorter than 32 characters; no other change."
+    },
+    {
       "path": "tests/__init__.py",
       "upstream_path": "tests/__init__.py",
       "upstream_commit": "25b3eab",
@@ -341,6 +350,26 @@
     {
       "path": "core/studio_core/project_kind.py",
       "reason": "AAS-owned ProjectKind seam: Protocol, registry, NullKind"
+    },
+    {
+      "path": "core/studio_core/appfiles.py",
+      "reason": "AAS-owned positive write allow-list (src/** and public/**)"
+    },
+    {
+      "path": "core/studio_core/app_kind.py",
+      "reason": "AAS-owned 'app' ProjectKind and the blank template"
+    },
+    {
+      "path": "core/studio_core/activity.py",
+      "reason": "AAS-owned activity recorder: kinds enum, field allow-list, sanitiser, redaction"
+    },
+    {
+      "path": "core/studio_core/aas_models.py",
+      "reason": "AAS-owned ORM tables activity_events and app_settings"
+    },
+    {
+      "path": "core/studio_core/alembic/versions/0003_app_kind_activity_settings.py",
+      "reason": "AAS-owned migration: projects.kind, activity_events, app_settings"
     },
     {
       "path": "tests/vendored/__init__.py",
