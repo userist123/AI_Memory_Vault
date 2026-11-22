@@ -35,7 +35,7 @@ DFIR_DENIED = [
     "pip install requests", "python -m pip install requests", "npm install", "git push origin main", "git fetch",
     "git clone https://x/y", "echo hi > out.txt", "echo hi >> out.txt", "Get-Content a | Out-File b",
     "Set-Content b hi", "Add-Content b hi", "cat a | tee b", "cp a b", "mv a b", "rm a", "del a", "Remove-Item a",
-    "New-Item x", "cd C:/x && curl http://y", "ls; wget http://y",
+    "New-Item x", "cd C:/x && curl http://y", "ls; wget http://y",  # hygiene: intentional-absolute-path
 ]
 DFIR_ALLOWED = [
     "ls -la", "cat evidence/a.evtx.json", "grep -r 4624 logs", "git status", "git log --oneline",
@@ -61,7 +61,7 @@ def test_other_agents_and_main_session_bash_is_untouched_by_the_dfir_guard(tmp_p
 
 
 TEST_OK = ["20_TESTS/test_x.py", "pkg/tests/helper.py", "pkg/test/a.py", "a/b/foo_test.py", "src/Foo.Tests.cs",
-           "src/FooTests.cs", "C:/repo/20_TESTS/conftest.py", "C:" + chr(92) + "repo" + chr(92) + "20_TESTS" + chr(92) + "conftest.py", "test_y.py"]
+           "src/FooTests.cs", "C:/repo/20_TESTS/conftest.py", "C:" + chr(92) + "repo" + chr(92) + "20_TESTS" + chr(92) + "conftest.py", "test_y.py"]  # hygiene: intentional-absolute-path
 TEST_DENIED = ["src/app.py", "lib/check.py", "README.md", "C:" + chr(92) + "repo" + chr(92) + ".claude" + chr(92) + "x" + chr(92) + "SKILL.md", "latest/a.py",
                "contest.py", "20_TESTS_x/a.py"]
 

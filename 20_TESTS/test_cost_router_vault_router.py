@@ -218,9 +218,9 @@ def test_enforce_hook_counts_the_wrapper_as_a_router_receipt(tmp_path, monkeypat
         f"python {WRAPPER} --help",
         f'python -c "pass #{WRAPPER}" route',
         "python ./.claude/skills/cost-router/lib/vault_router.py route --goal x",  # relative = a project copy
-        "python /tmp/evil/cost-router/lib/vault_router.py route",
-        r"py -3 C:\Users\M\.claude\skills\cost-router\lib\vault_router.py route --goal x",
-        "cd /tmp && FOO=1 python3 -I /home/u/.claude/skills/cost-router/lib/vault_router.py route --goal x",
+        "python /tmp/evil/cost-router/lib/vault_router.py route",  # hygiene: intentional-absolute-path
+        r"py -3 C:\Users\M\.claude\skills\cost-router\lib\vault_router.py route --goal x",  # hygiene: intentional-absolute-path
+        "cd /tmp && FOO=1 python3 -I /home/u/.claude/skills/cost-router/lib/vault_router.py route --goal x",  # hygiene: intentional-absolute-path
         f"& python {WRAPPER} route",
     ]
     for cmd in not_receipts:

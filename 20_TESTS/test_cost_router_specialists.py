@@ -305,7 +305,7 @@ GOLDEN = [
     ("use clips kitty on this local video file and list the clips", "clips-kitty"),
     ("make reels from the podcast recording", "clips-kitty"),
     ("/clip https://www.twitch.tv/videos/12345 gta", "clip"),
-    ("/clip C:/videos/stream.mp4 max 5", "clip"),
+    ("/clip C:/videos/stream.mp4 max 5", "clip"),  # hygiene: intentional-absolute-path
     ("run the clip command on this link and report the job", "clip"),
     # prompts overlay
     ("scrie un prompt de continuare pentru sesiunea următoare", "prompt-director"),
