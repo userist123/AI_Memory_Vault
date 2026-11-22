@@ -484,13 +484,14 @@ def executor_path_problem(raw, cwd) -> str | None:
 def _ex_path_args(words, cwd: str, root: str, rule: str = "X4"):
     """Every path-like argument (or --opt=value) of an executing program must stay inside the worktree."""
     for w in words:
-        val = w.split("=", 1)[1] if w.startswith("-") and "=" in w else w
-        val = val.split("::", 1)[0]  # pytest node id
-        if not val or not ("/" in val or "\\" in val or val.startswith((".", "~")) or re.match(r"^[A-Za-z]:", val)):
-            continue
-        got = _ex_resolve(val, cwd, root)
-        if isinstance(got, str):
-            return _ex_deny(rule, got)
+        pieces = w.split("=")  # --opt=value and ini overrides such as `-o cache_dir=../x`: every piece is checked
+        for val in ([w] if len(pieces) == 1 else pieces[1:]) + ([pieces[0]] if len(pieces) > 1 else []):
+            val = val.split("::", 1)[0]  # pytest node id
+            if not val or not ("/" in val or "\\" in val or val.startswith((".", "~")) or re.match(r"^[A-Za-z]:", val)):
+                continue
+            got = _ex_resolve(val, cwd, root)
+            if isinstance(got, str):
+                return _ex_deny(rule, got)
     return None
 
 

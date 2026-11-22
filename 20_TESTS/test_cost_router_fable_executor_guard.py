@@ -73,7 +73,7 @@ X4_FS = [
     "del /s x", "rmdir /s x", "format D:", "diskpart", "cipher /w:C:", "mv a b", "cp a ../b", "touch x",
     "echo hi > ../x.txt", "cat a >> ../x", "python ../escape.py", "python C:/Windows/x.py", "python //srv/share/x.py",
     "python \\\\srv\\share\\x.py", "node ../x.js", "python scripts/run.py --out ../../x.txt",
-    "pytest --basetemp C:/Users", "pytest --basetemp=../tmp", "python -m pytest --basetemp=C:/", "mkdir x",
+    "pytest --basetemp C:/Users", "pytest --basetemp=../tmp", "pytest tests -o cache_dir=../x", "pytest --junitxml ../r.xml", "python -m pytest --basetemp=C:/", "mkdir x",
     "New-Item x", "Set-Content x y", "Out-File x", "ln -s a b", "cmd /c mklink /J a C:/", "find . -delete",
     "find . -exec rm {} ;", "rg --pre cat x", "python scripts/run.py:stream",
 ]
