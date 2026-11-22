@@ -124,5 +124,8 @@ account-statement*
 # Build metadata left by `pip wheel .` / `pip install -e .` (WP-17)
 *.egg-info/
 
+# cross-process lock of the controller audit log (security program 2026-11-22)
+*.jsonl.lock
+
 # AKE shadow-runner job records: local evaluation output, derived from vault notes
 08_OBSERVABILITY/active_knowledge_engine/

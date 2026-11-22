@@ -18,7 +18,7 @@ from .validation.supersession import SupersessionEnforcer
 # Canonical lifecycle authority -- the single source of truth for every
 # lifecycle transition in the runtime. See lifecycle/policy.py.
 from . import policy as lifecycle_policy
-from .audit.logger import audit_event
+from .audit.logger import audit_event, error_details
 from .cache import Cache
 
 # Security utilities
@@ -489,7 +489,7 @@ class MemoryController:
             audit_event('read', principal, note_id, success=True)
             return pack
         except Exception as e:
-            audit_event('read', principal, note_id, success=False, details={'error': str(e)})
+            audit_event('read', principal, note_id, success=False, details=error_details(e))
             raise
 
     # Cognitive Core retrieval — extends read() to include REVIEW notes.
@@ -540,7 +540,7 @@ class MemoryController:
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
         except Exception as e:
-            audit_event('cognitive_read', principal, note_id, success=False, details={'error': str(e)})
+            audit_event('cognitive_read', principal, note_id, success=False, details=error_details(e))
             raise
 
     def search(
@@ -1524,7 +1524,7 @@ class MemoryController:
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
-            audit_event('search', principal, target_id, success=False, details={'error': str(e)})
+            audit_event('search', principal, target_id, success=False, details=error_details(e))
             raise
 
     def search_financial(
@@ -1679,7 +1679,7 @@ class MemoryController:
                 audit_event('propose', principal, note_id, success=True)
                 return note_id
             except Exception as e:
-                audit_event('propose', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('propose', principal, note_id, success=False, details=error_details(e))
                 raise
 
     def review(self, principal: Principal, note_id: str, decision: str, comments: Optional[str] = None) -> None:
@@ -1722,7 +1722,7 @@ class MemoryController:
                 self.cache.invalidate_by_event('memory_updated')
                 audit_event('review', principal, note_id, success=True, details={'decision': decision})
             except Exception as e:
-                audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)})
+                audit_event('review', principal, note_id, success=False, details={'decision': decision, **error_details(e)})
                 raise
 
     def promote(self, principal: Principal, note_id: str) -> None:
@@ -1759,7 +1759,7 @@ class MemoryController:
                 self.cache.invalidate_by_event('memory_updated')
                 audit_event('promote', principal, note_id, success=True)
             except Exception as e:
-                audit_event('promote', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('promote', principal, note_id, success=False, details=error_details(e))
                 raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
@@ -1845,7 +1845,7 @@ class MemoryController:
                 else:
                     audit_event('update', principal, note_id, success=True)
             except Exception as e:
-                audit_event('update', principal, note_id, success=False, details={'error': str(e)})
+                audit_event('update', principal, note_id, success=False, details=error_details(e))
                 raise
 
     #: Principals whose attestation the content binding protects (the ATTEST matrix: HUMAN, ADMIN).
@@ -1907,7 +1907,7 @@ class MemoryController:
                     'attested_by': principal.value,
                     'reason': verification_reason if 'verification_reason' in locals() else '',
                     'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
-                    'error': str(e)
+                    **error_details(e)
                 })
                 raise
 
@@ -1943,7 +1943,7 @@ class MemoryController:
                     'new_lifecycle': Lifecycle.ARCHIVED.value,
                 })
             except Exception as e:
-                audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
+                audit_event('archive', principal, note_id, success=False, details={'reason': reason, **error_details(e)})
                 raise
 
     def supersede(self, principal: Principal, old_id: str, new_id: str, evidence: str = "") -> None:
@@ -2023,7 +2023,7 @@ class MemoryController:
                 audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence})
                 audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
             except Exception as e:
-                audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
+                audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, **error_details(e)})
                 raise
 
     def prune_synapses(
