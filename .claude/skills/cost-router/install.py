@@ -5,7 +5,10 @@
     python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only
     python3 .claude/skills/cost-router/install.py --no-context # no global CLAUDE.md rules, no deny rules
     python3 .claude/skills/cost-router/install.py --uninstall
-    python3 .claude/skills/cost-router/install.py --verify [--json]  # read-only: installed == source? exit 1 if not
+    python3 .claude/skills/cost-router/install.py --verify [--json] [--source-root <checkout>] [--require-hooks]
+                                                                  # read-only: installed == source? exit 1 if not; run
+                                                                  # from the installed copy it checks its own integrity
+                                                                  # (or the given checkout) and reports hook registration
     python3 .claude/skills/cost-router/install.py --home <dir>    # another HOME (tests)
     python3 .claude/skills/cost-router/install.py --session-start # what the SessionStart hook runs:
                                                                   # skill + agents only, and nothing at
@@ -377,9 +380,16 @@ def manifest_hash(m: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(dict(sorted(m.items())), sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _repo_head() -> str:
+def _is_installed_layout() -> bool:
+    """True when this script is the INSTALLED copy: install() put the router and the policy inside it, and the
+    repository layout `REPO = SKILL_SRC.parents[2]` would then be the home directory, not a checkout."""
+    return (SKILL_SRC / "lib" / "claude_model_router.py").is_file() and (SKILL_SRC / "policy.json").is_file()
+
+
+def _repo_head(repo: Path | None = None) -> str:
+    repo = repo or REPO
     try:
-        git = dict(cwd=REPO, capture_output=True, text=True, timeout=10)
+        git = dict(cwd=repo, capture_output=True, text=True, timeout=10)
         head = subprocess.run(["git", "rev-parse", "HEAD"], **git)
         if head.returncode != 0 or not head.stdout.strip():
             return "unknown"
@@ -394,11 +404,55 @@ def _repo_head() -> str:
 _VERSION_REF = re.compile(r"^([0-9a-f]{7,40}|unknown|[A-Za-z0-9._/-]+)(\+dirty)?$")
 
 
-def verify(home: Path) -> dict:
-    """Read-only: compare what install() would copy with the installed skill directory."""
+def hook_status(home: Path) -> dict:
+    """Read-only: which of our hooks are registered in the user settings, and does the Agent hook block on failure."""
+    try:
+        hooks = load_settings(home / ".claude" / "settings.json").get("hooks")
+    except ValueError:
+        hooks = None
+    hooks = hooks if isinstance(hooks, dict) else {}
+    found: dict[str, bool] = {}
+    on_failure_block = False
+    for event, script, matcher in HOOK_SPECS:
+        ok = False
+        for entry in hooks.get(event) or []:
+            if not isinstance(entry, dict) or entry.get("matcher") != matcher:
+                continue
+            for h in entry.get("hooks") or []:
+                if isinstance(h, dict) and f"cost-router/{script}" in str(h.get("command", "")).replace("\\", "/"):
+                    ok = True
+                    if script == "hook_agent_model.py" and h.get("onFailure") == "block":
+                        on_failure_block = True
+        found[script] = ok
+    return {"hooks": found, "hooks_registered": all(found.values()),
+            "agent_hook_on_failure_block": on_failure_block}
+
+
+def verify(home: Path, source_root: Path | None = None) -> dict:
+    """Read-only: compare what install() would copy with the installed skill directory.
+
+    Source: `source_root` (a checkout), else this checkout. From the INSTALLED copy without `source_root` there is
+    no checkout to compare with: the installed tree is checked against its own VERSION manifest hash (integrity)."""
     skill_dir = home / ".claude" / "skills" / "cost-router"
-    want = source_manifest()
+    layout = "source"
+    if source_root is not None:
+        want = manifest(source_root / ".claude" / "skills" / "cost-router", {
+            "lib/claude_model_router.py": source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
+            "policy.json": source_root / "04_CONFIG" / "claude_model_routing.json"})
+        head = _repo_head(source_root)
+    elif _is_installed_layout():
+        layout = "installed"
+        want = None
+        head = "unknown"
+    else:
+        want = source_manifest()
+        head = _repo_head()
     have_all = manifest(skill_dir) if skill_dir.is_dir() else {}
+    if want is None:  # integrity only: the installed tree is its own reference, VERSION line 2 is the check
+        want = {k: v for k, v in have_all.items()}
+        for required in ("lib/claude_model_router.py", "policy.json", "hook_agent_model.py"):
+            if required not in have_all:
+                want[required] = "missing"
     have = {k: v for k, v in have_all.items() if k != PIN_NAME or PIN_NAME in want}  # an installed pin is not drift
     vfile = skill_dir / "VERSION"
     version = vfile.read_text(encoding="utf-8").splitlines() if vfile.is_file() else []
@@ -414,8 +468,9 @@ def verify(home: Path) -> dict:
     return {"ok": bool(version) and not (missing or extra or differing or version_problem),
             "installed_dir": str(skill_dir),
             "missing": missing, "extra": extra, "differing": differing,
-            "installed_version": version, "source_version": [_repo_head(), manifest_hash(want)],
-            "version_missing": not version, "version_problem": version_problem}
+            "installed_version": version, "source_version": [head, manifest_hash(want)],
+            "version_missing": not version, "version_problem": version_problem, "layout": layout,
+            **hook_status(home)}
 
 
 def install(home: Path, with_hook: bool, force: bool, session_start: bool = False,
@@ -550,6 +605,8 @@ def main(argv=None) -> int:
     ap.add_argument("--session-start", action="store_true", help="quiet mode for the SessionStart hook: implies --no-hook, honours the disabled marker")
     ap.add_argument("--verify", action="store_true", help="read-only: compare the installed skill with this source; exit 1 on any difference")
     ap.add_argument("--json", action="store_true", help="with --verify: print a JSON object")
+    ap.add_argument("--require-hooks", action="store_true",
+                    help="with --verify: also exit 1 unless every hook is registered and the Agent hook has onFailure=block")
     a = ap.parse_args(argv)
     if (a.session_start or a.self_update) and (os.environ.get("COST_ROUTER_NO_SELF_INSTALL", "").strip() == "1"
                             or os.environ.get("COST_ROUTER_OFF", "").strip().lower() in ("1", "true", "yes", "on")):
@@ -564,6 +621,12 @@ def main(argv=None) -> int:
         checks = (a.source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
                   a.source_root / "04_CONFIG" / "claude_model_routing.json", a.source_root / ".claude" / "agents",
                   a.source_root / ".claude" / "skills" / "cost-router" / "SKILL.md")
+    elif a.verify and _is_installed_layout():
+        checks = ()  # the installed copy has no checkout beside it: --verify checks its own integrity
+    elif _is_installed_layout():
+        print("this is the installed copy: run install.py from a checkout, or pass --source-root <checkout>",
+              file=sys.stderr)
+        return 1
     else:
         checks = (ROUTER_SRC, POLICY_SRC, AGENTS_SRC)
     for p in checks:
@@ -571,7 +634,7 @@ def main(argv=None) -> int:
             print(f"missing source: {p}", file=sys.stderr)
             return 1
     if a.verify:
-        r = verify(a.home)
+        r = verify(a.home, a.source_root)
         if a.json:
             print(json.dumps(r, indent=2))
         else:
@@ -581,9 +644,13 @@ def main(argv=None) -> int:
             print("installed VERSION: " + (" / ".join(r["installed_version"]) or "MISSING"))
             if r["version_problem"]:
                 print("VERSION problem: " + r["version_problem"])
-            print("source VERSION:    " + " / ".join(r["source_version"]))
+            print("source VERSION:    " + " / ".join(r["source_version"]) + f"  (layout: {r['layout']})")
+            print("hooks registered in user settings: " + ("yes" if r["hooks_registered"] else
+                  "NO (" + ", ".join(k for k, v in r["hooks"].items() if not v) + ")"))
+            print("Agent hook onFailure=block: " + ("yes" if r["agent_hook_on_failure_block"] else "NO"))
             print("OK: installed skill matches this source" if r["ok"] else "DIFFERENT: run install.py to refresh")
-        return 0 if r["ok"] else 1
+        hooks_ok = r["hooks_registered"] and r["agent_hook_on_failure_block"]
+        return 0 if r["ok"] and (hooks_ok or not a.require_hooks) else 1
     quiet = a.session_start or a.self_update  # hook-driven: never wait on another run, skip instead
     try:
         with install_lock(a.home, wait=0 if quiet else 30):
