@@ -115,3 +115,4 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Small follow-ups: trigger "timeline" makes "EU AI act timeline" pick dfir-analyst (golden 99/100): scope it ("event timeline", "forensic timeline"); registry_compile.fold should strip Unicode Cf like the hook normalizer.
 - Full suite on this branch once before merging #404 -> #409 (check-runner, temp HOME and basetemp on E:).
 - Disk: C: was at 98.6%; freed by moving VS-installer temp copies to E:\.curatenie-cos and removing 11 clean pushed worktrees. Something still fills C: quickly (8.8 -> 3.2 GB in ~20 min during test runs): put pytest basetemp on E:.
+- 2026-11-22 follow-ups DONE: dfir "timeline" scoped (e4b8a9edd), compile fold = brief normalizer (598bf5c77 red, 93ab885ad fix), pin seq 11 (44e1748ae) pins 93ab885ad; golden 103/103; 1101 passed; seq 11 not installed globally yet.
