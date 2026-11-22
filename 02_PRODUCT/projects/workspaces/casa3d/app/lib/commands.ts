@@ -79,6 +79,8 @@ export const COMMANDS: CommandDef[] = [
   { id: 'column.shape', label: 'ctx.columnShape', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   // selecția multiplă de piese: Ctrl/⌘A e prinsă de plan (PlanView keyDown), ca F; alinierea și distribuirea n-au taste
   { id: 'select.all', label: 'help.selectAll', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'a', ctrlOrMeta: true }] },
+  // Shift+Space: obiectul curent al planului intră în grup sau iese (PlanView keyDown; în Structură, Shift+Enter)
+  { id: 'select.toggle', label: 'help.groupToggle', group: 'nav', domain: 'editor', dispatch: false, helpKeys: 'help.groupToggleKeys', shortcuts: [{ key: ' ', shift: true }] },
   ...ARRANGE_IDS.map((id): CommandDef => ({ id, label: id, group: 'context', domain: 'editor', dispatch: false, shortcuts: [] })),
   ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [toolKey(tk)] }))
 ];
@@ -128,7 +130,7 @@ export interface HelpRow { keys: string; keysKey?: string; label: string; sectio
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('select.all'), by('help'), by('palette'), by('ws.focus'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('select.all'), by('select.toggle'), by('help'), by('palette'), by('ws.focus'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

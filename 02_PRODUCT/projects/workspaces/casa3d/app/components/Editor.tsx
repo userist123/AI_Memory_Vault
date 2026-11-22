@@ -68,6 +68,7 @@ import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
 import { toggleMirror } from '@/core/mirror';
 import { isLocked, firstLocked, toggleLock, hasPinnedPieces } from '@/core/lock';
+import { toggleInGroup, type KeyCursor } from '@/core/multi-select';
 import { arrayGroup, groupIds, arrangeItems, alignPieces, distributePieces, applyMoves, nudgeGroup, rotateGroup, duplicateGroup, type AlignMode, type GroupResult } from '@/core/arrange';
 import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel, type TextExtra } from './PlanView';
@@ -87,6 +88,7 @@ import CommandPalette, { type Command } from './CommandPalette';
 import MenuBar, { buildMenus } from './MenuBar';
 import NorthPanel from './NorthPanel';
 import ArrayDialog from './ArrayDialog';
+import MepRiserControls from './MepRiserControls';
 import { arrayTech } from '@/core/tech-array';
 import './theme-pro.gen.css';
 import './theme-pro.css';
@@ -543,6 +545,13 @@ export default function Editor({ id }: { id: string }){
       // din listă tastele de editare nu acționează (săgețile trec prin obiecte): mesajul spune întâi cum se ajunge în plan
       const inList = !!(document.activeElement as HTMLElement | null)?.closest?.('.plan-mirror,.outliner');
       setLiveSel(`${t('mirror.selected', { label: selDesc })}. ${inList ? t('mirror.escFirst') + ' ' : ''}${keys}${liveFlip.current ? ' ' : ''}`); }, 350); return () => clearTimeout(tm); }, [selDesc, sel?.kind, sel?.id, t]); // eslint-disable-line
+  // selecția multiplă pentru cititorul de ecran: la schimbarea grupului „N piese selectate”; cu grupul prins de la tastatură
+  // (Shift+Space, apoi Tab) se anunță obiectul de sub cursor și dacă e în grup. Regiune live separată de cea a selecției,
+  // ca anunțul piesei principale (întârziat 350 ms) să nu-l acopere.
+  const [kbCursor, setKbCursor] = useState<KeyCursor>(null), [liveGroup, setLiveGroup] = useState(''), groupWas = useRef(0);
+  useEffect(() => { const was = groupWas.current, n = group.length; groupWas.current = n; if (n > 1 || (n === 1 && was > 1)) setLiveGroup(tp('plan.groupCount', n)); else if (was > 1) setLiveGroup(''); }, [group.length]); // eslint-disable-line
+  useEffect(() => { if (!kbCursor) return; const label = describeSelection(mirror, kbCursor) ?? '';
+    setLiveGroup(t(kbCursor.kind !== 'placement' ? 'plan.cursorOther' : group.includes(kbCursor.id) ? 'plan.cursorIn' : 'plan.cursorOut', { label })); }, [kbCursor?.kind, kbCursor?.id]); // eslint-disable-line
   // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
   useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
@@ -799,7 +808,9 @@ export default function Editor({ id }: { id: string }){
 
   // layoutul nou pe ecran lat; pe telefon foaia de jos comută Structură / Panou; Focus ascunde panourile și bara etapelor
   const studio = !compact && mode === 'studio' && !stageDef.page, focused = studio && focus, olShown = studio && !focused && wsLay.outliner, fit = fitToViewport(wsLay, vw, olShown);
-  const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
+  // Shift+Enter în Structură: piesa intră în grup sau iese (piesa principală rămâne); pe alt nivel nu există grup, deci se alege simplu
+  const toggleOutlineGroup = (lv: number, i: MirrorItem) => { if (lv !== L || preview || i.kind !== 'placement'){ pickOutline(lv, i, false); return; } setTool('select'); setGroup(toggleInGroup(group, i.id)); };
+  const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} group={group} onToggleGroup={toggleOutlineGroup} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
   return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''} ${theme === 'pro' ? 'theme-pro' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     {techArrayId && <ArrayDialog pieces={1} onApply={techArray} onClose={() => setTechArrayId(null)} />}
@@ -892,7 +903,7 @@ export default function Editor({ id }: { id: string }){
           snap={preview ? shown(preview.v.candidate) : snap}
           catalog={catalog}
           sel={preview ? null : sel}
-          multi={preview ? undefined : multi} onGroup={preview ? undefined : setGroup} onArrange={preview ? undefined : arrange}
+          multi={preview ? undefined : multi} onGroup={preview ? undefined : setGroup} onCursor={preview ? undefined : setKbCursor} onArrange={preview ? undefined : arrange}
           frame={preview ? undefined : frame ?? undefined}
           hoverId={preview ? null : hoverPid} onHover={setHoverPid} onFrameOther={preview ? undefined : frameIn3d}
           tool={preview ? 'select' : tool}
@@ -950,7 +961,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : tool === 'mep_run' ? t('editor.hintMepRun') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><p className="sr-only" aria-live="polite" data-live-group="">{liveGroup}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : tool === 'mep_run' ? t('editor.hintMepRun') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -1223,6 +1234,7 @@ export default function Editor({ id }: { id: string }){
               <div className="prov">{formatLength(runLength(r), units, lang)} · {r.diameterMm ? `Ø${r.diameterMm} mm` : t('bim.diameterUnknown')}</div>
               <label className="f"><span>{t('mep.system')}</span><select value={r.system} onChange={e => patchMepRun(r.id, q => { q.system = e.target.value as MepSystem; })}>
                 {(Object.keys(MEP_SYSTEMS) as MepSystem[]).map(k => <option key={k} value={k}>{MEP_SYSTEMS[k].label[lang === 'en' ? 'en' : 'ro']}</option>)}</select></label>
+              <MepRiserControls key={`riser-${r.id}-${r.points.length}`} run={r} ceilingM={snap.floor.ceilingHeight} say={say} onApply={nr => patchMepRun(r.id, q => { q.points = nr.points; })} />
               <div className="grid2">
                 <label className="f"><span>{t('mep.diameter')}</span><input key={`d-${r.id}-${r.diameterMm ?? ''}`} type="number" min={MEP_LIMITS.minDiameterMm} max={MEP_LIMITS.maxDiameterMm} defaultValue={r.diameterMm ?? ''} placeholder={t('mep.undeclared')} onKeyDown={onEnter} onBlur={e => setOpt(e.currentTarget, 'diameterMm', MEP_LIMITS.minDiameterMm, MEP_LIMITS.maxDiameterMm, 'mep.diaRange')} /></label>
                 <label className="f"><span>{t('mep.material')}</span><input key={`m-${r.id}-${r.material ?? ''}`} maxLength={MEP_LIMITS.materialMax} defaultValue={r.material ?? ''} placeholder={t('mep.undeclared')} onKeyDown={onEnter} onBlur={e => { const v = e.currentTarget.value.trim().slice(0, MEP_LIMITS.materialMax); if (v !== (r.material ?? '')) patchMepRun(r.id, q => { if (v) q.material = v; else delete q.material; }); }} /></label>

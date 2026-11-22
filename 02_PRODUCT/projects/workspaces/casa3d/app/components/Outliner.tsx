@@ -3,11 +3,14 @@
 // (perete → goluri, nișe) și Notele. Model: core/outliner.ts peste descrierile din core/plan-describe.ts (aceleași texte
 // ca pentru cititorul de ecran). Arbore APG: o singură oprire Tab (roving tabindex), sus/jos trec prin rânduri, dreapta
 // deschide sau intră, stânga închide sau urcă, Home/End, Enter alege și încadrează, Space doar alege, Escape duce în plan.
+// Selecția multiplă: Shift+Enter (sau Shift+Space) pe o piesă o adaugă în grup sau o scoate, fără să schimbe piesa principală;
+// piesele din grup au aria-selected și un semn (core/multi-select.ts).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrefs } from '@/lib/prefs';
 import Icon from './Icon';
 import { findPath, visibleRows, type OutlinerNode } from '@/core/outliner';
 import type { MirrorItem } from '@/core/plan-describe';
+import { isListGroupToggleKey } from '@/core/multi-select';
 
 type OnPick = (level: number, item: MirrorItem, frame: boolean) => void;
 // semne mici pe tipuri (14 px), desenate cu culoarea textului: camera e un contur, peretele o bară, golul un arc
@@ -21,8 +24,10 @@ const GLYPH: Record<string, string> = {
 const Glyph = ({ kind }: { kind?: string }) => <svg className="ol-glyph" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
   {kind && GLYPH[kind] ? <path d={GLYPH[kind]} /> : <circle cx="7" cy="7" r="1.6" />}</svg>;
 
-export default function Outliner({ nodes, level, selected, onPick, onHover, onHide }: {
+export default function Outliner({ nodes, level, selected, group, onPick, onToggleGroup, onHover, onHide }: {
   nodes: readonly OutlinerNode[]; level: number; selected: { kind: string; id: string } | null;
+  /** grupul de piese selectate pe nivelul curent (piesa principală prima) și comutarea unei piese în el */
+  group?: readonly string[]; onToggleGroup?(level: number, item: MirrorItem): void;
   onPick: OnPick; onHover(placementId: string | null): void; onHide?(): void }){
   const { t } = usePrefs(), box = useRef<HTMLUListElement>(null);
   const path = useMemo(() => findPath(nodes, level, selected), [nodes, level, selected]);
@@ -41,6 +46,8 @@ export default function Outliner({ nodes, level, selected, onPick, onHover, onHi
     const fk = (e.target as HTMLElement).closest<HTMLElement>('[data-key]')?.dataset.key, at = fk ? rows.findIndex(x => x.node.key === fk) : -1, ix = at >= 0 ? at : ixState;
     const r = rows[ix]; if (!r) return; const n = r.node, kids = n.children.length > 0, isOpen = open.has(n.key);
     let done = true;
+    // Shift+Enter / Shift+Space pe o piesă: intră în grup sau iese; focusul și piesa principală rămân pe loc
+    if (isListGroupToggleKey(e) && onToggleGroup && n.item?.kind === 'placement'){ e.preventDefault(); e.stopPropagation(); onToggleGroup(n.level, n.item); return; }
     switch (e.key){
       case 'ArrowDown': if (rows[ix + 1]) focusKey(rows[ix + 1]!.node.key); break;
       case 'ArrowUp': if (rows[ix - 1]) focusKey(rows[ix - 1]!.node.key); break;
@@ -61,16 +68,18 @@ export default function Outliner({ nodes, level, selected, onPick, onHover, onHi
       {onHide && <button type="button" className="btn ghost icon-btn sm" aria-label={t('outliner.hide')} title={t('outliner.hide')} onClick={onHide}><Icon name="chevronLeft" size={16} /></button>}</header>
     <p className="sr-only" id="ol-keys">{t('outliner.keys')}</p>
     {empty && <p className="ol-empty muted">{t('outliner.empty')}</p>}
-    <ul ref={box} role="tree" className="ol-tree" aria-label={t('outliner.aria')} aria-describedby="ol-keys" onKeyDown={onKey}>
+    <ul ref={box} role="tree" className="ol-tree" aria-multiselectable={onToggleGroup ? true : undefined} aria-label={t('outliner.aria')} aria-describedby="ol-keys" onKeyDown={onKey}>
       {rows.map(r => { const n = r.node, kids = n.children.length > 0, isOpen = open.has(n.key), on = n.key === path?.key;
         const pid = n.item?.kind === 'placement' ? n.item.id : null;
+        // piesa din grup, alta decât cea principală (doar pe nivelul curent: grupul e al planului afișat)
+        const also = !on && !!pid && n.level === level && (group?.length ?? 0) > 1 && group!.includes(pid);
         return <li key={n.key} data-key={n.key} role="treeitem" tabIndex={n.key === active ? 0 : -1} aria-level={r.depth + 1} aria-posinset={r.index} aria-setsize={r.setSize}
-          aria-expanded={kids ? isOpen : undefined} aria-selected={n.item ? on : undefined} aria-current={!n.item && r.depth === 0 && n.level === level ? 'true' : undefined}
-          className={`ol-row ${on ? 'is-sel' : ''} ${n.item ? '' : 'is-head'}`} style={{ '--d': r.depth } as React.CSSProperties} title={n.desc ?? n.label} aria-label={n.desc}
+          aria-expanded={kids ? isOpen : undefined} aria-selected={n.item ? on || also : undefined} aria-current={!n.item && r.depth === 0 && n.level === level ? 'true' : undefined}
+          className={`ol-row ${on ? 'is-sel' : ''} ${also ? 'is-multi' : ''} ${n.item ? '' : 'is-head'}`} style={{ '--d': r.depth } as React.CSSProperties} title={n.desc ?? n.label} aria-label={n.desc}
           onFocus={e => { if (e.target === e.currentTarget) setCur(n.key); }} onClick={() => { setCur(n.key); choose(n, false); }} onDoubleClick={() => n.item && onPick(n.level, n.item, true)}
           onMouseEnter={pid ? () => onHover(pid) : undefined} onMouseLeave={pid ? () => onHover(null) : undefined}>
           <span className="ol-twist" aria-hidden="true" onClick={kids ? e => { e.stopPropagation(); toggle(n.key); } : undefined}>{kids && <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={14} />}</span>
-          {n.item ? <Glyph kind={n.item.kind} /> : null}<span className="ol-label">{n.label}</span></li>; })}
+          {n.item ? <Glyph kind={n.item.kind} /> : null}<span className="ol-label">{n.label}</span>{also && <span className="ol-multi" aria-hidden="true"><Icon name="check" size={12} /></span>}</li>; })}
     </ul>
   </section>);
 }
