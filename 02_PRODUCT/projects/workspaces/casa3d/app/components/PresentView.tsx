@@ -21,6 +21,7 @@ import ClientDeliveries from './ClientDeliveries';
 import ClientSiteLog from './ClientSiteLog';
 import type { ClientLogEntry } from '@/core/site-log';
 import { ClientChanges } from './ChangeOrders';
+import { ClientOffer } from './OfferAcceptance';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
 import { FULL_W, renderSize, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
@@ -173,6 +174,8 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <dl>{Object.entries(pres.budget.categories).filter(([, v]) => v > 0).map(([k, v]) => <div key={k}><dt>{t(`budget.cat.${k}`)}</dt><dd>{money(v)}</dd></div>)}
           {pres.budget.labor > 0 && <div><dt>{t('pres.labour')}</dt><dd>{money(pres.budget.labor)}</dd></div>}<div><dt>{t('pres.contingency')}</dt><dd>{money(pres.budget.contingency)}</dd></div></dl></div>
       <footer>{num(n)}</footer></section>
+    {/* oferta de acceptat: apare doar dacă designerul a activat acceptarea online pe acest link (cere PIN) */}
+    {share && <ClientOffer token={share.token} />}
     {share && <ClientChanges token={share.token} offered={pres.budget.total} cur={cur} />}
     {share?.progress && <ClientDeliveries p={share.progress} />}
     {share && (share.siteLog?.length ?? 0) > 0 && <ClientSiteLog token={share.token} entries={share.siteLog!} />}

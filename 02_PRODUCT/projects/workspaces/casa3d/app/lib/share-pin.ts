@@ -32,11 +32,12 @@ export async function setSharePin(owner: string, projectId: string, token: unkno
   if (!rows[0]) throw notFound();
   return { pin };
 }
-/** Doar proprietarul: dezactivează pinii pe link (hash, sare și cheie șterse → sesiunile existente nu mai trec). */
+/** Doar proprietarul: dezactivează pinii pe link (hash, sare și cheie șterse → sesiunile existente nu mai trec).
+ *  Acceptarea online a ofertei (lib/offer-acceptance.ts) cere PIN, deci se oprește și ea pe acest link. */
 export async function clearSharePin(owner: string, projectId: string, token: unknown): Promise<{ ok: true }> {
   await getProject(owner, projectId); if (!isShareToken(token)) throw notFound();
   const { q } = await getDb();
-  const { rows } = await q(`update shares set pin_hash=null, pin_salt=null, pin_key=null, pin_failures=0, pin_locked_until=null
+  const { rows } = await q(`update shares set pin_hash=null, pin_salt=null, pin_key=null, pin_failures=0, pin_locked_until=null, offer_accept=false
     where token=$1 and project_id=$2 returning token`, [token, projectId]);
   if (!rows[0]) throw notFound();
   return { ok: true };

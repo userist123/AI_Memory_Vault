@@ -4,6 +4,8 @@
 // ce a preluat designerul din el e deja în brief-ul din proiect.json.
 // Cererile de ofertă către meseriași (lib/rfq.ts) nu intră nici ele: ofertele sunt datele meseriașilor; prețurile contractate la
 // atribuire sunt deja în proiect.json (laborContract).
+// Acceptările ofertei de către client (lib/offer-acceptance.ts) INTRĂ în arhivă: sunt dovada contractului designerului (instantaneul
+// înghețat, amprenta, numele tastat, data), cu câte o confirmare text pe acceptare; cheia linkului pe care s-au făcut nu apare.
 // Linkurile clientului apar fără cheie (doar revizia și datele), ca arhiva să nu deschidă nimic dacă ajunge la altcineva.
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -16,6 +18,7 @@ import { safeValue, quoteCell } from '../core/csv-safe';
 import { listSnags } from './site';
 import { listSiteLog } from './site-log';
 import { listChanges } from './change-orders';
+import { listAcceptanceRecords, confirmationFile } from './offer-acceptance';
 import { getTimesheet } from './timesheet';
 import { getContractData, readStoredContract } from './contract';
 import { listSurveys } from './surveys';
@@ -61,12 +64,15 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   files.push({ name: 'pareri-client.json', data: JSON.stringify(await listFeedback(owner, id), null, 2) });
   files.push({ name: 'alegeri-variante.json', data: JSON.stringify(await listChoices(owner, id), null, 2) });
   files.push({ name: 'contract.json', data: JSON.stringify(await orRaw(() => getContractData(owner, id), () => readStoredContract(id)), null, 2) });
+  const acceptances = await listAcceptanceRecords(owner, id);
+  files.push({ name: 'acceptari-oferta.json', data: JSON.stringify(acceptances, null, 2) });
+  for (const a of acceptances){ const c = confirmationFile(a); files.push({ name: `acceptari-oferta/${c.filename}`, data: c.text }); }
   files.push({ name: 'sarcini.json', data: JSON.stringify(await listTasks(owner, id), null, 2) });
   files.push({ name: 'comercial.json', data: JSON.stringify(await orRaw(() => getCommercialData(owner, id), () => readStoredCommercial(id)), null, 2) });   // discount, adaos, grafic de plăți (doar pentru designer)
   // randările de pe disc (doar imaginile, nu scena intermediară)
   const root = path.join(process.env.CASA3D_RENDER_DIR || path.join(process.cwd(), '.data', 'renders'), id);
   for (const job of await fs.readdir(root).catch(() => [] as string[])){ if (!/^\d{13}$/.test(job)) continue;
     for (const f of await fs.readdir(path.join(root, job)).catch(() => [] as string[])) if (/^[\w-]{1,80}\.png$/.test(f)) files.push({ name: `randari/${job}/${f}`, data: await fs.readFile(path.join(root, job, f)) }); }
-  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, alegeri-variante, sarcini, comercial — JSON\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
+  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, alegeri-variante, sarcini, comercial — JSON\r\nacceptari-oferta.json și acceptari-oferta/ — acceptările ofertei de către client: conținutul înghețat, amprenta SHA-256 și confirmarea fiecăreia\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
   return { filename: `${safe(p.name)}-casa3d-${new Date().toISOString().slice(0, 10)}.zip`, data: zip(files) };
 }

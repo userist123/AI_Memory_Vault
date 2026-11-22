@@ -28,10 +28,10 @@ export async function createShare(owner: string, id: string, revisionNumber: unk
 }
 export async function listShares(owner: string, id: string){
   await getProject(owner, id); const { q } = await getDb();
-  const { rows } = await q(`select token, revision_number, created_at, revoked_at, expires_at, last_access_at, (pin_hash is not null) as pin_enabled, (${shareActive()}) as active
+  const { rows } = await q(`select token, revision_number, created_at, revoked_at, expires_at, last_access_at, (pin_hash is not null) as pin_enabled, offer_accept, (${shareActive()}) as active
     from shares where project_id=$1 order by created_at desc`, [id]);
   return rows.map(r => ({ token: r.token, revisionNumber: r.revision_number, createdAt: r.created_at, revokedAt: r.revoked_at, expiresAt: r.expires_at, lastAccessAt: r.last_access_at,
-    active: !!r.active, pinEnabled: !!r.pin_enabled, path: `/share/${r.token}` }));
+    active: !!r.active, pinEnabled: !!r.pin_enabled, offerAccept: !!r.offer_accept, path: `/share/${r.token}` }));
 }
 export async function revokeShare(owner: string, id: string, token: unknown){
   await getProject(owner, id); if (typeof token !== 'string' || !TOKEN_RE.test(token)) throw new HttpError(404, 'Link inexistent.');

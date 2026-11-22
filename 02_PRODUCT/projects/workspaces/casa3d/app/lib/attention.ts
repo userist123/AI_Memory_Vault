@@ -12,6 +12,7 @@ import { getDb, dbWrites } from './db';
 import { getCatalog, getMaterials } from './repo';
 import { listCustomItemsFor } from './custom-items';
 import { shareActive } from './share';
+import { offerStatesFor } from './offer-acceptance';
 import type { Snapshot } from '../core/types';
 import { readMeta } from '../core/project-meta';
 import { readCommercial } from '../core/commercial';
@@ -65,6 +66,8 @@ export async function attentionFacts(owner: string, today: string): Promise<{ fa
   const stmBy = group(stm.rows, r => ({ number: Number(r.number), from: String(r.from ?? ''), to: String(r.to ?? '') }));
   const rfqBy = group(rfqs.rows, r => ({ id: r.id as string, title: r.title as string, dueDate: day(r.due), open: !!r.open, offers: Number(r.offers) }));
   const metas = new Map(ps.map(p => [p.id as string, readMeta(p.meta)]));
+  // starea ofertei: doar pentru proiectele cu o acceptare în vigoare (oferta curentă se recalculează, deci cel mult 20)
+  const offers = await offerStatesFor(owner, ids);
 
   // liniile de comandă: doar unde pot ieși întârzieri (fără nicio dată, toate liniile sunt „de comandat”, fără termen)
   const dated = ids.filter(id => metas.get(id)!.startDate || (statesBy.get(id) ?? []).some(([, s]) => s?.neededBy || s?.status === 'ordered' && s.eta));
@@ -80,7 +83,7 @@ export async function attentionFacts(owner: string, today: string): Promise<{ fa
     let phases: Phase[] = []; try { if (schedBy.get(id)) phases = checkSchedule(schedBy.get(id).data).phases; } catch { phases = []; }
     return { projectId: id, projectName: p.name as string, status: meta.status, dueDate: meta.dueDate ?? null, milestones: readCommercial(comBy.get(id)?.data).milestones, orders: orders.get(id) ?? [],
       snags: snagsBy.get(id) ?? [], phases, statements: stmBy.get(id) ?? [], brief: b ? { submittedAt: iso(b.submitted_at), importedAt: iso(b.imported_at) } : null, rfqs: rfqBy.get(id) ?? [],
-      share: sh ? { expiresAt: iso(sh.expires_at) } : null, feedback: f ? { open: Number(f.open), approvals: Number(f.approvals), latest: iso(f.latest) } : null }; });
+      share: sh ? { expiresAt: iso(sh.expires_at) } : null, feedback: f ? { open: Number(f.open), approvals: Number(f.approvals), latest: iso(f.latest) } : null, offer: offers.get(id) ?? null }; });
   return { facts, ordersSkipped: dated.length - calc.length };
 }
 

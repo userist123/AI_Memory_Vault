@@ -12,9 +12,10 @@ import type { StageId } from './stage-progress';
 
 export type AttentionSeverity = 'urgent' | 'soon' | 'info';
 export const ATTENTION_SEVERITIES = ['urgent', 'soon', 'info'] as const;
-export type AttentionKind = 'payment' | 'order' | 'delivery' | 'snag' | 'schedule' | 'statement' | 'brief' | 'rfq' | 'share' | 'feedback';
-/** Pragurile, în zile: „curând” = în următoarele 7 zile; o remediere deschisă de peste 14 zile urcă la „curând”. */
-export const ATTENTION = { soonDays: 7, snagOldDays: 14, statementStaleDays: 35, max: 50 } as const;
+export type AttentionKind = 'payment' | 'order' | 'delivery' | 'snag' | 'schedule' | 'statement' | 'brief' | 'rfq' | 'share' | 'feedback' | 'offer';
+/** Pragurile, în zile: „curând” = în următoarele 7 zile; o remediere deschisă de peste 14 zile urcă la „curând”;
+ *  oferta acceptată de client rămâne în listă 14 zile de la acceptare. */
+export const ATTENTION = { soonDays: 7, snagOldDays: 14, statementStaleDays: 35, offerAcceptedDays: 14, max: 50 } as const;
 
 export interface ProjectFacts {
   projectId: string; projectName: string; status?: ProjectStatus; dueDate?: string | null;
@@ -33,6 +34,8 @@ export interface ProjectFacts {
   share?: { expiresAt: string | null } | null;
   /** părerile nerezolvate ale clientului: observații și întrebări (`open`), aprobări (`approvals`) */
   feedback?: { open: number; approvals: number; latest: string | null } | null;
+  /** acceptarea ofertei pe linkul clientului (core/offer-acceptance.ts): versiunea curentă e acceptată sau oferta s-a schimbat după */
+  offer?: { state: 'accepted' | 'changed'; acceptedAt: string; name: string } | null;
 }
 export interface AttentionItem {
   /** stabil între încărcări: proiect + mesaj + referință */
@@ -105,6 +108,12 @@ export function projectAttention(f: ProjectFacts, today: string): AttentionItem[
 
   if (f.feedback?.open) add('feedback', 'soon', 'feedback.open', 'present', f.feedback.latest?.slice(0, 10) ?? null, f.feedback.open);
   if (f.feedback?.approvals) add('feedback', 'info', 'feedback.approvals', 'present', f.feedback.latest?.slice(0, 10) ?? null, f.feedback.approvals);
+
+  // oferta: schimbată după acceptare (clientul trebuie să o accepte din nou) sau acceptată de curând (de trimis graficul și contractul);
+  // se rezolvă în panoul „Contract și ofertă” din etapa Releveu
+  if (f.offer){ const at = f.offer.acceptedAt.slice(0, 10);
+    if (f.offer.state === 'changed') add('offer', 'soon', 'offer.changed', 'survey', at, 0, { name: f.offer.name });
+    else if (daysBetween(at, today) <= ATTENTION.offerAcceptedDays) add('offer', 'info', 'offer.accepted', 'survey', at, 0, { name: f.offer.name }); }
   return out;
 }
 

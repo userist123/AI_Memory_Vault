@@ -131,4 +131,21 @@ create index if not exists rfq_requests_project on rfq_requests(project_id, crea
 create table if not exists rfq_invites(token text primary key, request_id uuid not null references rfq_requests(id) on delete cascade, label text not null, data jsonb not null default '{}'::jsonb,
   rev int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now(), submitted_at timestamptz, expires_at timestamptz, revoked_at timestamptz);
 create index if not exists rfq_invites_request on rfq_invites(request_id, created_at);
+-- acceptarea ofertei pe linkul clientului (core/offer-acceptance.ts): designerul o activează pe un link cu PIN (offer_accept).
+-- Fiecare acceptare păstrează instantaneul înghețat al ofertei și amprenta lui SHA-256, numele tastat, opțional contactul și
+-- „în numele”, bifa de începere înainte de 14 zile și momentul serverului. Fără IP, fără agent de browser. Aceeași
+-- versiune poate fi acceptată de mai multe persoane (coproprietari): o singură acceptare în vigoare pe proiect, amprentă și
+-- persoană (name_key = numele normalizat). Retragerea (withdrawn_at) o scoate din vigoare, dar rândul rămâne în istoric
+alter table shares add column if not exists offer_accept boolean not null default false;
+create table if not exists offer_acceptances(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  share_token text not null, revision_number int not null, snapshot jsonb not null, hash text not null, accepted_name text not null, accepted_contact text, accepted_for text,
+  early_start boolean not null default false, accepted_at timestamptz not null default now(), withdrawn_at timestamptz);
+alter table offer_acceptances add column if not exists name_key text not null default '';
+-- rânduri dinaintea coloanei name_key: cheia din nume (litere mici, spații simple), iar dintre eventualele dubluri în vigoare pe
+-- aceeași persoană și amprentă rămâne cea mai veche, celelalte trec la retrase — altfel indexul unic de mai jos ar opri pornirea
+update offer_acceptances set name_key = lower(regexp_replace(trim(accepted_name), '[[:space:]]+', ' ', 'g')) where name_key = '';
+update offer_acceptances a set withdrawn_at = a.accepted_at where a.withdrawn_at is null and exists (select 1 from offer_acceptances b where b.project_id = a.project_id and b.hash = a.hash and b.name_key = a.name_key and b.withdrawn_at is null and (b.accepted_at, b.id) < (a.accepted_at, a.id));
+drop index if exists offer_acceptances_active;
+create unique index if not exists offer_acceptances_person on offer_acceptances(project_id, hash, name_key) where withdrawn_at is null;
+create index if not exists offer_acceptances_project on offer_acceptances(project_id, accepted_at desc);
 `;

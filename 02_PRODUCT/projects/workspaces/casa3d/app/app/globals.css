@@ -475,6 +475,34 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .dco-list li{border-top:1px solid var(--rule);padding:8px 0;display:grid;gap:4px} .dco-list li>div:first-child{display:flex;justify-content:space-between;gap:8px} .dco-act{display:flex;gap:6px}
 .dco-new{display:grid;gap:6px;border-top:1px solid var(--rule);padding-top:10px}
 @media (max-width:700px){ .cco{width:auto;margin:0 12px;padding:16px} .cco h2{font-size:var(--fs-xl)} .cco-bud{gap:14px} .cco-bud dd{font-size:var(--fs-lg)} .cco-item header{flex-direction:column} }
+/* ---- acceptarea ofertei pe linkul clientului (components/OfferAcceptance.tsx) ---- */
+.oa{width:min(1280px,94vw);margin:0 auto;background:var(--surface);border:1px solid var(--rule);padding:22px 26px;display:grid;gap:14px;box-sizing:border-box}
+.oa h2{font:400 var(--fs-xl)/1.1 var(--serif);margin:4px 0 0} .oa-lead{margin:6px 0 0;color:var(--lead)} .oa p{margin:0}
+.oa-body{display:grid;gap:12px;max-width:860px} .oa-sub{font:500 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead);margin:10px 0 0;padding-top:12px;border-top:1px solid var(--rule)}
+.oa-facts{display:grid;gap:10px;margin:0} .oa-facts>div{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:4px 16px} .oa-facts dt{color:var(--lead);font-size:var(--fs-sm)} .oa-facts dd{margin:0;display:grid;gap:2px}
+.oa-facts .total b{font:400 var(--fs-xl) var(--serif)} .oa-facts .total span{color:var(--lead);font-size:var(--fs-sm)}
+.oa table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)} .oa th{text-align:left;font:500 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);border-bottom:1px solid var(--ink);padding:6px 10px 6px 0}
+.oa td{border-bottom:1px solid var(--rule);padding:7px 10px 7px 0;vertical-align:top} .oa td:last-child,.oa th:last-child{text-align:right;white-space:nowrap}
+.oa-offer{display:grid;gap:10px;background:#fff;border:1px solid var(--rule);padding:14px 16px} .oa-offer h3{font:500 var(--fs-md) var(--serif);margin:0 0 4px} .oa-offer section{display:grid;gap:6px} .oa-offer ul,.oa-form ul{margin:0;padding-left:20px;display:grid;gap:3px}
+.oa-form{border:1px solid var(--rule);background:#fff;padding:10px 14px} .oa-form summary{cursor:pointer;font-weight:500;min-height:28px} .oa-form[open] summary{margin-bottom:8px} .oa-small{font-size:var(--fs-xs);color:var(--lead)}
+.oa-accept{display:grid;gap:12px;border:1px solid var(--ink);background:#fff;padding:16px;margin-top:6px} .oa-accept .f{display:grid;gap:4px} .oa-accept .f span{font-size:var(--fs-sm)} .oa-accept input:not([type=checkbox]){min-height:44px;padding:0 12px;font-size:16px;border:1px solid var(--line-strong);background:#fff;width:100%;box-sizing:border-box}
+.oa-chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer} .oa-chk input{width:20px;height:20px;margin-top:2px;flex:none} .oa-chk small{color:var(--lead)} .oa-effect{font-weight:500}
+.oa-go{min-height:48px;justify-self:start} .oa-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.oa-status{display:grid;gap:8px;border-left:3px solid var(--accent);background:#fff;padding:12px 14px} .oa-status.st-accepted{border-left-color:#4f6b4a} .oa-status.st-changed,.oa-status.st-withdrawn{border-left-color:var(--warn)} .oa-status ul{margin:0;padding-left:20px} .oa-status small{color:var(--lead);overflow-wrap:anywhere}
+.oa-confirm{background:#fff;border:1px solid var(--rule);padding:18px 22px} .oa-doc-facts{margin:10px 0} .contract-doc .oa-doc-facts th{width:36%;padding:5px 8px 5px 0;text-transform:none;letter-spacing:0;font:500 12px var(--sans);color:var(--lead);border-bottom:1px solid var(--rule);vertical-align:top} .oa-doc-facts td{overflow-wrap:anywhere;text-align:left!important;white-space:normal!important}
+.contract-doc h2.oa-doc-offer{font-size:19px;margin-top:22px;border-top:1px solid var(--ink);padding-top:12px}
+@media screen{ .oa-collapsed{display:none} }
+.oa-h4{font:500 var(--fs-md) var(--serif);margin:6px 0 0} .oa-more{border:1px solid var(--rule);background:#fff;padding:10px 14px} .oa-more>summary{cursor:pointer;font-weight:500;min-height:28px} .oa-more[open]>summary{margin-bottom:10px} .oa-status b{font-weight:500}
+.oa-links{list-style:none;margin:0;padding:0;display:grid;gap:6px} .oa-links small{color:var(--lead)}
+.oa-admin{display:grid;gap:8px;border-top:1px solid var(--rule);padding-top:10px} .oa-admin h4{font:500 var(--fs-sm) var(--sans);margin:0} .oa-state{margin:0;font-size:var(--fs-sm);border-left:3px solid var(--rule);padding-left:8px} .oa-state.st-accepted{border-left-color:#4f6b4a} .oa-state.st-changed,.oa-state.st-withdrawn{border-left-color:var(--warn)}
+.oa-list{list-style:none;margin:0;padding:0} .oa-list li{border-top:1px solid var(--rule);padding:8px 0;display:grid;gap:4px;font-size:var(--fs-sm)} .oa-list li.off{color:var(--lead)} .oa-list small{color:var(--lead);overflow-wrap:anywhere} .oa-wd{display:grid;gap:6px}
+@media (max-width:700px){ .oa{width:auto;margin:0 12px;padding:16px} .oa-facts>div{grid-template-columns:1fr} .oa-go{justify-self:stretch;white-space:normal;height:auto;padding:10px 14px} }
+/* tipărirea confirmării de pe linkul clientului: doar documentul; la tipărirea prezentării, secțiunea ofertei lipsește */
+@media print{
+  html:not(.oa-printing) .oa{display:none!important}
+  html.oa-printing .deck>:not(.oa),html.oa-printing .oa>:not(.oa-confirm){display:none!important}
+  html.oa-printing .deck{display:block;background:#fff;padding:0} html.oa-printing .oa{display:block;width:auto;border:0;padding:0;margin:0} html.oa-printing .oa-confirm{display:block!important;border:0;padding:0}
+}
 .cdel-due{border:1px solid var(--err);padding:12px 14px;display:grid;gap:4px} .cdel-due>b{color:var(--err);font:500 var(--fs-sm) var(--sans)}
 .oline-main>small.muted{grid-column:1/-1;font-size:var(--fs-xs)}
 /* Dosarul de predare */

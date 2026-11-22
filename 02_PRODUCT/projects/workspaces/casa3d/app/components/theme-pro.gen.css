@@ -116,6 +116,15 @@
 .ws.theme-pro .cco-item .down{color:#b7b7b7}
 .ws.theme-pro .co-approved{color:#b7b7b7}
 .ws.theme-pro .co-sent{color:#b2b4b6}
+.ws.theme-pro .oa-offer{background:#1d1d1d}
+.ws.theme-pro .oa-form{background:#1d1d1d}
+.ws.theme-pro .oa-accept{background:#1d1d1d}
+.ws.theme-pro .oa-accept input:not([type=checkbox]){background:#1d1d1d}
+.ws.theme-pro .oa-status{background:#1d1d1d}
+.ws.theme-pro .oa-status.st-accepted{border-left-color:#b7b7b7}
+.ws.theme-pro .oa-confirm{background:#1d1d1d}
+.ws.theme-pro .oa-more{background:#1d1d1d}
+.ws.theme-pro .oa-state.st-accepted{border-left-color:#b7b7b7}
 .ws.theme-pro .arch-title-block{background:#1d1d1d}
 .ws.theme-pro .arch-tb-sheet-num{background:rgba(26,26,26,.03)}
 .ws.theme-pro .sv-res{background:#1d1d1d}

@@ -12,7 +12,7 @@ import { TASK_LIMITS } from '@/core/tasks';
 type Data = { items: AttentionItem[]; counts: AttentionCounts; total: number; today: string; ordersSkipped: number };
 const SHORT = 6, SEVERITIES: AttentionSeverity[] = ['urgent', 'soon', 'info'];
 // elementele a căror dată e „de când așteaptă”, nu un termen
-const SINCE = new Set(['snag.open', 'brief.submitted', 'feedback.open', 'feedback.approvals', 'statement.stale']);
+const SINCE = new Set(['snag.open', 'brief.submitted', 'feedback.open', 'feedback.approvals', 'statement.stale', 'offer.accepted', 'offer.changed']);
 
 // `reloadKey`: se schimbă când lista de proiecte s-a schimbat (coș, restaurare, duplicare), ca panoul să se reîncarce
 export default function AttentionPanel({ onTaskAdded, reloadKey = 0 }: { onTaskAdded?: () => void; reloadKey?: number }){
