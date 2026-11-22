@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -20,7 +21,7 @@ from tests.conftest import AGENT, HUMAN
 
 pytestmark = pytest.mark.browser
 
-ARIAL = Path("C:/Windows/Fonts/arial.ttf")
+ARIAL = Path(os.environ.get("WINDIR", "")) / "Fonts" / "arial.ttf"
 
 
 def _squash(s: str) -> str:

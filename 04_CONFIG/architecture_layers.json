@@ -27,6 +27,12 @@
   },
   "layers": [
     {
+      "name": "L00_standalone_products",
+      "units": [
+        "products/ai_app_studio"
+      ]
+    },
+    {
       "name": "L0_foundation",
       "units": [
         "packages/security",

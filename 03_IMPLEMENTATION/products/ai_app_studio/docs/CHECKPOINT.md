@@ -61,6 +61,12 @@ Next (in order)
    Pending from S1: config.py still reads AWS_* env and port 17865 (separate identity AAS_*/17875 not done);
    visual/service.py keeps website BIM-viewport helpers (unreachable in AAS, patch when wiring).
    Before merging any vendored change: gen_vendored.py --check and check_vendored.py --upstream-repo on the owner PC.
+   Backlog for slice S2 (S1 review residuals):
+   - L1: check_vendored `_walk` must not descend into junctions (os.walk follows them on Python 3.12; a
+     self-parent junction recurses); test with a junction to its own parent.
+   - L2: CI mode of check_vendored must require the `residuals` block in VENDORED.json (fail when absent).
+   - L4: re-add the OCR bad-region ValidationFailed checks on the desktop-like capture
+     (tests/vendored/visual/test_ocr.py).
 
 Key facts
 - WSL2 NAT mode. Never touch AVD s9emu, ~/debug.keystore, ~/android/**, the owner's ~/.android.

@@ -260,9 +260,9 @@
       "upstream_path": "tests/unit/test_ocr.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "011fbded107b0e28f82eb137a27a2d5d969ac8ed3b3a439cd54b5187d3130a74",
-      "local_sha256": "011fbded107b0e28f82eb137a27a2d5d969ac8ed3b3a439cd54b5187d3130a74",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "7ce48a436faa48368726397b8beb579a354079ff2d4146f392340fdffaaca28a",
+      "patched": true,
+      "patch_reason": "ARIAL from %WINDIR% instead of a literal drive path (vault validate_repository_layout absolute-path gate); tests unchanged"
     },
     {
       "path": "tests/vendored/security/__init__.py",
@@ -278,9 +278,9 @@
       "upstream_path": "tests/security/test_core_security.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "114a5fd5f4b6fa83a8c827b122cee22801e43c0383a905dc693b9bd82ce8eff1",
-      "local_sha256": "983ca518f48435aeb99472800510ce32a0991339002a09835878184624bfd32d",
+      "local_sha256": "7866975af333ba0dd41558ffa41063cd120712eed493966b5ecfc54521c92d93",
       "patched": true,
-      "patch_reason": "removed component-injection tests (css/url/html escape/style property) and their section comment; remaining tests unchanged"
+      "patch_reason": "removed component-injection tests (css/url/html escape/style property) and their section comment; remaining tests unchanged; the Windows drive-absolute vector (win.ini) is written as two adjacent string literals (same value) for the vault absolute-path layout gate"
     },
     {
       "path": "tests/vendored/security/test_review_round1.py",
@@ -332,9 +332,9 @@
       "upstream_path": "tests/visual/test_ocr.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "cadf264419605a54db47bd90d1ad1c67b43204d29d521fc7427dfe0d09469ca6",
-      "local_sha256": "083aaf591674377d23dbb8f8dcf4f1f11fdd1f97822d729b8c7a98f74930165f",
+      "local_sha256": "5a2ef2cd9c125ab9d82a7b2d9ee31ea289917eac44385a8813e51f4716754429",
       "patched": true,
-      "patch_reason": "removed test_ocr_reads_hero_title_and_region_excludes_it (template 'landing' + update_component on a Chromium preview); test_analyze_ocr_attaches_text_for_desktop_like_capture unchanged"
+      "patch_reason": "removed test_ocr_reads_hero_title_and_region_excludes_it (template 'landing' + update_component on a Chromium preview); test_analyze_ocr_attaches_text_for_desktop_like_capture unchanged; ARIAL from %WINDIR% instead of a literal drive path (vault absolute-path layout gate)"
     }
   ],
   "local_files": [

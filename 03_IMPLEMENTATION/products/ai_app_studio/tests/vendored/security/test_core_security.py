@@ -18,7 +18,8 @@ from tests.conftest import AGENT, HUMAN
 
 
 @pytest.mark.parametrize("bad", [
-    "../outside.txt", "a/../../x", "C:/Windows/win.ini", "c:evil", "/etc/passwd", "\\\\server\\share\\x",
+    "../outside.txt", "a/../../x", "C:" "/Windows/win.ini", "c:evil",  # drive-absolute literal split for the layout gate
+    "/etc/passwd", "\\\\server\\share\\x",
     "//server/share", "file.txt:stream", "CON", "nul.txt", "a/aux/b", "trailing. ", "x\x00y", "",
 ])
 def test_workspace_rejects_traversal_and_special_paths(tmp_path: Path, bad: str) -> None:

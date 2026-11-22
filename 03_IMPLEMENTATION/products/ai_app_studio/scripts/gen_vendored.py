@@ -4,7 +4,7 @@ The tables below are the source of truth for what is vendored, why each file is 
 sit in a vendored tree and which upstream tests were not vendored. Hashes are always recomputed:
 upstream_sha256 from `git -C <AWS repo> show <commit>:<upstream_path>`, local_sha256 from the file bytes.
 
-    python scripts/gen_vendored.py --upstream-repo E:/claude-work/ai-website-studio [--check]
+    python scripts/gen_vendored.py --upstream-repo <path to the AI Website Studio clone> [--check]
 
 --check writes nothing and exits 1 when the committed manifest differs from the regenerated one.
 Owner PC only: CI has no access to the upstream repository (see the "residuals" entry it writes).
@@ -73,11 +73,14 @@ FILES: list[tuple[str, str, str]] = [
     ("tests/vendored/unit/test_project_engine.py", "tests/unit/test_project_engine.py",
      "removed website-only tests (templates/components/theme/component_model) and the component_model import; "
      "remaining tests unchanged; generic equivalents re-covered in tests/unit/test_project_kind.py"),
-    ("tests/vendored/unit/test_ocr.py", "tests/unit/test_ocr.py", ""),
+    ("tests/vendored/unit/test_ocr.py", "tests/unit/test_ocr.py",
+     "ARIAL from %WINDIR% instead of a literal drive path (vault validate_repository_layout absolute-path gate); "
+     "tests unchanged"),
     ("tests/vendored/security/__init__.py", "tests/security/__init__.py", ""),
     ("tests/vendored/security/test_core_security.py", "tests/security/test_core_security.py",
      "removed component-injection tests (css/url/html escape/style property) and their section comment; remaining "
-     "tests unchanged"),
+     "tests unchanged; the Windows drive-absolute vector (win.ini) is written as two adjacent string literals "
+     "(same value) for the vault absolute-path layout gate"),
     ("tests/vendored/security/test_review_round1.py", "tests/security/test_review_round1.py",
      "removed test_css_grammar_round1 (components) and test_export_does_not_follow_junctions (used template "
      "'landing'; re-covered unchanged in assertions by tests/unit/test_project_kind.py)"),
@@ -93,7 +96,8 @@ FILES: list[tuple[str, str, str]] = [
     ("tests/vendored/visual/__init__.py", "tests/visual/__init__.py", ""),
     ("tests/vendored/visual/test_ocr.py", "tests/visual/test_ocr.py",
      "removed test_ocr_reads_hero_title_and_region_excludes_it (template 'landing' + update_component on a "
-     "Chromium preview); test_analyze_ocr_attaches_text_for_desktop_like_capture unchanged"),
+     "Chromium preview); test_analyze_ocr_attaches_text_for_desktop_like_capture unchanged; ARIAL from %WINDIR% "
+     "instead of a literal drive path (vault absolute-path layout gate)"),
 ]
 
 LOCAL_FILES: list[tuple[str, str]] = [

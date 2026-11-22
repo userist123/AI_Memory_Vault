@@ -148,6 +148,10 @@ domains:
     title: XAU_Kinetic / Elite Quant Bot — motorul de trading XAUUSD
     roots: ["03_IMPLEMENTATION/products/xau_kinetic"]
     keywords: [xau, xauusd, xau kinetic, elite quant, trading bot, mt5, metatrader, gold]
+  products.ai_app_studio:
+    title: AI App Studio — produs standalone pentru aplicații desktop (spec, threat model, checkpoint)
+    roots: ["03_IMPLEMENTATION/products/ai_app_studio"]
+    keywords: [ai app studio, app studio, aas, desktop app, aplicatie desktop, wsl, emulator]
 
   # ── 04–10 ────────────────────────────────────────────────────────────────────────────────
   config:

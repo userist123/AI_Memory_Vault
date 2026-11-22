@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -12,10 +13,10 @@ from studio_core.errors import Unavailable
 from studio_core.visual import ocr as ocr_mod
 from studio_core.visual.ocr import ocr_png
 
-ARIAL = Path("C:/Windows/Fonts/arial.ttf")
+ARIAL = Path(os.environ.get("WINDIR", "")) / "Fonts" / "arial.ttf"
 
 needs_win = pytest.mark.skipif(sys.platform != "win32" or not ARIAL.exists(),
-                               reason="Windows.Media.Ocr and C:/Windows/Fonts/arial.ttf are required (win32 only)")
+                               reason="Windows.Media.Ocr and %WINDIR%/Fonts/arial.ttf are required (win32 only)")
 
 
 def _png(img: Image.Image) -> bytes:
