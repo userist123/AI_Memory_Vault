@@ -248,6 +248,31 @@ def _requests_fable(value) -> bool:
     return "fable" in str(value or "").strip().lower()
 
 
+def _is_inherit(value) -> bool:
+    return str(value or "").strip().lower() == "inherit"
+
+
+def _session_is_fable(data: dict) -> bool:
+    """Read-only (no state written, so COST_ROUTER_OFF stays inert): does the session run Fable? Payload model, then
+    the transcript's last assistant model, then the stored session model, then ANTHROPIC_MODEL."""
+    try:
+        import route_state  # noqa: E402
+        found = data.get("model") if isinstance(data.get("model"), str) else None
+        if not (found and found.strip()):
+            found = None
+            path = data.get("transcript_path")
+            if path:
+                try:
+                    from transcript_usage import last_assistant_model  # noqa: E402
+                    found = last_assistant_model(path)
+                except Exception:
+                    found = None
+            found = found or route_state.session_model(data.get("session_id")) or os.environ.get("ANTHROPIC_MODEL")
+        return _requests_fable(found)
+    except Exception:
+        return False
+
+
 def _pin_seq(skill_dir: Path):
     """seq of the release pin inside a skill directory, or None (absent, unreadable or invalid)."""
     try:
@@ -723,7 +748,8 @@ def choose(policy, mod, tool_input: dict, data: dict | None = None):
         if explicit == "unknown":
             return ("fable" if _requests_fable(requested_model) else "opus"), d
         return (explicit or "fable"), d
-    if _requests_fable(requested_model) or str(requested_model or "").strip().lower() == "inherit":
+    if (_requests_fable(requested_model) or str(requested_model or "").strip().lower() == "inherit"
+            or _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"))):
         return "opus", d
     if explicit == "unknown":
         if not needs_opus(d, reviewer) and d.task_class == "unclassified" and not risky:
@@ -814,6 +840,8 @@ def _main() -> int:
         stype == FABLE_CONSULTANT
         or _requests_fable(tool_input.get("model"))
         or _requests_fable(frontmatter_model)
+        or _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"))  # the env override beats every model key
+        or ((_is_inherit(tool_input.get("model")) or _is_inherit(frontmatter_model)) and _session_is_fable(data))
     )
     if off and not fable_sensitive:
         return 0  # COST_ROUTER_OFF: no routing, no state, no output; only the Fable guard below still runs

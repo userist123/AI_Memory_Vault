@@ -420,3 +420,50 @@ def test_p5_short_prompts_follow_the_same_rule(tmp_path):
     assert _state(home)["escalation_authorized"] is True
     _prompt(home, "ok\n#direct")
     assert _state(home)["direct"] is False
+
+
+# ---- review round 1, item 1: OFF must not skip the guard for env / inherit routes to Fable -----------------------
+
+FABLE_SESSION = "claude-fable-5-2"
+
+
+def _plain_spawn(proj: Path, session: str, **over) -> str:
+    ti = {"description": "unclassified task", "prompt": "unclassified task", "subagent_type": "general-purpose"}
+    ti.update(over)
+    return json.dumps({"session_id": SID, "hook_event_name": "PreToolUse", "tool_name": "Agent", "cwd": str(proj),
+                       "model": session, "tool_input": ti})
+
+
+def _off_run(home: Path, proj: Path, stdin: str, **extra):
+    return _run(AGENT, stdin=stdin, home=home, cwd=proj, CLAUDE_PROJECT_DIR=str(proj), COST_ROUTER_OFF="1", **extra)
+
+
+def test_r1_p3_off_still_guards_env_override_and_inherit_in_a_fable_session(tmp_path):
+    home = tmp_path / "home"
+    proj = tmp_path / "proj"
+    home.mkdir()
+    proj.mkdir()
+    # CLAUDE_CODE_SUBAGENT_MODEL=fable routes every subagent to Fable
+    r = _off_run(home, proj, _plain_spawn(proj, "opus"), CLAUDE_CODE_SUBAGENT_MODEL="fable")
+    assert r.returncode == 0, r.stderr
+    assert _decision(r).get("updatedInput", {}).get("model") == "opus", r.stdout
+    # `model: inherit` in the tool input while the session runs Fable
+    r = _off_run(home, proj, _plain_spawn(proj, FABLE_SESSION, model="inherit"))
+    assert r.returncode == 0, r.stderr
+    assert _decision(r).get("updatedInput", {}).get("model") == "opus", r.stdout
+    # an agent whose frontmatter says `model: inherit`, in a Fable session
+    agent = proj / ".claude" / "agents" / "helper.md"
+    agent.parent.mkdir(parents=True)
+    agent.write_text("---\nname: helper\ndescription: x\nmodel: inherit\n---\nbody\n", encoding="utf-8")
+    r = _off_run(home, proj, _plain_spawn(proj, FABLE_SESSION, subagent_type="helper"))
+    assert r.returncode == 0, r.stderr
+    assert _decision(r).get("updatedInput", {}).get("model") == "opus", r.stdout
+
+
+def test_r1_p3_off_stays_inert_for_inherit_outside_a_fable_session(tmp_path):
+    home = tmp_path / "home"
+    proj = tmp_path / "proj"
+    home.mkdir()
+    proj.mkdir()
+    r = _off_run(home, proj, _plain_spawn(proj, "claude-opus-5-5", model="inherit"))
+    assert r.returncode == 0 and r.stdout == "" and r.stderr == ""
