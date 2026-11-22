@@ -78,7 +78,7 @@ FAIL_PROBES = {
     "onkey": ('    Application.OnKey "^a", "Proba"', ""),
     "dde": ('    x = DDEInitiate("a", "b")', ""),
     "followhyperlink": ("    ThisWorkbook.FollowHyperlink x", ""),
-    "unc_path": ('    x = "\\\\server\\share\\a.docx"', ""),
+    "unc_path": ('    x = "\\\\server\\share\\a.docx"', ""),  # hygiene: intentional-absolute-path
     "addins_add": ("    AddIns.Add x", ""),
     "addin_installed": ("    f.Installed = True", ""),
     "name_as_statement": ('    Name "a.txt" As "b.txt"', ""),
@@ -100,8 +100,8 @@ FAIL_PROBES = {
     "fso_with_delete": ("    With fso.GetFile(x)\n        .Delete\n    End With", ""),
     "fso_typed_var_delete": ("    Dim g As Scripting.File\n    g.Delete", ""),
     "startup_path_property": ("    x = Application.StartupPath", ""),
-    "xlstart_path": ('    x = Environ$("APPDATA") & "\\Microsoft\\Excel\\XLSTART\\a.xlsm"', ""),
-    "windows_startup_folder": ('    x = "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\a"', ""),
+    "xlstart_path": ('    x = Environ$("APPDATA") & "\\Microsoft\\Excel\\XLSTART\\a.xlsm"', ""),  # hygiene: intentional-absolute-path
+    "windows_startup_folder": ('    x = "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\a"', ""),  # hygiene: intentional-absolute-path
     "normal_template": ("    NormalTemplate.Save", ""),
     "automation_security_low": ("    Application.AutomationSecurity = 1", ""),
     "auto_open_across_continuation": ("    x = 1", "Private Sub _\n    Workbook_Open()\nEnd Sub"),
