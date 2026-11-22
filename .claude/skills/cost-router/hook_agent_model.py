@@ -906,6 +906,9 @@ def _main() -> int:
         or _requests_fable(frontmatter_model)
         or _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"))  # the env override beats every model key
         or ((_is_inherit(tool_input.get("model")) or _is_inherit(frontmatter_model)) and _session_is_fable(data))
+        # no model in tool_input and none in the agent frontmatter (general-purpose, built-ins, project agents without
+        # `model:`): the subagent inherits the session model, exactly like `inherit`
+        or (not tool_input.get("model") and not frontmatter_model and _session_is_fable(data))
     )
     if off and not fable_sensitive:
         return 0  # COST_ROUTER_OFF: no routing, no state, no output; only the Fable guard below still runs

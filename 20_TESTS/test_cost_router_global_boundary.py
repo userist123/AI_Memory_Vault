@@ -661,3 +661,28 @@ def test_r1_p5_direct_does_not_match_directory_or_other_longer_words(tmp_path):
     assert _state(home)["direct"] is True
     _prompt(home, "#DIRECT, " + TASK)
     assert _state(home)["direct"] is True
+
+# ---- review round 2, item 1: a spawn with no model anywhere inherits the session model --------------------------------
+
+def _hook_run(home: Path, proj: Path, stdin: str, **extra):
+    return _run(AGENT, stdin=stdin, home=home, cwd=proj, CLAUDE_PROJECT_DIR=str(proj), **extra)
+
+
+def test_r2_p3_spawn_without_any_model_is_fable_sensitive_in_a_fable_session_also_with_off(tmp_path):
+    home = tmp_path / "home"
+    proj = tmp_path / "proj"
+    home.mkdir()
+    agents = proj / ".claude" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "nomodel.md").write_text("---\nname: nomodel\ndescription: h\ntools: Read, Bash, Write\n---\nbody\n",
+                                       encoding="utf-8")
+    for off in (None, "1"):
+        extra = {"COST_ROUTER_OFF": off} if off else {}
+        for stype in ("general-purpose", "nomodel"):
+            r = _hook_run(home, proj, _plain_spawn(proj, FABLE_SESSION, subagent_type=stype), **extra)
+            assert r.returncode == 0, (off, stype, r.stderr)
+            assert _decision(r).get("updatedInput", {}).get("model") == "opus", (off, stype, r.stdout)
+    # outside a Fable session, OFF stays inert for a spawn without a model
+    r = _off_run(home, proj, _plain_spawn(proj, "claude-opus-5-5", subagent_type="nomodel"))
+    assert r.returncode == 0 and r.stdout == "" and r.stderr == ""
+
