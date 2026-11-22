@@ -207,3 +207,54 @@ def test_t3_storage_error_has_no_marker_and_no_absolute_path(tmp_path, monkeypat
     assert err["path"].replace("\\", "/") == "01_ARCHITECTURE/knowledge/bad.md"
     assert "message" not in err
     assert err["error_type"]
+
+
+# ---------------------------------------------------------------- review round 2 (spool robustness)
+def test_r2_orphaned_merging_file_is_chained_and_reported(tmp_path):
+    log = tmp_path / "a.jsonl"
+    lg = AuditLogger(str(log))
+    lg.log("x", "op", "first")
+    orphan = tmp_path / "a.jsonl.pending.999.jsonl.merging"   # crash between rename and remove
+    orphan.write_text(json.dumps({"actor": "x", "operation": "op", "target_id": "orphan",
+                                  "timestamp": "2026-11-22T00:00:00Z", "outcome": "success"}) + "\n",
+                      encoding="utf-8")
+    ok, violations = lg.verify_integrity()
+    assert not ok and any("pending" in v for v in violations)
+    lg.log("x", "op", "next")
+    targets = [e["target_id"] for e in _entries(log)]
+    assert targets == ["first", "orphan", "next"]
+    assert not orphan.exists() and lg.verify_integrity() == (True, [])
+
+
+def test_r2_corrupt_or_planted_spool_never_fails_logging(tmp_path):
+    log = tmp_path / "a.jsonl"
+    lg = AuditLogger(str(log))
+    (tmp_path / "a.jsonl.pending.111.jsonl").write_text("[1]\nnot json\n" + json.dumps(
+        {"actor": "x", "operation": "op", "target_id": "real", "spooled": False}) + "\n", encoding="utf-8")
+    lg.log("x", "op", "current")                     # must not raise
+    entries = _entries(log)
+    assert entries[-1]["target_id"] == "current"
+    corrupt = [e for e in entries if e["operation"] == "audit_spool_corrupt"]
+    assert len(corrupt) == 2                          # one per unusable line, no content copied
+    merged = [e for e in entries if e.get("target_id") == "real"]
+    assert merged and merged[0]["spooled"] is True    # forced, whatever the line claimed
+    assert lg.verify_integrity() == (True, [])
+
+
+def test_r2_a_directory_planted_under_a_spool_name_is_ignored(tmp_path):
+    log = tmp_path / "a.jsonl"
+    lg = AuditLogger(str(log))
+    (tmp_path / "a.jsonl.pending.222.jsonl").mkdir()
+    lg.log("x", "op", "t")                           # must not raise
+    ok, violations = lg.verify_integrity()            # must not raise
+    assert ok, violations
+
+
+def test_r2_verify_reports_instead_of_raising_when_the_lock_is_held(tmp_path):
+    log = str(tmp_path / "a.jsonl")
+    holder = AuditLogger(log)
+    checker = AuditLogger(log, lock_timeout=0.3)
+    checker.log("x", "op", "t")
+    with holder._file_lock():
+        ok, violations = checker.verify_integrity()
+    assert not ok and any("lock" in v for v in violations)
