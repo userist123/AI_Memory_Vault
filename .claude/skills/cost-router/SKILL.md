@@ -374,7 +374,9 @@ receipt line and the failing lines verbatim, never interpreting causes. When the
 appends `after failed check <label> exit=<n>` if the session (matched by `--session`) has a failing receipt: informational
 only. Receipts are forgeable by the main session and never grant authority or relax any gate. A `.cmd`/`.bat` target
 is started by cmd.exe, which re-parses the command line: `check.py` refuses (exit 2) when any argument holds `& | < > ^ %`
-a double quote or a newline. Residual: the list is a denylist (a `!` for delayed expansion is not refused) and a shim that evaluates its own arguments stays the caller's risk; run untrusted shims through an `.exe`.
+a double quote or a newline. `--session` must match `[A-Za-z0-9_-]{1,64}` (exit 2 otherwise); a bare command name is
+resolved on PATH without the cwd (Windows: a name found only in the cwd is refused, exit 2); `last` and the escalation note
+never read a receipt file over 256 KB. Residual: the list is a denylist (a `!` for delayed expansion is not refused) and a shim that evaluates its own arguments stays the caller's risk; run untrusted shims through an `.exe`.
 
 ## 5. Report shape (end of task)
 

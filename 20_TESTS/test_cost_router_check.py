@@ -237,3 +237,81 @@ def test_shim_refusal_helper_is_pure(tmp_path):
     assert check.shim_refusal([str(shim), "plain"]) is None
     assert "metacharacter" in check.shim_refusal([str(shim), "a|b"])
     assert check.shim_refusal([str(shim)]) is None
+
+
+# ---- M10 residuals: session id shape, cwd executable resolution, receipt size cap ---------------------------------
+
+@pytest.mark.parametrize("sid", ["../x", "a.b", "..", "a/b", "a b", "x" * 65, "s\u00e9"],
+                         ids=["traversal", "dot", "dotdot", "slash", "space", "too-long", "non-ascii"])
+def test_bad_session_is_a_usage_error_for_run_and_last(home, sid):
+    r = _run(home, "run", "--session", sid, "--label", "s", "--", sys.executable, "-c", "1")
+    assert r.returncode == 2 and "session" in r.stdout.lower()
+    assert _receipts(home) == []  # nothing ran, nothing recorded
+    r = _run(home, "last", "--session", sid)
+    assert r.returncode == 2 and "session" in r.stdout.lower()
+
+
+def test_session_of_64_safe_chars_is_accepted(home):
+    sid = "A-z_9" * 12 + "abcd"
+    assert len(sid) == 64
+    r = _run(home, "run", "--session", sid, "--label", "s", "--", sys.executable, "-c", "1")
+    assert r.returncode == 0 and _receipts(home)[0].name.startswith(sid + "-")
+    assert check.last_failing("../" + sid) is None and check.last_failing("a.b") is None
+
+
+def _env_without_curdir_switch():
+    env = dict(os.environ)
+    env.pop("NoDefaultCurrentDirectoryInExePath", None)
+    return env
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows searches the current directory for a bare command name")
+@pytest.mark.parametrize("cwd_on_path", [False, True], ids=["cwd-not-on-path", "cwd-on-path"])
+def test_bare_name_that_resolves_only_in_cwd_is_refused(home, tmp_path, cwd_on_path):
+    work = tmp_path / "work"
+    work.mkdir()
+    sentinel = tmp_path / "PLANTED.txt"
+    (work / "zzcrplanted.cmd").write_text(f"@echo off\r\necho x> \"{sentinel}\"\r\n", encoding="ascii")
+    env = _env_without_curdir_switch()
+    env.update(HOME=str(home), USERPROFILE=str(home))
+    env.pop("CLAUDE_SESSION_ID", None)
+    if cwd_on_path:
+        env["PATH"] = str(work) + os.pathsep + env.get("PATH", "")
+    r = subprocess.run([sys.executable, "-I", str(CHECK), "run", "--label", "p", "--", "zzcrplanted"],
+                       capture_output=True, text=True, encoding="utf-8", timeout=120, env=env, cwd=str(work))
+    assert r.returncode == 2 and "refus" in r.stdout.lower() and "current directory" in r.stdout.lower()
+    assert not sentinel.exists()
+    assert _receipts(home) == []
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PATHEXT resolution")
+def test_bare_name_on_path_still_resolves_outside_cwd(home, tmp_path):
+    work = tmp_path / "work"
+    work.mkdir()
+    r = _run(home, "run", "--label", "c", "--", "cmd", "/c", "exit", "0", cwd=work)
+    assert r.returncode == 0 and "exit=0 pass" in r.stdout
+    exe = check.resolve_exe("cmd")
+    assert exe and os.path.isabs(exe) and os.path.dirname(exe).lower() != str(Path.cwd()).lower()
+
+
+def _plant_receipt(home: Path, name: str, receipt: dict, pad: int = 0):
+    d = home / ".claude" / "cache" / "cost-router" / "checks"
+    d.mkdir(parents=True, exist_ok=True)
+    if pad:
+        receipt = dict(receipt, tail=["x" * 1000] * pad)
+    (d / name).write_text(json.dumps(receipt), encoding="utf-8")
+    return d / name
+
+
+def test_receipt_over_256_kb_is_ignored_by_last_and_last_failing(home, monkeypatch):
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    big = {"schema": 1, "label": "big", "session": "s7", "epoch": 2_000_000_000, "t": 2_000_000_000.0, "exit": 5}
+    p = _plant_receipt(home, "s7-2000000000.json", big, pad=300)
+    assert p.stat().st_size > 256 * 1024
+    r = _run(home, "last", "--label", "big")
+    assert r.returncode == 1 and "no receipt" in r.stdout
+    assert check.last_failing("s7") is None
+    small = _plant_receipt(home, "s7-2000000001.json", dict(big, label="small", t=2_000_000_001.0), pad=10)
+    assert small.stat().st_size < 256 * 1024
+    assert check.last_failing("s7")["label"] == "small"

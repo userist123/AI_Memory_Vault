@@ -12,6 +12,8 @@ route_state.state_dir(), ~/.claude/cache/cost-router) and prints ONE line:
 
 where the summary is parsed from a pytest (`N passed`, `N failed`) or `dotnet test` summary line, when there is one.
 The exit status of this script is the command's own. `last` prints the newest receipt as JSON.
+`--session` must match [A-Za-z0-9_-]{1,64} (else exit 2). A bare command name is resolved on PATH without the current
+directory; on Windows a name found only in the cwd is refused (exit 2). A receipt file over 256 KB is never read.
 
 A receipt is informational: the main session can forge one, so it never grants authority and no hook allows anything
 because of it. Stdlib only; no network; no LLM.
@@ -35,7 +37,8 @@ TAIL_LINES = 40
 MAX_LINE = 400
 MAX_AGE_SECONDS = 7 * 86400
 LABEL_RE = re.compile(r"[A-Za-z0-9_.-]{1,40}")
-SESSION_RE = re.compile(r"[A-Za-z0-9_.-]{1,128}")
+SESSION_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")  # no dot, no separator: a session id is part of a file name
+MAX_RECEIPT_BYTES = 256 * 1024  # a larger receipt is not one this script wrote: never read it
 _PYTEST = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b")
 _PYTEST_LINE = re.compile(r"^\W*(?:\d+ (?:passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b[^\n]*?)\bin [0-9.]+\s*s")
 _DOTNET = re.compile(r"(?:Passed|Failed)!\s+-\s+Failed:\s*(\d+),\s*Passed:\s*(\d+),\s*Skipped:\s*(\d+),\s*Total:\s*(\d+)")
@@ -70,7 +73,68 @@ def parse_summary(lines) -> str:
 
 def _session(value) -> str:
     sid = value or os.environ.get("CLAUDE_SESSION_ID") or ""
-    return sid if SESSION_RE.fullmatch(sid) and sid not in (".", "..") else ""
+    return sid if isinstance(sid, str) and SESSION_RE.fullmatch(sid) else ""
+
+
+def _cwd_dirs() -> set:
+    try:
+        return {os.path.normcase(os.path.realpath(os.getcwd()))}
+    except OSError:
+        return set()
+
+
+def _search_path() -> list:
+    """PATH without empty, '.' or relative entries and without the current directory itself."""
+    cwd = _cwd_dirs()
+    out = []
+    for d in os.environ.get("PATH", "").split(os.pathsep):
+        d = d.strip().strip('"')
+        if not d or not os.path.isabs(d):
+            continue
+        try:
+            if os.path.normcase(os.path.realpath(d)) in cwd:
+                continue
+        except OSError:
+            continue
+        out.append(d)
+    return out
+
+
+def _win_lookup(name: str, dirs) -> str | None:
+    exts = [e for e in os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(";") if e]
+    cands = [name] if os.path.splitext(name)[1].lower() in {e.lower() for e in exts} else []
+    cands += [name + e for e in exts]
+    for d in dirs:
+        for c in cands:
+            p = os.path.join(d, c)
+            if os.path.isfile(p):
+                return p
+    return None
+
+
+def resolve_exe(name: str) -> str | None:
+    """The executable a bare command name runs, searched on PATH WITHOUT the current directory (Windows otherwise
+    searches the cwd first, so a planted `pytest.cmd` in the project would run). A name with a directory part is
+    returned unchanged (explicit). None when nothing on the cleaned PATH matches."""
+    if not name:
+        return None
+    if os.path.dirname(name) or os.path.isabs(name):
+        return name
+    dirs = _search_path()
+    if os.name == "nt":
+        return _win_lookup(name, dirs)
+    return shutil.which(name, path=os.pathsep.join(dirs))
+
+
+def cwd_refusal(argv):
+    """Refuse a bare command name that is found only in the current directory (Windows resolution order)."""
+    name = argv[0] if argv else ""
+    if os.name != "nt" or not name or os.path.dirname(name) or resolve_exe(name) is not None:
+        return None
+    if _win_lookup(name, [os.getcwd()]) is not None:
+        return (f"check: refused: {os.path.basename(name)} resolves only in the current directory; give the full path "
+                "of a trusted executable or put its directory on PATH")
+    return None
 
 
 def line_for(receipt: dict) -> str:
@@ -108,7 +172,7 @@ CMD_METACHARS = frozenset('&|<>^%"'+chr(10)+chr(13))
 def shim_refusal(argv):
     """A .cmd/.bat target is started through cmd.exe, which re-parses the command line: refuse an argument that holds a
     cmd metacharacter (argument injection). Returns the refusal text, or None when it is fine to run."""
-    exe = shutil.which(argv[0]) or argv[0]
+    exe = resolve_exe(argv[0]) or argv[0]
     if str(exe).lower().endswith((".cmd", ".bat")):
         for a in argv[1:]:
             if any(c in CMD_METACHARS for c in a):
@@ -119,7 +183,7 @@ def shim_refusal(argv):
 
 def run(argv, label: str, session: str = "", timeout: float = 1800.0):
     start = time.time()
-    exe = shutil.which(argv[0]) or argv[0]  # resolve .cmd/.exe shims the way a shell would, without a shell
+    exe = resolve_exe(argv[0]) or argv[0]  # resolve .cmd/.exe shims like a shell would, never from the cwd
     code, text = 127, ""
     try:
         proc = subprocess.run([exe, *argv[1:]], shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -145,6 +209,8 @@ def all_receipts(session: str = "", label: str = ""):
     try:
         for p in checks_dir().glob("*.json"):
             try:
+                if p.is_symlink() or not p.is_file() or p.stat().st_size > MAX_RECEIPT_BYTES:
+                    continue
                 r = json.loads(p.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 continue
@@ -188,6 +254,9 @@ def main(argv=None) -> int:
     la.add_argument("--label", default="")
     la.add_argument("--session", default="")
     args = ap.parse_args(argv)
+    if args.session and not SESSION_RE.fullmatch(args.session):
+        print("check: session must match [A-Za-z0-9_-]{1,64}")
+        return 2
     if args.mode == "run":
         if not LABEL_RE.fullmatch(args.label):
             print("check: label must match [A-Za-z0-9_.-]{1,40}")
@@ -195,7 +264,7 @@ def main(argv=None) -> int:
         if not cmd:
             print("check: give the command after --")
             return 2
-        refusal = shim_refusal(cmd)
+        refusal = cwd_refusal(cmd) or shim_refusal(cmd)
         if refusal:
             print(refusal)
             return 2
