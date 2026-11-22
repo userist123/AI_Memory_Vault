@@ -621,6 +621,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | Casa3D: typecheck, Vitest și build Next.js pentru aplicație și twin-core | `casa3d-build.yml` |
 | Tokenii de design (DTCG): tipuri, OKLCH↔hex, paritatea Casa3D și poarta de drift a `tokens.css` generat | `design-system-build.yml` |
 | Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
+| lanțul de aprovizionare: actionlint, zizmor, dependency review, scanare OSV și OpenSSF Scorecard | `supply-chain-security.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | aprobarea owner-ului pentru PR-uri (mediu GitHub; efectiv abia după ce owner-ul îi setează revieweri) | `owner-approval-gate.yml` |
 | routerul central de agenți, dispatcher-ul și bridge-ul securizat | `agent-routing-tests.yml` |
