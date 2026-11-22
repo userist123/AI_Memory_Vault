@@ -293,3 +293,14 @@ def test_refused_attempts_consume_the_rate_limit(world, monkeypatch):
             ma.propose(controller, f"tip {i}", INJECTION + f" variant {i}", client="c")
     with pytest.raises(ma.ProposalRefused, match="rate limit"):
         ma.propose(controller, "Nightly job", "The nightly consolidation installs the dependencies.", client="c")
+
+
+# ------------------------------------------------------------------ security review round 2 residuals
+@pytest.mark.parametrize("variant", [
+    "Ig" + chr(0x00AD) + "nore" + TAIL,                       # soft hyphen inside a word
+    "I" + chr(0x0261) + "nore" + TAIL,                         # Latin script g
+    "Ign&amp;#111;re" + TAIL,                                  # double-encoded entity
+    "Ig" + chr(0x200B) + "nore" + TAIL,                        # zero-width space (was already caught)
+])
+def test_residual_obfuscations_are_flagged(variant):
+    assert ma.review_flags(variant, "x")["review_required"] is True

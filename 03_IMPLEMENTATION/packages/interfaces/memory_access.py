@@ -90,7 +90,7 @@ _CONFUSABLES = str.maketrans({
     "Т": "t", "В": "b", "ο": "o", "α": "a", "ε": "e", "ι": "i",
     "κ": "k", "ν": "v", "ρ": "p", "τ": "t", "υ": "u", "Ο": "o",
     "Α": "a", "Ε": "e", "Ι": "i", "Κ": "k", "Μ": "m", "Ν": "n",
-    "Ρ": "p", "Τ": "t",
+    "Ρ": "p", "Τ": "t", "ɡ": "g", "ɑ": "a", "ɩ": "i", "ı": "i",
 })
 
 
@@ -122,7 +122,16 @@ def _normalised_views(text: str) -> List[str]:
     pass it (OWASP LLM01:2025)."""
     import html
 
-    folded = html.unescape(unicodedata.normalize("NFKC", text)).translate(_CONFUSABLES)
+    # unescape until stable (bounded): a double-encoded entity hid a pattern (review round 2)
+    unescaped = text
+    for _ in range(4):
+        nxt = html.unescape(unescaped)
+        if nxt == unescaped:
+            break
+        unescaped = nxt
+    # drop format characters (soft hyphen, zero-width joiners...) that split a word without showing
+    stripped = "".join(ch for ch in unescaped if unicodedata.category(ch) != "Cf")
+    folded = unicodedata.normalize("NFKC", stripped).translate(_CONFUSABLES)
     collapsed = re.sub(r"\s+", " ", folded).strip()
     return [v for v in dict.fromkeys((folded, collapsed)) if v and v != text]
 
