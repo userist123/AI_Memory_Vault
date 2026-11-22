@@ -1,0 +1,64 @@
+{
+ "schema_version": 1,
+ "id": "analist-juridic",
+ "kind": "skill",
+ "domain": [
+  "legal",
+  "research"
+ ],
+ "task_classes": [
+  "design",
+  "review",
+  "explore",
+  "summarize"
+ ],
+ "triggers": {
+  "ro": [
+   "ce spune legea",
+   "analizeaza legea",
+   "speta juridica",
+   "legal memo",
+   "memoriu juridic",
+   "conformitate cu legea",
+   "oug",
+   "legislatie",
+   "cod civil",
+   "gdpr"
+  ],
+  "en": [
+   "what does the law say",
+   "legal analysis",
+   "legal memo",
+   "compliance with the law",
+   "statute",
+   "eur-lex"
+  ]
+ },
+ "summary": "Romanian and EU law analyst: official texts, citation register.",
+ "run_in": "main",
+ "tier": {
+  "min": "sonnet",
+  "default": "opus",
+  "max": "opus"
+ },
+ "tools": [
+  "WebFetch",
+  "Read"
+ ],
+ "authority": {
+  "write": "scratch",
+  "execute": false,
+  "network": "fetch",
+  "spawn": false
+ },
+ "acceptance": "Legal Memo with citation register; unverified leads apart.",
+ "risk_ceiling": "high",
+ "privacy": "standard",
+ "priority": 80,
+ "uses": [
+  "surse-web"
+ ],
+ "not_for": [
+  "legal advice to third parties"
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "schema_version": 1,
+ "id": "explore",
+ "kind": "agent",
+ "domain": [
+  "code",
+  "docs"
+ ],
+ "task_classes": [
+  "explore",
+  "summarize"
+ ],
+ "triggers": {
+  "ro": [
+   "unde este",
+   "care fisiere",
+   "cine importa",
+   "listeaza toate",
+   "inventar de"
+  ],
+  "en": [
+   "where is",
+   "which files",
+   "who imports",
+   "list every",
+   "inventory of"
+  ]
+ },
+ "summary": "Read-only search and inventory on Haiku.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "haiku",
+  "default": "haiku",
+  "max": "sonnet"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "List of paths with line numbers.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 20,
+ "subagent_type": "Explore",
+ "effort": "low",
+ "cost": {
+  "class": "S",
+  "typical_usd": null
+ }
+}

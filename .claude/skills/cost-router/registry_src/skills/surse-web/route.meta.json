@@ -1,0 +1,53 @@
+{
+ "schema_version": 1,
+ "id": "surse-web",
+ "kind": "skill",
+ "domain": [
+  "research"
+ ],
+ "task_classes": [
+  "explore",
+  "summarize",
+  "design"
+ ],
+ "triggers": {
+  "ro": [
+   "cauta pe internet",
+   "cerceteaza pe web",
+   "surse web",
+   "raport din surse",
+   "ce spune legea"
+  ],
+  "en": [
+   "search the web",
+   "web research",
+   "from web sources",
+   "research online",
+   "fetch the page"
+  ]
+ },
+ "summary": "Web research and documents from sources (fetch, playwright).",
+ "run_in": "main",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "opus"
+ },
+ "tools": [
+  "mcp__fetch",
+  "mcp__playwright"
+ ],
+ "authority": {
+  "write": "scratch",
+  "execute": false,
+  "network": "fetch",
+  "spawn": false
+ },
+ "acceptance": "Every claim has a source URL; pages were read.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 40,
+ "uses": [
+  "agent-bridge"
+ ]
+}

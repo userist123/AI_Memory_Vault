@@ -1,0 +1,58 @@
+{
+ "schema_version": 1,
+ "id": "aplicatie-securizata",
+ "kind": "skill",
+ "domain": [
+  "security",
+  "code"
+ ],
+ "task_classes": [
+  "implement",
+  "design",
+  "review",
+  "frontier"
+ ],
+ "triggers": {
+  "ro": [
+   "aplicatie securizata",
+   "threat model",
+   "securizeaza aplicatia",
+   "hardening"
+  ],
+  "en": [
+   "secure app",
+   "build a secure",
+   "harden the app"
+  ]
+ },
+ "summary": "Secure-by-design app: threat model, tests first, independent review.",
+ "run_in": "main",
+ "tier": {
+  "min": "sonnet",
+  "default": "opus",
+  "max": "opus"
+ },
+ "tools": [
+  "Read",
+  "Edit",
+  "Write",
+  "Bash"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": true,
+  "network": "bridge",
+  "spawn": true
+ },
+ "acceptance": "Security tests pass; independent review has no open high finding.",
+ "risk_ceiling": "critical",
+ "privacy": "standard",
+ "priority": 70,
+ "uses": [
+  "agent-bridge",
+  "fable-consultant",
+  "vault-reviewer",
+  "vault-worker"
+ ],
+ "escalates_to": "vault-reviewer"
+}
