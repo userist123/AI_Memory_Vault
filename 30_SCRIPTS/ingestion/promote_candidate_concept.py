@@ -250,7 +250,7 @@ def promote_candidate_concept(
     note_filepath = os.path.join(notes_dir, note_filename)
     os.makedirs(notes_dir, exist_ok=True)
 
-    with open(note_filepath, "w", encoding="utf-8") as f:
+    with open(note_filepath, "w", encoding="utf-8", newline="\n") as f:
         f.write(yaml_frontmatter + note_body)
 
     # Update slot file table row in place
@@ -263,7 +263,7 @@ def promote_candidate_concept(
         new_row = f"| {target_cols[1]} | {target_cols[2]} | {target_cols[3]} | promoted | {target_cols[5]} | {note_uuid} |"
     lines[target_row_idx] = new_row
 
-    with open(slot_file, "w", encoding="utf-8") as f:
+    with open(slot_file, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
 
     return {

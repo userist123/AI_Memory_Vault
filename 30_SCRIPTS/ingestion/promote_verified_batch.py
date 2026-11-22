@@ -188,7 +188,7 @@ def promote_all(update_slots: bool = False):
                         )
 
                         full_note = yaml_fm + body_content
-                        note_path.write_text(full_note, encoding="utf-8")
+                        note_path.write_text(full_note, encoding="utf-8", newline="\n")
 
                         # Update table row: status -> promoted, promoted_note_id -> note_id
                         cols[4] = "promoted"
@@ -204,7 +204,7 @@ def promote_all(update_slots: bool = False):
                         })
 
         if modified and update_slots:
-            sfile.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            sfile.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     print(f"Successfully promoted {len(promoted_records)} concepts to {KNOWLEDGE_DIR}.")
     return promoted_records

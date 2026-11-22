@@ -277,7 +277,7 @@ def apply_dispositions(
     # Write changes if --apply is set
     if not dry_run:
         for slot_file, content in file_updates.items():
-            slot_file.write_text(content, encoding="utf-8")
+            slot_file.write_text(content, encoding="utf-8", newline="\n")
 
         # Post-write verification on disk
         post_disk_rows = slot_rows.read_all(slots_dir)
