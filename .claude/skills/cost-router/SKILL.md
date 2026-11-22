@@ -423,9 +423,10 @@ prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_fo
 `EXECUTOR_LIVE_PATTERNS`: push, apply, drop, upload, ship, release, rollout, migrate, truncate, `rm -rf`, force-push;
 deploy/rotate/publish match inside compounds such as autodeploy/redeploy), matched on the brief after
 `specialists.normalize/fold` (NFKC, Cf/zero-width removed, cedilla ş/ţ -> ș/ț, diacritics folded, casefold, whitespace
-collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the brief (same
-normalization), and the installed registry is readable; the prompt hook records the local_only scan on every path,
-`#direct` override and router error included; (h)
+collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the WHOLE brief (same
+normalization plus the `specialists.CONFUSABLES` look-alike fold, also used by (f)), and the installed registry is readable;
+the prompt hook records the local_only scan on every path, `#direct` override, router error and short/slash/trivial
+prompts included (a short prompt keeps its route but starts a new prompt epoch); (h)
 `COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
 vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
 spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
@@ -440,6 +441,33 @@ cache and are writable by the same user, so a same-user process (or a hostile ma
 ladder by editing these files; the spawn record only raises the cost of a forgery from one check.py call to editing JSON
 by hand. The gate limits induced overspend; it does not stop a hostile Opus main session (E1). The stem and trigger lists
 are denylists.
+
+**Tool-level guard (M12, the real boundary).** The (f)/(g) brief checks are only an extra signal: a brief is
+attacker-shaped text (look-alike letters, words split by markdown or newlines, other languages). `hook_enforce_route.py`
+(`executor_guard`) decides on what an `agent_type` `fable-executor` actually RUNS, before COST_ROUTER_OFF,
+COST_ROUTER_ENFORCE=0, `#direct` or shadowing are looked at (X7), and fails CLOSED on any internal error. Threat model
+(the reviewer gets the same list): X1 git push/reset --hard/clean/branch -D/checkout -- ./restore/rebase/filter-branch/
+tag -d/remote, aliases; X2 network clients and package install/publish, gh, docker; X3 deploy/publish/release CLIs; X4
+recursive or out-of-worktree deletes and writes; X5 obfuscation (encoded commands, `-c`/`-e` wrappers, env-var indirection,
+substitution, here-strings, continuation, look-alikes, zero-width, quote splitting); X6 Write/Edit/NotebookEdit outside the
+worktree; X7 the kill switches. **Bash ALLOWLIST**: the command must be unchanged by NFKC + Cf removal + confusables fold,
+ASCII, <= 2000 chars, ONE simple command under Git Bash quoting (no unquoted `; & | < > ( ) { } $ backtick ! @`, no `$`
+or backtick even in double quotes, no newline, comment, line continuation, env assignment, program path or `~`), and one of:
+`pytest`/`python -m pytest`; `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
+`node [--test] <script inside the worktree>`; `dotnet build|test`; `npm|pnpm|yarn test | run test|build|lint [-- args]`;
+`git [--no-pager] [-C <dir in the worktree>] status|diff|log|show|blame|rev-parse|ls-files|add|commit` (never `--amend`,
+`--output`, `--ext-diff`, `--textconv`, `-c`, `--git-dir`), `git switch -c|checkout -b <new branch>`, `git stash list`,
+`git branch` listing; read-only `ls dir cat type Get-Content Select-String rg grep find head tail wc pwd` (no `find
+-exec/-delete/-fprint`, no `rg --pre`). Every path-like argument of an executing command (`--basetemp`, `--rootdir`, node
+ids, `-o`) must resolve inside the worktree; unquoted globs are refused there. Anything else is denied naming the rule.
+**Writes**: the realpath of the target must be inside `git rev-parse --show-toplevel` of the session cwd (else no write
+at all), lexically too, not in `.git` (also `.GIT`, `.git.`), not through a symlink/junction/reparse point, not a hard
+link, not in a nested repository, not in `~/.claude`, no UNC/device/drive-relative path, no `:` stream. Residuals: the
+CONTENTS of an allowed worktree script, test/conftest file, package.json script, project file, or a tracked hooks dir that
+the repo's own `core.hooksPath` already points to are not inspected (the executor may write them, then run them through
+an allowed command); reads outside the worktree stay allowed (no network to send them); a same-user process outside Claude
+Code is out of scope. Enabling `rules.fable_executor` still needs the owner's explicit decision after a review of this
+guard; it stays `false`.
 
 ## 5. Report shape (end of task)
 
