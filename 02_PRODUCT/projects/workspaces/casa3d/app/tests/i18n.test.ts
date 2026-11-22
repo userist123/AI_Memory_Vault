@@ -51,7 +51,8 @@ describe('t(): interpolare și rezervă', () => {
     assert.equal(tp('ro', 'editor.summaryPieces', 1), '1 piesă'); assert.equal(tp('ro', 'editor.summaryPieces', 0), '0 piese');
   });
   test('detectarea limbii din browser', () => {
-    assert.equal(detectLang('ro-RO'), 'ro'); assert.equal(detectLang('ro'), 'ro'); assert.equal(detectLang('en-US'), 'en'); assert.equal(detectLang('de-DE'), 'en'); assert.equal(detectLang(''), 'en'); assert.equal(detectLang(undefined), 'en');
+    // româna e limba produsului în orice browser (cerință a proprietarului, 2026-11-22); engleza doar aleasă explicit din Setări
+  for (const l of ['ro-RO', 'ro', 'en-US', 'en', 'de-DE', '', undefined]) assert.equal(detectLang(l), 'ro', String(l));
     assert.ok(isLang('ro') && isLang('en') && !isLang('de') && !isLang(null));
   });
   test('failText urmează limba', () => {

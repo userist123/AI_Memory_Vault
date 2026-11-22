@@ -13,7 +13,10 @@ export const DICTS: Record<Lang, Dict> = { ro, en };
 /** Numele limbii în limba ei, pentru selector. */
 export const LANGS: { code: Lang; name: string }[] = [{ code: 'ro', name: 'Română' }, { code: 'en', name: 'English' }];
 export const isLang = (x: unknown): x is Lang => typeof x === 'string' && Object.hasOwn(DICTS, x);
-export const detectLang = (navigatorLanguage?: string | null): Lang => /^ro\b/i.test(navigatorLanguage ?? '') ? 'ro' : 'en';
+/** Româna e limba produsului (piața din România), indiferent de limba browserului sau a sistemului: un Windows în engleză nu
+ *  trebuie să mute aplicația pe engleză. Engleza se alege explicit din Setări (alegerea se păstrează în localStorage). Parametrul
+ *  rămâne pentru apelanții existenți. */
+export const detectLang = (_navigatorLanguage?: string | null): Lang => DEFAULT_LANG;
 
 /** Textul cheii în limba cerută. Cheie lipsă în limba aleasă → textul românesc; lipsă și acolo → cheia însăși (se vede imediat în dezvoltare). */
 export function t(lang: Lang, key: string, vars?: Vars): string {
