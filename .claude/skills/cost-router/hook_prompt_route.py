@@ -149,6 +149,32 @@ def sync_escalation(data: dict, flag: bool) -> None:
         pass
 
 
+def renew_epoch(data: dict, prompt: str, esc: bool) -> None:
+    """A short / slash / trivial prompt keeps the current route (task class, subagent, counters), but it is a NEW owner
+    prompt: it gets a fresh epoch (reset(): the previous prompt's markers and its check/spawn failure ladder no longer
+    count for the fable-executor gate) and its local_only scan is merged into `spec`. No state yet: an unrouted one is
+    written so the scan is still recorded. Never raises."""
+    try:
+        import route_state  # noqa: E402
+        sid = data.get("session_id")
+        if not sid:
+            return
+        hits = _local_only(prompt)
+        state = route_state.load(sid)
+        if state is None:
+            persist(data, prompt, None, spec=hits)
+            return
+        state = dict(state)
+        if not state.get("delegation_denied"):
+            state.pop("delegation_denied", None)  # load() adds the marker key; keep the saved shape
+        state["escalation_authorized"] = esc
+        old = state.get("spec") if isinstance(state.get("spec"), list) else []
+        state["spec"] = ([str(x)[:40] for x in old if x] + [x for x in hits if x not in old])[:8]
+        route_state.reset(sid, state)
+    except Exception:
+        sync_escalation(data, esc)
+
+
 def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bool = False, spec=()) -> None:
     """Write the session's route state; never raises. `spec`: the specialist ids hinted for this prompt (lead, overlay),
     recorded so the fable-executor gate (hook_agent_model) can refuse a prompt routed to a local_only specialist."""
@@ -249,7 +275,7 @@ def main() -> int:
             _emit(warning)
         return 0
     if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
-        sync_escalation(data, esc)
+        renew_epoch(data, prompt, esc)  # route kept; new prompt epoch + local_only scan (M12)
         if warning:  # a short follow-up keeps its route, but the size reminder still applies
             _emit(warning)
         return 0

@@ -1029,8 +1029,10 @@ def _live_operation_hit(brief: str, stems, specialists):
     NFKC, Cf/zero-width removed, cedilla -> comma-below, casefold, whitespace collapsed). A policy stem with diacritics
     (`șterg`, `producț`) matches the normalized text with its diacritics; an ASCII stem matches the diacritic-folded
     text too (`şterge` -> `sterge`), so folding never turns `producț` into a bare `product`."""
-    kept = " " + specialists.normalize(brief) + " "
-    folded = " " + specialists.fold(brief) + " "
+    conf = getattr(specialists, "CONFUSABLES", None)  # M12: look-alike letters folded to ASCII first
+    src = unicodedata.normalize("NFKC", str(brief)).translate(conf) if conf else brief
+    kept = " " + specialists.normalize(src) + " "
+    folded = " " + specialists.fold(src) + " "
     for k in stems:
         kn, kf = specialists.normalize(k), specialists.fold(k)
         if not kn:

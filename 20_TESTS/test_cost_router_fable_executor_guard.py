@@ -303,28 +303,17 @@ def test_live_operation_scan_folds_confusables():
     assert am._live_operation_hit("please dеploy it", ["prod"], sp) == "deploy"
 
 
-def _prompt(home, prompt, sid="m12-p"):
-    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
-    for k in ("COST_ROUTER_OFF", "COST_ROUTER_ENFORCE"):
-        env.pop(k, None)
-    r = subprocess.run([sys.executable, str(PROMPT_HOOK)], input=json.dumps({"session_id": sid, "prompt": prompt}),
-                       capture_output=True, text=True, timeout=60, env=env, encoding="utf-8")
-    assert r.returncode == 0, r.stderr
-
-
-def _route_state(home, sid="m12-p"):
-    return json.loads((home / ".claude" / "cache" / "cost-router" / f"route-{sid}.json").read_text(encoding="utf-8"))
-
-
 @pytest.mark.parametrize("short", ["ok", "/clear", "da", "amcache triage now"])
 def test_short_prompt_starts_a_new_epoch_and_scans_local_only(tmp_path, short):
+    import test_cost_router_fable_executor as fe  # its install/skill-copy helpers (registry compiled in the copy)
     home = tmp_path / "home"
     home.mkdir()
-    _prompt(home, "implement a new feature in the module with tests and refactor the whole parser")
-    before = _route_state(home)
-    _prompt(home, short)
-    after = _route_state(home)
+    fe._install_trust(home)
+    skill = fe._skill_copy(tmp_path, home)
+    before = fe._prompt(skill, home, "implement a new feature in the module with tests and refactor the whole parser")
+    after = fe._prompt(skill, home, short)
     assert after["epoch"] != before["epoch"]
     assert after["task_class"] == before["task_class"] and after["subagent"] == before["subagent"]
+    assert after["main_calls"] == before["main_calls"] and after["delegated"] == before["delegated"]
     if "amcache" in short:
         assert "dfir-analyst" in after["spec"]

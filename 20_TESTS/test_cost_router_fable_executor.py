@@ -762,11 +762,19 @@ def test_g_residual_dfir_repros_are_local_only(tmp_path, text):
 
 
 @pytest.mark.parametrize("trigger", ["amcache", "shimcache", "prefetch", "srum", "lnk file", "jumplist", "intrusion",
-                                     "security log", "event log", "malware execution", "triage", "event timeline",
-                                     "forensic timeline", "timeline of events", "super timeline"])
+                                     "windows security log", "event log", "malware execution", "forensic triage",
+                                     "incident triage", "event timeline", "forensic timeline",
+                                     "forensic timeline of events", "super timeline"])
 def test_g_dfir_analyst_carries_the_privacy_triggers(trigger):
     meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
     assert trigger in meta["triggers"]["en"]
+
+
+def test_g_dfir_leaky_triggers_are_scoped():
+    # M12: bare "triage", "security log" and "timeline of events" leaked dfir-analyst (local_only) into normal hints
+    meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
+    for bare in ("triage", "security log", "timeline of events"):
+        assert bare not in meta["triggers"]["en"]
 
 
 def test_g_dfir_timeline_triggers_are_scoped():

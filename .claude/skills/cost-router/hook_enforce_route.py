@@ -266,6 +266,397 @@ def role_guard(data: dict):
     return None
 
 
+# --- M12: tool-level ALLOWLIST guard for agent_type `fable-executor` (threat model X1-X7, SKILL.md 4G) ---------------
+# The executor's brief is attacker-shaped text, so the decision is taken on what it RUNS. Bash: one simple command
+# (Git Bash quoting rules) whose program and sub-command are on the allowlist below; everything else is denied with
+# the rule it broke. Write/Edit/NotebookEdit: the real path must be inside the git worktree of the session cwd, not in
+# .git, not through a link, not in a nested repository, not in ~/.claude. COST_ROUTER_OFF, COST_ROUTER_ENFORCE=0 and
+# #direct never disable it (X7). Any internal error DENIES (fail closed). Residuals (documented): the CONTENTS of an
+# allowed worktree script, package.json script, test file or project file are not inspected; a same-user process
+# outside Claude Code is out of scope.
+FABLE_EXECUTOR_ROLE = "fable-executor"
+_EX = "cost-router: fable-executor "
+_EX_MAX = 2000
+_EX_READ_ONLY = frozenset({"ls", "dir", "cat", "type", "get-content", "select-string", "rg", "grep", "find", "head",
+                           "tail", "wc", "pwd"})
+_EX_PY = re.compile(r"^(?:python(?:3(?:\.\d{1,2})?)?|py)$")
+_EX_PY_FLAGS = re.compile(r"^-[IBuEsSOq]+$")
+_EX_PY_X = frozenset({"utf8", "utf8=1", "utf8=0", "dev"})
+_EX_GIT_READ = frozenset({"status", "diff", "log", "show", "blame", "rev-parse", "ls-files"})
+_EX_GIT_BAD_FLAG = re.compile(r"^(?:--(?:output|ext-diff|textconv|exec|upload-pack|receive-pack|config|amend|"
+                              r"open-files-in-pager)(?:=|$)|-O)")
+_EX_BRANCH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")
+_EX_BRANCH_LIST = frozenset({"--show-current", "--list", "-a", "-v", "-vv", "-r", "-av", "-avv", "-l"})
+_EX_PKG_FORMS = (("test",), ("run", "test"), ("run", "build"), ("run", "lint"))
+_EX_FIND_BAD = frozenset({"-exec", "-execdir", "-ok", "-okdir", "-delete", "-fls"})
+_EX_NET = frozenset({"curl", "wget", "iwr", "irm", "invoke-webrequest", "invoke-restmethod", "ssh", "scp", "sftp",
+                     "ftp", "nc", "ncat", "pip", "pip3", "uv", "gh", "docker", "certutil", "start-bitstransfer", "npx"})
+_EX_DEPLOY = frozenset({"vercel", "netlify", "firebase", "terraform", "kubectl", "helm", "twine", "az", "aws",
+                        "gcloud"})
+_EX_FS = frozenset({"rm", "rd", "rmdir", "del", "erase", "remove-item", "format", "diskpart", "cipher", "mv", "cp",
+                    "move", "copy", "mkdir", "touch", "new-item", "set-content", "out-file", "ln", "mklink"})
+_REPARSE = 0x400  # FILE_ATTRIBUTE_REPARSE_POINT: symlinks, junctions, mount points
+
+
+def _ex_deny(rule: str, why: str) -> str:
+    return f"{_EX}guard ({rule}): {why}; denied. Report what you need to the main session instead."
+
+
+def _ex_normal(cmd: str) -> str:
+    """NFKC, format chars (Cf: zero-width, bidi, BOM, soft hyphen) removed, look-alike letters folded to ASCII."""
+    import unicodedata
+    s = unicodedata.normalize("NFKC", cmd)
+    s = "".join(c for c in s if unicodedata.category(c) != "Cf")
+    try:
+        from specialists import CONFUSABLES  # noqa: E402
+        s = s.translate(CONFUSABLES)
+    except Exception:
+        pass
+    return s
+
+
+def _ex_words(cmd: str):
+    """Words of ONE simple command with Git Bash quoting applied: [(text, unquoted_glob, leading_tilde)], or a deny
+    reason (str) for any chain, pipe, redirect, substitution, expansion, comment or multi-line input."""
+    if any(ord(c) < 32 and c != "\t" for c in cmd) or ord(max(cmd)) > 126:
+        return _ex_deny("X5", "control characters or non-ASCII text in the command")
+    words, cur, started, glob, tilde, quote, i = [], [], False, False, False, "", 0
+    while i < len(cmd):
+        ch = cmd[i]
+        if quote == "'":
+            if ch == "'":
+                quote = ""
+            else:
+                cur.append(ch)
+        elif quote == '"':
+            if ch == '"':
+                quote = ""
+            elif ch in "$`":
+                return _ex_deny("X5", "expansion or substitution inside double quotes")
+            elif ch == "\\" and i + 1 < len(cmd) and cmd[i + 1] in '"\\':
+                i += 1
+                cur.append(cmd[i])
+            else:
+                cur.append(ch)
+        elif ch in "'\"":
+            quote, started = ch, True
+        elif ch in " \t":
+            if started or cur:
+                words.append(("".join(cur), glob, tilde))
+            cur, started, glob, tilde = [], False, False, False
+        elif ch == "\\":
+            if i + 1 >= len(cmd):
+                return _ex_deny("X5", "line continuation")
+            i += 1
+            cur.append(cmd[i])
+            started = True
+        elif ch in ";&|<>()`$!{}@":
+            return _ex_deny("X5", f"shell operator {ch!r} (one simple command only: no chain, pipe, redirect, "
+                                  "substitution, here-string or variable)")
+        elif ch == "#" and not (started or cur):
+            return _ex_deny("X5", "a comment")
+        else:
+            if ch in "*?[":
+                glob = True
+            if ch == "~" and not (started or cur):
+                tilde = True
+            cur.append(ch)
+        i += 1
+    if quote:
+        return _ex_deny("X5", "unbalanced quotes")
+    if started or cur:
+        words.append(("".join(cur), glob, tilde))
+    return words or _ex_deny("X5", "an empty command")
+
+
+def _ex_home_claude() -> str:
+    return os.path.normcase(os.path.realpath(os.path.join(os.path.expanduser("~"), ".claude")))
+
+
+def _ex_root(cwd: str):
+    """Real path of the git worktree root that holds `cwd` (git rev-parse, 5 s), else the nearest ancestor with a
+    .git entry, else None."""
+    import subprocess
+    top = None
+    try:
+        r = subprocess.run(["git", "-C", cwd, "rev-parse", "--show-toplevel"], capture_output=True, text=True,
+                           timeout=5, encoding="utf-8", stdin=subprocess.DEVNULL)
+        if r.returncode == 0 and r.stdout.strip():
+            top = r.stdout.strip()
+    except Exception:
+        top = None
+    if not top:
+        d = os.path.abspath(cwd)
+        while True:
+            if os.path.lexists(os.path.join(d, ".git")):
+                top = d
+                break
+            parent = os.path.dirname(d)
+            if parent == d:
+                return None
+            d = parent
+    root = os.path.realpath(top)
+    return root if os.path.isdir(root) else None
+
+
+def _ex_within(path: str, root: str) -> bool:
+    a, b = os.path.normcase(path), os.path.normcase(root)
+    try:
+        return os.path.commonpath([a, b]) == b
+    except ValueError:
+        return False  # another drive
+
+
+def _ex_shape_problem(raw: str):
+    """Reasons a path string is never acceptable as a write/exec target, whatever it resolves to."""
+    if not raw or not raw.strip():
+        return "an empty path"
+    p = raw.replace("/", "\\")
+    if p.startswith("\\\\"):
+        return "a UNC or device path"
+    if re.match(r"^[A-Za-z]:(?!\\)", p):
+        return "a drive-relative path"
+    if ":" in (p[2:] if re.match(r"^[A-Za-z]:", p) else p):
+        return "a colon in the path (alternate data stream or URL)"
+    if "\x00" in p:
+        return "a NUL byte in the path"
+    return None
+
+
+def _ex_resolve(raw: str, cwd: str, root: str):
+    """(real, lexical) absolute paths of `raw` when it stays inside `root`, else a reason (str)."""
+    bad = _ex_shape_problem(raw)
+    if bad:
+        return bad
+    lexical = os.path.abspath(os.path.join(cwd, os.path.expanduser(raw) if raw.startswith("~") else raw))
+    real = os.path.realpath(lexical)
+    if not _ex_within(real, root):
+        return f"{raw!r} resolves outside the git worktree {root}"
+    if _ex_within(real, _ex_home_claude()):
+        return f"{raw!r} is inside ~/.claude"
+    return real, lexical
+
+
+def _ex_is_link(p: str) -> bool:
+    try:
+        st = os.lstat(p)
+    except OSError:
+        return False
+    if os.path.islink(p) or getattr(st, "st_file_attributes", 0) & _REPARSE:
+        return True
+    isj = getattr(os.path, "isjunction", None)
+    return bool(isj and isj(p))
+
+
+def executor_path_problem(raw, cwd) -> str | None:
+    """None when a Write/Edit/NotebookEdit target is acceptable for fable-executor, else the deny reason (X6)."""
+    if not isinstance(raw, str):
+        return _ex_deny("X6", "no file path")
+    root = _ex_root(cwd)
+    if root is None:
+        return _ex_deny("X6", "the session cwd is not inside a git worktree, so no write is allowed")
+    got = _ex_resolve(raw, cwd, root)
+    if isinstance(got, str):
+        return _ex_deny("X6", got)
+    real, lexical = got
+    if not _ex_within(lexical, root):
+        return _ex_deny("X6", f"{raw!r} reaches the worktree only through a link")
+    lex_rel, real_rel = os.path.relpath(lexical, root), os.path.relpath(real, root)
+    for part in re.split(r"[\\/]", real_rel) + re.split(r"[\\/]", lex_rel):
+        if part.rstrip(". ").lower() == ".git":
+            return _ex_deny("X6", f"{raw!r} is inside .git")
+    cur = root
+    parts = [x for x in re.split(r"[\\/]", lex_rel) if x and x != "."]
+    for n, part in enumerate(parts):
+        cur = os.path.join(cur, part)
+        if _ex_is_link(cur):
+            return _ex_deny("X6", f"{raw!r} goes through a symlink or junction ({part})")
+        if n < len(parts) - 1 and os.path.lexists(os.path.join(cur, ".git")):
+            return _ex_deny("X6", f"{raw!r} is inside another repository ({part})")
+    try:
+        if os.path.isfile(real) and os.stat(real).st_nlink > 1:
+            return _ex_deny("X6", f"{raw!r} is a hard link")
+    except OSError:
+        pass
+    return None
+
+
+def _ex_path_args(words, cwd: str, root: str, rule: str = "X4"):
+    """Every path-like argument (or --opt=value) of an executing program must stay inside the worktree."""
+    for w in words:
+        val = w.split("=", 1)[1] if w.startswith("-") and "=" in w else w
+        val = val.split("::", 1)[0]  # pytest node id
+        if not val or not ("/" in val or "\\" in val or val.startswith((".", "~")) or re.match(r"^[A-Za-z]:", val)):
+            continue
+        got = _ex_resolve(val, cwd, root)
+        if isinstance(got, str):
+            return _ex_deny(rule, got)
+    return None
+
+
+def _ex_git(args, cwd: str, root: str):
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        a = args[i]
+        if a == "--no-pager":
+            i += 1
+        elif a == "-C" and i + 1 < len(args):
+            got = _ex_resolve(args[i + 1], cwd, root)
+            if isinstance(got, str):
+                return _ex_deny("X1", f"git -C {got}")
+            cwd = got[0]
+            i += 2
+        else:
+            return _ex_deny("X1", f"git global option {a!r} is not allowed (config, git-dir and exec overrides)")
+    if i >= len(args):
+        return _ex_deny("X1", "bare git")
+    sub, rest = args[i].lower(), args[i + 1:]
+    bad = next((a for a in rest if _EX_GIT_BAD_FLAG.match(a)), None)
+    if bad:
+        return _ex_deny("X1", f"git flag {bad!r} runs a program, writes a file or rewrites history")
+    if sub in _EX_GIT_READ or sub in ("add", "commit"):
+        return None
+    if sub == "branch" and all(a in _EX_BRANCH_LIST for a in rest):
+        return None
+    if sub == "stash" and rest == ["list"]:
+        return None
+    if (((sub == "switch" and rest[:1] in (["-c"], ["--create"])) or (sub == "checkout" and rest[:1] == ["-b"]))
+            and len(rest) in (2, 3) and all(_EX_BRANCH.match(a) for a in rest[1:])):
+        return None
+    return _ex_deny("X1", f"git {sub!r} is not on the executor allowlist (status, diff, log, show, blame, add, "
+                          "commit, switch -c/checkout -b <new branch>, stash list, branch listing)")
+
+
+def _ex_python(prog: str, args, cwd: str, root: str):
+    i = 0
+    if prog == "py" and args[:1] and re.match(r"^-[23](?:\.\d{1,2})?$", args[0]):
+        i = 1  # py -3 / py -3.12
+    while i < len(args):
+        a = args[i]
+        if _EX_PY_FLAGS.match(a):
+            i += 1
+        elif a == "-X" and i + 1 < len(args) and args[i + 1] in _EX_PY_X:
+            i += 2
+        else:
+            break
+    if i >= len(args):
+        return _ex_deny("X5", "an interactive interpreter (no script)")
+    if args[i] == "-m":
+        if i + 1 < len(args) and args[i + 1] == "pytest":
+            return _ex_path_args(args[i + 2:], cwd, root)
+        return _ex_deny("X2", "python -m is allowed only for pytest")
+    if args[i].startswith("-"):
+        return _ex_deny("X5", f"interpreter option {args[i]!r} (-c, stdin and the like are wrappers)")
+    got = _ex_resolve(args[i], cwd, root)
+    if isinstance(got, str):
+        return _ex_deny("X4", "script " + got)
+    return _ex_path_args(args[i + 1:], cwd, root)
+
+
+def _ex_node(args, cwd: str, root: str):
+    i = 1 if args[:1] == ["--test"] else 0
+    if i >= len(args):
+        return None if i else _ex_deny("X5", "an interactive interpreter (no script)")
+    if args[i].startswith("-"):
+        return _ex_deny("X5", f"node option {args[i]!r} (-e, -p, -r, --import and the like are wrappers)")
+    got = _ex_resolve(args[i], cwd, root)
+    if isinstance(got, str):
+        return _ex_deny("X4", "script " + got)
+    return _ex_path_args(args[i + 1:], cwd, root)
+
+
+def executor_bash_problem(cmd, cwd) -> str | None:
+    """None when a Bash command is on the fable-executor allowlist, else the deny reason naming the rule."""
+    if not isinstance(cmd, str) or not cmd.strip():
+        return _ex_deny("X5", "no command text")
+    if len(cmd) > _EX_MAX:
+        return _ex_deny("X5", f"a command longer than {_EX_MAX} characters")
+    if _ex_normal(cmd) != cmd:
+        return _ex_deny("X5", "Unicode look-alike, compatibility or zero-width characters in the command")
+    words = _ex_words(cmd.strip())
+    if isinstance(words, str):
+        return words
+    prog_raw = words[0][0]
+    if "=" in prog_raw:
+        return _ex_deny("X5", "an environment assignment before the command")
+    if "/" in prog_raw or "\\" in prog_raw or words[0][2]:
+        return _ex_deny("X5", "a program given by path (only allowlisted programs from PATH)")
+    prog = prog_raw.lower()
+    prog = prog[:-4] if prog.endswith(".exe") else prog
+    args = [w[0] for w in words[1:]]
+    if any(w[2] for w in words[1:]):
+        return _ex_deny("X5", "home (~) expansion in an argument")
+    if prog in _EX_READ_ONLY:
+        if prog == "find" and any(a.lower() in _EX_FIND_BAD or a.lower().startswith("-fprint") for a in args):
+            return _ex_deny("X4", "find with -exec/-delete/-fprint runs or writes")
+        if prog == "rg" and any(a == "--pre" or a.startswith("--pre=") for a in args):
+            return _ex_deny("X5", "rg --pre runs a program")
+        return None
+    executing = prog in ("git", "pytest", "py.test", "node", "npm", "pnpm", "yarn", "dotnet") or bool(_EX_PY.match(prog))
+    if not executing:
+        rule = "X2" if prog in _EX_NET else "X3" if prog in _EX_DEPLOY else "X4" if prog in _EX_FS else "X5"
+        return _ex_deny(rule, f"program {prog!r} is not on the executor allowlist (pytest, python <worktree script>|"
+                              "-m pytest, node <worktree script>, dotnet build|test, npm|pnpm|yarn test|run "
+                              "test|build|lint, git local subcommands, read-only ls/cat/grep/rg/find)")
+    if any(w[1] for w in words[1:]):
+        return _ex_deny("X5", "an unquoted glob in an executing command")
+    root = _ex_root(cwd)
+    if root is None:
+        return _ex_deny("X4", "the session cwd is not inside a git worktree, so only read-only commands run")
+    if prog == "git":
+        return _ex_git(args, cwd, root)
+    if _EX_PY.match(prog):
+        return _ex_python(prog, args, cwd, root)
+    if prog in ("pytest", "py.test"):
+        return _ex_path_args(args, cwd, root)
+    if prog == "node":
+        return _ex_node(args, cwd, root)
+    if prog == "dotnet":
+        if args[:1] not in (["build"], ["test"]):
+            return _ex_deny("X3", "dotnet is allowed only for build and test")
+        return _ex_path_args(args[1:], cwd, root)
+    for form in _EX_PKG_FORMS:  # npm / pnpm / yarn
+        n = len(form)
+        if tuple(args[:n]) == form and (len(args) == n or args[n] == "--"):
+            return _ex_path_args(args[n + 1:], cwd, root)
+    return _ex_deny("X2", f"{prog} is allowed only for test / run test / run build / run lint (never install or "
+                          "publish)")
+
+
+_EX_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit", "MultiEdit")
+_EX_READ_TOOLS = ("Read", "Grep", "Glob")
+
+
+def is_fable_executor(data: dict) -> bool:
+    role = str(data.get("agent_type") or "").strip().lower()
+    return role == FABLE_EXECUTOR_ROLE or role.endswith(":" + FABLE_EXECUTOR_ROLE)
+
+
+def executor_guard(data: dict):
+    """A deny payload for a fable-executor tool call outside the allowlist, else None; other callers: None.
+    Fails CLOSED: any internal error denies."""
+    try:
+        if not isinstance(data, dict) or not is_fable_executor(data):
+            return None
+    except Exception:
+        return None
+    try:
+        tool = data.get("tool_name")
+        ti = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
+        cwd = str(data.get("cwd") or os.getcwd())
+        if tool in _EX_READ_TOOLS:
+            return None
+        if tool == "Bash":
+            reason = executor_bash_problem(ti.get("command"), cwd)
+        elif tool in _EX_WRITE_TOOLS:
+            reason = executor_path_problem(ti.get("file_path") or ti.get("notebook_path"), cwd)
+        else:
+            reason = _ex_deny("X6", f"tool {tool!r} is not one of the executor's tools")
+    except Exception as exc:
+        reason = _ex_deny("X7", f"internal guard error ({type(exc).__name__}), failing closed")
+    return _deny(reason) if reason else None
+
+
 READ_TOOLS = ("Read", "Grep", "Glob")
 
 
@@ -331,6 +722,16 @@ def decide(data: dict):
 
 
 def main() -> int:
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        return 0
+    if not isinstance(data, dict):
+        return 0
+    ex = executor_guard(data)  # M12: before every switch (COST_ROUTER_OFF, ENFORCE=0, #direct, shadowing) - X7
+    if ex:
+        print(json.dumps(ex))
+        return 0
     try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch; no output, no state
         import route_state as _rs  # noqa: E402
         if _rs.disabled_by_env():
@@ -338,9 +739,6 @@ def main() -> int:
     except Exception:
         pass
     try:
-        data = json.load(sys.stdin)
-        if not isinstance(data, dict):
-            return 0
         from route import is_shadowed  # noqa: E402
         if is_shadowed(Path(__file__)):
             return 0
