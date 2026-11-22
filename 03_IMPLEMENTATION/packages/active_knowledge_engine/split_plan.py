@@ -23,6 +23,7 @@ The manifest carries offsets, hashes and line numbers, never note content.
 from __future__ import annotations
 
 import hashlib
+import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from memory_controller.authorizer import Principal
@@ -189,7 +190,9 @@ def plan_split(controller, note_id: str) -> Dict[str, Any]:
         for index, (a, b) in enumerate(ranges):
             start, end = lines[a][0], lines[b - 1][1]
             piece = body[start:end]
-            child_id = f"{note_id}--part-{index + 1:03d}"
+            # deterministic UUID (the note schema requires one); bound to the parent body, so a
+            # re-plan after the parent changes proposes different ids
+            child_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ake-split/{note_id}/{_sha(body)}/{index + 1}"))
             children.append({
                 "index": index,
                 "child_id_proposed": child_id,

@@ -246,6 +246,16 @@ def test_package_has_no_network_and_no_write_path():
                     assert node.func.attr not in _FORBIDDEN_CALLS, (path.name, node.func.attr)
 
 
+def test_engine_never_imports_the_owner_tools():
+    """apply-split writes memory, so it lives in ake_owner_tools; the engine must not reach it."""
+    for path in PKG.glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                assert not any(a.name.split(".")[0] == "ake_owner_tools" for a in node.names), path.name
+            elif isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] != "ake_owner_tools", path.name
+
+
 def test_cli_dry_run_writes_a_record(tmp_path):
     from memory_vault_fixture import make_vault
 

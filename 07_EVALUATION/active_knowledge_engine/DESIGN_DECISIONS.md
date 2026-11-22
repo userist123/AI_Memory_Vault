@@ -225,3 +225,26 @@ A first run marked the catalogue UNSPLITTABLE for a false reason. The body start
 **Next steps are owner actions, as planned.** For each child: create it, re-hash it against `content_sha256`, attest it with `expected_content_sha256`, then promote it. After that, attest the manifest and supersede the parent.
 - Pilot on Continuity_Handoff (4 children) first.
 - The catalogue (159 children) needs a batch tool. It should run only after the pilot is verified.
+
+### Step 2 built, not run: the owner tool `apply-split` (2026-11-22)
+
+`ake_owner_tools/split_apply.py` (CLI `python -m ake_owner_tools apply-split --manifest PLAN.json [--execute]`; a separate package, so the write-free AST guard on the engine holds) is the owner's step. It is built and tested but **was not run on the real vault**: creating and attesting notes is the owner's authority.
+- It runs only as HUMAN/ADMIN. `--execute` also needs an interactive terminal (stdin and stdout; on Windows NUL reports `isatty()`) and the parent id typed back.
+- It re-checks the manifest against the parent as it is now. A stale or tampered manifest is refused before any write.
+- For each child, in order, it:
+  1. creates the child **RAW** (never served to agents before attestation), with a `part_of` relation and a deterministic UUID;
+  2. attests it with `expected_content_sha256` (PR #398), so a body swapped in between is refused;
+  3. reviews and promotes it;
+  4. reads it back through `memory_get` as an AI_AGENT and requires the exact slice.
+- The first failure stops the run and names the child. A re-run skips children already applied, and a conflicting id stops the run. The parent is never modified.
+
+It depends on PR #398 and is on the stacked branch `claude/ake-split-apply`. Dry run on the real Continuity_Handoff manifest: 4 children listed, nothing written.
+
+Security review round 1 (`vault-reviewer`) returned CHANGES_REQUIRED, all reproduced. Fixed test-first:
+- **What is attested.** The parent must be ACTIVE and verified. The owner attests exact slices of an already-verified note, never new text. Before, an agent could plan a split of its own unverified note, and the owner would have attested text they never read.
+- **Pre-flight, before any write.** Child ids must equal their deterministic derivation, line numbers must match the offsets, and a parent with `source_type: ai` is refused.
+- **Every field the tool writes is checked:** before attestation, and again after promotion (plus `verification`, `verification_source` and the attested hash). A child that fails an integrity check is **archived**, so it is no longer served.
+- **Resume.** A re-run picks up the tool's own partial children from the state they are in.
+- **Authority limit, stated plainly.** The principal is an argument, as for every controller call in this vault, because the runtime authority layer is not wired. Any code that imports the module can pass HUMAN. The terminal check and the typed parent id guard against piped or scripted runs; they do not prove the owner is present.
+
+**Owner pilot:** `python -m active_knowledge_engine split-plan --note-id 8c7d5c90-9c29-450b-b5a9-e2b2024db502`, then `python -m ake_owner_tools apply-split --manifest <plan> --execute` in your own terminal. Supersede or keep the parent afterwards; that is a separate owner decision.

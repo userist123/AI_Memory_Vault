@@ -73,6 +73,7 @@
       "name": "L7_cognition",
       "units": [
         "packages/active_knowledge_engine",
+        "packages/ake_owner_tools",
         "packages/book_to_memory",
         "packages/learning"
       ]
@@ -141,6 +142,7 @@
       "__path__": [
         "packages/active_knowledge_engine",
         "packages/agent_bridge",
+        "packages/ake_owner_tools",
         "packages/book_to_memory",
         "packages/cognitive_core",
         "packages/graph",

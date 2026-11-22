@@ -51,6 +51,8 @@ _CANONICAL_SCHEMA = {
         "conflicts_with": {"type": "string", "format": "uuid"},
         "last_verified": {"type": "string", "format": "date"},
         "verification_source": {"type": "string"},
+        # SHA-256 of the body the owner attested (memory/controller.py attest/promote).
+        "attested_content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "relations": {
             "type": "array",
             # Two accepted shapes, because until now the schema and the graph

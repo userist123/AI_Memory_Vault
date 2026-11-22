@@ -7,6 +7,9 @@ Milestone 1 supports the dry run only. Exit codes: 0 = COMPLETED, 3 = COMPLETED_
 ``python -m active_knowledge_engine split-plan --note-id ID`` writes a dry-run split manifest
 (exit 0 = PLANNED; 1 = NEEDS_PROVENANCE, UNSPLITTABLE, DOES_NOT_FIT or COVERAGE_FAILED).
 
+Applying a PLANNED split is the owner's step and lives OUTSIDE this package, which never
+writes memory: ``python -m ake_owner_tools apply-split --manifest PLAN.json [--execute]``.
+
 ``python -m active_knowledge_engine compare BASELINE.json CANDIDATE.json`` compares the
 retrieval_quality stage of two job records (exact McNemar). Exit codes: 0 = NO_CHANGE,
 IMPROVED or INCONCLUSIVE, 4 = REGRESSED, 2 = NOT_COMPARABLE.
