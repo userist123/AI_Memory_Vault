@@ -5,6 +5,7 @@ import type { Catalog, MaterialsCatalog, Snapshot } from './types';
 import { finishSchedule } from './finish-schedule';
 import { resolve, pricedOffer } from './catalog';
 import { floors } from './levels';
+import { fxItem, type FxInfo } from './fx';
 
 export const ORDER_STATUSES = ['todo', 'quoted', 'ordered', 'delivered', 'installed', 'cancelled'] as const;
 export type OrderStatus = typeof ORDER_STATUSES[number];
@@ -18,6 +19,8 @@ export interface ProcurementLine {
   qty: number; unit: string; packs: string | null; unitPrice: number | null; total: number | null; rooms: string[];
   /** doar produsele proprii: prețul de achiziție (intern, nu ajunge la client), termenul și dimensiunea */
   costPrice?: number | null; costTotal?: number | null; leadDays?: number | null; dimension?: string | null;
+  /** produs în altă monedă: prețurile de mai sus sunt deja în moneda proiectului; aici originalul și cursul (`rate` null = lipsește cursul, prețul e necunoscut) */
+  fx?: FxInfo;
 }
 export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean;
   /** zilele de livrare folosite (ale designerului sau implicite) și data până la care trebuie comandat/decis */
@@ -43,7 +46,9 @@ const keyOf = (...parts: (string | null | undefined)[]) => parts.map(p => (p ?? 
 
 /** Liniile de cumpărat, stabile între salvări (cheia nu depinde de ordinea camerelor). */
 /** Produs adăugat de designer în afara catalogului (din linkul unui magazin sau de mână). */
-export interface CustomLineItem { id: string; name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; qty: number; unit: string; roomId: string | null; costPrice?: number | null; leadDays?: number | null; dimension?: string | null }
+export interface CustomLineItem { id: string; name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; qty: number; unit: string; roomId: string | null; costPrice?: number | null; leadDays?: number | null; dimension?: string | null;
+  /** moneda prețurilor (null = moneda proiectului); altă monedă se convertește cu cursul proiectului (Snapshot.fx) */
+  currency?: string | null; fx?: FxInfo }
 export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: CustomLineItem[] = []): ProcurementLine[] {
   const out = new Map<string, ProcurementLine>();
   for (const r of finishSchedule(snap, cat, mc)){ if (!r.product || r.element === 'adhesive' && !r.supplier) continue;
@@ -57,9 +62,10 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
     if (cur){ cur.qty += 1; cur.total = cur.total != null && o ? round2(cur.total + o.price) : null; if (room && !cur.rooms.includes(room)) cur.rooms.push(room); continue; }
     out.set(key, { key, kind: 'furniture', product: productLabel(rv.product.name, rv.variant.name), supplier: sup, code: null,
       url: (o ?? rv.offer)?.affiliateUrl ?? (o ?? rv.offer)?.provenance?.sourceUrl ?? null, qty: 1, unit: 'buc', packs: null, unitPrice: o?.price ?? null, total: o ? round2(o.price) : null, rooms: room ? [room] : [] }); }
-  for (const c of custom){ const room = roomName.get(c.roomId ?? '') ?? '', key = 'c|' + c.id;
+  // produsele în altă monedă intră la cursul proiectului; fără curs prețul e necunoscut (total null), nu se adună ca lei
+  for (const raw of custom){ const c = fxItem(raw, snap.fx), room = roomName.get(c.roomId ?? '') ?? '', key = 'c|' + c.id;
     out.set(key, { key, kind: 'custom', itemId: c.id, product: c.name, supplier: c.supplier, code: c.sku, url: c.url, image: c.image, qty: c.qty, unit: c.unit, packs: null, unitPrice: c.price, total: c.price != null ? round2(c.price * c.qty) : null, rooms: room ? [room] : [],
-      costPrice: c.costPrice ?? null, costTotal: c.costPrice != null ? round2(c.costPrice * c.qty) : null, leadDays: c.leadDays ?? null, dimension: c.dimension ?? null }); }
+      costPrice: c.costPrice ?? null, costTotal: c.costPrice != null ? round2(c.costPrice * c.qty) : null, leadDays: c.leadDays ?? null, dimension: c.dimension ?? null, ...(c.fx ? { fx: c.fx } : {}) }); }
   return [...out.values()].sort((a, b) => a.supplier.localeCompare(b.supplier) || a.kind.localeCompare(b.kind) || a.product.localeCompare(b.product));
 }
 /** Liniile cu starea lor; o linie fără stare salvată e „de comandat”. */

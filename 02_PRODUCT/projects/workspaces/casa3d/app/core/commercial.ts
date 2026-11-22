@@ -29,6 +29,7 @@ const r2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
  */
 export { VAT_RATE } from './rules.boq';
 import { VAT_RATE } from './rules.boq';
+import { fxItems, type FxInfo } from './fx';
 
 export const COMMERCIAL_LIMITS = { suppliers: 100, milestones: 20, supplierName: 120, label: 120, series: 12, discountMax: 99, markupMax: 1000, amountMax: 1e9, numberMax: 1e9 };
 export const MILESTONE_STATUSES = ['pending', 'paid'] as const;
@@ -118,7 +119,8 @@ export function termsFor(d: Pick<CommercialData, 'defaults' | 'suppliers'>, supp
 /** O linie de deviz, minimal: ce trebuie pentru profit și proformă. */
 export type LineCategory = BoqCategory | 'custom';
 /** `costTotal`: costul real al liniei (produs propriu cu preț de achiziție); lipsă/null → din discountul furnizorului. */
-export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null }
+export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null;
+  /** produs în altă monedă: originalul și cursul (intern; nu ajunge pe proformă) */ fx?: FxInfo }
 /** `costTotal`: costul contractat al liniei (manoperă cu ofertă atribuită); lipsă → costul e chiar `amount` (trecere fără adaos).
  *  `contract`: prețul contractat pe unitate și echipa, pentru afișare lângă estimare. */
 export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number; costTotal?: number; contract?: { unitPrice: number; vatPayer: boolean; label: string } }
@@ -222,7 +224,9 @@ export function proformaCsv(p: Proforma): string {
 
 // ---------- lanțul canonic al totalului (același în buget, panoul comercial și proformă) ----------
 /** Produs propriu, cât trebuie pentru deviz (prețul de client cu TVA; costul real, dacă e cunoscut). */
-export interface CustomSource { id: string; name: string; supplier: string; qty: number; unit: string; price: number | null; costPrice?: number | null }
+export interface CustomSource { id: string; name: string; supplier: string; qty: number; unit: string; price: number | null; costPrice?: number | null;
+  /** moneda prețurilor (null = moneda proiectului); se convertește cu cursurile din buget (`b.fx`, adică Snapshot.fx) */
+  currency?: string | null; fx?: FxInfo }
 /**
  * Liniile devizului din buget: produsele din catalog și cele proprii, manopera (scenariul ales, dacă e inclusă) și
  * transportul / montajul cunoscute. Aceeași funcție pe server (raport, proformă) și în buget, deci aceleași sume.
@@ -230,8 +234,9 @@ export interface CustomSource { id: string; name: string; supplier: string; qty:
 export function commercialSources(b: Budget, custom: CustomSource[] = [], laborContract?: LaborContract | null): { items: SourceLine[]; labor: SourceLabor[]; extras: SourceLabor[] } {
   const items: SourceLine[] = b.items.map(i => ({ key: i.key, category: i.category, label: i.label, supplier: i.supplier, qty: i.orderedQty, unit: i.unit, unitPrice: i.unitPrice, total: i.total }));
   // produsele proprii: `price` e prețul de listă / către client (cu TVA, ca în catalog); costul real, dacă e cunoscut, e costPrice
-  for (const c of custom) items.push({ key: 'c|' + c.id, category: 'custom', label: c.name, supplier: c.supplier, qty: c.qty, unit: c.unit,
-    unitPrice: c.price, total: c.price == null ? null : r2(c.price * c.qty), costTotal: c.costPrice == null ? null : r2(c.costPrice * c.qty) });
+  // altă monedă: la cursul proiectului; fără curs linia are preț necunoscut (nu intră în totaluri, e numărată la `unknownLines`)
+  for (const c of fxItems(custom, b.fx)) items.push({ key: 'c|' + c.id, category: 'custom', label: c.name, supplier: c.supplier, qty: c.qty, unit: c.unit,
+    unitPrice: c.price, total: c.price == null ? null : r2(c.price * c.qty), costTotal: c.costPrice == null ? null : r2(c.costPrice * c.qty), ...(c.fx ? { fx: c.fx } : {}) });
   // prețul contractat (dacă există pe tariful liniei) schimbă doar costul; `amount` rămâne prețul către client din scenariul ales
   const contractOf = (rateId: string) => laborContract && Object.prototype.hasOwnProperty.call(laborContract, rateId) ? laborContract[rateId]! : null;
   const labor: SourceLabor[] = b.settings.includeLabor ? b.labor.map(l => { const c = contractOf(l.rateId), base = { key: l.key, label: l.label, qty: l.qty, unit: l.unit, amount: l[b.settings.laborScenario] };

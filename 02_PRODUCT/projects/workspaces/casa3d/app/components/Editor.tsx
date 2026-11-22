@@ -61,6 +61,7 @@ import ContractPanel from './ContractPanel';
 import WardrobePanel from './WardrobePanel';
 import { DesignerChanges } from './ChangeOrders';
 import OrdersPage from './OrdersPage';
+import type { FxRates } from '@/core/fx';
 import CommercialPanel from './CommercialPanel';
 import ProgressPanel from './ProgressPanel';
 import RfqPanel from './RfqPanel';
@@ -213,7 +214,8 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'site', view: '2d', tools: [], page: true }
 ];
 /** Prețurile de manoperă contractate nu țin de istoricul desenului: anularea / refacerea unui pas le păstrează pe cele curente. */
-function keepContract(s: Snapshot, from: Pick<Snapshot, 'laborContract'>): Snapshot { const { laborContract: _old, ...rest } = s; return from.laborContract ? { ...rest, laborContract: from.laborContract } : rest; }
+// la fel și cursurile valutare (Snapshot.fx): anularea unei mutări de perete nu schimbă pe tăcute un curs (și deci devizul)
+function keepContract(s: Snapshot, from: Pick<Snapshot, 'laborContract' | 'fx'>): Snapshot { const { laborContract: _old, fx: _fx, ...rest } = s; return { ...rest, ...(from.laborContract ? { laborContract: from.laborContract } : {}), ...(from.fx ? { fx: from.fx } : {}) }; }
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
@@ -323,9 +325,13 @@ export default function Editor({ id }: { id: string }){
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
   // problemele nivelului: pereți/goluri și scările lui (cele legate de o piesă apar la piesă)
   const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor, id => roomCeilingDropCm(snap, id)), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
+  // monedele străine ale produselor la comandă (lista vine de pe server când se deschide etapa de documente): cele fără curs apar la verificări
+  const [fxUsed, setFxUsed] = useState<string[]>([]);
+  useEffect(() => { if (stage !== 'docs') return; let alive = true; fetch(`/api/projects/${id}/items`).then(r => r.ok ? r.json() : null).then(j => { if (alive && Array.isArray(j?.fx?.used)) setFxUsed(j.fx.used); }).catch(() => {}); return () => { alive = false; }; }, [id, stage]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
-    return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
-  const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
+    return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog), fxMissing: fxUsed.filter(c => !(house?.fx && Object.hasOwn(house.fx, c))) }); }, [snap, house, catalog, mc, fxUsed]);
+  // cursul lipsă se rezolvă în Comenzi (secțiunea „Cursuri valutare”), nu pe plan
+  const showAdvice = (a: Advice) => { if (a.code === 'FX_MISSING'){ setStageRaw('orders'); return; } setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
   // tavanul fals pe zonă se editează în Finisaje; restul planului în Releveu, piesele în Mobilier
   const focusIssue = (i: Issue) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); if (!tgt) return; setStageRaw(tgt.kind === 'placement' ? 'ffe' : tgt.kind === 'ceiling_zone' ? 'finishes' : 'survey'); setSel(tgt as Sel); if (compact && sheet === 'peek') setSheet('half'); };
 
@@ -510,7 +516,9 @@ export default function Editor({ id }: { id: string }){
   const onBrief = (brief: Snapshot['brief'], draftRev?: number | null) => { if (!house) return; const h = { ...(latest.current ?? house), brief }; setHouse(h); latest.current = h;
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
   // prețurile de manoperă contractate (cereri de ofertă către meseriași) se scriu pe server: editorul le preia și continuă de la versiunea nouă
-  const onContract = (c: Snapshot['laborContract'], draftRev?: number | null) => { if (!house) return; const h = keepContract(latest.current ?? house, { laborContract: c && Object.keys(c).length ? c : undefined }); setHouse(h); latest.current = h;
+  // cursurile valutare: se scriu în proiect fără pas de anulare (keepContract) și se trimit imediat, ca devizul și comenzile de pe server să le vadă
+  const onFx = async (rates: FxRates): Promise<boolean> => { if (!house) return false; const base = latest.current ?? house; commitHouse(keepContract(base, { laborContract: base.laborContract, fx: Object.keys(rates).length ? rates : undefined }), false); return flushDraft(); };
+  const onContract = (c: Snapshot['laborContract'], draftRev?: number | null) => { if (!house) return; const h = keepContract(latest.current ?? house, { laborContract: c && Object.keys(c).length ? c : undefined, fx: (latest.current ?? house).fx }); setHouse(h); latest.current = h;
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
   async function restore(n: number){ if (!(await askConfirm({ title: t('dlg.restoreTitle', { n }), body: t('editor.restoreConfirm', { n }), confirmLabel: t('dlg.restoreOk', { n }) }))) return;
     clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
@@ -903,7 +911,7 @@ export default function Editor({ id }: { id: string }){
     </nav>
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
     </div>
-    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
+    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage fx={house!.fx} onFx={onFx} onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && !studio && wideSide ? "wide-side" : ""} ${studio ? 'ws-studio' : ''} ${olShown ? 'has-outliner' : ''}`}
       style={studio ? { '--ol-w': `${olShown ? fit.left : 0}px`, '--in-w': `${focused ? 0 : fit.right}px` } as React.CSSProperties : undefined}>
       <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
@@ -1367,7 +1375,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && !showSel && catalog && <CoordinationPanel house={house!} catalog={catalog} say={say} onIssue={(id, rec) => mutate(s => { const m = { ...(s.issues ?? {}) }; if (rec) m[id] = rec; else delete m[id]; if (Object.keys(m).length) s.issues = m; else delete s.issues; })} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
-        {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'quote' && <BudgetWithCustom id={id} onFx={onFx} say={say} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {stage === 'quote' && <CommercialPanel id={id} cur={cur} say={say} />}
         {stage === 'quote' && <ProgressPanel id={id} cur={cur} say={say} />}
         {stage === 'quote' && <RfqPanel id={id} cur={cur} say={say} flush={flushDraft} onContract={onContract} />}

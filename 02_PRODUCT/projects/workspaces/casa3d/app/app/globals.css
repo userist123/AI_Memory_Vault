@@ -433,6 +433,13 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .clip-link{display:flex;gap:8px;flex-wrap:wrap} .clip-link input{flex:1 1 260px;min-width:0}
 .clip-card{display:grid;grid-template-columns:140px minmax(0,1fr);gap:16px;align-items:start} .clip-card>img,.clip-card>.noimg{width:140px;height:140px;object-fit:contain;background:var(--paper);border:1px solid var(--rule)}
 .clip-fields{display:grid;gap:8px} .qty-unit{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:6px}
+/* Cursuri valutare (produse la comandă în altă monedă) */
+.fxbox{background:var(--surface);border:1px solid var(--rule);padding:14px 16px;display:grid;gap:8px} .fxbox h2{font:400 var(--fs-lg) var(--serif);margin:0} .fxbox p{margin:0} .fxbox .small{font-size:var(--fs-xs);line-height:1.45}
+.fxbox ul{list-style:none;margin:0;padding:0;display:grid} .fxbox li{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--rule)}
+.fx-rate{display:flex;align-items:center;gap:6px} .fx-rate span{font-weight:500;white-space:nowrap} .fx-rate input{width:104px;text-align:right;font-variant-numeric:tabular-nums} .fx-rate em{font-style:normal;color:var(--lead)}
+.fx-date input{width:150px} .fx-src{font-size:var(--fs-xs);color:var(--lead);min-width:104px} .fx-src.late{color:var(--err)} .fxbox li>small{flex-basis:100%;font-size:var(--fs-xs)} .fxbox li.is-missing .fx-rate input{border-color:var(--err)}
+.oname small.fxline{font-variant-numeric:tabular-nums} .oname small.fxline.late{color:var(--err)}
+.side .fxbox{padding:10px 12px;margin:10px 0} .side .fxbox h2{font-size:var(--fs-md)} .oedit-item .f:has(.cur-pick){width:230px} .cur-pick{display:grid;grid-template-columns:minmax(0,1fr);gap:6px} .cur-pick.other{grid-template-columns:minmax(0,1fr) 76px}
 .othumb{width:40px;height:40px;object-fit:contain;background:var(--paper);border:1px solid var(--rule);grid-row:span 1}
 .oline-main:has(.othumb){grid-template-columns:40px minmax(0,1fr) 110px 110px 120px}
 .oedit-item{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap} .oedit-item .f{width:160px}

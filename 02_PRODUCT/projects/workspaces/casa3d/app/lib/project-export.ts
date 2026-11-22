@@ -11,6 +11,7 @@ import { getDb } from './db';
 import { getProject, getCatalog, getMaterials } from './repo';
 import { getOrders } from './procurement';
 import { listCustomItems } from './custom-items';
+import { fxItems } from '../core/fx';
 import { safeValue, quoteCell } from '../core/csv-safe';
 import { listSnags } from './site';
 import { listSiteLog } from './site-log';
@@ -40,12 +41,14 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   const shares = (await q('select revision_number, created_at, revoked_at from shares where project_id=$1 order by created_at', [id])).rows;
   files.push({ name: 'linkuri-client.json', data: JSON.stringify(shares.map(s => ({ revision: s.revision_number, createdAt: s.created_at, revokedAt: s.revoked_at })), null, 2) });
   const orders = await getOrders(owner, id);
-  files.push({ name: 'comenzi.csv', data: csv([['Produs', 'Cod', 'Camere', 'Furnizor', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Stare', 'Nr. comandă', 'Comandat', 'Livrare estimată', 'Livrat', 'Necesar pe șantier', 'Link'],
-    ...orders.rows.map(r => [r.product, r.code, r.rooms.join(', '), r.supplier, r.qty, r.unit, r.unitPrice, r.total, r.state.status, r.state.ref, r.state.orderedAt, r.state.eta, r.state.deliveredAt, r.state.neededBy, r.url])]) });
+  files.push({ name: 'comenzi.csv', data: csv([['Produs', 'Cod', 'Camere', 'Furnizor', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Stare', 'Nr. comandă', 'Comandat', 'Livrare estimată', 'Livrat', 'Necesar pe șantier', 'Link', 'Preț original'],
+    ...orders.rows.map(r => [r.product, r.code, r.rooms.join(', '), r.supplier, r.qty, r.unit, r.unitPrice, r.total, r.state.status, r.state.ref, r.state.orderedAt, r.state.eta, r.state.deliveredAt, r.state.neededBy, r.url,
+      r.fx ? r.fx.rate != null ? `${r.fx.price ?? '?'} ${r.fx.currency} × ${r.fx.rate}` : `lipsește cursul ${r.fx.currency}` : ''])]) });
   const boq = computeBOQ(p.draft, await getCatalog(), await getMaterials());
   files.push({ name: 'deviz.csv', data: csv([['Categorie', 'Cameră', 'Articol', 'Cantitate', 'UM', 'Preț unitar', 'Total', 'Furnizor', 'Sursă'],
     ...boq.items.map(i => [i.category, i.roomId ?? '', i.label, i.orderedQty, i.unit, i.unitPrice, i.total, i.supplier, i.sourceUrl ?? '']),
-    ...(await listCustomItems(id)).map(i => ['produs propriu', i.roomId ?? '', i.name, i.qty, i.unit, i.price, i.price != null ? Math.round(i.price * i.qty * 100) / 100 : '', i.supplier, i.url]),
+    // produsele în altă monedă: la cursul proiectului; originalul (sau „lipsește cursul”) în denumire
+    ...fxItems(await listCustomItems(id), p.draft.fx).map(i => ['produs propriu', i.roomId ?? '', i.fx ? `${i.name} (${i.fx.rate != null ? `${i.fx.price ?? '?'} ${i.fx.currency} × ${i.fx.rate}` : `lipsește cursul ${i.fx.currency}`})` : i.name, i.qty, i.unit, i.price, i.price != null ? Math.round(i.price * i.qty * 100) / 100 : '', i.supplier, i.url]),
     ...boq.labor.map(l => ['manoperă', l.roomId, l.label, l.qty, l.unit, '', l.expected, '', '']),
     ...boq.unknown.map(u => ['de stabilit', '', u, '', '', '', '', '', ''])]) });
   const snags = await listSnags(owner, id); files.push({ name: 'santier/remedieri.json', data: JSON.stringify(snags, null, 2) });

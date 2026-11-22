@@ -105,7 +105,9 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   /** orientarea casei și localitatea (core/north.ts): nordul real față de sus-ul planului și coordonatele; fiecare lipsă = nedeclarată */
   site?: import('./north').SiteInfo;
   /** prețurile de manoperă contractate după atribuirea unei cereri de ofertă (core/rfq.ts), pe tarif; doar pentru designer */
-  laborContract?: import('./rfq').LaborContract }
+  laborContract?: import('./rfq').LaborContract;
+  /** cursurile valutare ale proiectului (core/fx.ts): lei pentru 1 unitate din moneda produselor la comandă; o revizie le îngheață */
+  fx?: import('./fx').FxRates }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }

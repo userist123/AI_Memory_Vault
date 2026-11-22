@@ -8,7 +8,8 @@ import { usePrefs } from '@/lib/prefs';
 import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms, type ProjectChain, type SourceLabor } from '@/core/commercial';
 import { ChainTable, TOTALS_EVENT, FEE_EVENT } from './ChainTable';
 
-type Resp = { data: CommercialData; report: ProfitReport; labor?: SourceLabor[]; chain: ProjectChain; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[] };
+type Resp = { data: CommercialData; report: ProfitReport; labor?: SourceLabor[]; chain: ProjectChain; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[];
+  /** monedele străine ale produselor la comandă; cele fără curs nu sunt adunate */ fx?: { used: string[]; missing: string[] } };
 const today = () => new Date().toISOString().slice(0, 10);
 const numOrUndef = (s: string) => { const v = Number(s.replace(',', '.')); return s.trim() === '' || !Number.isFinite(v) ? undefined : v; };
 const newId = () => 'm' + Math.random().toString(36).slice(2, 10);
@@ -75,6 +76,7 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
     {contracted.length > 0 && <div className="com-contract"><p className="muted small">{t('rfq.contractedHelp')}</p>
       <ul>{contracted.map((l, i) => <li key={`${l.key}:${i}`}><span>{l.label} · {formatNumber(l.qty, lang, { max: 2 })} {unitL(l.unit)}</span>
         <small>{t('rfq.contracted', { price: formatPrice(l.contract!.unitPrice, cur, lang), unit: unitL(l.unit), vat: l.contract!.vatPayer ? t('rfq.contracted.vat') : '', team: l.contract!.label })} · {t('rfq.contractedSums', { cost: money(l.costTotal), client: money(l.amount) })}</small></li>)}</ul></div>}
+    {!!r.fx?.missing.length && <p className="issue WARNING" role="alert">{t('fx.missing', { list: r.fx.missing.join(', ') })}</p>}
     {rep.unknownLines > 0 && <p className="muted small">{t('com.unknownLines', { n: rep.unknownLines })}</p>}
     {rep.feeUnknown && <p className="muted small">{t('com.feeUnknown')}</p>}
     <p className="muted small">{t('com.vatBasis')}</p>

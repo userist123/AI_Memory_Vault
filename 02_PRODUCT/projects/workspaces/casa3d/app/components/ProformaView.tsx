@@ -13,7 +13,7 @@ import { formatNumber, normalizeUnit, qtyDecimals } from '@/core/format';
 import { intlLocale } from '@/lib/i18n';
 
 type Data = { name: string; client: ClientInfo | null; siteAddress: string | null; seller: StudioProfile; series: string; number: number; issueDate: string; dueDate: string | null; proforma: Proforma;
-  chain?: { invoiceable: number; contingency: number; contingencyPct: number; total: number } };
+  chain?: { invoiceable: number; contingency: number; contingencyPct: number; total: number }; fxMissing?: string[] };
 export default function ProformaView({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/commercial/proforma`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
@@ -30,6 +30,7 @@ export default function ProformaView({ id }: { id: string }){
 .pf-sum{margin-left:auto;max-width:340px}.pf-sum td{border:0}.pf-due td{font-weight:600;border-top:1px solid var(--ink)}.pf-logo{max-height:56px;max-width:180px}
 @page{size:A4;margin:14mm;@bottom-right{content:'Pagina ' counter(page) ' din ' counter(pages);font:9pt 'Instrument Sans',sans-serif;color:#5F584F}}@media (max-width:560px){.pf-parties{grid-template-columns:1fr}}`}</style>
     <div className="no-print report-bar"><span className="muted small">{d.chain ? t('pf.chainNote', { inv: n2(d.chain.invoiceable), total: n2(d.chain.total), res: n2(d.chain.contingency), pct: d.chain.contingencyPct }) : null}</span><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
+    {!!d.fxMissing?.length && <p className="missing no-print" role="alert"><b>{t('fx.docMissing', { list: d.fxMissing.join(', ') })}</b></p>}
     {missing.length > 0 && <p className="missing no-print" role="status"><b>{t('doc.missing')}</b>{missing.map(m => <span key={m}>{m}</span>)}</p>}
     <header>{s.logo && <img className="pf-logo" src={s.logo} alt="" />}<span className="kicker">{t('com.proformaKicker')}</span>
       <h1>{t('com.proformaNo', { s: d.series, n: d.number })}</h1>

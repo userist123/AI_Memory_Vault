@@ -4,6 +4,7 @@ import { HttpError, getProject } from './repo';
 import { floors } from '../core/levels';
 import { checkCustomItem, ClipError, type CustomItemInput } from '../core/clip';
 import { parseCustomCsv, customItemsCsv, customBudget, normText, CSV_LIMITS } from '../core/custom-csv';
+import { fxUsage } from '../core/fx';
 
 export interface CustomItem extends CustomItemInput { id: string; createdAt: string }
 export const CUSTOM_LIMITS = { perProject: 1000 };
@@ -52,7 +53,9 @@ export async function deleteCustomItem(owner: string, projectId: string, id: unk
 const roomsOf = (draft: any) => floors(draft).flatMap(f => f.rooms.map(r => ({ id: r.id as string, name: r.name as string })));
 const csvErr = (fn: () => any) => { try { return fn(); } catch (e: any){ if (e instanceof ClipError) throw new HttpError(e.message.includes('KB') ? 413 : 400, e.message); throw e; } };
 /** Listă + totaluri pentru buget (proprietar). */
-export async function getCustomItems(owner: string, projectId: string){ await getProject(owner, projectId); const items = await listCustomItems(projectId); return { items, budget: customBudget(items) }; }
+export async function getCustomItems(owner: string, projectId: string){ const p = await getProject(owner, projectId), items = await listCustomItems(projectId);
+  // totalurile în moneda proiectului, la cursurile din ciornă; `fx`: monedele străine folosite și cele fără curs
+  return { items, budget: customBudget(items, p.draft.fx), fx: fxUsage(items, p.draft.fx) }; }
 /** Importul CSV: validarea e aici, pe server; cu `dryRun` doar previzualizare. Un rând greșit oprește tot importul (nimic nu se scrie pe jumătate). */
 export async function importCustomItems(owner: string, projectId: string, body: unknown){
   const p = await getProject(owner, projectId), b = body as any;

@@ -5,6 +5,7 @@ import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
+import { fxItems, fxUsage, type FxInfo } from './fx';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
@@ -295,7 +296,9 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
 
 // ---------- 3) buget ----------
 export interface BudgetLine { key: string; label: string; amount: number | null; confidence: Confidence; note?: string; sourceUrl?: string | null }
-export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: { price: number | null; qty: number }[] = []){
+export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, customRaw: { price: number | null; qty: number; currency?: string | null; costPrice?: number | null; fx?: FxInfo }[] = []){
+  // produsele în altă monedă: la cursul proiectului (snap.fx); fără curs nu se adună (apar în `fxMissing`)
+  const custom = fxItems(customRaw, snap.fx), fxMissing = fxUsage(custom, snap.fx).missing;
   const s = budgetOf(snap), { items, labor, geometry, unknown } = computeBOQ(snap, cat, mc);
   const sum = (c: BoqCategory) => r2(items.filter(i => i.category === c).reduce((a, i) => a + (i.total ?? 0), 0));
   const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary'), textiles: sum('textiles') };
@@ -329,6 +332,8 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   const scen = { low: mk('low'), expected: mk('expected'), high: mk('high') }, chosen = scen[s.laborScenario];
   const target = s.target, diff = target != null ? r2(target - chosen.total) : null;
   return { settings: s, categories: cats, laborTotals, extras: known, unknownLines, unknownItems: unknown, scenarios: scen, chosen, target, diff,
-    status: diff == null ? 'none' : diff >= 0 ? 'under' : 'over', items, labor, geometry, vatRate: VAT_RATE };
+    status: diff == null ? 'none' : diff >= 0 ? 'under' : 'over', items, labor, geometry, vatRate: VAT_RATE,
+    // doar când există: cursurile folosite (aceleași în lanțul comercial) și monedele fără curs
+    ...(snap.fx ? { fx: snap.fx } : {}), ...(fxMissing.length ? { fxMissing } : {}) };
 }
 export type Budget = ReturnType<typeof computeBudget>;

@@ -66,6 +66,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
     <h3>{t('budget.estimate')}</h3>
     {out?.disclosure && <div className="issue WARNING">{t('budget.affiliateNote')} <a href="/despre-linkuri" target="_blank">{t('budget.details')}</a></div>}
     <div className="bigtotal"><span>{t('chain.total')}</span><b>{lei(shown)}</b><small>{t('budget.rangeVat', { low: lei(b.scenarios.low.total + shift), high: lei(b.scenarios.high.total + shift), vat: lei(c.vat) })}</small></div>
+    {b.fxMissing && <div className="issue WARNING" role="alert">{t('fx.missing', { list: b.fxMissing.join(', ') })}</div>}
     {diff != null && <div className={`issue ${diff < 0 ? 'ERROR' : 'PASS'}`}>{diff < 0 ? t('budget.overTarget', { amount: lei(-diff) }) : t('budget.underTarget', { amount: lei(diff) })}</div>}
     <div className="bars">{parts.map(([l, v]) => <div key={l} className="bar"><span>{l}</span><b className="mono">{lei(v)}</b><em className="track"><i style={{ width: `${Math.max(2, v / maxPart * 100)}%` }} /></em></div>)}</div>
     {chain && <ChainTable chain={chain} money={lei} />}

@@ -21,6 +21,7 @@ import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
 import { sanitizeIssues } from '../core/issues';
 import { sanitizeLaborContract } from '../core/rfq';
+import { checkFxRates, FxError, type FxRates } from '../core/fx';
 import { elementIndex } from '../core/elements';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
@@ -76,7 +77,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues', 'site', 'laborContract'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'issues', 'site', 'laborContract', 'fx'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -155,6 +156,9 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   if (s.site != null){ const n = parseSite(s.site); if (n) s.site = n; else delete s.site; }
   // prețurile de manoperă contractate (core/rfq.ts): doar intrările valide rămân; nimic valid = câmp absent
   if (s.laborContract != null){ const c = sanitizeLaborContract(s.laborContract); if (c) s.laborContract = c; else delete s.laborContract; }
+  // cursurile valutare (core/fx.ts): validate strict; un curs greșit oprește salvarea (altfel totalurile ar fi greșite pe tăcute)
+  if (s.fx != null){ let v: FxRates; try { v = checkFxRates(s.fx); } catch (e: any){ throw new HttpError(400, e instanceof FxError ? e.message : 'Cursurile valutare sunt invalide.'); }
+    if (Object.keys(v).length) s.fx = v; else delete s.fx; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   if (mc) pruneProducts(s as Snapshot, mc);

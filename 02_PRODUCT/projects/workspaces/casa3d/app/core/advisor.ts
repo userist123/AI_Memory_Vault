@@ -28,6 +28,8 @@ export interface AdvisorOptions {
   budget?: { total: number | null; target: number | null; unknown: number };
   /** Moneda bugetului (implicit RON). */
   currency?: string;
+  /** Monedele produselor la comandă fără curs pe proiect (core/fx.ts): prețurile lor nu intră în deviz. */
+  fxMissing?: string[];
 }
 
 // ---- Praguri (reguli de bun-simț, nu norme legale) ----
@@ -236,6 +238,8 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
     if (b.total != null && b.target != null && b.total > b.target) add('OVER_BUDGET', { severity: 'WARNING', category: 'buget', refs: {}, code: 'OVER_BUDGET', vars: { cur, total_money: b.total, over_money: b.total - b.target, target_money: b.target } });
     if (b.unknown > 0) add('UNKNOWN_PRICES', { severity: 'TIP', category: 'buget', refs: {}, code: b.unknown === 1 ? 'UNKNOWN_PRICES_ONE' : 'UNKNOWN_PRICES', vars: { count: b.unknown } });
   }
+  // înainte de predare: produse în altă monedă fără curs → devizul și comenzile nu le adună
+  if (opts.fxMissing?.length) add('FX_MISSING', { severity: 'WARNING', category: 'buget', refs: {}, code: 'FX_MISSING', vars: { list: opts.fxMissing.join(', ') } });
 
   const roomIdx = new Map(snap.floor.rooms.map((r, i) => [r.id, i])), rank = (a: Advice) => a.refs.roomId != null && roomIdx.has(a.refs.roomId) ? roomIdx.get(a.refs.roomId)! : 1e6;
   return out.sort((a, b) => SEV_ORDER[a.severity] - SEV_ORDER[b.severity] || rank(a) - rank(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
