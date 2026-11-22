@@ -12,6 +12,8 @@ import { DOOR_HEIGHT } from './rules.boq';
 import { wallItemsOnSide } from './wall-items';
 import type { WallItemKind } from './types';
 import { activeOpenings } from './renovation';
+import type { TechKind, TechPoint } from './technical';
+import { techFrame, isSizedRadiator, radiatorSize, hvacSize } from './tech-geometry';
 
 type Side = WallFeature['side'];
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -64,7 +66,52 @@ export interface ElevOpening { kind: 'door' | 'window'; u0: number; u1: number; 
 export interface ElevBand { kind: WallFeature['kind'] | 'walltile'; y0: number; y1: number; u0: number; u1: number; material: string; name: string; color: string | null; frames?: [number, number, number, number][] }
 /** `items` = obiectele de pe perete (centrul `u`, `y`, lățimea și înălțimea, m), cu cota centrului desenată pe elevație. */
 export interface Elevation { side: Side; lengthM: number; heightM: number; openings: ElevOpening[]; bands: ElevBand[]; baseboardM: number | null; sconces: { u: number; y: number }[]; ceilingDropM: number;
-  items: { id: string; kind: WallItemKind; u: number; y: number; w: number; h: number }[] }
+  items: { id: string; kind: WallItemKind; u: number; y: number; w: number; h: number }[];
+  /** punctele tehnice DECLARATE (`snap.tech`) de pe latura aceasta; niciodată sugestii (art. 4: fără valori inventate) */
+  tech: ElevTech[];
+  /** `false` = proiectul nu are `snap.tech`: desfășurata nu arată niciun punct, iar planșa o spune */
+  techDeclared: boolean;
+  /** lanțul de cote orizontale, de la colțul stâng la fiecare punct tehnic și margine de gol, ordonat de la stânga */
+  dims: ElevDim[] }
+/** Punct tehnic pe desfășurată: `u` = poziția reală de la colțul stâng (m), `y` = înălțimea de la pardoseala finită (câmpul `height`),
+ *  `du` = decalajul DOAR al simbolului desenat când mai multe puncte stau în același loc (cota din lanț rămâne cea reală),
+ *  `body` = corpul (calorifer cu mărimi, unitate AC): lățime și înălțime, cu marginea de jos la `y`. */
+export interface ElevTech { id: string; kind: TechKind; u: number; y: number; du: number; body?: { w: number; h: number } }
+/** O cotă din lanț: `cm` de la colțul stâng; `row` = rândul (0 = cel de pe linia pardoselii), urcat când textele s-ar suprapune. */
+export interface ElevDim { u: number; cm: number; row: number; ref: 'tech' | 'opening' }
+/** Punctul de lumină e pe tavan, nu pe perete: nu apare pe desfășurate (e pe planul de tavan). */
+export const ELEV_TECH_KINDS: TechKind[] = ['outlet', 'outlet_double', 'switch', 'data', 'cooker', 'water_cold', 'water_hot', 'drain', 'hvac_split', 'thermostat', 'vent_exhaust', 'radiator'];
+/** Cât de departe de latura camerei mai e „pe perete” un punct (m) — un sifon în mijlocul camerei nu se proiectează pe un perete. */
+export const ELEV_TECH_WALL_M = .3;
+/** Mărimea textului din lanțul de cote și pasul dintre rânduri (m în desen; la 1:50 = 1,4 mm pe hârtie). */
+export const ELEV_DIM_FONT_M = .07, ELEV_DIM_ROW_M = .09;
+const SYMBOL_STEP_M = .125;
+/** Punctele tehnice declarate ale camerei, pe latura lor (cea mai apropiată, ca în 3D: `techFrame`), în coordonata elevației. */
+export function techOnSide(snap: Pick<Snapshot, 'tech'>, fl: Floor, room: Room, side: Side): ElevTech[] {
+  if (!snap.tech || !fl.rooms.some(q => q.id === room.id)) return [];
+  const r = room.rect, horiz = side === 'N' || side === 'S', len = horiz ? r.x1 - r.x0 : r.z1 - r.z0, edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[side], r3 = (v: number) => Math.round(v * 1000) / 1000;
+  const pts = snap.tech.filter((p: TechPoint) => p.roomId === room.id && ELEV_TECH_KINDS.includes(p.kind) && techFrame(fl, p)?.side === side && Math.abs((horiz ? p.z : p.x) - edge) <= ELEV_TECH_WALL_M)
+    .map(p => { const u = r3(Math.max(0, Math.min(len, alongWall(r, side, p.x, p.z)))), body = p.kind === 'hvac_split' ? hvacSize(p) : isSizedRadiator(p) ? radiatorSize(p) : null;
+      return { id: p.id, kind: p.kind, u, y: body ? Math.max(0, Math.min(fl.ceilingHeight - body.h - .02, p.height)) : p.height, du: 0, ...(body ? { body: { w: body.w, h: body.h } } : {}) }; })
+    .sort((a, b) => a.u - b.u || a.y - b.y || (a.id < b.id ? -1 : 1));
+  // simbolurile care ar cădea unul peste altul (priză + date în același loc) se așază alăturat; poziția cotată rămâne `u`
+  const placed: [number, number][] = [];
+  for (const p of pts){ const dir = p.u > len - .5 ? -1 : 1; let k = 0;
+    while (k < 12 && placed.some(([x, y]) => Math.abs(x - (p.u + dir * k * SYMBOL_STEP_M)) < SYMBOL_STEP_M - .005 && Math.abs(y - p.y) < .19)) k++;
+    p.du = r3(dir * k * SYMBOL_STEP_M); placed.push([p.u + p.du, p.y]); }
+  return pts;
+}
+/** Lanțul de cote: de la colțul stâng la fiecare punct tehnic și la marginile golurilor, în cm, ordonat; două cote prea apropiate
+ *  ca textele să încapă pe același rând trec pe rânduri diferite. */
+export function dimensionChain(lengthM: number, openings: Pick<ElevOpening, 'u0' | 'u1'>[], tech: Pick<ElevTech, 'u'>[]): ElevDim[] {
+  const seen = new Map<number, ElevDim>();
+  const add = (u: number, ref: ElevDim['ref']) => { const cm = Math.round(u * 100); if (cm <= 0 || cm >= Math.round(lengthM * 100) || seen.has(cm)) return; seen.set(cm, { u: Math.round(u * 1000) / 1000, cm, row: 0, ref }); };
+  for (const t of tech) add(t.u, 'tech'); for (const o of openings){ add(o.u0, 'opening'); add(o.u1, 'opening'); }
+  const dims = [...seen.values()].sort((a, b) => a.cm - b.cm), right: number[] = [];
+  for (const d of dims){ const half = (String(d.cm).length * .6 * ELEV_DIM_FONT_M + .03) / 2, left = d.u - half; let row = 0; while (right[row] != null && right[row]! > left) row++;
+    d.row = row; right[row] = d.u + half; }
+  return dims;
+}
 /** Poziția de-a lungul peretelui, de la stânga la dreapta, privind peretele din cameră. */
 export function alongWall(r: Room['rect'], side: Side, x: number, z: number): number {
   return side === 'N' ? x - r.x0 : side === 'S' ? r.x1 - x : side === 'E' ? z - r.z0 : r.z1 - z;
@@ -88,6 +135,7 @@ export function wallElevations(snap: Snapshot, mc: MaterialsCatalog, cat: Catalo
         ...(w.kind === 'frames' ? { frames: frameRects(fl, room, w).map(([p, q, s, t]): [number, number, number, number] => [r3(flip ? len - s : p), q, r3(flip ? len - p : s), t]) } : {}) }; })
       .sort((a, b) => a.y0 - b.y0 || a.u0 - b.u0);
     const sconces = fixtures.filter(p => (horiz ? Math.abs(p.z - edge) : Math.abs(p.x - edge)) < .2).map(p => ({ u: Math.round(alongWall(r, side, p.x, p.z) * 1000) / 1000, y: p.y }));
+    const tech = techOnSide(snap, fl, room, side);
     return { side, lengthM: Math.round(len * 1000) / 1000, heightM: H, openings: openings.sort((a, b) => a.u0 - b.u0), bands, baseboardM: !wet && base ? (base.specs?.sizeCm?.[1] ?? Number(base.name.match(/x (\d{2,3}) x \d+ mm/)?.[1] ?? 60) / 10) / 100 : null, sconces,
-      ceilingDropM: c.type === 'flat' ? 0 : c.dropCm / 100, items: wallItemsOnSide(fl, room, side) }; });
+      ceilingDropM: c.type === 'flat' ? 0 : c.dropCm / 100, items: wallItemsOnSide(fl, room, side), tech, techDeclared: !!snap.tech, dims: dimensionChain(len, openings, tech) }; });
 }

@@ -2,7 +2,7 @@
 // (de la colț, cu rost la mijloc sau cu placa centrată) așa încât tăieturile de la capete să nu fie fâșii subțiri
 // (sub o treime de placă arată rău și se sparg la tăiere), apoi se numără plăcile reale (întregi + tăiate).
 import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot } from './types';
-import { materialOf, pieceSizeCm, layoutOf, sideGeometry, bathTiles, alongOf, sideSpan } from './finishes';
+import { materialOf, pieceSizeCm, layoutOf, sideGeometry, bathTiles, alongOf, sideSpan, PATTERN_WASTE } from './finishes';
 import { finishesOf } from './boq';
 import { kitchenOf, kitchenRun } from './kitchen';
 import { floors } from './levels';
@@ -29,7 +29,8 @@ export function axisPlan(L: number, T: number, g: number, options: StartRule[] =
 }
 export interface SurfacePlan { roomId: string; room: string; surface: 'floor' | 'N' | 'S' | 'W' | 'E' | 'backsplash'; material: string; tileCm: [number, number]; groutMm: number;
   widthM: number; heightM: number; across: AxisPlan; along: AxisPlan; tiles: number; sliver: boolean;
-  pattern?: import('./types').FloorPattern; /** porțiunea laturii (m de la colțul x0/z0) când faianța e întreruptă de o placare */ span?: [number, number]; netAreaM2?: number; grossAreaM2?: number; wastePct?: number }
+  pattern?: import('./types').FloorPattern; /** porțiunea laturii (m de la colțul x0/z0) când faianța e întreruptă de o placare */ span?: [number, number]; netAreaM2?: number; grossAreaM2?: number; wastePct?: number;
+  /** la montajul decalat (cărămidă, o treime) fiecare rând are alte tăieturi: plăcile întregi se numără rând cu rând */ fullTiles?: number }
 
 /** Planurile de placare pentru toate camerele cu gresie (așezare dreaptă / tablă de șah) sau faianță. */
 export function settingOut(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): SurfacePlan[] {
@@ -45,8 +46,9 @@ function plan(room: Room, surface: SurfacePlan['surface'], material: string, til
 function roomPlans(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, fl: Floor, room: Room): SurfacePlan[] {
   const f = finishesOf(snap, room), out: SurfacePlan[] = [], W = room.rect.x1 - room.rect.x0, D = room.rect.z1 - room.rect.z0;
   const fm = materialOf(mc, f.floor);
-  if (fm?.category === 'floor_tile'){ const lay = layoutOf(f, fm); if (lay.pattern === 'straight' || lay.pattern === 'checker'){
-    const [a, b] = pieceSizeCm(fm), rot = lay.angle === 90; out.push(plan(room, 'floor', fm.name, rot ? [b, a] : [a, b], lay.groutMm ?? 3, W, D, false)); } }
+  if (fm?.category === 'floor_tile'){ const lay = layoutOf(f, fm), [a, b] = pieceSizeCm(fm), rot = lay.angle === 90, tc: [number, number] = rot ? [b, a] : [a, b];
+    if (lay.pattern === 'straight' || lay.pattern === 'checker') out.push(plan(room, 'floor', fm.name, tc, lay.groutMm ?? 3, W, D, false));
+    else if (lay.pattern === 'brick' || lay.pattern === 'third') out.push(staggeredPlan(room, fm.name, tc, lay.groutMm ?? 3, W, D, lay.pattern)); }
   const wt = materialOf(mc, f.wallTile); if (!wt) return out;
   const [a, b] = pieceSizeCm(wt), tile: [number, number] = [a, b], grout = wt.specs?.rectified ? 2 : 3;
   if (room.type === 'baie') for (const w of bathTiles(f, room.type, room)){ const g = sideGeometry(fl, room, w.side, w.heightM, w.alongFromM !== undefined ? alongOf(w, sideSpan(room, w.side)) : undefined); if (g.lengthM > .05) out.push({ ...plan(room, w.side, wt.name, tile, grout, g.lengthM, g.heightM, true), ...(w.alongFromM !== undefined ? { span: alongOf(w, sideSpan(room, w.side)) } : {}) }); }
@@ -54,15 +56,22 @@ function roomPlans(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, fl: Floor
   return out;
 }
 
-const PATTERN_WASTE_PCT: Record<import('./types').FloorPattern, number> = {
-  straight: 10,
-  checker: 10,
-  brick: 12,
-  third: 12,
-  diagonal: 15,
-  herringbone: 15,
-  chevron: 15,
-};
+/** Montaj decalat: rândurile (de-a lungul laturii H) se decalează cu 1/2 (cărămidă) sau 1/3 (o treime) din pasul plăcii. Se alege
+ *  pornirea rândului de bază care dă cea mai mare tăietură minimă pe TOATE rândurile; plăcile se numără rând cu rând. */
+export function staggeredPlan(room: Pick<Room, 'id' | 'name'>, material: string, tileCm: [number, number], groutMm: number, W: number, H: number, pattern: 'brick' | 'third'): SurfacePlan {
+  const T1 = tileCm[0] / 100, T2 = tileCm[1] / 100, g = groutMm / 1000, p = T1 + g, along = axisPlan(H, T2, g), cycle = pattern === 'brick' ? 2 : 3, frac = 1 / cycle;
+  const bases: [StartRule, number][] = [['edge', 0], ['centerJoint', norm(W / 2 + g / 2, p)], ['centerTile', norm(W / 2 - T1 / 2, p)]];
+  let best: { start: StartRule; rows: number[][] } | null = null; const minOf = (rows: number[][]) => Math.min(T1, ...rows.flat().filter(x => x < T1 - 1e-3));
+  for (const [st, s0] of bases){ const rows = Array.from({ length: along.pieces }, (_, r) => piecesAt(W, T1, g, norm(s0 + (r % cycle) * frac * p, p)));
+    const score = (rs: number[][]) => minOf(rs) * 1000 - rs.reduce((n, x) => n + x.length, 0); if (!best || score(rows) > score(best.rows) + 1e-9) best = { start: st, rows }; }
+  const rows = best!.rows, cuts = rows.flat().filter(x => x < T1 - 1e-3), minCut = cuts.length ? Math.min(...cuts) : null, tiles = rows.reduce((n, x) => n + x.length, 0);
+  const across: AxisPlan = { start: best!.start, pieces: Math.max(0, ...rows.map(x => x.length)), full: Math.min(...rows.map(x => x.filter(y => y >= T1 - 1e-3).length)), cuts, minCut, sliver: minCut != null && minCut < T1 / 3 };
+  // plăcile întregi: cele întregi pe lungime, din rândurile care au înălțimea întreagă a plăcii
+  const q = T2 + g, sAlong = { edge: 0, centerJoint: norm(H / 2 + g / 2, q), centerTile: norm(H / 2 - T2 / 2, q), top: norm(H - T2, q) }[along.start], rowH = piecesAt(H, T2, g, sAlong);
+  const fullTiles = rows.reduce((n, x, r) => n + ((rowH[r] ?? 0) >= T2 - 1e-3 ? x.filter(y => y >= T1 - 1e-3).length : 0), 0);
+  const netAreaM2 = r3(W * H), wastePct = Math.round(PATTERN_WASTE[pattern] * 100);
+  return { roomId: room.id, room: room.name, surface: 'floor', material, tileCm, groutMm, widthM: r3(W), heightM: r3(H), across, along, tiles, sliver: across.sliver || along.sliver, pattern, netAreaM2, grossAreaM2: r3(netAreaM2 * (1 + wastePct / 100)), wastePct, fullTiles };
+}
 
 /**
  * Calculează planul de placare cu origine explicită (`originCm`), model (`pattern`: grid/straight, brick/staggered, herringbone etc.)
@@ -99,7 +108,8 @@ export function customSurfaceSettingOut(opts: {
       })()
     : axisPlan(opts.heightM, T2, g);
   const netAreaM2 = r3(opts.widthM * opts.heightM);
-  const wastePct = opts.wastePctOverride ?? PATTERN_WASTE_PCT[pattern] ?? 10;
+  // o singură sursă pentru pierderi: aceleași procente ca devizul (core/finishes.ts PATTERN_WASTE)
+  const wastePct = opts.wastePctOverride ?? Math.round((PATTERN_WASTE[pattern] ?? .10) * 100);
   const grossAreaM2 = r3(netAreaM2 * (1 + wastePct / 100));
   const tileAreaM2 = T1 * T2;
   const tiles = Math.max(across.pieces * along.pieces, Math.ceil(grossAreaM2 / Math.max(tileAreaM2, 1e-6)));
