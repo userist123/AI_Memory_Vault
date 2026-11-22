@@ -15,7 +15,7 @@ export function buildMenus(commands: Command[], label: (k: string) => string): M
   return [
     { id: 'file', label: label('menu.file'), items: sep(ids('rev'), by(c => c.id === 'print' || c.id === 'present' || c.id === 'board' || c.id.startsWith('doc-')), ids('home')) },
     { id: 'edit', label: label('menu.edit'), items: sep(ids('undo', 'redo'), ids('frame-other', 'mirror', 'array', 'lock'), by(c => c.id.startsWith('arrange.'))) },
-    { id: 'view', label: label('menu.view'), items: sep(by(c => c.id.startsWith('v-')), ids('ws.focus', 'ws.outliner', 'ws.classic', 'theme')) },
+    { id: 'view', label: label('menu.view'), items: sep(by(c => c.id.startsWith('v-')), ids('layers'), ids('ws.focus', 'ws.outliner', 'ws.classic', 'theme')) },
     { id: 'stages', label: label('menu.stages'), items: by(c => c.id.startsWith('st-')) },
     { id: 'tools', label: label('menu.tools'), items: by(c => c.id.startsWith('tool-')) },
     { id: 'settings', label: label('menu.settings'), items: ids('lang', 'units') },

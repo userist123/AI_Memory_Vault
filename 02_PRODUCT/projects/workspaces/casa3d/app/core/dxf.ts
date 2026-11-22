@@ -11,6 +11,7 @@ import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from '.
 import { wallLength } from './geometry';
 import { nicheGeometry } from './niches';
 import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, rotateAbout, textAnchor, textAnchorAt, angleGeometry, angleLabelAt, formatAngle, cloudOutline, cloudLabelAt, ANGLE_TEXT_M, CLOUD_LABEL_M } from './annotations';
+import { risers } from './mep-riser';
 
 export const DXF_LAYERS = [
   { name: 'WALLS', color: 7 }, { name: 'DOORS', color: 1 }, { name: 'WINDOWS', color: 5 }, { name: 'ROOMS', color: 3 },
@@ -193,6 +194,10 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     // Traseul se desenează în plan (proiecția x/z); eticheta are diametrul declarat sau „D?”, nu o valoare inventată.
     for (const r of snap.floor.mepRuns ?? []){ const L = `MEP_${r.system.toUpperCase()}`; usedBim.add(L);
       for (let k = 1; k < r.points.length; k++){ const a = r.points[k - 1]!, b = r.points[k]!; if (a[0] !== b[0] || a[2] !== b[2]) line(L, P(a[0], a[2]), P(b[0], b[2])); }
+      // coloana verticală (core/mep-riser.ts): cerc cu cruce în punctul ei, pe stratul sistemului, și „UP”/„DN” cu cota de sosire (m)
+      for (const v of risers(r)){ const q = r.points[v.to]!, c = P(q[0], q[2]), rr = Math.max(60, (r.diameterMm ?? 0) / 2 + 20);
+        circle(L, c, rr); line(L, [c[0] - rr * .7, c[1] - rr * .7], [c[0] + rr * .7, c[1] + rr * .7]); line(L, [c[0] - rr * .7, c[1] + rr * .7], [c[0] + rr * .7, c[1] - rr * .7]);
+        text(L, [c[0] + rr + 30, c[1] - 40], 70, `${v.dh > 0 ? 'UP' : 'DN'} ${q[1] >= 0 ? '+' : ''}${q[1].toFixed(2)}`); }
       const m = r.points[Math.floor(r.points.length / 2)]!; text(L, [P(m[0], m[2])[0] + 60, P(m[0], m[2])[1] + 60], 80, `${r.id} ${r.diameterMm ? `D${r.diameterMm}` : 'D?'}`); }
     for (const fd of snap.floor.footings ?? []){ usedBim.add('STRUCT_FOOTINGS'); poly('STRUCT_FOOTINGS', [P(fd.x - fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z + fd.d / 2), P(fd.x - fd.w / 2, fd.z + fd.d / 2)]); }
     for (const w of snap.floor.walls) if (w.structural){ usedBim.add('STRUCT_WALLS'); line('STRUCT_WALLS', P(...w.a), P(...w.b)); }

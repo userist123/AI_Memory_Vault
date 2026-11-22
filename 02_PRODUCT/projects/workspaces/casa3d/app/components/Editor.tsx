@@ -86,6 +86,8 @@ import { isLocalHostname } from '@/lib/public-gate';
 import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShares } from '@/core/stage-progress';
 import CommandPalette, { type Command } from './CommandPalette';
 import MenuBar, { buildMenus } from './MenuBar';
+import LayersPanel from './LayersPanel';
+import { LAYER_IDS, defaultLayers, layersKey, parseLayers, serializeLayers, toggleLayer, stageAllows, finishMarksInStage, layerOfKind, layerOfTool, type LayerId, type LayerState } from '@/core/layers';
 import NorthPanel from './NorthPanel';
 import ArrayDialog from './ArrayDialog';
 import MepRiserControls from './MepRiserControls';
@@ -216,7 +218,7 @@ export default function Editor({ id }: { id: string }){
   const [styleSrc, setStyleSrc] = useState<string | null>(null);
   useEffect(() => { setStyleSrc(null); }, [tool]);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
-  const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
+  const [techKind, setTechKind] = useState<TechKind>('outlet_double');
   // unealta „Traseu instalații”: sistemul (același implicit ca în panou), cota traseului și diametrul; cota și diametrul pornesc goale (art. 4)
   const [mepSys, setMepSys] = useState<MepSystem>('water_cold'), [mepH, setMepH] = useState(''), [mepDia, setMepDia] = useState('');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
@@ -432,7 +434,7 @@ export default function Editor({ id }: { id: string }){
   // același dialog pentru punctele tehnice (spoturi, prize): core/tech-array.ts, totul sau nimic, un singur pas de anulare
   const techArray = (count: number, sx: number, sz: number) => { const id = techArrayId; setTechArrayId(null); if (!snap || !id) return;
     const r = arrayTech(snap, [id], count, sx, sz, house?.tech?.length); if (!r.ok){ say(t(r.key === 'edit.arrayBad' ? 'array.bad' : r.key)); return; }
-    mutate(s => { s.tech = r.tech; }); setShowTech(true); say(t('tech.arrayDone', { n: r.ids.length })); };
+    mutate(s => { s.tech = r.tech; }); showTechLayer(); say(t('tech.arrayDone', { n: r.ids.length })); };
   const groupArray = (count: number, sx: number, sz: number) => { setArrayOpen(false); if (!snap || !catalog || !group.length) return;
     const r = arrayGroup(snap, catalog, group, count, sx, sz, () => uid()); if (!r.ok && r.key === 'edit.arrayBad'){ say(t('array.bad')); return; }
     if (groupDone(r, 'editor.positionRefused')){ setGroup(r.ids); say(t('array.done', { n: r.ids.length })); } };
@@ -573,6 +575,19 @@ export default function Editor({ id }: { id: string }){
   const [theme, setThemeState] = useState<'pro' | 'classic'>('pro');
   useEffect(() => { try { if (localStorage.getItem('casa3d.theme') === 'classic') setThemeState('classic'); } catch { /* stocare blocată */ } }, []);
   const setTheme = (x: 'pro' | 'classic') => { setThemeState(x); try { localStorage.setItem('casa3d.theme', x); } catch { /* stocare blocată */ } };
+  // straturile planului 2D (core/layers.ts): alegerea utilizatorului, per proiect, citită după montare (fără nepotriviri la
+  // hidratare). Doar afișarea din editor: planșele tipărite și exporturile nu o citesc.
+  const [layers, setLayersState] = useState<LayerState>(defaultLayers), [layersOpen, setLayersOpen] = useState(false);
+  useEffect(() => { let raw: string | null = null; try { raw = localStorage.getItem(layersKey(id)); } catch { /* stocare blocată */ } setLayersState(parseLayers(raw)); }, [id]);
+  const setLayers = (n: LayerState) => { setLayersState(n); try { localStorage.setItem(layersKey(id), serializeLayers(n)); } catch { /* stocare blocată: rămâne pe sesiune */ } };
+  const layerName = (l: LayerId) => t(`layers.${l}`);
+  // acțiunile care pun puncte tehnice (propunerea automată, multiplicarea) arată stratul lor; intrarea în etapa Instalații nu îl mai forțează: alegerea omului rămâne
+  const showTechLayer = () => { if (!layers.tech) setLayers({ ...layers, tech: true }); };
+  const toggleLayerId = (l: LayerId) => { const n = toggleLayer(layers, l); setLayers(n); say(t(n[l] ? 'layers.shown' : 'layers.hidden', { layer: layerName(l) })); };
+  // elementul ales dintr-un strat ascuns (din Structură, din paletă, dintr-o problemă) se vede cât timp rămâne ales; omul află de ce
+  useEffect(() => { const l = sel ? layerOfKind(sel.kind) : null; if (l && !layers[l]) say(t('layers.revealed', { layer: layerName(l) })); }, [sel?.kind, sel?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // unealta care desenează într-un strat ascuns îl arată la loc (altfel omul ar desena fără să vadă)
+  useEffect(() => { const l = layerOfTool(tool); if (l && !layers[l]){ setLayers({ ...layers, [l]: true }); say(t('layers.autoShown', { layer: layerName(l) })); } }, [tool]); // eslint-disable-line react-hooks/exhaustive-deps
   const setLayoutMode = (m: LayoutMode) => { setMode(m); setFocus(false); try { localStorage.setItem(MODE_KEY, m); } catch { /* stocare blocată */ } say(t(m === 'classic' ? 'ws.classicOn' : 'ws.studioOn')); };
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
   const outline = useMemo(() => house && catalog && (mode === 'studio' || compact) ? buildOutliner(floors(house).map((_, i) => ({ name: levelName(i), groups: i === L ? mirror : describePlan(levelView(house, i), catalog, { t, units, lang }) }))) : [],
@@ -724,7 +739,7 @@ export default function Editor({ id }: { id: string }){
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
   // `after`: ce mai schimbă apelantul, în aceeași actualizare (tranziția rulează callback-ul mai târziu, deci după
   // orice setState făcut imediat după apel)
-  const setStage = (s: Stage, after?: () => void) => { const st = STAGES.find(x => x.id === s)!; withViewTransition(() => flushSync(() => { setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); after?.(); })); };
+  const setStage = (s: Stage, after?: () => void) => { const st = STAGES.find(x => x.id === s)!; withViewTransition(() => flushSync(() => { setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); setSideOpen(true); setSheet('half'); after?.(); })); };
   const nextId = nextStage(stage);
   // stările goale „desenează camerele”: etapa Releveu cu unealta Cameră, plan vizibil (și foaia de jos coborâtă pe ecranele mici)
   const drawRooms = () => { const go = () => { setView('2d'); setTool('room'); if (compact) setSheet('peek'); }; if (stage !== 'survey') setStage('survey', go); else go(); };
@@ -770,6 +785,10 @@ export default function Editor({ id }: { id: string }){
     ...(stageDef.page ? [] : [{ id: 'v-2d', group: t('cmdk.group.views'), label: t('cmdk.view2d'), keywords: ['2D'], run: () => { setView('2d'); if (compact) setSheet('peek'); } },
       { id: 'v-split', group: t('cmdk.group.views'), label: t('cmdk.viewSplit'), disabled: compact, run: () => setView('split') },
       { id: 'v-3d', group: t('cmdk.group.views'), label: t('cmdk.view3d'), run: () => { setView('3d'); if (compact) setSheet('peek'); } }]),
+    // straturile planului: „Straturi…” deschide panoul din bara nivelurilor (și în meniul Vizualizare); câte o comandă de comutare pe strat, doar în paletă
+    ...(stageDef.page ? [] : [{ id: 'layers', group: t('cmdk.group.views'), label: t('layers.menu'), keywords: ['layers', 'straturi', 'strat', 'layer'], run: () => { if (view === '3d') setView(compact ? '2d' : 'split'); setLayersOpen(true); } },
+      ...LAYER_IDS.map(l => ({ id: `layer-${l}`, group: t('cmdk.group.views'), label: t(layers[l] ? 'layers.cmdHide' : 'layers.cmdShow', { layer: layerName(l) }), keywords: ['layer', 'strat', t('layers.title')],
+        hint: stageAllows(l, stage) ? undefined : t('layers.stageOff'), run: () => toggleLayerId(l) }))]),
     // UI/UX P1-5: paleta acoperă tot ce se poate face din editor: unelte (cu scurtătura din registru), obiecte după nume,
     // setări, toate documentele
     ...(stageDef.page ? [] : stageDef.tools.map(tk => { const k = formatShortcut(toolShortcut(tk), { mac });
@@ -889,10 +908,12 @@ export default function Editor({ id }: { id: string }){
         <div className="levelbar">
           {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
           <div role="tablist" aria-label={t('level.tabs')} className="levelbar-tabs">{floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}</div>
-          <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
+          <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button>
+          {/* straturile planului 2D: doar când planul e pe ecran */}
+          {(view === '2d' || (view === 'split' && !compact)) && <LayersPanel layers={layers} stage={stage} open={layersOpen} onOpen={setLayersOpen} onToggle={toggleLayerId} onShowAll={() => { setLayers(defaultLayers()); say(t('layers.allShown')); }} />}</div>
         {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && !studio && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
           onKey={onPlanKey}
-          showTech={showTech && !preview}
+          showTech={layers.tech && !preview} layers={layers}
           onTechAt={(x, z) => { if (!snap || preview) return;
             // plafoanele serverului: toate punctele (600), caloriferele cu corp (100), unitățile de aer condiționat (40)
             if (full(snap.tech?.length, MAX_TECH_POINTS) || (techKind === 'radiator' && full(techBodyCount(house?.tech, 'radiator'), PLAN_LIMITS.radiator.max)) || (techKind === 'hvac_split' && full(techBodyCount(house?.tech, 'hvac_split'), PLAN_LIMITS.hvac.max))) return;
@@ -916,8 +937,8 @@ export default function Editor({ id }: { id: string }){
           onAddColumn={preview ? undefined : onAddColumn}
           onAddNiche={preview ? undefined : onAddNiche}
           onAddClad={preview ? undefined : onAddClad}
-          onAddWallItem={preview ? undefined : onAddWallItem} showWallItems={stage !== 'survey'}
-          showFinishes={!preview && (stage === 'finishes' || stage === 'docs')} mc={mc}
+          onAddWallItem={preview ? undefined : onAddWallItem} showWallItems={stageAllows('wallItems', stage)}
+          showFinishes={!preview && finishMarksInStage(stage) && layers.finishes} mc={mc}
           onAddDim={preview ? undefined : onAddDim} onAddAngle={preview ? undefined : onAddAngle} onAddCloud={preview ? undefined : onAddCloud}
           onAddText={preview ? undefined : onAddText}
           onToggleDemolish={preview ? undefined : onToggleDemolish}
@@ -958,7 +979,7 @@ export default function Editor({ id }: { id: string }){
               {runs.some(r => !r.diameterMm) && <li><i aria-hidden style={{ display: 'inline-block', width: 18, borderTop: '2px dashed #777', marginRight: 6, verticalAlign: '3px' }} />{t('bim.diameterUnknown')}</li>}
               {hasStruct && <li><i aria-hidden style={{ display: 'inline-block', width: 18, borderTop: '2px dashed #c2410c', marginRight: 6, verticalAlign: '3px' }} />{t('bim.structuralWall')}</li>}
               {hasFd && <li><i aria-hidden style={{ display: 'inline-block', width: 12, height: 10, border: '1px dashed #4A5568', marginRight: 6, verticalAlign: '-1px' }} />{t('bim.footing')}</li>}</ul></details>); })()}
-          {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
+          {!preview && finishMarksInStage(stage) && layers.finishes && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
           <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><p className="sr-only" aria-live="polite" data-live-group="">{liveGroup}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'pan' ? t('editor.hintPan') : tool === 'zoom_area' ? t('editor.hintZoomArea') : tool === 'rug' ? t('editor.hintRug') : tool === 'angle_dim' ? t('editor.hintAngleDim') : tool === 'rev_cloud' ? t('editor.hintRevCloud') : tool === 'leader' ? t('editor.hintLeader') : tool === 'level_mark' ? t('editor.hintLevelMark') : tool === 'split' ? t('editor.hintSplit') : tool === 'style_copy' ? (snap.floor.rooms.some(r => r.id === styleSrc) ? t('editor.hintStyleCopyTo', { room: snap.floor.rooms.find(r => r.id === styleSrc)!.name }) : t('editor.hintStyleCopy')) : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : tool === 'mep_run' ? t('editor.hintMepRun') : multi.length ? tp('editor.hintMulti', group.length) : t('editor.hintSelect')}</div></div>}
@@ -1330,8 +1351,8 @@ export default function Editor({ id }: { id: string }){
         {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} flush={flushDraft} onSelect={s => { setStageRaw(s.kind === 'placement' ? 'ffe' : 'survey'); setSel(s); }} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={onApplied} />}
         {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} onDraw={drawRooms} />}
         {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={(vid: string) => addToRoom(vid, selRoom)} />}
-        {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
-          onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
+        {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={layers.tech} kind={techKind} onShow={v => setLayers({ ...layers, tech: v })} onKind={k => { setTechKind(k); setTool('tech'); }}
+          onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); showTechLayer(); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
           onArray={id => setTechArrayId(id)} onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {/* pista BIM (docs/bim): traseele, structura și coordonarea țin de etapa Instalații, lângă stratul tehnic din care pornesc traseele */}
