@@ -99,3 +99,7 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Verification after fixes (commit f9859bec3): combined brief command, temp HOME: `1035 passed in 329.78s (0:05:29)`; real HOME (read-only): `1035 passed in 324.85s (0:05:24)`. Two earlier runs showed 1-3 failures only while the C: drive was 99-100% full (WinError 112 / git push failures / subprocess crash 0xC00000AD); they passed on rerun with `-o tmp_path_retention_policy=none`. Tip for a successor: free disk first.
 - Next: release pin seq 9 (only release_pin.json), tick M11.
 - DONE: release pin seq 9 pins cc6b9ba58 (last code commit); M11 ticked. The installed copy under ~/.claude is NOT updated; to enable the executor the owner edits the installed policy and re-runs install.py with a pin that includes it (SKILL.md 4G). Reviewer pass (Opus) on this branch still pending.
+
+## M11 residuals progress (2026-11-22; resume from here)
+- Brief: (f) normalized live-operation check + stems, (g) normalized local_only scan + dfir triggers, (E1) Agent hook records real spawns per epoch, gate needs real sonnet+opus spawn, (low) prompt hook direct/router-error paths record local_only.
+- Step 1: red tests appended to 20_TESTS/test_cost_router_fable_executor.py (_failed_twice now does real sonnet+opus spawns via the hook).

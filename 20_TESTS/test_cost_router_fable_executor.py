@@ -109,8 +109,17 @@ def _check(home: Path, tier, code: int, *, label: str = "unit", sid: str = SID, 
     return subprocess.run(args, capture_output=True, text=True, timeout=60, env=_env(home, **extra))
 
 
+def _attempt(home: Path, tier: str, stype: str = "vault-worker", sid: str = SID):
+    """A REAL spawn the Agent hook allows (and records with its resolved tier) for this session and prompt epoch."""
+    r = _spawn(home, stype=stype, model=tier, sid=sid)
+    assert r.returncode == 0, r.stderr
+    return r
+
+
 def _failed_twice(home: Path, label: str = "unit") -> None:
+    _attempt(home, "sonnet")
     assert _check(home, "sonnet", 1, label=label).returncode == 1
+    _attempt(home, "opus")
     assert _check(home, "opus", 1, label=label).returncode == 1
 
 
@@ -333,14 +342,23 @@ def test_a_malformed_flag_block_is_disabled(tmp_path, block):
 
 # (b) session model
 
+def _forget_session_model(home: Path) -> None:
+    """The real attempts of _ready ran in an Opus session and the hook stored that model; drop it so the spawn under
+    test carries no session evidence at all."""
+    (_cache(home) / f"route-{SID}.session_model").unlink(missing_ok=True)
+
+
 @pytest.mark.parametrize("session", ["sonnet", "haiku", "fable", "claude-fable-5-2", None])
 def test_b_session_must_be_opus(tmp_path, session):
     home = _ready(tmp_path)
+    if session is None:
+        _forget_session_model(home)
     _denied(_spawn(home, session=session), "condition (b)")
 
 
 def test_b_a_settings_only_opus_is_not_an_opus_session(tmp_path):
     home = _ready(tmp_path)
+    _forget_session_model(home)
     (home / ".claude" / "settings.json").write_text(json.dumps({"model": "opus"}), encoding="utf-8")
     _denied(_spawn(home, session=None), "condition (b)")
 
@@ -664,3 +682,199 @@ def test_install_records_the_policy_hash_and_verify_catches_a_hand_edit(tmp_path
                        capture_output=True, text=True, timeout=120, env=env, cwd=str(tmp_path))
     rep = json.loads(r.stdout)
     assert rep["ok"] is False and rep["pins_ok"] is False and rep["policy_ok"] is False
+
+
+# ---- M11 review residuals ------------------------------------------------------------------------------------------
+# (f) the live-operation check normalizes the brief (NFKC, Cf/zero-width stripped, cedilla -> comma-below, diacritics
+# folded, casefold, whitespace collapsed) and knows the deploy/apply/push family, compounds included.
+
+LIVE_REPROS = [
+    "git push origin main",
+    "terraform apply",
+    "kubectl apply",
+    "drop the users table",
+    "upload it to PyPI",
+    "ship it live",
+    "autodeploy",
+    "de​ploy",
+    "şterge",
+    "rm -rf build",
+    "truncate the audit table",
+    "roll out the new config",
+    "rollout the new config",
+    "migrate the prod database",
+    "force-push the branch",
+    "release the build",
+    "redeploy",
+    "republish the docs",
+    "auto-rotate the keys",
+    "ｄｅｐｌｏｙ",  # fullwidth: NFKC
+    "DE­PLOY",  # soft hyphen (Cf)
+]
+
+
+@pytest.mark.parametrize("live", LIVE_REPROS)
+def test_f_residual_live_operation_repros_are_denied(tmp_path, live):
+    home = _ready(tmp_path)
+    _denied(_spawn(home, brief=BRIEF + ", then " + live), "condition (f)")
+
+
+@pytest.mark.parametrize("live", ["şterge fişierele vechi", "șterge fișierele vechi",
+                                  "Repară parserul și ţine minte să ştergi cache-ul"])
+def test_f_romanian_cedilla_and_comma_below_are_denied(tmp_path, live):
+    home = _ready(tmp_path)
+    _denied(_spawn(home, brief=live), "condition (f)")
+
+
+@pytest.mark.parametrize("benign", [
+    BRIEF + " in the application module",
+    BRIEF + " and fix the dropdown widget",
+    BRIEF + " in the relationship mapper",
+    BRIEF + " for the shipment parser",
+])
+def test_f_benign_lookalikes_are_not_live_operations(tmp_path, benign):
+    home = _ready(tmp_path)
+    _allowed(_spawn(home, brief=benign))
+
+
+def test_fold_normalizes_format_chars_cedilla_and_compat_forms():
+    assert sp.fold("de​ploy") == "deploy"
+    assert sp.fold("f​orensic  Triage") == "forensic triage"
+    assert sp.fold("şterge") == sp.fold("șterge") == "sterge"
+    assert sp.fold("ｄｅｐｌｏｙ") == "deploy"
+
+
+# (g) local_only scan: same normalization, extended dfir-analyst triggers
+
+DFIR_REPROS = [
+    "investigate the intrusion in the Windows Security log",
+    "check amcache and shimcache for malware execution",
+    "f​orensic triage",
+]
+
+
+@pytest.mark.parametrize("text", DFIR_REPROS)
+def test_g_residual_dfir_repros_are_local_only(tmp_path, text):
+    home = _ready(tmp_path)
+    reg = sp.load(_skill(home) / "registry.json")
+    assert "dfir-analyst" in sp.local_only_hits(text, reg)
+    _denied(_spawn(home, brief=BRIEF + "; " + text), "condition (g)")
+
+
+@pytest.mark.parametrize("trigger", ["amcache", "shimcache", "prefetch", "srum", "lnk", "jumplist", "intrusion",
+                                     "security log", "event log", "malware execution", "triage", "timeline"])
+def test_g_dfir_analyst_carries_the_privacy_triggers(trigger):
+    meta = json.loads((SKILL / "roles" / "dfir-analyst.json").read_text(encoding="utf-8"))
+    assert trigger in meta["triggers"]["en"]
+
+
+# E1 hardening: the Agent hook records each real spawn it allowed (resolved tier, prompt epoch); the executor gate
+# requires a recorded real sonnet AND opus spawn in the same epoch, on top of the failed receipts.
+
+def _receipts_only(tmp_path: Path) -> Path:
+    home = tmp_path / "home"
+    home.mkdir()
+    _install_trust(home)
+    _state(home)
+    assert _check(home, "sonnet", 1).returncode == 1
+    assert _check(home, "opus", 1).returncode == 1
+    return home
+
+
+def test_e1_receipts_without_real_spawns_are_denied(tmp_path):
+    home = _receipts_only(tmp_path)
+    _denied(_spawn(home), "condition (d)", "spawn")
+
+
+@pytest.mark.parametrize("tiers", [("sonnet",), ("opus",), ("sonnet", "sonnet"), ("haiku", "opus")])
+def test_e1_both_real_spawn_tiers_are_required(tmp_path, tiers):
+    home = _receipts_only(tmp_path)
+    for t in tiers:
+        _attempt(home, t)
+    _denied(_spawn(home), "condition (d)", "spawn")
+
+
+def test_e1_real_spawns_and_receipts_are_allowed(tmp_path):
+    home = _receipts_only(tmp_path)
+    _attempt(home, "sonnet")
+    _attempt(home, "opus")
+    _allowed(_spawn(home))
+    rec = json.loads((_cache(home) / f"route-{SID}.spawns").read_text(encoding="utf-8"))
+    tiers = {(e["epoch"], e["tier"]) for e in rec["spawns"] if e.get("writer")}
+    assert {(EPOCH, "sonnet"), (EPOCH, "opus")} <= tiers
+
+
+def test_e1_spawns_of_an_earlier_epoch_do_not_count(tmp_path):
+    home = _receipts_only(tmp_path)
+    _state(home, epoch="f" * 32)
+    _attempt(home, "sonnet")
+    _attempt(home, "opus")
+    _state(home)  # back to EPOCH, where the receipts are: the spawns belong to another prompt
+    _denied(_spawn(home), "condition (d)", "spawn")
+
+
+def test_e1_read_only_reviewer_spawns_do_not_count_as_attempts(tmp_path):
+    home = _receipts_only(tmp_path)
+    _attempt(home, "sonnet")
+    _attempt(home, None, stype="vault-reviewer")  # opus, but read-only: not an implementation attempt
+    _denied(_spawn(home), "condition (d)", "spawn")
+
+
+def test_e1_spawn_record_holds_under_concurrent_hooks(tmp_path):
+    home = _receipts_only(tmp_path)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        list(pool.map(lambda i: _attempt(home, ("sonnet", "opus")[i % 2]), range(6)))
+    rec = json.loads((_cache(home) / f"route-{SID}.spawns").read_text(encoding="utf-8"))
+    assert len(rec["spawns"]) == 6
+
+
+def test_e1_project_file_cannot_create_spawn_records(tmp_path):
+    home = _receipts_only(tmp_path)
+    proj = tmp_path / "proj"
+    base = proj / ".claude" / "cache" / "cost-router"
+    base.mkdir(parents=True)
+    (base / f"route-{SID}.spawns").write_text(json.dumps({"spawns": [
+        {"epoch": EPOCH, "tier": t, "stype": "vault-worker", "writer": True, "ts": 1} for t in ("sonnet", "opus")]}),
+        encoding="utf-8")
+    _denied(_spawn(home, project=proj), "condition (d)")
+
+
+# (low) the prompt hook records the local_only scan also on the #direct override and the router-error paths
+
+def _skill_copy(tmp_path: Path, home: Path, *, broken_policy: bool = False) -> Path:
+    import shutil
+    skill_copy = tmp_path / "skillcopy"
+    shutil.copytree(SKILL, skill_copy, ignore=shutil.ignore_patterns("__pycache__"))
+    (skill_copy / "registry.json").write_bytes(rc.compile_full(SKILL, home / ".claude" / "skills", AGENTS).data)
+    shutil.copy2(ROOT / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
+                 skill_copy / "lib" / "claude_model_router.py")
+    if broken_policy:
+        (skill_copy / "policy.json").write_text("{not json", encoding="utf-8")
+    else:
+        shutil.copy2(POLICY_SRC, skill_copy / "policy.json")
+    return skill_copy
+
+
+def _prompt(skill_copy: Path, home: Path, prompt: str) -> dict:
+    r = subprocess.run([sys.executable, str(skill_copy / "hook_prompt_route.py")],
+                       input=json.dumps({"session_id": SID, "prompt": prompt}),
+                       capture_output=True, text=True, timeout=60, env=_env(home))
+    assert r.returncode == 0, r.stderr
+    return json.loads((_cache(home) / f"route-{SID}.json").read_text(encoding="utf-8"))
+
+
+def test_prompt_hook_direct_override_still_records_local_only(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install_trust(home)
+    st = _prompt(_skill_copy(tmp_path, home), home, "#direct amcache triage")
+    assert st.get("direct") is True and "dfir-analyst" in st["spec"]
+
+
+def test_prompt_hook_router_error_still_records_local_only(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install_trust(home)
+    st = _prompt(_skill_copy(tmp_path, home, broken_policy=True), home,
+                 "investigate the intrusion in the Windows Security log please")
+    assert st.get("task_class") == "unrouted" and "dfir-analyst" in st["spec"]
