@@ -9,11 +9,14 @@ from unittest.mock import patch
 from memory_controller.controller import controller, Principal, Operation
 import memory_controller.audit.logger as logger_module
 
-TEST_AUDIT_LOG = os.path.join(tempfile.gettempdir(), "test_audit_log.jsonl")
+# Per-test log path (set in setup_function) so concurrent suite runs never share a file.
+TEST_AUDIT_LOG = ""
 
 def setup_function():
-    # Force the audit logger to use a clean test file
-    open(TEST_AUDIT_LOG, "w", encoding="utf-8").close()
+    global TEST_AUDIT_LOG
+    # Force the audit logger to use a clean, unique test file
+    fd, TEST_AUDIT_LOG = tempfile.mkstemp(prefix="test_audit_log_", suffix=".jsonl")
+    os.close(fd)
     logger_module._logger_instance = logger_module.AuditLogger(TEST_AUDIT_LOG)
     
     # Clear controller state

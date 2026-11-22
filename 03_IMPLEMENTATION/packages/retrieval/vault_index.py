@@ -17,11 +17,13 @@ cognitive_core/activation.py.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
+
 
 try:
     import yaml
@@ -60,6 +62,59 @@ NAVIGATION_TYPES = {"moc", "index", "map"}
 EXPORT_RESIDUE_MARKERS = (
     ("Obsidian", "Artifacts"),
 )
+
+
+#: Imported skills are untrusted data (vault_domains.yaml: trust untrusted), never agent notes.
+_EXCLUDED_IMPORT_DIRS = ("01_KNOWLEDGE/EXTERNAL_SKILLS", "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS")
+
+
+def is_link(path: Any) -> bool:
+    """Symlink or NTFS junction (reparse-point fallback on Python < 3.12). Local copy of
+    vault_access.links.is_link: retrieval (L3) must not import vault_access (L4)."""
+    path = str(path)
+    if os.path.islink(path):
+        return True
+    isjunction = getattr(os.path, "isjunction", None)
+    if isjunction is not None:
+        try:
+            return bool(isjunction(path))
+        except OSError:
+            return True
+    if os.name == "nt":
+        try:
+            return bool(os.lstat(path).st_file_attributes & 0x400)
+        except (OSError, AttributeError):
+            return False
+    return False
+
+
+def _scan_notes(vault_root: Path, base: Path) -> List[Path]:
+    """Sorted .md files under `base`; does not follow symlinks/junctions, skips the excluded
+    import folders (compared on the resolved real path) and directories resolving outside the vault."""
+    real_vault = os.path.normcase(os.path.realpath(vault_root))
+    excluded = [os.path.normcase(os.path.realpath(Path(vault_root) / d)) for d in _EXCLUDED_IMPORT_DIRS]
+
+    def inside(real: str, folder: str) -> bool:
+        return real == folder or real.startswith(folder + os.sep)
+
+    if is_link(base) or not inside(os.path.normcase(os.path.realpath(base)), real_vault):
+        return []
+    found: List[Path] = []
+    for dirpath, dirnames, filenames in os.walk(base, followlinks=False):
+        keep = []
+        for d in dirnames:
+            full = os.path.join(dirpath, d)
+            real = os.path.normcase(os.path.realpath(full))
+            if is_link(full) or not inside(real, real_vault) or any(inside(real, e) for e in excluded):
+                continue
+            keep.append(d)
+        dirnames[:] = keep
+        for name in filenames:
+            if name.endswith(".md"):
+                full = os.path.join(dirpath, name)
+                if not os.path.islink(full):
+                    found.append(Path(full))
+    return sorted(found)
 
 
 def _is_export_residue(path: Path) -> bool:
@@ -241,7 +296,7 @@ class VaultIndex:
             base = vault_root / root
             if not base.exists():
                 continue
-            for path in sorted(base.rglob("*.md")):
+            for path in _scan_notes(vault_root, base):
                 if exclude_export_residue and _is_export_residue(path):
                     continue
                 note = _parse(path)

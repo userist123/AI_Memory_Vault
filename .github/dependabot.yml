@@ -1,0 +1,20 @@
+# Security program 2026-11-22 (09_SECURITY/SECURITY_PROGRAM.md, section 3.4).
+# Version updates for the pinned GitHub Actions only: every action is pinned to a full SHA, so
+# without this nothing refreshes the pins. A 7-day cooldown lets a compromised release be caught
+# before it is proposed (security updates are not delayed by it). The imported third-party
+# projects keep Dependabot security updates from the repository settings; adding version updates
+# for them is a separate owner decision because of the pull-request volume.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5

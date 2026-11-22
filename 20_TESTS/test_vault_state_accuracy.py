@@ -187,6 +187,21 @@ def test_runtime_authority_layer_has_no_production_consumer(module, state_text, 
     assert "NOT wired into production" in state_text
 
 
+def test_closed_loop_learning_direct_write_path_stays_unwired(state_text, production_python_sources):
+    """`ClosedLoopLearner.record_outcome()` withdraws a note with `storage.set(...)` as AI_AGENT,
+    bypassing MemoryController and lifecycle/policy.py (AKE Milestone 0 audit, section 3.1). The
+    r001 "7/7 mutation paths gated" count holds only while nothing calls it. The day a production
+    module imports it, this fails: the write must go through the controller before it is wired."""
+    module = "closed_loop_learning"
+    importer = re.compile(rf"^\s*(from|import)[^#\n]*\b{module}\b", re.M)
+    hits = [rel for rel, stem, text in production_python_sources
+            if stem != module and not rel.startswith(".agents/") and importer.search(text)]
+    assert not hits, f"{module} gained production consumers {hits}: route its mutation through MemoryController first"
+    source = (REPO / "03_IMPLEMENTATION" / "packages" / "learning" / "closed_loop_learning.py").read_text(encoding="utf-8")
+    assert "self.storage.set(" in source, "direct write removed: update this guard and VAULT_STATE.md"
+    assert "closed_loop_learning.py" in state_text and "direct" in state_text
+
+
 def test_the_shim_warning_still_applies(state_text):
     """If memory_controller ever becomes a real package, the warning is wrong."""
     shim = REPO / "03_IMPLEMENTATION" / "packages" / "memory_controller" / "__init__.py"
