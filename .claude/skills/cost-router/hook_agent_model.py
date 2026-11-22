@@ -28,6 +28,7 @@ Fable consultant routing fails closed when its policy cannot be loaded, and malf
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -345,10 +346,15 @@ def _read_agent_frontmatter(path: Path):
 
 def _agent_frontmatter(subagent_type: str):
     """Resolve a subagent by declared name; unreadable/ambiguous scope is not trusted."""
+    return _agent_resolve(subagent_type)[0]
+
+
+def _agent_resolve(subagent_type: str):
+    """(frontmatter fields or None/invalid marker, the definition file or None) of a subagent."""
     raw_type = str(subagent_type or "").strip()
     name = raw_type.split(":")[-1].lower()
     if not name:
-        return None
+        return None, None
     project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()).resolve()
     cwd = Path.cwd().resolve()
     try:
@@ -374,7 +380,7 @@ def _agent_frontmatter(subagent_type: str):
         try:
             candidates = sorted(path for path in base.rglob("*.md") if path.is_file())
         except OSError:
-            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}
+            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}, None
         for candidate in candidates:
             try:
                 fields = _read_agent_frontmatter(candidate)
@@ -393,14 +399,60 @@ def _agent_frontmatter(subagent_type: str):
                 except OSError:
                     unreadable = True
                     continue
-            matches.append(fields)
+            matches.append((fields, candidate))
         if unreadable:
-            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}
+            return {"__invalid__": True, "name": name, "model": "fable-unresolved"}, None
         if len(matches) == 1:
             return matches[0]
         if len(matches) > 1:
-            return {"__invalid__": True, "name": name, "model": "fable-ambiguous"}
-    return None
+            return {"__invalid__": True, "name": name, "model": "fable-ambiguous"}, None
+    return None, None
+
+
+PINNED_AGENTS = "agents.pinned.json"  # {file name: sha256 of the SOURCE agent file}, written by install.py
+PRIVILEGED_AGENTS = frozenset({FABLE_CONSULTANT, "vault-reviewer"})
+
+
+def _pinned_agent_hashes():
+    """{agent name: sha256} pinned at install time, from the INSTALLED skill only (never from the project); None when
+    nothing is installed or the file is unreadable, which keeps the structural checks as the only guard."""
+    try:
+        data = json.loads((Path.home() / ".claude" / "skills" / "cost-router" / PINNED_AGENTS).read_text(encoding="utf-8"))
+        return {Path(k).stem.lower(): v for k, v in data.items() if isinstance(k, str) and isinstance(v, str)}
+    except Exception:
+        return None
+
+
+def _under_home_claude(path: Path) -> bool:
+    try:
+        path.resolve().relative_to((Path.home() / ".claude").resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def _definition_mismatch(stype: str, fields, path, pinned):
+    """A message when a PRIVILEGED agent definition (fable-consultant, vault-reviewer, any agent on opus or fable) is
+    not the one pinned at install time: a project `.claude/agents/<name>.md` is searched before the home directory and
+    its body is not part of any frontmatter check. None when it matches, is not privileged, or nothing is pinned."""
+    if pinned is None or not isinstance(fields, dict) or path is None:
+        return None
+    name = str(fields.get("name") or stype).strip().lower()
+    model = str(fields.get("model") or "").lower()
+    privileged = (name in PRIVILEGED_AGENTS or stype in PRIVILEGED_AGENTS or "opus" in model or "fable" in model)
+    if not privileged:
+        return None
+    try:
+        actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return f"definition of agent {name!r} is unreadable"
+    if pinned.get(name) == actual:
+        return None
+    if name not in pinned and _under_home_claude(Path(path)):
+        return None  # the owner's own user-level agent, never pinned by the installer
+    return (f"definition of agent {name!r} ({Path(path).name}) does not match the pinned sha256 recorded at install"
+            if name in pinned else
+            f"definition of agent {name!r} ({Path(path).name}) is an unpinned project definition")
 
 
 def _agent_frontmatter_model(subagent_type: str):
@@ -724,24 +776,30 @@ def _verbose() -> bool:
 
 
 def _main() -> int:
-    try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch; no output, no state
+    off = False
+    try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch: efficiency behaviour only, see below
         import route_state as _rs  # noqa: E402
-        if _rs.disabled_by_env():
-            return 0
+        off = _rs.disabled_by_env()
     except Exception:
         pass
     try:
         data = json.load(sys.stdin)
     except Exception:
+        if off:
+            return 0
         print("cost-router: invalid Agent hook input; blocking spawn", file=sys.stderr)
         return 2
     if not isinstance(data, dict):
+        if off:
+            return 0
         print("cost-router: Agent hook input must be a JSON object; blocking spawn", file=sys.stderr)
         return 2
     if data.get("tool_name") not in SPAWN_TOOLS:
         return 0
     tool_input = data.get("tool_input")
     if not isinstance(tool_input, dict):
+        if off:
+            return 0
         print("cost-router: malformed Agent tool input; blocking spawn", file=sys.stderr)
         return 2
     stype = str(tool_input.get("subagent_type") or "").strip().lower()
@@ -749,16 +807,29 @@ def _main() -> int:
         _agent_frontmatter(stype)
         if stype == FABLE_CONSULTANT or not tool_input.get("model") else None
     )
+    pinned_agents = _pinned_agent_hashes()
+    agent_path = _agent_resolve(stype)[1] if (pinned_agents is not None and agent_frontmatter) else None
     frontmatter_model = agent_frontmatter.get("model") if agent_frontmatter else None
     fable_sensitive = (
         stype == FABLE_CONSULTANT
         or _requests_fable(tool_input.get("model"))
         or _requests_fable(frontmatter_model)
     )
+    if off and not fable_sensitive:
+        return 0  # COST_ROUTER_OFF: no routing, no state, no output; only the Fable guard below still runs
     if stype == FABLE_CONSULTANT and not _valid_fable_consultant_frontmatter(agent_frontmatter):
         print("cost-router: fable-consultant definition is missing or violates the read-only agent contract; blocking spawn",
               file=sys.stderr)
         return 2
+    definition_note = None
+    mismatch = _definition_mismatch(stype, agent_frontmatter, agent_path, pinned_agents)
+    if mismatch:
+        if fable_sensitive:
+            print(f"cost-router: {mismatch}; blocking a Fable-sensitive spawn (reinstall cost-router from the trusted "
+                  "checkout, or remove the project override)", file=sys.stderr)
+            return 2
+        definition_note = (f"cost-router: {mismatch}; its body is not trusted: the model stays on the route/Opus floor"
+                           " and the installed definition is the reference")
     try:
         from route import _load_router, is_shadowed, policy_path  # noqa: E402
         if is_shadowed(Path(__file__)) and _user_agent_hook_is_registered():
@@ -801,7 +872,9 @@ def _main() -> int:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                                  "permissionDecisionReason": deny}}))
         return 0
-    reason = gate_and_mark(data)
+    if definition_note:
+        pnote = "; ".join(x for x in (pnote, definition_note) if x)
+    reason = None if off else gate_and_mark(data)  # OFF: no Vault-router gate, no delegation marker
     if reason:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                                  "permissionDecisionReason": reason}}))

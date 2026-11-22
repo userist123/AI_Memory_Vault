@@ -10,7 +10,7 @@ error exits 0 with no output: this hook must never block a prompt.
 It also persists the route to ~/.claude/cache/cost-router/route-<session_id>.json (lib/route_state.py)
 so the PreToolUse hooks can make it binding. A trivial prompt (continua, ok, fewer than 4 words, a
 slash command) keeps the current route: it continues that task. Only a new non-trivial prompt
-replaces the state; a prompt containing "#direct" stores subagent null (owner override: the main
+replaces the state; a prompt whose FIRST line contains "#direct" (like "#escalate": never pasted content below it) stores subagent null (owner override: the main
 session does the work itself).
 
 Once the main transcript's context (last assistant usage, lib/transcript_usage.py) exceeds
@@ -115,12 +115,24 @@ def is_synthetic_turn(prompt: str) -> bool:
     return bool(SYNTHETIC_RE.match(prompt or ""))
 
 
-ESCALATE_RE =re.compile(r"(?<![\w#])#escalate\b", re.IGNORECASE)
+ESCALATE_RE = re.compile(r"(?<![\w#])#escalate\b", re.IGNORECASE)
+DIRECT_MARK = "#direct"
+
+
+def first_line(prompt: str) -> str:
+    """The owner's markers (#escalate, #direct) count on the FIRST line of the prompt only: anything below it may be
+    pasted content (a web page, a log, a file) that carries someone else's instructions."""
+    text = (prompt or "").strip()
+    return text.splitlines()[0] if text else ""
+
+
+def direct_requested(prompt: str) -> bool:
+    return DIRECT_MARK in first_line(prompt).lower()
 
 
 def escalation_authorized(prompt: str) -> bool:
-    """True only for the owner's own UserPromptSubmit text: tool_input can never reach this parser."""
-    return bool(ESCALATE_RE.search(prompt or ""))
+    """True only for the owner's own UserPromptSubmit text, first line only: tool_input can never reach this parser."""
+    return bool(ESCALATE_RE.search(first_line(prompt)))
 
 
 def sync_escalation(data: dict, flag: bool) -> None:
@@ -148,7 +160,7 @@ def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bo
             state = route_state.new_state("direct" if direct else "unrouted", None, None, digest, direct=direct)
         else:
             state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
-                                          direct=route_state.DIRECT_MARK in prompt.lower())
+                                          direct=direct_requested(prompt))
         state["escalation_authorized"] = escalation_authorized(prompt)  # this prompt epoch only
         if d is not None:
             state["risk"] = _risk_of(d)
@@ -208,7 +220,7 @@ def main() -> int:
         _emit("cost-router: synthetic turn (subagent/notification) - route unchanged" + (" " + warning if warning else ""))
         return 0
     esc = escalation_authorized(prompt)
-    if "#direct" in prompt.lower() and len(words) < 4:
+    if direct_requested(prompt) and len(words) < 4:
         persist(data, prompt, None, direct=True)  # owner override, however short the prompt
         if warning:
             _emit(warning)
@@ -226,7 +238,7 @@ def main() -> int:
         if warning:
             _emit(warning)
         return 0
-    same_tier = "#direct" not in prompt.lower() and is_same_tier(resolve_model(data), d)
+    same_tier = not direct_requested(prompt) and is_same_tier(resolve_model(data), d)
     persist(data, prompt, d, same_tier=same_tier)
     if os.environ.get("COST_ROUTER_VERBOSE_ROUTE", "").strip() != "1":  # compact is the default (<=120 chars)
         target = f"{d.subagent} subagent" if d.subagent else "main"
@@ -254,7 +266,7 @@ def main() -> int:
     elif d.subagent:
         ctx += (f" Do the work in a subagent of any type ({d.subagent} fits); the Agent hook sets its model"
                 f" to {d.model}. Keep only its conclusion in this session.")
-        if "#direct" not in prompt.lower():
+        if not direct_requested(prompt):
             ctx += " Enforced: after 3 direct tool calls the main session must delegate (unless the Agent gate itself refused the spawn)."
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:
         try:

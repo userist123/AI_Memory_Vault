@@ -339,7 +339,8 @@ def _context_installed(home: Path) -> bool:
 
 _IGNORE = ("__pycache__", "chat")
 CONFIG_NAME = "config.json"  # machine-local pinned vault roots, written by install(), never part of a source
-_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME}  # written by install(), not part of the source manifest
+PINNED_AGENTS = "agents.pinned.json"  # sha256 of the SOURCE agent files: the trust root of privileged definitions
+_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME, PINNED_AGENTS}  # written by install(), not part of the source manifest
 
 
 def _file_sha(path: Path) -> str:
@@ -574,6 +575,10 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         agent_hashes[src.name] = _sha(dst)
         touched.append(str(dst))
     (staging / AGENT_MANIFEST).write_text(json.dumps(agent_hashes, indent=2) + "\n", encoding="utf-8")
+    # hook_agent_model compares a resolved privileged definition (fable-consultant, vault-reviewer, any opus/fable
+    # agent) with these hashes: a project .claude/agents/<name>.md is searched before ~/.claude/agents
+    (staging / PINNED_AGENTS).write_text(
+        json.dumps({src.name: _sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
     try:
         _swap_in(staging, skill_dir)
     finally:
