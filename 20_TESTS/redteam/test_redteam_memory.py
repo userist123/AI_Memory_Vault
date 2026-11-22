@@ -74,9 +74,33 @@ def test_rt06_a_different_body_type_or_source_is_a_new_candidate(world):
 
 # RT05 prompt injection in retrieved memory ---------------------------------------------------------------------
 
+def _plant(controller, title, body):
+    """A REVIEW candidate that reached the vault without memory_propose's write-time scan (git,
+    an import, a note older than the scan): the read-time flag must still catch it."""
+    import uuid
+    from memory_controller.authorizer import Principal
+
+    note_id = str(uuid.uuid4())
+    controller.propose(Principal.AI_AGENT, {
+        "id": note_id, "type": "knowledge", "category": "redteam", "tags": ["candidate"],
+        "provenance": {"source_type": "ai", "source_ref": "redteam"}, "confidence": "low",
+        "verification": "unverified", "relations": [], "lifecycle": "REVIEW",
+        "content": "# " + title + chr(10) + chr(10) + body + chr(10),
+    })
+    return {"id": note_id}
+
+
+def test_rt05_memory_propose_refuses_the_injection_at_write_time(world):
+    """Since 2026-11-22 (security program, path 3) the injection never enters through the tool."""
+    controller, vault = world
+    with pytest.raises(ma.ProposalRefused, match="content scanner"):
+        ma.propose(controller, "Maintenance tip", INJECTION, client="redteam")
+    assert _proposals(vault) == []
+
+
 def test_rt05_planted_injection_is_flagged_on_get_and_search_without_changing_lifecycle(world):
     controller, _ = world
-    bad = ma.propose(controller, "Maintenance tip", INJECTION, client="redteam")
+    bad = _plant(controller, "Maintenance tip", INJECTION)
     good = ma.propose(controller, "Consolidation note", BENIGN, client="redteam")
     g_bad, g_good = ma.get(controller, bad["id"]), ma.get(controller, good["id"])
     assert g_bad["review_required"] is True and "instruction_override" in g_bad["review_reasons"]
@@ -92,7 +116,7 @@ def test_rt05_planted_injection_is_flagged_on_get_and_search_without_changing_li
 
 def test_rt05_review_flag_never_reorders_results(world, monkeypatch):
     controller, _ = world
-    ma.propose(controller, "Maintenance tip", INJECTION, client="redteam")
+    _plant(controller, "Maintenance tip", INJECTION)
     ma.propose(controller, "Consolidation note", BENIGN, client="redteam")
     with_flag = ma.search(controller, "consolidation maintenance", limit=10)["query_results"]
     monkeypatch.setattr(ma, "review_flags", lambda text, label: {})
