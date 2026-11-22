@@ -622,7 +622,7 @@ class DeterministicCodeAgentPolicy(BaseAgentPolicy):
         target_path = workspace / task.target_file
         target_path.parent.mkdir(parents=True, exist_ok=True)
         if task.code_patch is not None:
-            with open(target_path, 'w', encoding='utf-8') as f:
+            with open(target_path, 'w', encoding='utf-8', newline="\n") as f:
                 f.write(task.code_patch)
             action_records.append(
                 ActionExecutionRecord(
@@ -636,7 +636,7 @@ class DeterministicCodeAgentPolicy(BaseAgentPolicy):
         if task.test_file and task.test_patch is not None:
             test_path = workspace / task.test_file
             test_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(test_path, 'w', encoding='utf-8') as f:
+            with open(test_path, 'w', encoding='utf-8', newline="\n") as f:
                 f.write(task.test_patch)
             action_records.append(
                 ActionExecutionRecord(
@@ -829,7 +829,7 @@ class RealAgentExecutionHarness:
                         target_file_rel = act.get("path")
                         target_file_path = ws_path / target_file_rel
                         target_file_path.parent.mkdir(parents=True, exist_ok=True)
-                        with open(target_file_path, "w", encoding="utf-8") as f:
+                        with open(target_file_path, "w", encoding="utf-8", newline="\n") as f:
                             f.write(act.get("content", ""))
 
                     elif act_type == "run_command":
@@ -954,7 +954,7 @@ class RealAgentExecutionHarness:
         traces_jsonl = self.trace_dir / 'execution_traces.jsonl'
 
         with self._lock:
-            with open(trace_file, 'w', encoding='utf-8') as f:
+            with open(trace_file, 'w', encoding='utf-8', newline="\n") as f:
                 json.dump(redacted_trace_dict, f, indent=2)
 
             with open(traces_jsonl, 'a', encoding='utf-8') as f:

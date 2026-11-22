@@ -12,6 +12,17 @@ project_root = Path(__file__).resolve().parents[3]
 # The import root stays `packages/`: that is where `memory_controller` and `cognitive_core` live.
 packages_root = Path(__file__).resolve().parents[1]
 if str(packages_root) not in sys.path: sys.path.insert(0, str(packages_root))
+if __name__ == '__main__':
+    # Started as the gateway (not imported by a test): load the per-user HMAC secret that search
+    # needs, and keep the controller's audit log and telemetry out of the working directory,
+    # as the MCP server and the CLIs do. Must run before the storage below is built.
+    from interfaces import vault_runtime as _vault_runtime
+    try:
+        _vault_runtime.ensure_secret_in_env()
+    except (_vault_runtime.VaultSecretMissing, _vault_runtime.VaultSecretInvalid) as _exc:
+        print(f'[BROWSER GATEWAY] refusing to start: {_exc}', file=sys.stderr); sys.exit(2)
+    _vault_runtime.configure_runtime_dirs()
+
 from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController
 from memory_controller.storage.file_engine import FileStorageEngine
@@ -52,15 +63,27 @@ def _route_agents(root:Path,task:str):
         matched=sorted(t for t in tokens if t in hay); scored.append({**agent,'route_score':len(matched),'matched_terms':matched})
     scored.sort(key=lambda x:(-x['route_score'],x.get('name',''))); return scored[:5]
 
-def _ollama_get(path,timeout=20):
+def _ollama_host():
+    """OLLAMA_HOST, refused unless it is plain http to a loopback host (vault context never
+    leaves the machine; same rule as vault_access.ollama_assistant). Raises ValueError."""
+    from vault_access.ollama_assistant import check_local_url
     host=os.getenv('OLLAMA_HOST','http://127.0.0.1:11434').rstrip('/')
-    req=urllib.request.Request(host+path,method='GET')
-    with urllib.request.urlopen(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
+    check_local_url(host)
+    return host
+
+# No proxy (a proxy from the environment would carry vault context off the machine) and no
+# redirects (a redirect from the local host must not send the request elsewhere), as
+# vault_access.ollama_assistant does.
+from vault_access.ollama_assistant import _NoRedirect
+_LOCAL_OPENER=urllib.request.build_opener(urllib.request.ProxyHandler({}),_NoRedirect())
+
+def _ollama_get(path,timeout=20):
+    req=urllib.request.Request(_ollama_host()+path,method='GET')
+    with _LOCAL_OPENER.open(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
 
 def _ollama_post(path,payload,timeout=120):
-    host=os.getenv('OLLAMA_HOST','http://127.0.0.1:11434').rstrip('/')
-    req=urllib.request.Request(host+path,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json'},method='POST')
-    with urllib.request.urlopen(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
+    req=urllib.request.Request(_ollama_host()+path,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json'},method='POST')
+    with _LOCAL_OPENER.open(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
 
 def _ollama_models():
     try: return [m.get('name') for m in _ollama_get('/api/tags').get('models',[]) if m.get('name')]
@@ -123,7 +146,7 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path.startswith('/api/v1/') and path != '/api/v1/status' and not self._require_api_auth():
             return
         if path in {'/','/api/v1/status'}:
-            agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models(); self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','vault_root':str(self.vault_root),'indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
+            agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models(); self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
         if path=='/api/v1/metrics':
             agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); counts=self.queue.status(); self._json(200,{'memory_items':len(self.storage.id_to_path),'agents_online':sum(1 for a in agents if a.get('status')=='ONLINE'),'agents_total':len(agents),'skills_operational':len(skills),'proposals_pending':counts.get('PENDING_REVIEW',0),'engine':'V6','retrieval':'MemoryController'}); return
         if path=='/api/v1/models':
@@ -135,10 +158,20 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             self._json(200,{'total':len(skills),'skills':skills[:1000]}); return
         if path=='/api/v1/proposals':
             records=self.queue._load(); pending=[x for x in records if x.get('queue_status')=='PENDING_REVIEW']; self._json(200,{'total':len(records),'pending':pending[:100],'status':{k:sum(1 for x in records if x.get('queue_status')==k) for k in ['PENDING_REVIEW','APPROVED','REJECTED','PROMOTED']}}); return
+        # Reads go through the agent read contract (interfaces/memory_access), exactly as
+        # memory_search / memory_get: RAW, ARCHIVED and quarantined notes are never served here
+        # (20_TESTS/test_rest_read_contract.py). Before, storage was read directly.
         if path=='/api/v1/search':
-            term=q.get('q',[''])[0].strip(); notes=self.storage.query(intent=term); notes.sort(key=lambda n:str(n.get('updated',n.get('created',''))),reverse=True); self._json(200,{'query':term,'total_results':len(notes),'results':notes[:20]}); return
+            from interfaces import memory_access
+            term=q.get('q',[''])[0].strip()
+            results=memory_access.search(self.controller,term,limit=20)['query_results'] if term else []
+            self._json(200,{'query':term,'total_results':len(results),'results':results}); return
         if path.startswith('/api/v1/note/'):
-            nid=path.replace('/api/v1/note/','',1); note=self.storage.get(nid); self._json(200 if note else 404,note if note else {'error':'Note not found','id':nid}); return
+            from interfaces import memory_access
+            nid=path.replace('/api/v1/note/','',1)
+            try: note=memory_access.get(self.controller,nid)
+            except ValueError: note=None
+            self._json(200 if note else 404,note if note else {'error':'Note not found','id':nid}); return
         self._json(404,{'error':'Endpoint not found'})
     def do_POST(self):
         path=urlparse(self.path).path
@@ -180,9 +213,17 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path=='/api/v1/chat':
             message=str(data.get('message','')).strip(); model=str(data.get('model','')).strip(); history=data.get('history') or []
             if not message: self._json(400,{'error':'message is required'}); return
+            try: _ollama_host()
+            except ValueError as exc: self._json(400,{'error':f'OLLAMA_HOST refused: it must be plain http to a loopback host ({exc})'}); return
             models=_ollama_models(); chosen=model or os.getenv('JARVIS_MODEL') or (models[0] if models else '')
             if not chosen: self._json(503,{'error':'No Ollama model available','ollama':'offline'}); return
-            ranked=_route_agents(self.vault_root,message); selected=ranked[0] if ranked else None; memory=self.storage.query(intent=message)[:8]
+            ranked=_route_agents(self.vault_root,message); selected=ranked[0] if ranked else None
+            # context only from notes the agent read contract serves (search, then memory_get)
+            from interfaces import memory_access
+            memory=[]
+            for hit in memory_access.search(self.controller,message,limit=8)['query_results']:
+                try: memory.append(memory_access.get(self.controller,hit['id']))
+                except ValueError: continue
             context='\n\n'.join([f"[{n.get('id','memory')}] {n.get('content','')}" for n in memory])[:12000]; agent_name=selected.get('name') if selected else 'Agent Council'
             language_instruction='Răspunde în limba română.' if _looks_romanian(message) else 'Răspunde în aceeași limbă în care ți se adresează utilizatorul.'
             system=JARVIS_STYLE_RO+'\n\n'+language_instruction+'\n\nCURRENT ROUTED SPECIALIST: '+agent_name+'\n\nCANONICAL VAULT CONTEXT:\n'+(context or '(nu există memorie relevantă pentru această întrebare)')

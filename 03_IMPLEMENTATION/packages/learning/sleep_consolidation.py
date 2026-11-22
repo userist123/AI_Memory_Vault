@@ -61,6 +61,19 @@ def _heuristic_activation(note: Dict[str, Any], now: datetime, decay: float = 0.
     return -decay * math.log(age + 1.0)
 
 
+def collect_notes(controller) -> List[Dict[str, Any]]:
+    """Every note the controller's storage holds, read-only, whatever the storage engine."""
+    storage = getattr(controller, "storage", None)
+    if hasattr(storage, "store") and isinstance(storage.store, dict):
+        return list(storage.store.values())
+    if hasattr(storage, "all_notes") and callable(storage.all_notes):
+        return storage.all_notes()
+    if hasattr(storage, "id_to_path"):
+        notes = [storage.get(nid) for nid in list(storage.id_to_path.keys())]
+        return [n for n in notes if n]
+    return []
+
+
 @dataclass
 class SleepConsolidationReport:
     generated_at: str
@@ -88,16 +101,7 @@ class SleepConsolidator:
 
     def run(self) -> SleepConsolidationReport:
         now = datetime.now(timezone.utc)
-        storage = getattr(self.controller, "storage", None)
-        if hasattr(storage, "store") and isinstance(storage.store, dict):
-            all_notes = list(storage.store.values())
-        elif hasattr(storage, "all_notes") and callable(storage.all_notes):
-            all_notes = storage.all_notes()
-        elif hasattr(storage, "id_to_path"):
-            all_notes = [storage.get(nid) for nid in list(storage.id_to_path.keys())]
-            all_notes = [n for n in all_notes if n]
-        else:
-            all_notes = []
+        all_notes = collect_notes(self.controller)
 
         report = SleepConsolidationReport(generated_at=now.isoformat())
 

@@ -180,8 +180,14 @@ class VaultAccess:
         path = contained_path(base, route.path)
         if not path.is_file():
             raise VaultAccessError(ErrorCode.NOT_FOUND, "route target no longer exists")
-        data = path.read_bytes()
-        if len(data) > self.limits.get("max_file_bytes", 2_000_000):
+        limit = self.limits.get("max_file_bytes", 2_000_000)
+        # Refuse on stat before reading; read at most limit+1 bytes so a file that
+        # grows between stat and read (or a missing size) is still bounded.
+        if path.stat().st_size > limit:
+            raise VaultAccessError(ErrorCode.TOO_LARGE, "file over the routing limit")
+        with path.open("rb") as fh:
+            data = fh.read(limit + 1)
+        if len(data) > limit:
             raise VaultAccessError(ErrorCode.TOO_LARGE, "file over the routing limit")
         return data
 
