@@ -121,3 +121,9 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Seq 11 installed and safe (flag false). The text-denylist gate conditions (f) live operations and (g) local_only are inherently bypassable: Cyrillic look-alikes (`dеploy`), words split by newlines or markdown (`**de**ploy`), Romanian (`lansează versiunea pe server`, `publică pachetul`), `rm -r -f`, `git reset --hard`; (g) scans only the first 8000 chars; short prompts keep the previous epoch and spec.
 - Main-session decision: do not patch more words. M12 (next) = enforce at tool level instead of brief text: a PreToolUse role guard for agent_type `fable-executor` (like dfir-analyst's) that denies git push/reset --hard/force, deploy/publish/release commands, network clients, package publishing, recursive deletes and writes outside the repo worktree; keep (f)/(g) text checks only as an extra signal; fix the short-prompt epoch path in hook_prompt_route.py:251-255; scan the full brief (no MAX_PROMPT truncation) with a confusables fold. Then one review round before the owner may enable the flag.
 - Also scope dfir-analyst triggers that leak into normal hints: "triage" -> "forensic triage"/"incident triage", "security log" -> "windows security log", "timeline of events" -> "forensic timeline of events".
+
+## M12 progress (branch claude/cost-router-m12, worktree E:\claude-work\wt\cr-m12)
+- 6b322f7f6 red tests 20_TESTS/test_cost_router_fable_executor_guard.py (280 failed before the fix).
+- 7c6ef4e82 executor_guard in hook_enforce_route.py (Bash allowlist + worktree write check, before OFF/ENFORCE=0/shadow, fail closed); specialists.CONFUSABLES + fold_strict, local_only_hits scans the whole text; (f) folds confusables; hook_prompt_route renew_epoch for short/slash/trivial prompts; dfir triggers scoped.
+- 9e4738666 SKILL.md 4G: allowlist, X1-X7, residuals; flag stays false.
+- Next: full targeted run, release pin seq 12, checkpoint.
