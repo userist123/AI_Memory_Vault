@@ -81,3 +81,12 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Tests (one command, temp HOME): 862 passed. With the REAL HOME, `test_fable_consultant_routing.py::test_frontmatter_fable_request_fails_closed_when_policy_is_unavailable` fails at the base commit too: it reads the installed `~/.claude/skills/cost-router/agents.pinned.json` (present since M9). Test-hygiene residual: give it a temp HOME.
 - b8df729b4: release pin seq 7 pins f1794a6f5. The installed copy under ~/.claude is NOT updated (owner: re-run install.py with the seq 7 pin to get the new agents and check.py fixes).
 - Next: M11 fable-executor (default off), Antigravity branch inventory.
+
+## Handoff 2026-11-22 (start the next session from here, with /clear)
+- Installed globally at release seq 7 (pin commit f1794a6f5); `--verify --require-hooks` exit 0; backups in `~/.claude/backups/cost-router-global-*`.
+- Antigravity's old branches: everything still valid already reached main via #313/#317/#320 (squash); nothing to port.
+- PRs: #404 (Antigravity Fable 5.2 base) <- #409 (this branch, M1-M10). Full suite not yet run on this branch: run it once (check-runner agent, temp HOME) before merge.
+- Next, in order:
+  1. M10 review residuals: (F1) document in SKILL.md that dfir-analyst network/write limits and test-author's tests-only scope are declared, not enforced (they have Bash); optional PreToolUse Bash guard keyed on agent_type. (F5) test_fable_consultant_routing.py:342 needs HOME/USERPROFILE monkeypatched to tmp_path. (F2) registry_compile overlay check: use _privileged_names and require privacy/risk no looser than the target. (F3) hook_prompt_route overlay hint prints `on <subagent_type>`. (F4) check.py: refuse when executable lookup returns None; set NoDefaultCurrentDirectoryInExePath=1 for the child.
+  2. M11 fable-executor, default off (separate agent + validator, pinned policy block enabled:false, receipts after failed sonnet AND opus attempts, mandatory Opus review after).
+  3. Security program: triage the 54 Dependabot alerts on main (6 critical, 28 high).
