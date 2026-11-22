@@ -278,6 +278,11 @@ def search(controller, query: str, limit: int = 5, principal: Principal = Princi
         # whatever `_readable` served: the content cognitive_read returned for an ACTIVE note,
         # or the flagged unverified REVIEW candidate. Storage is not read for anything else.
         is_quarantined = _is_quarantined(stored, item, readable)
+        if is_quarantined and principal == Principal.AI_AGENT:
+            # A quarantined note is not even pointed to: before 2026-11-22 it was listed with an
+            # empty snippet, which still gave an agent its id and file path
+            # (20_TESTS/test_rest_read_contract.py; memory_get withholds it already).
+            continue
         if principal == Principal.AI_AGENT:
             raw_snippet_text = readable.get("content", "") if (readable and not is_quarantined) else ""
         else:
