@@ -54,6 +54,11 @@ def env(tmp_path):
     home, proj = tmp_path / "home", tmp_path / "proj"
     home.mkdir()
     proj.mkdir()
+    import hashlib  # what install.py writes: the pinned sha256 of the source agent definitions
+    pins = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted((ROOT / ".claude" / "agents").glob("*.md"))}
+    (home / ".claude" / "skills" / "cost-router").mkdir(parents=True)
+    (home / ".claude" / "skills" / "cost-router" / "agents.pinned.json").write_text(json.dumps(pins), encoding="utf-8")
     return home, proj
 
 

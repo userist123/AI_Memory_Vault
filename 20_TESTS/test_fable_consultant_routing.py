@@ -27,6 +27,15 @@ ROUTER = _load_router()
 POLICY = ROUTER.ClaudeModelPolicy.from_file(policy_path())
 
 
+def _pin_agents(home: Path) -> None:
+    """What install.py writes: the sha256 of the source agent definitions, the trust root of privileged agents."""
+    import hashlib
+    pins = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT / ".claude" / "agents").glob("*.md"))}
+    d = Path(home) / ".claude" / "skills" / "cost-router"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "agents.pinned.json").write_text(json.dumps(pins), encoding="utf-8")
+
+
 @pytest.fixture(autouse=True)
 def _isolated_claude_lib():
     iso.enter(SKILL / "lib")
@@ -160,9 +169,13 @@ def test_installer_removes_unchanged_fable_consultant_on_uninstall(tmp_path):
     assert not installed.exists()
 
 
-def test_agent_hook_failure_is_closed_for_fable_sensitive_spawns(monkeypatch, capsys):
+def test_agent_hook_failure_is_closed_for_fable_sensitive_spawns(tmp_path, monkeypatch, capsys):
     import io
     import route as route_module
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _pin_agents(tmp_path)
 
     def fail_load():
         raise RuntimeError("policy unavailable")
@@ -208,6 +221,7 @@ def test_agent_hook_preserves_pinned_fable_frontmatter_without_invalid_model_ove
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _pin_agents(tmp_path)
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(ROOT))
     monkeypatch.setattr(route_module, "is_shadowed", lambda _path: False)
     tool_input = {
@@ -233,6 +247,7 @@ def test_agent_hook_respects_explicit_non_fable_model_override(tmp_path, monkeyp
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _pin_agents(tmp_path)
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(ROOT))
     monkeypatch.setattr(route_module, "is_shadowed", lambda _path: False)
     tool_input = {
@@ -305,6 +320,9 @@ def test_agent_hook_blocks_fable_consultant_with_non_read_only_frontmatter(tmp_p
         "---\nConsult only.\n",
         encoding="utf-8",
     )
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _pin_agents(tmp_path)
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(project))
     monkeypatch.setattr(route_module, "is_shadowed", lambda _path: False)
     monkeypatch.setattr(hook_agent_model, "gate_and_mark", lambda _data: None)
@@ -485,6 +503,7 @@ def test_fable_consultant_is_denied_on_non_opus_or_unknown_sessions(tmp_path, se
     }
     if session is not None:
         payload["model"] = session
+    _pin_agents(home)
     r = _run_agent_hook(payload, home=home)
     assert r.returncode == 0, r.stderr
     out = json.loads(r.stdout)["hookSpecificOutput"]
@@ -496,14 +515,14 @@ def test_fable_consultant_is_denied_on_settings_only_opus_session(tmp_path):
     home = tmp_path / "home"
     proj = tmp_path / "proj"
     (proj / ".claude" / "agents").mkdir(parents=True)
-    (proj / ".claude" / "agents" / "fable-consultant.md").write_text(
-        (ROOT / ".claude" / "agents" / "fable-consultant.md").read_text(encoding="utf-8"),
-        encoding="utf-8",
+    (proj / ".claude" / "agents" / "fable-consultant.md").write_bytes(  # bytes: a pinned hash is a hash of bytes
+        (ROOT / ".claude" / "agents" / "fable-consultant.md").read_bytes()
     )
     (proj / ".claude" / "settings.json").write_text(json.dumps({"model": "opus"}), encoding="utf-8")
     empty_transcript = tmp_path / "empty.jsonl"
     empty_transcript.write_text("", encoding="utf-8")
     home.mkdir()
+    _pin_agents(home)
     r = _run_agent_hook(
         {
             "session_id": "s-settings-only",
@@ -598,6 +617,7 @@ def test_cost_router_off_kill_switch_stays_inert_for_fable_consultant(tmp_path):
     home.mkdir()
     proj = tmp_path / "proj"
     proj.mkdir()  # no fable-consultant.md
+    _pin_agents(home)
     r = _run_agent_hook(
         {"tool_name": "Agent", "model": "opus", "tool_input": {"subagent_type": "fable-consultant", "prompt": "consult"}},
         home=home, project=proj, extra_env={"COST_ROUTER_OFF": "1"},

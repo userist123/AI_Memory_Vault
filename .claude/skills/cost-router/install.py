@@ -89,6 +89,7 @@ HOOK_SPECS = (  # (event, script, matcher)
     ("SessionStart", "hook_self_update.py", "startup|resume"),
 )
 HOOK_TIMEOUT = {"hook_self_update.py": 60}  # seconds; a fetch is about two, the rest is margin
+PRIVILEGED_AGENTS = ("fable-consultant", "vault-reviewer")  # also pinned for the Agent hook
 AGENT_MANIFEST = "agents.sha256.json"  # under the installed skill: hashes of the agent files it wrote
 DENY_RULES = (  # pure caches only: never source, never worth reading (deny beats any project allow, so
     # dependency trees such as node_modules/.venv and build output such as dist/ stay readable for debugging)
@@ -569,8 +570,15 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
                 touched.append(f"{dst} (already current)")
                 continue
             if written.get(src.name) != current:
-                touched.append(f"{dst} (kept existing: edited here; --force to overwrite)")
-                continue
+                if src.stem in PRIVILEGED_AGENTS:
+                    # the hooks trust only the pinned definition of a privileged agent: keeping an edited copy would
+                    # leave every spawn blocked or noted, so back it up and install the pinned one
+                    backup = dst.with_name(f"{dst.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
+                    shutil.copy2(dst, backup)
+                    touched.append(f"{dst} (edited here: backed up to {backup}, replaced by the pinned definition)")
+                else:
+                    touched.append(f"{dst} (kept existing: edited here; --force to overwrite)")
+                    continue
         shutil.copy2(src, dst)
         agent_hashes[src.name] = _sha(dst)
         touched.append(str(dst))

@@ -36,6 +36,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
@@ -415,7 +416,7 @@ def _agent_resolve(subagent_type: str):
             if fields and fields.get("__unreadable__"):
                 unreadable = True
                 continue
-            if fields is None or str(fields.get("name") or "").strip().lower() != name:
+            if fields is None or _norm_name(fields.get("name")) != name:
                 continue
             if plugin_scope:
                 try:
@@ -454,6 +455,69 @@ def _under_home_claude(path: Path) -> bool:
         return True
     except (ValueError, OSError):
         return False
+
+
+_ZERO_WIDTH = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff\u00ad\u180e\u200e\u200f"))
+
+
+def _norm_name(value) -> str:
+    """An agent name as Claude Code would compare it: zero-width characters and BOM removed, NFKC, a trailing YAML
+    comment dropped, quotes stripped, casefolded."""
+    text = unicodedata.normalize("NFKC", str(value or "")).translate(_ZERO_WIDTH)
+    text = re.split(r"\s#", text, maxsplit=1)[0].strip().strip("\"'").translate(_ZERO_WIDTH).strip()
+    return text.casefold()
+
+
+def _project_agent_roots() -> list:
+    """The project and cwd directories whose `.claude/agents` Claude Code searches before the home directory."""
+    project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()).resolve()
+    cwd = Path.cwd().resolve()
+    try:
+        cwd.relative_to(project)
+        roots = [cwd]
+        while roots[-1] != project:
+            roots.append(roots[-1].parent)
+    except ValueError:
+        roots = [project] + ([cwd] if cwd != project else [])
+    home = Path.home().resolve()
+    return [r for r in dict.fromkeys(roots) if r != home]
+
+
+_NAME_LINE = re.compile(r"^\s*[\"']?name[\"']?\s*:(.*)$", re.IGNORECASE)
+
+
+def _project_override_problem(pinned):
+    """A message when ANY project `.claude/agents/**/*.md` claims a privileged name (its file stem, or any `name:` line
+    of its first lines, normalized: comment, BOM, zero-width, NFKC, casefold) without being byte-equal to the pinned
+    definition. A tolerant scan on purpose: the simple frontmatter parser is not what Claude Code uses to resolve."""
+    for root in _project_agent_roots():
+        base = root / ".claude" / "agents"
+        if not base.is_dir():
+            continue
+        try:
+            files = sorted(p for p in base.rglob("*.md") if p.is_file())
+        except OSError:
+            return f"cannot list {base}"
+        for f in files:
+            claimed = set()
+            if _norm_name(f.stem) in PRIVILEGED_AGENTS:
+                claimed.add(_norm_name(f.stem))
+            try:
+                raw = f.read_bytes()
+            except OSError:
+                if claimed:
+                    return f"project agent definition {f.name} is unreadable"
+                continue
+            for line in raw.decode("utf-8", errors="replace").splitlines()[:80]:
+                m = _NAME_LINE.match(line.lstrip("\ufeff"))
+                if m and _norm_name(m.group(1)) in PRIVILEGED_AGENTS:
+                    claimed.add(_norm_name(m.group(1)))
+            digest = hashlib.sha256(raw).hexdigest()
+            for name in sorted(claimed):
+                if pinned.get(name) != digest:
+                    return (f"project agent definition {f.name} claims the privileged name {name!r} and does not match "
+                            "the pinned sha256 recorded at install")
+    return None
 
 
 def _definition_mismatch(stype: str, fields, path, pinned):
@@ -831,7 +895,7 @@ def _main() -> int:
     stype = str(tool_input.get("subagent_type") or "").strip().lower()
     agent_frontmatter = (
         _agent_frontmatter(stype)
-        if stype == FABLE_CONSULTANT or not tool_input.get("model") else None
+        if stype == FABLE_CONSULTANT or stype in PRIVILEGED_AGENTS or not tool_input.get("model") else None
     )
     pinned_agents = _pinned_agent_hashes()
     agent_path = _agent_resolve(stype)[1] if (pinned_agents is not None and agent_frontmatter) else None
@@ -845,19 +909,32 @@ def _main() -> int:
     )
     if off and not fable_sensitive:
         return 0  # COST_ROUTER_OFF: no routing, no state, no output; only the Fable guard below still runs
+    definition_note = None
+    if pinned_agents is None:
+        if stype == FABLE_CONSULTANT:
+            print("cost-router: agents.pinned.json is missing (the pinned sha256 of the agent definitions): cannot "
+                  "validate the fable-consultant definition; blocking spawn (run install.py from the trusted checkout)",
+                  file=sys.stderr)
+            return 2
+        mismatch = ("agents.pinned.json is missing, so the definition of agent "
+                    f"{stype!r} cannot be checked") if stype in PRIVILEGED_AGENTS else None
+    else:
+        mismatch = _definition_mismatch(stype, agent_frontmatter, agent_path, pinned_agents)
+        if not mismatch and (stype in PRIVILEGED_AGENTS or fable_sensitive):
+            mismatch = _project_override_problem(pinned_agents)
+    if mismatch:
+        if fable_sensitive:
+            contract = ("; the definition also violates the read-only agent contract"
+                        if stype == FABLE_CONSULTANT and not _valid_fable_consultant_frontmatter(agent_frontmatter) else "")
+            print(f"cost-router: {mismatch}{contract}; blocking a Fable-sensitive spawn (reinstall cost-router from the "
+                  "trusted checkout, or remove the project override)", file=sys.stderr)
+            return 2
+        definition_note = (f"cost-router: {mismatch}; its body is not trusted: the model stays on the route/Opus floor"
+                           " and the installed definition is the reference")
     if stype == FABLE_CONSULTANT and not _valid_fable_consultant_frontmatter(agent_frontmatter):
         print("cost-router: fable-consultant definition is missing or violates the read-only agent contract; blocking spawn",
               file=sys.stderr)
         return 2
-    definition_note = None
-    mismatch = _definition_mismatch(stype, agent_frontmatter, agent_path, pinned_agents)
-    if mismatch:
-        if fable_sensitive:
-            print(f"cost-router: {mismatch}; blocking a Fable-sensitive spawn (reinstall cost-router from the trusted "
-                  "checkout, or remove the project override)", file=sys.stderr)
-            return 2
-        definition_note = (f"cost-router: {mismatch}; its body is not trusted: the model stays on the route/Opus floor"
-                           " and the installed definition is the reference")
     try:
         from route import _load_router, is_shadowed, policy_path  # noqa: E402
         if is_shadowed(Path(__file__)) and _user_agent_hook_is_registered():
