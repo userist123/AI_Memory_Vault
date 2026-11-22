@@ -31,12 +31,15 @@ import { dimGeometry, textHeight, leaderGeometry, levelMarkGeometry, textAnchor,
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { localizeSnapshotRoomNames } from '@/core/templates';
+import { phaseSheets, phaseView, type Phase } from '@/core/phase-views';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const MARGIN = 0.5;   // m în jurul planului pentru cote
 
-type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[] };
+type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[];
+  /** planșa pe faze (core/phase-views.ts): pe „demolări” peretele de demolat se desenează la grosimea lui, hașurat roșu, cu golurile lui */
+  phase?: Phase };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
 /** Săgeata de nord pe planșă: apare doar când orientarea e declarată (core/north.ts); rotită cu unghiul nordului față de sus. */
 export function NorthArrow({ deg, label }: { deg: number; label: string }){
@@ -46,17 +49,18 @@ export function NorthArrow({ deg, label }: { deg: number; label: string }){
       <text y={-5.9} fontSize={2.6} textAnchor="middle" fontWeight={700} transform={`rotate(${-deg} 0 -5.9)`}>N</text></g>
   </svg>);
 }
-export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
+export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [], phase }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
     {f.rooms.map(r => <rect key={r.id} x={r.rect.x0} y={r.rect.z0} width={r.rect.x1 - r.rect.x0} height={r.rect.z1 - r.rect.z0} fill={roomId && r.id !== roomId ? '#f6f4ef' : ROOM_FILL[r.type] || '#f3f1ec'} stroke="#c9c4b8" strokeWidth={fs(0.2)} />)}
     {/* starea peretelui: nou = hașurat (linii la 45°), de demolat = contur punctat; existent = plin, ca înainte */}
-    {f.walls.map(w => w.status === 'demolish' ? <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
+    {f.walls.map(w => w.status === 'demolish' && phase === 'demolition' ? <g key={w.id}><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeOpacity={.16} strokeWidth={w.thickness} /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={w.thickness} strokeDasharray=".03 .06" /></g>
+      : w.status === 'demolish' ? <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
       : w.status === 'new' ? <g key={w.id}><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#fff" strokeWidth={w.thickness * .7} strokeDasharray=".03 .03" /></g>
       : <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
     {(f.zones ?? []).filter(z => !roomId || z.roomId === roomId).map(z => <rect key={z.id} x={z.rect.x0} y={z.rect.z0} width={z.rect.x1 - z.rect.x0} height={z.rect.z1 - z.rect.z0} fill="#e7dccb" fillOpacity={.6} stroke="#8B6A45" strokeWidth={fs(0.15)} />)}
-    {f.walls.filter(w => w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
-      return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeWidth={w.thickness + 0.02} />); })}
+    {f.walls.filter(w => phase === 'demolition' || w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
+      return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeOpacity={w.status === 'demolish' ? .55 : undefined} strokeWidth={w.thickness + 0.02} />); })}
     {(f.columns ?? []).filter(c => c.role === 'shaft' || c.role === 'boxing').map(c => <g key={c.id} stroke="#333" strokeWidth={fs(0.2)} fill="#f4f1ea"><rect x={c.x - c.w / 2} y={c.z - c.d / 2} width={c.w} height={c.d} />
       {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
     {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
@@ -93,6 +97,15 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
         <line x1={a[0] - nx * tick} y1={a[1] - nz * tick} x2={a[0] + nx * tick} y2={a[1] + nz * tick} /><line x1={c[0] - nx * tick} y1={c[1] - nz * tick} x2={c[0] + nx * tick} y2={c[1] + nz * tick} />
         <text x={d.label[0]} y={d.label[1]} fontSize={fs(2.4)} fill="#333" stroke="none" textAnchor="middle" dominantBaseline="central" transform={vertical ? `rotate(-90 ${d.label[0]} ${d.label[1]})` : undefined}>{text}</text></g>; })}
   </svg>);
+}
+/** Legenda planșelor pe faze: cele trei stări ale peretelui, desenate ca pe plan. */
+export function PhaseLegend({ t }: { t: Translate }){
+  const sw = (kind: 'kept' | 'demolish' | 'new') => <svg width="14mm" height="3mm" viewBox="0 0 14 3" aria-hidden="true">
+    {kind === 'kept' ? <line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#333" strokeWidth={2.4} />
+      : kind === 'new' ? <><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#333" strokeWidth={2.4} /><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#fff" strokeWidth={1.7} strokeDasharray=".6 .6" /></>
+      : <><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#B3261E" strokeOpacity={.16} strokeWidth={2.4} /><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="#B3261E" strokeWidth={2.4} strokeDasharray=".6 1.2" /></>}</svg>;
+  return (<ul className="phase-legend" aria-label={t('phv.legend')}><li className="phase-legend-h">{t('phv.legend')}</li>
+    <li>{sw('kept')}{t('phv.legendKept')}</li><li>{sw('demolish')}{t('phv.legendDemolish')}</li><li>{sw('new')}{t('phv.legendNew')}</li></ul>);
 }
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 
@@ -214,6 +227,16 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg>
         {snap.site && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}</div>
     {renderTitleBlock(multi ? t('print.levelPlan', { name: levelName(i) }) : t('tb.plan'), `1:${sc.denominator}`)}</section>); })}
+    {/* renovare: situația existentă, demolările și situația propusă — doar pe nivelurile cu pereți noi sau de demolat, la scara planului */}
+    {phaseSheets(snap).map(({ level: i, phase }) => { const { box, sc, mm } = plans[i]!, pv = phaseView(snap, phase, i), name = t(`phv.${phase}`), title = multi ? t('phv.level', { title: name, name: levelName(i) }) : name;
+      return (<section key={`ph-${i}-${phase}`} className="print-plan print-break phase-sheet" data-testid={`phase-${i}-${phase}`} data-title={title}>
+        <h2>{title} <small>1:{sc.denominator}</small></h2>
+        <PlanSvg snap={pv.snap} catalog={catalog} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims phase={phase} voids={stairwells(snap, i)} aria={t('phv.aria', { title })} />
+        <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
+          {snap.site && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}
+          <PhaseLegend t={t} /></div>
+        <p className="phase-note">{t('phv.note')}</p>
+      {renderTitleBlock(title, `1:${sc.denominator}`)}</section>); })}
     {/* planșele pentru echipe: tavan și iluminat, pardoseli — la aceeași scară ca planul */}
     {views.map((v, i) => { const { box, sc, mm } = plans[i]!, lv = multi ? ` · ${levelName(i)}` : ''; return (<div key={'dr' + v.floor.id}>
       <section className="print-plan print-break" data-testid={`ceiling-${i}`}><h2>{t('draw.ceiling')}{lv} <small>1:{sc.denominator}</small></h2>

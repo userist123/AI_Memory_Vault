@@ -101,6 +101,9 @@ label.f{display:grid;gap:4px;font-size:var(--fs-xs);color:var(--lead)} label.f >
 .print-page{max-width:297mm;margin:0 auto;padding:10mm;background:#fff;color:#111}
 .print-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:8px} .print-head h1{margin:0;font-size:20px} .print-brand{display:grid;gap:6px;justify-items:end;font-weight:600}
 .print-plan{display:grid;gap:4px;justify-items:start} .print-plan>svg{background:#fbfaf7;max-width:none} .print-scale{display:flex;gap:10px;align-items:center;font-size:12px}
+/* planșele pe faze (existent / demolări / propus): legenda celor trei stări și nota de subsol */
+.phase-legend{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;list-style:none;margin:0;padding:0;font-size:11px} .phase-legend li{display:flex;gap:5px;align-items:center} .phase-legend-h{font-weight:600}
+.phase-note{margin:0;max-width:180mm;font-size:10.5px;font-style:italic;color:#555}
 .print-sec{margin-top:12px} .print-sec h2{font-size:16px;margin:0 0 6px} .print-sec h3{font-size:13px;margin:8px 0 3px}
 .print-table{width:100%;border-collapse:collapse;font-size:11.5px} .print-table th,.print-table td{text-align:left;padding:3px 6px;border-bottom:1px solid var(--rule);vertical-align:top} .print-table .num{text-align:right;font-variant-numeric:tabular-nums} .print-table tfoot th{border-top:2px solid var(--graphite)}
 .print-totals{margin:8px 0 0;font-size:12.5px} .print-foot{margin-top:14px;padding-top:6px;border-top:1px solid var(--rule);font-size:10.5px;color:var(--lead)}
@@ -1600,3 +1603,9 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .ws .levelbar .layers-foot .btn{border:1px solid #D5C9BE;border-radius:8px;background:#fff;color:#2A202A}
 .ws .levelbar .layers-foot .btn:disabled{opacity:.5}
 .ws .levelbar .layers-btn[aria-expanded=true]{background:#E3D8CE;color:#2A202A}
+
+/* turul virtual 360° (components/PanoramaView.tsx) */
+.pano-stage{position:relative;flex:1;min-height:0;display:flex} .pano-stage canvas{flex:1;width:100%;height:100%}
+.pano-hot{position:absolute;transform:translate(-50%,-50%);background:rgba(20,17,15,.78);color:#fff;border:2px solid #fff;border-radius:999px;padding:6px 12px;font:600 13px var(--sans);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4);white-space:nowrap}
+.pano-hot:hover,.pano-hot:focus-visible{background:#2470cf;outline:none}
+.pano-rooms{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:90%}

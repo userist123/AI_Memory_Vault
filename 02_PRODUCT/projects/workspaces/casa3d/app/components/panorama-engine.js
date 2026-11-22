@@ -6,14 +6,15 @@ THREE.ColorManagement.enabled = false;   // ca în viewer3d-engine.js (culori ca
  *  trebuie să cadă pe -z și aici: SphereGeometry pune u = 0,5 pe -x, deci sfera se rotește cu -90° în jurul lui y. */
 export function panoramaGeometry(){ const geo = new THREE.SphereGeometry(10, 64, 32); geo.scale(-1, 1, 1); geo.rotateY(-Math.PI / 2); return geo; }
 
-export function createPanorama(canvas, url){
+/** `onView({ lon, lat, fov, aspect })` se cheamă la fiecare desenare: punctele de trecere ale turului (core/pano-tour.ts) se așază după el. */
+export function createPanorama(canvas, url, onView){
   const R = new THREE.WebGLRenderer({ canvas, antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(75, 1, .1, 100);
   const tex = new THREE.TextureLoader().load(url, () => draw()); tex.colorSpace = THREE.SRGBColorSpace;
   const geo = panoramaGeometry(), mat = new THREE.MeshBasicMaterial({ map: tex }); scene.add(new THREE.Mesh(geo, mat));
   let lon = 0, lat = 0, drag = false, lx = 0, ly = 0;
   // aceeași convenție ca la randare: longitudine 0 = privire spre -z (nord pe plan), 90 = spre +x
-  const draw = () => { const phi = (90 - lat) * Math.PI / 180, th = lon * Math.PI / 180; cam.lookAt(Math.sin(phi) * Math.sin(th), Math.cos(phi), -Math.sin(phi) * Math.cos(th)); R.render(scene, cam); };
+  const draw = () => { const phi = (90 - lat) * Math.PI / 180, th = lon * Math.PI / 180; cam.lookAt(Math.sin(phi) * Math.sin(th), Math.cos(phi), -Math.sin(phi) * Math.cos(th)); R.render(scene, cam); onView?.({ lon, lat, fov: cam.fov, aspect: cam.aspect }); };
   const resize = () => { const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); draw(); };
   const down = e => { drag = true; lx = e.clientX; ly = e.clientY; canvas.setPointerCapture(e.pointerId); };
   const move = e => { if (!drag) return; lon -= (e.clientX - lx) * .15; lat = Math.max(-85, Math.min(85, lat + (e.clientY - ly) * .15)); lx = e.clientX; ly = e.clientY; draw(); };

@@ -4,6 +4,7 @@ import Joystick from './Joystick';
 import Icon from './Icon';
 import { usePrefs } from '@/lib/prefs';
 import PanoramaView from './PanoramaView';
+import { tourHotspots } from '@/core/pano-tour';
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { planAzimuth } from '@/core/north';
 import { viewerInput, type PlateVoid } from '@/lib/viewer-input';
@@ -20,7 +21,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
   selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void }){
   const { t, lang } = usePrefs();
-  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
+  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string; room?: string; lon?: number } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick), hoverRef = useRef(onHover); hoverRef.current = onHover;
   const [xray, setXray] = useState(false);
   // motorul se încarcă asincron: selecția și o cerere de încadrare venite înainte se aplică imediat după creare
@@ -71,11 +72,12 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(applyLight, [time, azimuth, snap.site?.northDeg]); // eslint-disable-line
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
-  function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
-    setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === room)?.name;
+  // turul virtual: din panorama unei camere se trece în vecina ei pe ușă (core/pano-tour.ts); privirea continuă în aceeași direcție
+  function openPano(target: string | null = room, lookLon = 0){ const rid = target; if (!rid || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
+    setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === rid)?.name;
         // camera aleasă în tur poate fi ștearsă între timp: spunem, nu tăcem
-        const url = rn ? v.current.renderPanorama(room, 2048) : null;
-        if (url && rn) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg') });
+        const url = rn ? v.current.renderPanorama(rid, 2048) : null;
+        if (url && rn) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg'), room: rid, lon: lookLon });
         else setPanoMsg(t('pano.noRoom')); }
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
@@ -120,7 +122,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
         <option value="">{t('viewer.tourPick')}</option>
         {snap.floor.rooms.map(r => <option key={r.id} value={r.id}>{t('viewer.tour', { room: r.name })}</option>)}
       </select>
-      {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
+      {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={() => openPano()}>360°</button>}
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       {/* un singur meniu „Afișare”: uși, tăierea machetei, lumină și calitate */}
       <button className="btn" aria-expanded={lightOpen} onClick={() => { setLightOpen(o => !o); setViewsOpen(false); }} title={t('viewer.displayTitle')} aria-label={t('viewer.displayTitle')}><Icon name="sun" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.display')}</span></button>
@@ -148,7 +150,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
     </div>}
     <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : (touch ? t('viewer.hintHouseTouch') : t('viewer.hintHouse')))}</div>
-    {pano && <PanoramaView url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} />}
+    {pano && <PanoramaView key={pano.url.length + (pano.room ?? '')} url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} hotspots={pano.room ? tourHotspots(snap.floor, pano.room) : []} startLon={pano.lon ?? 0} onGo={h => openPano(h.toRoomId, h.lon)} />}
     {/* WCAG 2.2 2.5.7: tot ce se face prin tragere (rotire, înclinare, zoom) are și un buton */}
     {!err && <div className="v3nudge" role="group" aria-label={t('viewer.nudgeAria')}>
       {([['left', '◀'], ['up', '▲'], ['down', '▼'], ['right', '▶'], ['in', '+'], ['out', '−']] as const).map(([k, sym]) =>
