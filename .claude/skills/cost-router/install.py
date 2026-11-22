@@ -103,9 +103,9 @@ HOOK_SPECS = (  # (event, script, matcher)
     ("SessionStart", "hook_self_update.py", "startup|resume"),
 )
 HOOK_TIMEOUT = {"hook_self_update.py": 60}  # seconds; a fetch is about two, the rest is margin
-PRIVILEGED_AGENTS = ("fable-consultant", "vault-reviewer")  # also pinned for the Agent hook
+PRIVILEGED_AGENTS = ("fable-consultant", "fable-executor", "vault-reviewer")  # also pinned for the Agent hook
 SHIPPED_AGENTS = ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md", "check-runner.md",
-                  "dfir-analyst.md", "test-author.md")  # removed by --uninstall when still the copy install wrote
+                  "dfir-analyst.md", "test-author.md", "fable-executor.md")  # removed by --uninstall when still the copy install wrote
 AGENT_MANIFEST = "agents.sha256.json"  # under the installed skill: hashes of the agent files it wrote
 DENY_RULES = (  # pure caches only: never source, never worth reading (deny beats any project allow, so
     # dependency trees such as node_modules/.venv and build output such as dist/ stay readable for debugging)
@@ -357,7 +357,8 @@ def _context_installed(home: Path) -> bool:
 _IGNORE = ("__pycache__", "chat")
 CONFIG_NAME = "config.json"  # machine-local pinned vault roots, written by install(), never part of a source
 PINNED_AGENTS = "agents.pinned.json"  # sha256 of the SOURCE agent files: the trust root of privileged definitions
-PIN_RECORD = "pins.sha256.json"  # sha256 of config.json and agents.pinned.json as install() wrote them (for --verify)
+PIN_RECORD = "pins.sha256.json"  # sha256 of config.json, agents.pinned.json and policy.json as install() wrote them
+POLICY_NAME = "policy.json"  # the fable-executor gate reads its flag ONLY from this copy, verified against PIN_RECORD
 _GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME, PINNED_AGENTS, PIN_RECORD}  # written by install(), not part of the source manifest
 
 
@@ -496,6 +497,7 @@ def pins_status(skill_dir: Path, agents_dir: Path, agents_src: Path | None) -> d
     config_ok = bool(record) and record.get(CONFIG_NAME) == sha_of(CONFIG_NAME) is not None
     pinned = _json_dict(skill_dir / PINNED_AGENTS)
     agents_pinned_ok = bool(record) and pinned is not None and record.get(PINNED_AGENTS) == sha_of(PINNED_AGENTS)
+    policy_ok = bool(record) and record.get(POLICY_NAME) == sha_of(POLICY_NAME) is not None
     differing, edited = [], []
     for name, want in sorted((pinned or {}).items()):
         try:
@@ -509,8 +511,8 @@ def pins_status(skill_dir: Path, agents_dir: Path, agents_src: Path | None) -> d
         if source != pinned:
             agents_pinned_ok = False
     return {"pins_recorded": bool(record), "config_ok": config_ok, "agents_pinned_ok": agents_pinned_ok,
-            "agents_differing": differing, "agents_edited": edited,
-            "pins_ok": bool(record) and config_ok and agents_pinned_ok and not differing}
+            "policy_ok": policy_ok, "agents_differing": differing, "agents_edited": edited,
+            "pins_ok": bool(record) and config_ok and agents_pinned_ok and policy_ok and not differing}
 
 
 def verify(home: Path, source_root: Path | None = None) -> dict:
@@ -681,7 +683,8 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     (staging / PINNED_AGENTS).write_text(
         json.dumps({src.name: _lf_sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
     (staging / PIN_RECORD).write_text(
-        json.dumps({n: _file_sha(staging / n) for n in (CONFIG_NAME, PINNED_AGENTS)}, indent=2) + "\n", encoding="utf-8")
+        json.dumps({n: _file_sha(staging / n) for n in (CONFIG_NAME, PINNED_AGENTS, POLICY_NAME)}, indent=2) + "\n",
+        encoding="utf-8")
     try:
         _swap_in(staging, skill_dir)
     finally:
@@ -791,8 +794,9 @@ def main(argv=None) -> int:
             print("installed VERSION: " + (" / ".join(r["installed_version"]) or "MISSING"))
             print("pinned vault roots (config.json): " + (", ".join(r["pinned_vault_roots"]) or "none"))
             if not r["pins_ok"]:
-                print("PINS problem: config.json ok=%s, agents.pinned.json ok=%s, recorded=%s, privileged agent files "
-                      "differing: %s" % (r["config_ok"], r["agents_pinned_ok"], r["pins_recorded"],
+                print("PINS problem: config.json ok=%s, agents.pinned.json ok=%s, policy.json ok=%s, recorded=%s, privileged "
+                      "agent files differing: %s" % (r["config_ok"], r["agents_pinned_ok"], r["policy_ok"],
+                                                     r["pins_recorded"],
                                          ", ".join(r["agents_differing"]) or "none"))
             if r["agents_edited"]:
                 print("agent files edited here (not privileged, informational): " + ", ".join(r["agents_edited"]))

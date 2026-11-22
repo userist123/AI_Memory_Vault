@@ -84,7 +84,7 @@ def test_compile_is_byte_identical_twice_and_within_cap(tree):
     assert len(a) <= 16384
     reg = json.loads(a)
     ids = [e["id"] for e in reg["entries"]]
-    assert ids == sorted(ids) and len(ids) == 17
+    assert ids == sorted(ids) and len(ids) == 18
     assert all("src_sha256" not in e and "artifact_sha256" not in e for e in reg["entries"])  # hashes: own file
     hs = json.loads(rc.compile_full(s_dir, skills, agents).hashes)["entries"]
     assert all(h["artifact_sha256"] and len(h["src_sha256"]) == 64 for h in hs.values())
@@ -186,7 +186,7 @@ def test_bak_dirs_are_ignored(tree):
     shutil.copy2(_meta(s_dir, "surse-web"), dup)  # would be a mismatched id
     (s_dir / "roles" / "vault-worker.json.bak-1").write_text("{", encoding="utf-8")
     reg, _ = rc.compile_registry(s_dir, skills, agents)
-    assert len(reg["entries"]) == 17
+    assert len(reg["entries"]) == 18
 
 
 def test_size_cap_enforced(tree):
@@ -228,7 +228,7 @@ def test_shipped_sidecars_cover_the_required_set(tree):
     assert {e["id"] for e in reg["entries"]} == {
         "vault-worker", "vault-reviewer", "explore", "fable-consultant", "check-runner", "analist-juridic", "aplicatie-securizata",
         "surse-web", "agent-bridge", "animatie-3d", "clips-kitty", "clip", "prompt-director", "cost-router",
-        "dfir-analyst", "test-author", "repro-debugger"}
+        "dfir-analyst", "test-author", "repro-debugger", "fable-executor"}
     by = {e["id"]: e for e in reg["entries"]}
     assert by["cost-router"]["kind"] == "overlay" and by["prompt-director"]["kind"] == "overlay"
     assert by["fable-consultant"]["authority"] == {} and by["fable-consultant"]["tier"] == ["fable"] * 3
@@ -595,7 +595,7 @@ def test_malformed_untrusted_json_is_skipped_and_reported(tree):
     (skills / "junk" / "route.meta.json").write_text("{bad", encoding="utf-8")
     report = []
     reg, _ = rc.compile_registry(s_dir, skills, agents, report=report)
-    assert len(reg["entries"]) == 17 and any("junk" in r for r in report)
+    assert len(reg["entries"]) == 18 and any("junk" in r for r in report)
 
 
 def test_trusted_priority_wins_ties_and_untrusted_never_outranks(tree):

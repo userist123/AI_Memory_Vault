@@ -353,6 +353,34 @@ def record_resume(session_id, agent_id: str) -> bool:
         return _write_json(path, counts)
 
 
+def reserve_fable_executor(session_id, max_per_session: int):
+    """Take one fable-executor slot for this session: (True, count after) when count < max_per_session, else
+    (False, count). Read-modify-write under the same cross-process lock as the resume counter, so concurrent Agent
+    hooks never exceed the budget. Fails closed: (False, -1) when the session id, the lock or the write fails."""
+    path = _session_json(session_id, ".fable_executor")
+    if path is None or type(max_per_session) is not int or max_per_session < 1:
+        return False, -1
+    with _Locked(path) as lk:
+        if not lk.acquired:
+            return False, -1
+        count = 0
+        if path.exists():
+            try:  # a corrupted or foreign counter never reopens the budget
+                data = json.loads(path.read_text(encoding="utf-8"))
+                count = data["count"]
+                if type(count) is not int:
+                    return False, -1
+            except Exception:
+                return False, -1
+        if count < 0:
+            return False, -1
+        if count >= max_per_session:
+            return False, count
+        if not _write_json(path, {"count": count + 1, "ts": int(time.time())}):
+            return False, -1
+        return True, count + 1
+
+
 SEEN_MAX = 500
 USAGE_MAX = 200
 

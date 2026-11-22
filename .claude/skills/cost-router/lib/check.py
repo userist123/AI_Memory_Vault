@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Acceptance receipts: run a test/CI command and keep a small JSON record of what happened.
 
-    python -I <S>/lib/check.py run [--session <id>] --label <name> -- <command...>
+    python -I <S>/lib/check.py run [--session <id>] [--tier sonnet|opus] --label <name> -- <command...>
     python -I <S>/lib/check.py last [--label <name>] [--session <id>]
 
 `run` executes the command (argv list, no shell), captures the exit code, the duration, the last 40 lines of output
@@ -15,8 +15,13 @@ The exit status of this script is the command's own. `last` prints the newest re
 `--session` must match [A-Za-z0-9_-]{1,64} (else exit 2). A bare command name is resolved on PATH without the current
 directory; on Windows a name found only in the cwd is refused (exit 2). A receipt file over 256 KB is never read.
 
-A receipt is informational: the main session can forge one, so it never grants authority and no hook allows anything
-because of it. Stdlib only; no network; no LLM.
+`--tier sonnet|opus` records the tier of the agent whose work is being checked, and the receipt records the current
+prompt epoch of the session (route_state, written by the prompt hook; null without one).
+
+A receipt is informational: the main session can forge one. The only consumer that reads receipts as a condition is
+the default-off fable-executor gate (hook_agent_model): a failed sonnet AND a failed opus receipt of the same label in
+the same prompt epoch; that gate limits induced overspend, it is not a defence against a hostile main session.
+Stdlib only; no network; no LLM.
 """
 from __future__ import annotations
 
@@ -37,6 +42,7 @@ TAIL_LINES = 40
 MAX_LINE = 400
 MAX_AGE_SECONDS = 7 * 86400
 LABEL_RE = re.compile(r"[A-Za-z0-9_.-]{1,40}")
+TIERS = ("sonnet", "opus")  # --tier: the tier of the attempt being checked
 SESSION_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")  # no dot, no separator: a session id is part of a file name
 MAX_RECEIPT_BYTES = 256 * 1024  # a larger receipt is not one this script wrote: never read it
 _PYTEST = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b")
@@ -181,7 +187,20 @@ def shim_refusal(argv):
     return None
 
 
-def run(argv, label: str, session: str = "", timeout: float = 1800.0):
+def prompt_epoch(session: str):
+    """The epoch nonce of the session's current prompt (route_state), or None."""
+    if not session:
+        return None
+    try:
+        import route_state
+        state = route_state.load(session) or {}
+        epoch = state.get("epoch")
+        return epoch if isinstance(epoch, str) and epoch else None
+    except Exception:
+        return None
+
+
+def run(argv, label: str, session: str = "", timeout: float = 1800.0, tier=None):
     start = time.time()
     exe = resolve_exe(argv[0]) or argv[0]  # resolve .cmd/.exe shims like a shell would, never from the cwd
     code, text = 127, ""
@@ -203,7 +222,8 @@ def run(argv, label: str, session: str = "", timeout: float = 1800.0):
     tail = lines[-TAIL_LINES:]
     receipt = {"schema": 1, "label": label, "session": session or None, "epoch": int(start), "t": round(start, 3), "exit": int(code),
                "duration_s": round(time.time() - start, 2), "cmd_sha256": command_sha256(argv),
-               "summary": parse_summary(tail), "tail": tail}
+               "summary": parse_summary(tail), "tail": tail, "tier": tier if tier in TIERS else None,
+               "prompt_epoch": prompt_epoch(session)}
     return receipt
 
 
@@ -253,6 +273,7 @@ def main(argv=None) -> int:
     r.add_argument("--label", required=True)
     r.add_argument("--session", default="")
     r.add_argument("--timeout", type=float, default=1800.0)
+    r.add_argument("--tier", default=None)
     la = sub.add_parser("last")
     la.add_argument("--label", default="")
     la.add_argument("--session", default="")
@@ -267,6 +288,9 @@ def main(argv=None) -> int:
         if not cmd:
             print("check: give the command after --")
             return 2
+        if args.tier is not None and args.tier not in TIERS:
+            print("check: tier must be sonnet or opus")
+            return 2
         refusal = cwd_refusal(cmd) or shim_refusal(cmd)
         if not refusal and not os.path.dirname(cmd[0]) and resolve_exe(cmd[0]) is None:
             refusal = f"check: refused: executable {os.path.basename(cmd[0])!r} not found on PATH"
@@ -274,7 +298,7 @@ def main(argv=None) -> int:
             print(refusal)
             return 2
         session = _session(args.session)
-        receipt = run(cmd, args.label, session, args.timeout)
+        receipt = run(cmd, args.label, session, args.timeout, tier=args.tier)
         write_receipt(receipt, session)
         print(line_for(receipt))
         return receipt["exit"] if 0 <= receipt["exit"] < 256 else 1

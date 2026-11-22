@@ -3,6 +3,7 @@
 
 Sets the model of every subagent spawn from the policy route of its brief (description + prompt):
   - the exact `fable-consultant` agent -> Fable 5.2, read-only and advisory only (requires an opus session);
+  - the exact `fable-executor` agent -> Fable 5.2 only through _fable_executor_gate (default off, SKILL.md 4G);
   - every other Fable alias/model ID -> Opus (or capped to session tier), including unclassified briefs;
   - no model given             -> the route's model;
   - a model given              -> kept between the route's model and one tier above it (a one-notch
@@ -44,6 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 RISK_PREFIXES = ("risk_detected", "risk_floor")
 SPAWN_TOOLS = ("Agent", "Task")  # "Task" is the legacy name of the spawn tool
 FABLE_CONSULTANT = "fable-consultant"
+FABLE_EXECUTOR = "fable-executor"  # M11: gated, default off (see _fable_executor_gate)
 REVIEWER_MARKS = ("review", "verif")  # vault-reviewer, code-review, verifier: never below Opus
 # vault-worker, implementer: routed as implement; on risky code the floor moves to the mandatory
 # Opus reviewer (policy rules.implementer_risk_floor), so the worker stays on Sonnet.
@@ -436,7 +438,7 @@ def _agent_resolve(subagent_type: str):
 
 
 PINNED_AGENTS = "agents.pinned.json"  # {file name: sha256 of the SOURCE agent file}, written by install.py
-PRIVILEGED_AGENTS = frozenset({FABLE_CONSULTANT, "vault-reviewer"})
+PRIVILEGED_AGENTS = frozenset({FABLE_CONSULTANT, FABLE_EXECUTOR, "vault-reviewer"})
 
 
 def _pinned_agent_hashes():
@@ -621,6 +623,30 @@ def _valid_fable_consultant_frontmatter(fields) -> bool:
         and fields.get("model") == "claude-fable-5-2"
         and fields.get("effort") == "high"
         and fields.get("permissionMode") == "plan"
+    )
+
+
+FABLE_EXECUTOR_FRONTMATTER_KEYS = frozenset({"name", "description", "tools", "disallowedTools", "model", "effort"})
+FABLE_EXECUTOR_TOOLS = frozenset({"Read", "Grep", "Glob", "Bash", "Edit", "Write"})
+FABLE_EXECUTOR_REQUIRED_DENIALS = frozenset({
+    "Agent", "Task", "NotebookEdit", "WebFetch", "WebSearch", "ToolSearch", "Skill", "PowerShell", "mcp__*",
+})
+
+
+def _valid_fable_executor_frontmatter(fields) -> bool:
+    """The exact, pinned fable-executor definition: its OWN key set and tool set (never a relaxed consultant check).
+    Workspace tools only: no Agent/Task (spawn), no MCP, no WebFetch/WebSearch, no NotebookEdit."""
+    if not isinstance(fields, dict) or fields.get("__invalid__"):
+        return False
+    if set(fields) != FABLE_EXECUTOR_FRONTMATTER_KEYS:
+        return False
+    return (
+        fields.get("name") == FABLE_EXECUTOR
+        and bool(str(fields.get("description") or "").strip())
+        and _csv_values(fields.get("tools")) == FABLE_EXECUTOR_TOOLS
+        and FABLE_EXECUTOR_REQUIRED_DENIALS <= _csv_values(fields.get("disallowedTools"))
+        and fields.get("model") == "claude-fable-5-2"
+        and fields.get("effort") == "high"
     )
 
 
@@ -913,6 +939,179 @@ def choose(policy, mod, tool_input: dict, data: dict | None = None):
     return target, d
 
 
+FABLE_EXECUTOR_MAX_CAP = 10  # a policy max_per_session above this is malformed (disabled), not a bigger budget
+LOCAL_ONLY_IDS = frozenset({"dfir-analyst"})  # privacy specialists, also when the registry says nothing
+ATTEMPT_SOURCES = ("payload", "transcript", "stored", "env")  # a settings-file model is a guess, never an Opus session
+
+
+def _installed_skill_dir() -> Path:
+    return Path.home() / ".claude" / "skills" / "cost-router"
+
+
+def _installed_policy_raw():
+    """(policy dict, None) from the INSTALLED policy.json, only when its bytes match the sha256 install.py recorded in
+    pins.sha256.json; else (None, why). Never the project copy, an env var or prompt text (threat E2)."""
+    d = _installed_skill_dir()
+    try:
+        data = (d / "policy.json").read_bytes()
+    except OSError:
+        return None, "the installed policy.json is missing"
+    try:
+        record = json.loads((d / "pins.sha256.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None, "pins.sha256.json is missing or unreadable"
+    want = record.get("policy.json") if isinstance(record, dict) else None
+    if not isinstance(want, str) or want != hashlib.sha256(data).hexdigest():
+        return None, ("the installed policy.json is not the one recorded at install (pins.sha256.json); re-run "
+                      "install.py with a release pin that includes it")
+    try:
+        raw = json.loads(data.decode("utf-8"))
+    except Exception:
+        return None, "the installed policy.json is not valid JSON"
+    return (raw, None) if isinstance(raw, dict) else (None, "the installed policy.json is not an object")
+
+
+def _executor_budget(raw: dict):
+    """(max_per_session, None) when rules.fable_executor is exactly {"enabled": true, "max_per_session": 1..10},
+    else (None, why). Anything else, including the shipped enabled=false, means disabled."""
+    rules = raw.get("rules")
+    block = rules.get("fable_executor") if isinstance(rules, dict) else None
+    if not isinstance(block, dict) or set(block) != {"enabled", "max_per_session"}:
+        return None, "rules.fable_executor is missing or malformed in the installed policy: disabled"
+    if block["enabled"] is not True:
+        return None, "fable_executor is disabled in the installed policy (rules.fable_executor.enabled is not true)"
+    n = block["max_per_session"]
+    if type(n) is not int or not 1 <= n <= FABLE_EXECUTOR_MAX_CAP:
+        return None, f"rules.fable_executor.max_per_session must be an int 1..{FABLE_EXECUTOR_MAX_CAP}: disabled"
+    return n, None
+
+
+def _failed_ladder(sid: str, epoch: str):
+    """The label of a check that, in this session and prompt epoch, has a FAILED receipt from a sonnet-tier attempt
+    and one from an opus-tier attempt, and whose newest receipt is still failing; else None."""
+    import check  # noqa: E402  (the hook's own lib: receipts live under ~/.claude/cache, never in the project)
+    groups: dict = {}
+    for r in check.all_receipts(session=sid):  # sorted oldest first
+        if r.get("prompt_epoch") == epoch and r.get("session") == sid and type(r.get("exit")) is int:
+            groups.setdefault(r["label"], []).append(r)
+    for label, rs in sorted(groups.items()):
+        if rs[-1]["exit"] == 0:
+            continue  # the check passes now: nothing is left to execute
+        tiers = {r.get("tier") for r in rs if r["exit"] != 0}
+        if {"sonnet", "opus"} <= tiers:
+            return label
+    return None
+
+
+def _fable_executor_gate(data: dict, tool_input: dict, fields, path, pinned, off: bool) -> int:
+    """M11 gate for a `fable-executor` spawn (default off). Every condition must hold, else exit 2 naming it:
+    (a) rules.fable_executor.enabled in the INSTALLED, hash-verified policy; (b) the session runs Opus; (c) the
+    definition is the pinned one and passes its own exact validator, no project file claims the name; (d) this session
+    and prompt epoch hold a failed check.py receipt from a sonnet-tier AND from an opus-tier attempt of the same check;
+    (f) no critical risk, no live-operation stem (rules.implementer_risk_floor.never_for_stems); (g) no local_only
+    specialist on this prompt or in the brief; (e) a slot of max_per_session, taken under a cross-process lock.
+    (h) COST_ROUTER_OFF bypasses none of it. Receipts and route state can be written by the main session: this limits
+    induced overspend, it does not stop a hostile Opus session (threat E1)."""
+    def deny(cond: str, why: str) -> int:
+        print(f"cost-router: fable-executor blocked: condition ({cond}) {why}; blocking spawn", file=sys.stderr)
+        return 2
+
+    raw, why = _installed_policy_raw()
+    if raw is None:
+        return deny("a", f"policy flag: {why}; the executor stays disabled")
+    max_n, why = _executor_budget(raw)
+    if max_n is None:
+        return deny("a", f"policy flag: {why}")
+    try:
+        from route import _load_router  # noqa: E402
+        mod = _load_router()
+        policy = mod.ClaudeModelPolicy(raw)
+        import route_state  # noqa: E402
+        import specialists  # noqa: E402
+    except Exception as exc:
+        return deny("a", f"the installed policy cannot be loaded ({type(exc).__name__})")
+    sid = data.get("session_id")
+    session, source = route_state.resolve_session_model_ex(sid, data, data.get("transcript_path"))
+    tier = _tier(policy, session) if source in ATTEMPT_SOURCES else None
+    if tier != "opus" or _requests_fable(session):
+        return deny("b", f"session model: the executor is spawned only from an Opus session; session is "
+                         f"{_model_label(session) if session and source in ATTEMPT_SOURCES else 'unknown'}")
+    if not isinstance(pinned, dict) or not isinstance(pinned.get(FABLE_EXECUTOR), str):
+        return deny("c", "definition: agents.pinned.json has no pinned fable-executor definition (re-run install.py)")
+    if path is None or not _valid_fable_executor_frontmatter(fields):
+        return deny("c", "definition: fable-executor is missing or violates its exact agent contract")
+    try:
+        actual = _lf_sha256(Path(path).read_bytes())
+    except OSError:
+        return deny("c", "definition: the fable-executor definition is unreadable")
+    if actual != pinned[FABLE_EXECUTOR]:
+        return deny("c", f"definition: {Path(path).name} does not match the pinned sha256 recorded at install")
+    problem = _project_override_problem(pinned, {FABLE_EXECUTOR, FABLE_CONSULTANT})
+    if problem:
+        return deny("c", f"definition: {problem}")
+    model = tool_input.get("model")
+    if model is not None and str(model).strip().lower() not in ("fable", "claude-fable-5-2"):
+        return deny("c", f"definition: the executor runs only on its pinned Fable model, not {_model_label(model)}")
+    state = route_state.load(sid)
+    epoch = state.get("epoch") if isinstance(state, dict) else None
+    if not isinstance(epoch, str) or not epoch:
+        return deny("d", "failed checks: no route state for the current prompt (the prompt hook did not run)")
+    sid_s = str(sid or "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", sid_s):
+        return deny("d", "failed checks: the session id cannot key check.py receipts")
+    try:
+        label = _failed_ladder(sid_s, epoch)
+    except Exception:
+        label = None
+    if label is None:
+        return deny("d", "failed checks: needs a FAILED check.py receipt of the same check from a sonnet-tier attempt "
+                         "AND from an opus-tier attempt in this prompt (check.py run --session <id> --tier sonnet|opus)")
+    brief = f"{tool_input.get('description') or ''} {tool_input.get('prompt') or ''}"
+    try:
+        try:
+            d = mod.route(policy, brief[:20000], for_subagent=True, role="implementer")
+        except TypeError:
+            d = mod.route(policy, brief[:20000], for_subagent=True)
+        risk = _risk_label(d)
+    except Exception:
+        return deny("f", "risk: the brief cannot be routed")
+    if risk == "critical" or state.get("risk") == "critical":
+        return deny("f", "risk: critical risk stays on Opus")
+    rule = policy.rules.get("implementer_risk_floor")
+    stems = [str(k).lower() for k in (rule.get("never_for_stems") or ()) if k] if isinstance(rule, dict) else []
+    if not stems:
+        return deny("f", "risk: the installed policy has no live-operation stems")
+    text = " " + re.sub(r"\s+", " ", brief.lower()) + " "
+    hit = next((k for k in stems if re.search(rf"(?<![^\W_]){re.escape(k)}", text)), None)
+    if hit:
+        return deny("f", f"risk: live operation ({hit!r}) stays on Opus")
+    spec = state.get("spec")
+    if not isinstance(spec, list):
+        return deny("g", "privacy: the prompt has no specialist record, so local_only work cannot be excluded")
+    reg = specialists.load(_installed_skill_dir() / "registry.json")
+    if not reg:
+        return deny("g", "privacy: the installed registry.json is missing or invalid, so local_only work cannot be "
+                         "excluded")
+    local = {i for i, e in reg.items() if e.get("privacy") == "local_only"} | LOCAL_ONLY_IDS
+    bad = [str(x) for x in spec if str(x) in local] + specialists.local_only_hits(brief, reg)
+    if bad:
+        return deny("g", f"privacy: local_only specialist {bad[0]!r} on this prompt")
+    ok, count = route_state.reserve_fable_executor(sid_s, max_n)
+    if not ok:
+        return deny("e", f"budget: {count}/{max_n} fable-executor spawns already used this session" if count >= 0
+                    else "budget: the per-session counter is unavailable (lock or write failed)")
+    reason = None if off else gate_and_mark(data)
+    if reason:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                                 "permissionDecisionReason": reason}}))
+        return 0
+    ctx = (f"cost-router: fable-executor allowed ({count}/{max_n} this session; check {label[:40]!r} failed on sonnet "
+           "and opus). An Opus vault-reviewer pass on the executor's diff is mandatory before DONE: spawn "
+           "vault-reviewer with the diff and the same acceptance check.")
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": ctx}}))
+    return 0
+
+
 def _verbose() -> bool:
     return os.environ.get("COST_ROUTER_VERBOSE_ROUTE", "").strip() == "1"
 
@@ -945,22 +1144,23 @@ def _main() -> int:
         print("cost-router: malformed Agent tool input; blocking spawn", file=sys.stderr)
         return 2
     stype = str(tool_input.get("subagent_type") or "").strip().lower()
-    if stype != FABLE_CONSULTANT and _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL")):
+    if stype not in (FABLE_CONSULTANT, FABLE_EXECUTOR) and _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL")):
         # CLAUDE_CODE_SUBAGENT_MODEL may override ANY model key (tool_input.model, frontmatter, our own rewrite), so
         # rewriting `model` cannot keep a non-consultant spawn off Fable: deny it, also under COST_ROUTER_OFF
         print("cost-router: CLAUDE_CODE_SUBAGENT_MODEL resolves to a Fable model and overrides every model setting; "
-              "only the pinned fable-consultant may run on Fable. Unset CLAUDE_CODE_SUBAGENT_MODEL (or set it to a "
+              "only the pinned fable-consultant and the gated fable-executor may run on Fable. Unset CLAUDE_CODE_SUBAGENT_MODEL (or set it to a "
               "non-Fable model); blocking spawn", file=sys.stderr)
         return 2
     agent_frontmatter = (
         _agent_frontmatter(stype)
-        if stype == FABLE_CONSULTANT or stype in PRIVILEGED_AGENTS or not tool_input.get("model") else None
+        if stype in (FABLE_CONSULTANT, FABLE_EXECUTOR) or stype in PRIVILEGED_AGENTS or not tool_input.get("model")
+        else None
     )
     pinned_agents = _pinned_agent_hashes()
     agent_path = _agent_resolve(stype)[1] if (pinned_agents is not None and agent_frontmatter) else None
     frontmatter_model = agent_frontmatter.get("model") if agent_frontmatter else None
     fable_sensitive = (
-        stype == FABLE_CONSULTANT
+        stype in (FABLE_CONSULTANT, FABLE_EXECUTOR)  # the executor gate below also runs under COST_ROUTER_OFF
         or _requests_fable(tool_input.get("model"))
         or _requests_fable(frontmatter_model)
         or _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"))  # the env override beats every model key
@@ -973,9 +1173,9 @@ def _main() -> int:
         return 0  # COST_ROUTER_OFF: no routing, no state, no output; only the Fable guard below still runs
     definition_note = None
     if pinned_agents is None:
-        if stype == FABLE_CONSULTANT:
+        if stype in (FABLE_CONSULTANT, FABLE_EXECUTOR):
             print("cost-router: agents.pinned.json is missing (the pinned sha256 of the agent definitions): cannot "
-                  "validate the fable-consultant definition; blocking spawn (run install.py from the trusted checkout)",
+                  f"validate the {stype} definition; blocking spawn (run install.py from the trusted checkout)",
                   file=sys.stderr)
             return 2
         mismatch = ("agents.pinned.json is missing, so the definition of agent "
@@ -1013,6 +1213,8 @@ def _main() -> int:
             print("cost-router: cannot validate Fable routing; blocking spawn", file=sys.stderr)
             return 2
         return 0
+    if stype == FABLE_EXECUTOR:
+        return _fable_executor_gate(data, tool_input, agent_frontmatter, agent_path, pinned_agents, off)
     try:
         mod = _load_router()
         policy = mod.ClaudeModelPolicy.from_file(policy_path())

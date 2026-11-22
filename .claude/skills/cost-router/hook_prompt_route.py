@@ -149,8 +149,9 @@ def sync_escalation(data: dict, flag: bool) -> None:
         pass
 
 
-def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bool = False) -> None:
-    """Write the session's route state; never raises."""
+def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bool = False, spec=()) -> None:
+    """Write the session's route state; never raises. `spec`: the specialist ids hinted for this prompt (lead, overlay),
+    recorded so the fable-executor gate (hook_agent_model) can refuse a prompt routed to a local_only specialist."""
     try:
         import route_state  # noqa: E402
         sid = data.get("session_id")
@@ -163,6 +164,7 @@ def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bo
             state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
                                           direct=direct_requested(prompt))
         state["escalation_authorized"] = escalation_authorized(prompt)  # this prompt epoch only
+        state["spec"] = [str(x)[:40] for x in spec if x][:8]
         if d is not None:
             state["risk"] = _risk_of(d)
         if same_tier and not state.get("direct"):
@@ -250,8 +252,14 @@ def main() -> int:
             _emit(warning)
         return 0
     same_tier = not direct_requested(prompt) and is_same_tier(resolve_model(data), d)
-    persist(data, prompt, d, same_tier=same_tier)
     sel = pick_specialist(prompt, d)
+    spec_ids = [sel.get("id"), sel.get("overlay")] if isinstance(sel, dict) else []
+    try:  # a privacy (local_only) trigger anywhere in the prompt is recorded whatever the class (fable-executor gate)
+        from specialists import local_only_hits  # noqa: E402
+        spec_ids += [x for x in local_only_hits(prompt) if x not in spec_ids]
+    except Exception:
+        pass
+    persist(data, prompt, d, same_tier=same_tier, spec=spec_ids)
     try:
         from specialists import spec_token  # noqa: E402
         spec = spec_token(sel)

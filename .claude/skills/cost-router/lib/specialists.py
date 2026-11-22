@@ -80,6 +80,8 @@ def select(prompt: str, task_class: str, registry: dict | None = None) -> dict |
         text = fold(str(prompt)[:MAX_PROMPT])
         best = {"overlay": None, "other": None}
         for e in reg.values():
+            if e.get("selectable") is False:
+                continue  # a gated entry (fable-executor): never selected by text, whatever triggers it carries
             h = _hits(text, e["triggers"])
             if not h or not _compatible(e, task_class):
                 continue
@@ -103,6 +105,21 @@ def select(prompt: str, task_class: str, registry: dict | None = None) -> dict |
                 "tier": list(lead.get("tier") or []), "subagent_type": lead.get("subagent_type")}
     except Exception:
         return None
+
+
+def local_only_hits(prompt: str, registry: dict | None = None) -> list:
+    """Ids of the trusted local_only (privacy) entries whose trigger appears in `prompt`, whatever the task class.
+    Used to keep the gated fable-executor off privacy work. [] when the registry cannot be loaded (callers that need
+    a guarantee check the registry themselves)."""
+    try:
+        reg = registry if registry is not None else load()
+        if not reg:
+            return []
+        text = fold(str(prompt)[:MAX_PROMPT])
+        return sorted(e["id"] for e in reg.values()
+                      if e.get("privacy") == "local_only" and not e.get("untrusted") and _hits(text, e["triggers"]))
+    except Exception:
+        return []
 
 
 def spec_token(sel: dict | None) -> str:

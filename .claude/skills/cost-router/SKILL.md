@@ -78,8 +78,8 @@ are respected. Provider-prefixed Fable IDs are detected, while `inherit` on any 
 forced to Opus, and so is `inherit` (tool input or agent frontmatter) or NO model at all (no tool-input model, none in
 the agent frontmatter: general-purpose, built-ins, project agents without `model:`) in a Fable session: all of these count
 as Fable-sensitive even with `COST_ROUTER_OFF=1`. `CLAUDE_CODE_SUBAGENT_MODEL` resolving to a Fable model is DENIED
-(exit 2) for every spawn except the pinned `fable-consultant`, because the variable may override any model key, so a
-rewritten `model` would not hold. Privileged definitions (`fable-consultant`, `vault-reviewer`) must match the sha256 in
+(exit 2) for every spawn except the pinned `fable-consultant` and the gated `fable-executor` (4G), because the variable may override any model key, so a
+rewritten `model` would not hold. Privileged definitions (`fable-consultant`, `fable-executor`, `vault-reviewer`) must match the sha256 in
 `agents.pinned.json` (written at install; line endings normalized to LF before hashing, so CRLF checkouts match). Every
 file in a project `.claude/agents/` must carry exactly one plain `name: <[A-Za-z0-9_-]+>` line (trailing `# comment`
 allowed; no quotes, escapes, tags, anchors, block scalars, flow mappings, `? name`); a file that does not may claim a
@@ -398,6 +398,38 @@ is started by cmd.exe, which re-parses the command line: `check.py` refuses (exi
 a double quote or a newline. `--session` must match `[A-Za-z0-9_-]{1,64}` (exit 2 otherwise); a bare command name is
 resolved on PATH without the cwd (Windows: a name found only in the cwd is refused, exit 2); `last` and the escalation note
 never read a receipt file over 256 KB. Residual: the list is a denylist (a `!` for delayed expansion is not refused) and a shim that evaluates its own arguments stays the caller's risk; run untrusted shims through an `.exe`.
+`--tier sonnet|opus` (any other value: exit 2) records the tier of the attempt whose work is checked; every receipt also
+records the session's current prompt epoch (`prompt_epoch`, from the route state; null without one).
+
+### 4G. `fable-executor` (M11, DEFAULT OFF)
+
+`.claude/agents/fable-executor.md`: Fable 5.2 (`claude-fable-5-2`), tools exactly Read, Grep, Glob, Bash, Edit, Write
+(Agent/Task, MCP, WebFetch/WebSearch, NotebookEdit denied), checked by its own exact validator
+(`_valid_fable_executor_frontmatter`; the consultant validator is unchanged), pinned in `agents.pinned.json`, privileged
+(an edited copy is backed up and replaced at install; a project file claiming the name blocks). Sidecar
+`roles/fable-executor.json` has no triggers and `selectable: false`: text never selects it. Owner rule: Haiku/Sonnet
+execute, Opus advises and reviews, Opus or Fable execute only after the cheaper tiers failed.
+The Agent hook allows a `fable-executor` spawn only when ALL hold, else exit 2 naming the condition:
+(a) `rules.fable_executor.enabled` is `true` in the INSTALLED `~/.claude/skills/cost-router/policy.json` whose sha256
+equals the one install.py recorded in `pins.sha256.json` (never the project copy, an env var, prompt text or a user-scope
+sidecar; `max_per_session` int 1..10); (b) the session model is Opus (payload/transcript/stored/env, never a settings
+guess; not Fable); (c) the definition matches its pin and the validator, no project file claims the name, no explicit
+non-Fable model; (d) this session and prompt epoch hold a FAILED receipt of the same check label from `--tier sonnet` and
+from `--tier opus`, and the newest receipt of that label still fails; (e) fewer than `max_per_session` executor spawns this
+session (counter `route-<sid>.fable_executor` under the same lock as the resume counter); (f) no critical risk (brief or
+prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_for_stems`); (g) no local_only specialist
+(dfir-analyst) recorded for the prompt or triggered by the brief, and the installed registry is readable; (h)
+`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
+vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
+spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
+Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` under `rules.fable_executor` in
+`04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
+(`python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n+1> --out <pin>`, commit the
+pin), then re-run `python .claude/skills/cost-router/install.py --source-ref <sha> --release-pin <pin>` and
+`install.py --verify --require-hooks` (exit 0, `policy_ok` true). Editing the installed `policy.json` by hand changes its
+hash and keeps the executor disabled (and fails `--verify`). Disable: the same steps with `false`.
+Threat residuals: receipts, route state and `pins.sha256.json` are writable by the same user, so the gate limits induced
+overspend; it does not stop a hostile Opus main session (E1). The stem list is a denylist.
 
 ## 5. Report shape (end of task)
 

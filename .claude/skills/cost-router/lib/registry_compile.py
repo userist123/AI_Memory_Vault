@@ -18,7 +18,8 @@ same sidecar, e.g. the registry_src one and the installed one, count as one). An
 
 Schema v1 (all mandatory unless marked): schema_version, id, kind, domain, task_classes, triggers{ro,en}, summary,
 run_in, subagent_type (iff run_in == subagent), tier{min,default,max}, tools, authority{write,execute,network,spawn},
-acceptance, risk_ceiling, privacy, priority. Optional: not_for, uses, effort, escalates_to, cost{class,typical_usd}.
+acceptance, risk_ceiling, privacy, priority. Optional: not_for, uses, effort, escalates_to, cost{class,typical_usd},
+selectable (only `false`, trusted only, with empty triggers: never selected by text, e.g. the gated fable-executor).
 `approve` and `merge` are not fields: they are always false and a sidecar cannot name them.
 """
 from __future__ import annotations
@@ -46,7 +47,7 @@ de si sa la pe cu un o ca ce nu ma te se am ai au al ale ar fi fie din dar sau m
 pentru sunt era erau fost fiind acest aceasta aceste acesta acei aceea ei ea el ele noi voi eu tu mea
 tau lui lor iar deci tot toate toti orice fiecare
 """.split())
-PRIVILEGED_IDS = frozenset({"fable-consultant", "vault-reviewer"})
+PRIVILEGED_IDS = frozenset({"fable-consultant", "fable-executor", "vault-reviewer"})
 BAK_MARK = ".bak-"
 POLICY_CLASSES = ("explore", "summarize", "implement", "review", "design", "frontier")
 KINDS = ("agent", "skill", "overlay", "external")
@@ -57,7 +58,7 @@ ID_RE = re.compile(r"^[a-z0-9-]{1,40}$")
 TRIGGER_BAD = set("\\^$*+?()[]{}|<>")  # literal phrases only, no regex
 MANDATORY = ("schema_version", "id", "kind", "domain", "task_classes", "triggers", "summary", "run_in", "tier", "tools",
              "authority", "acceptance", "risk_ceiling", "privacy", "priority")
-OPTIONAL = ("subagent_type", "not_for", "uses", "effort", "escalates_to", "cost")
+OPTIONAL = ("subagent_type", "not_for", "uses", "effort", "escalates_to", "cost", "selectable")
 
 
 class RegistryError(ValueError):
@@ -146,7 +147,16 @@ def validate(meta: dict, where: str, untrusted: bool = False) -> dict:
                     continue
                 raise RegistryError(f"{where}.triggers.{lang}: {p!r} is {problem}")
             folded.append(f)
-    if not folded:
+    if "selectable" in meta:
+        # selectable=false (trusted sidecars only): an entry the text can never select (the gated fable-executor);
+        # it carries no trigger at all
+        if meta["selectable"] is not False:
+            raise RegistryError(f"{where}: selectable may only be false (omit it for a selectable entry)")
+        if untrusted:
+            raise RegistryError(f"{where}: selectable is not allowed in a user-scope sidecar")
+        if trig["ro"] or trig["en"]:
+            raise RegistryError(f"{where}: a non-selectable entry has no triggers")
+    elif not folded:
         raise RegistryError(f"{where}.triggers: at least one phrase")
     if not _is_str(meta["summary"], 160):
         raise RegistryError(f"{where}: summary must be 1..160 chars")
@@ -257,6 +267,8 @@ def compact(e: dict) -> dict:
         out["subagent_type"] = e["subagent_type"]
     if e["privacy"] != "standard":
         out["privacy"] = e["privacy"]
+    if e.get("selectable") is False:
+        out["selectable"] = False
     return out
 
 
