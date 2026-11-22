@@ -36,10 +36,22 @@ Done
   release binaries; actions pinned by SHA. Skeleton dirs: core/studio_core, wsl/opt-aas-bin, images/{proxy,
   web-build,android-build}, apps/{backend,mcp-app,desktop}, tests/{security,integration,ui,local_gate}.
 
+- S1 done (2026-11-23): vendored core from AWS 25b3eab (git archive only) into core/studio_core (24 files) and
+  8 test files into tests/ + tests/vendored; VENDORED.json (32 entries with upstream/local sha256, 4 patched with
+  reasons, 30 dropped tests with reasons, local_files); scripts/check_vendored.py (exit 1 on unlisted divergence,
+  --upstream-repo re-derives upstream hashes) + tests/ci/test_check_vendored.py positive controls. ProjectKind seam
+  in core/studio_core/project_kind.py (Protocol validate/build/publish + initial_settings, registry, NullKind; the
+  design's kinds/ package name is not used). services.py imports no website module; Studio resolves its kind on use
+  and fails closed (Unavailable) for an unregistered kind ("app" not registered yet). pyproject.toml exact pins from
+  AWS uv.lock, uv.lock seeded from it. uv run pytest -q: 83 passed on Windows. CI pytest job: uv 0.13.9 sha256-pinned,
+  uv sync --frozen, check_vendored, pytest.
+
 Next (in order)
-4. (S1, redo in vault; the stopped attempt left unreviewed files only in E:/claude-work/ai-app-studio) Seam in studio_core (project kinds), copy shared core from AWS 25b3eab.
 5. Probes as failing tests (test-author), then implementation slices by one vault-worker at a time, each
-   followed by vault-reviewer; then delivery gate (aplicatie-securizata step 7).
+   followed by vault-reviewer; then delivery gate (aplicatie-securizata step 7). First app slice: register the
+   "app" kind (kinds/app.py or project_kind), projects.kind column + migration 0003, appfiles.py validate.
+   Pending from S1: config.py still reads AWS_* env and port 17865 (separate identity AAS_*/17875 not done);
+   visual/service.py keeps lazy imports of computer_use/BIM helpers (unreachable in AAS, patch when wiring).
 
 Key facts
 - WSL2 NAT mode. Never touch AVD s9emu, ~/debug.keystore, ~/android/**, the owner's ~/.android.

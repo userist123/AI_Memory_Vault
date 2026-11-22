@@ -1,0 +1,431 @@
+{
+  "upstream": "AI Website Studio",
+  "upstream_commit": "25b3eab",
+  "note": "sha256 over raw file bytes (repo stores text with LF). Unlisted change => scripts/check_vendored.py exits 1. Track upstream security fixes in AWS and re-vendor with updated hashes (THREAT_MODEL.md N6).",
+  "files": [
+    {
+      "path": "core/studio_core/__init__.py",
+      "upstream_path": "core/studio_core/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "bbbbe49b842ae76c26f781f57fbcec03ffdb3b12f0bbd77e15129e34d66125db",
+      "local_sha256": "bbbbe49b842ae76c26f781f57fbcec03ffdb3b12f0bbd77e15129e34d66125db",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/policy.py",
+      "upstream_path": "core/studio_core/policy.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "ff1da74cecf162f6b3e8e724e4630e8de704c3f555ebc1d7a8d94be4769665ea",
+      "local_sha256": "ff1da74cecf162f6b3e8e724e4630e8de704c3f555ebc1d7a8d94be4769665ea",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/audit.py",
+      "upstream_path": "core/studio_core/audit.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "0c006251c2cf141ea3592b84e51e54b79a15ea5989c80632b9960f605af47e71",
+      "local_sha256": "0c006251c2cf141ea3592b84e51e54b79a15ea5989c80632b9960f605af47e71",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/workspace.py",
+      "upstream_path": "core/studio_core/workspace.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "685020cba4533fbfe055464703b3bcc05b887f47023e98e482c589ad686ee5b9",
+      "local_sha256": "685020cba4533fbfe055464703b3bcc05b887f47023e98e482c589ad686ee5b9",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/services.py",
+      "upstream_path": "core/studio_core/services.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "8af4717ebbcf2efff2cd47bd05522c2d489ef38e2d81fe5acc95795aa6c36d24",
+      "local_sha256": "01eae35d60b9488ca6ecb7ddfdc3db19dac5dcb12c26c80c1eb8b028097ff919",
+      "patched": true,
+      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required; write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model."
+    },
+    {
+      "path": "core/studio_core/db.py",
+      "upstream_path": "core/studio_core/db.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "86847a7dcabb8927c0f4fd9eed967e035b24fe5bf0c4095f027ec8f8af65173b",
+      "local_sha256": "86847a7dcabb8927c0f4fd9eed967e035b24fe5bf0c4095f027ec8f8af65173b",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/ids.py",
+      "upstream_path": "core/studio_core/ids.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "b0c0a8b573b5e11346640bf97c242a7a41032e3fb5d7059fd5735f5a3c276530",
+      "local_sha256": "b0c0a8b573b5e11346640bf97c242a7a41032e3fb5d7059fd5735f5a3c276530",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/errors.py",
+      "upstream_path": "core/studio_core/errors.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "3db424c0ff92f0ee1847e08f28a6668d916b420ab7f3b5133f270eee11ba998b",
+      "local_sha256": "3db424c0ff92f0ee1847e08f28a6668d916b420ab7f3b5133f270eee11ba998b",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/config.py",
+      "upstream_path": "core/studio_core/config.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "232d9aa9cd028ac0787047bae0dcf97e5ad999c3457224dec0610ed770148cbe",
+      "local_sha256": "232d9aa9cd028ac0787047bae0dcf97e5ad999c3457224dec0610ed770148cbe",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/migrations.py",
+      "upstream_path": "core/studio_core/migrations.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "bfb34a42b8403cc058f87df54975f45621146668d758d86212fdb22b7d4c7a40",
+      "local_sha256": "bfb34a42b8403cc058f87df54975f45621146668d758d86212fdb22b7d4c7a40",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/gitrepo.py",
+      "upstream_path": "core/studio_core/gitrepo.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "96686e6c296344f1ca001c3b72b7b7edb00318aa061e4b61481147338f97e741",
+      "local_sha256": "96686e6c296344f1ca001c3b72b7b7edb00318aa061e4b61481147338f97e741",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/alembic/env.py",
+      "upstream_path": "core/studio_core/alembic/env.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "fca4c04ffbe68744d29133e789164a0d812aa1415f9b510258e34614db76093c",
+      "local_sha256": "fca4c04ffbe68744d29133e789164a0d812aa1415f9b510258e34614db76093c",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/alembic/script.py.mako",
+      "upstream_path": "core/studio_core/alembic/script.py.mako",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "dba2f98f764737a861c0b271f2957391b05d86d2d69b697a7cb6f39383a2cc7f",
+      "local_sha256": "dba2f98f764737a861c0b271f2957391b05d86d2d69b697a7cb6f39383a2cc7f",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/alembic/versions/0001_initial_schema.py",
+      "upstream_path": "core/studio_core/alembic/versions/0001_initial_schema.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "89524e4fdf91e8ec2b4da21908da14e8472187cb067ce7fbe0d45b970610ab57",
+      "local_sha256": "89524e4fdf91e8ec2b4da21908da14e8472187cb067ce7fbe0d45b970610ab57",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/alembic/versions/0002_widen_status_columns.py",
+      "upstream_path": "core/studio_core/alembic/versions/0002_widen_status_columns.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "f2d9128076f2b2123f9ccbe39f2363bea3c273367271d005f86221b40836b8bb",
+      "local_sha256": "f2d9128076f2b2123f9ccbe39f2363bea3c273367271d005f86221b40836b8bb",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/__init__.py",
+      "upstream_path": "core/studio_core/visual/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "local_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/preview_server.py",
+      "upstream_path": "core/studio_core/visual/preview_server.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "2649f032ac57c3f22629655d1584a3de25d046a0d71b70bec30b929b1a422d67",
+      "local_sha256": "2649f032ac57c3f22629655d1584a3de25d046a0d71b70bec30b929b1a422d67",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/service.py",
+      "upstream_path": "core/studio_core/visual/service.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "2fe4f82f0ef2aa30ca01017bc7f3603f4603c7a751a25d6c0b6ee61c7f83f2fc",
+      "local_sha256": "2fe4f82f0ef2aa30ca01017bc7f3603f4603c7a751a25d6c0b6ee61c7f83f2fc",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/analyze.py",
+      "upstream_path": "core/studio_core/visual/analyze.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "8842d7392da5e885e17e624c6dd44646d8e36691a5bc853c47a866b9acdd8315",
+      "local_sha256": "8842d7392da5e885e17e624c6dd44646d8e36691a5bc853c47a866b9acdd8315",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/compare.py",
+      "upstream_path": "core/studio_core/visual/compare.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "2bb86410a678fa28d3998db2f9faff9fb73e718332e0d283f88e3fdd3d3f30ba",
+      "local_sha256": "2bb86410a678fa28d3998db2f9faff9fb73e718332e0d283f88e3fdd3d3f30ba",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/dom_probe.py",
+      "upstream_path": "core/studio_core/visual/dom_probe.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "6cec507d80d105c0efaaf752181b94af9bc1d22db89da098466680533fe1da28",
+      "local_sha256": "6cec507d80d105c0efaaf752181b94af9bc1d22db89da098466680533fe1da28",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/visual/ocr.py",
+      "upstream_path": "core/studio_core/visual/ocr.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "c49168513a282c187400d04d68af1bc3edd5c1e83534a8db0f875a0515a4987b",
+      "local_sha256": "c49168513a282c187400d04d68af1bc3edd5c1e83534a8db0f875a0515a4987b",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/ai/__init__.py",
+      "upstream_path": "core/studio_core/ai/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "local_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "core/studio_core/ai/providers.py",
+      "upstream_path": "core/studio_core/ai/providers.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "51a59bdc17665b4c112778f3dc9f00a1c4b8c0998ca93af50cc02fc53de0af6f",
+      "local_sha256": "51a59bdc17665b4c112778f3dc9f00a1c4b8c0998ca93af50cc02fc53de0af6f",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/__init__.py",
+      "upstream_path": "tests/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "local_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/conftest.py",
+      "upstream_path": "tests/conftest.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "8b560e882ff54fabe7f7374d1cafd0332e6789f0b26a0208bdec1f36f27b9cac",
+      "local_sha256": "8b560e882ff54fabe7f7374d1cafd0332e6789f0b26a0208bdec1f36f27b9cac",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/vendored/unit/__init__.py",
+      "upstream_path": "tests/unit/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "local_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/vendored/unit/test_project_engine.py",
+      "upstream_path": "tests/unit/test_project_engine.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "85eed59916230ab42f6ef9d12e290ec9e947ed28cd3b9f021f4b4fc40eb78fdf",
+      "local_sha256": "7bc2af991c55960aa5eb15eb2e33799c0ec9cabe1538765d8864459f5c961c1c",
+      "patched": true,
+      "patch_reason": "removed website-only tests (templates/components/theme/component_model) and the component_model import; remaining tests unchanged; generic equivalents re-covered in tests/unit/test_project_kind.py"
+    },
+    {
+      "path": "tests/vendored/unit/test_ocr.py",
+      "upstream_path": "tests/unit/test_ocr.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "011fbded107b0e28f82eb137a27a2d5d969ac8ed3b3a439cd54b5187d3130a74",
+      "local_sha256": "011fbded107b0e28f82eb137a27a2d5d969ac8ed3b3a439cd54b5187d3130a74",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/vendored/security/__init__.py",
+      "upstream_path": "tests/security/__init__.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "local_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "patched": false,
+      "patch_reason": ""
+    },
+    {
+      "path": "tests/vendored/security/test_core_security.py",
+      "upstream_path": "tests/security/test_core_security.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "114a5fd5f4b6fa83a8c827b122cee22801e43c0383a905dc693b9bd82ce8eff1",
+      "local_sha256": "983ca518f48435aeb99472800510ce32a0991339002a09835878184624bfd32d",
+      "patched": true,
+      "patch_reason": "removed component-injection tests (css/url/html escape/style property) and their section comment; remaining tests unchanged"
+    },
+    {
+      "path": "tests/vendored/security/test_review_round1.py",
+      "upstream_path": "tests/security/test_review_round1.py",
+      "upstream_commit": "25b3eab",
+      "upstream_sha256": "a1d56629c44ef016f138f8d327654e0bffbde13224dae6be41c2b752d622ecee",
+      "local_sha256": "0e2b5de4c03d2f0807f0e04ba6671648708c1e94a13d909dce81ea1a73ea80d0",
+      "patched": true,
+      "patch_reason": "removed test_css_grammar_round1 (components) and test_export_does_not_follow_junctions (used template 'landing'; re-covered unchanged in assertions by tests/unit/test_project_kind.py)"
+    }
+  ],
+  "local_files": [
+    {
+      "path": "core/studio_core/project_kind.py",
+      "reason": "AAS-owned ProjectKind seam: Protocol, registry, NullKind"
+    },
+    {
+      "path": "tests/vendored/__init__.py",
+      "reason": "AAS-owned package marker"
+    },
+    {
+      "path": "tests/vendored/conftest.py",
+      "reason": "AAS-owned: runs vendored tests against NullKind"
+    }
+  ],
+  "dropped_tests": [
+    {
+      "upstream_path": "tests/unit/test_ai_engine.py",
+      "reason": "needs studio_core.ai.engine (not vendored; built-in runner replaces it, DESIGN.md 6.1)"
+    },
+    {
+      "upstream_path": "tests/unit/test_assets.py",
+      "reason": "needs studio_core.assets (not in the vendored list)"
+    },
+    {
+      "upstream_path": "tests/unit/test_bim.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): bim"
+    },
+    {
+      "upstream_path": "tests/unit/test_blender.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): blender"
+    },
+    {
+      "upstream_path": "tests/unit/test_bonsai.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): bim/bonsai"
+    },
+    {
+      "upstream_path": "tests/unit/bonsai_edit.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): bim/bonsai helper"
+    },
+    {
+      "upstream_path": "tests/unit/test_codefiles.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): codefiles (replaced by appfiles.py)"
+    },
+    {
+      "upstream_path": "tests/unit/test_deploy_git.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): deploy"
+    },
+    {
+      "upstream_path": "tests/unit/test_geometry.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): computer_use"
+    },
+    {
+      "upstream_path": "tests/unit/test_qa_deploy.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): qa/deploy"
+    },
+    {
+      "upstream_path": "tests/unit/test_templates.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): templates"
+    },
+    {
+      "upstream_path": "tests/unit/test_git.py",
+      "reason": "every test uses website templates/components; re-covered with files via NullKind in tests/unit/test_project_kind.py (same assertions)"
+    },
+    {
+      "upstream_path": "tests/security/test_review_round2.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): assets, deploy, scene_model"
+    },
+    {
+      "upstream_path": "tests/security/test_terminal.py",
+      "reason": "website-only module not vendored (DESIGN.md section 1): terminal"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_create_project_from_template_renders_site",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_every_operation_writes_tool_execution_with_required_fields",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_stale_revision_is_a_conflict_and_does_not_overwrite",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_mutation_requires_base_revision",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_undo_redo_and_restore",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_move_component_structural_and_cycle_rejected",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_remove_component_removes_subtree",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_export_zip_contains_site",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_component_schema_migration_v0_to_v1",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/unit/test_project_engine.py::test_theme_is_rendered_as_css_variables",
+      "reason": "uses website templates/components/theme; generic engine part re-covered in tests/unit/test_project_kind.py where applicable"
+    },
+    {
+      "upstream_path": "tests/security/test_core_security.py::test_css_injection_rejected",
+      "reason": "component data injection (component_model/renderer not vendored); app writes are gated by appfiles.py probes later"
+    },
+    {
+      "upstream_path": "tests/security/test_core_security.py::test_dangerous_urls_rejected",
+      "reason": "component data injection (component_model/renderer not vendored); app writes are gated by appfiles.py probes later"
+    },
+    {
+      "upstream_path": "tests/security/test_core_security.py::test_text_is_html_escaped",
+      "reason": "component data injection (component_model/renderer not vendored); app writes are gated by appfiles.py probes later"
+    },
+    {
+      "upstream_path": "tests/security/test_core_security.py::test_unknown_style_property_rejected",
+      "reason": "component data injection (component_model/renderer not vendored); app writes are gated by appfiles.py probes later"
+    },
+    {
+      "upstream_path": "tests/security/test_review_round1.py::test_css_grammar_round1",
+      "reason": "component CSS grammar (component_model not vendored)"
+    },
+    {
+      "upstream_path": "tests/security/test_review_round1.py::test_export_does_not_follow_junctions",
+      "reason": "used template 'landing'; same assertions re-covered in tests/unit/test_project_kind.py"
+    }
+  ]
+}
