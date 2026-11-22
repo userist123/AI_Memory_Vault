@@ -338,7 +338,8 @@ def _context_installed(home: Path) -> bool:
 
 
 _IGNORE = ("__pycache__", "chat")
-_GENERATED = {"VERSION", AGENT_MANIFEST}  # written by install(), not part of the source manifest
+CONFIG_NAME = "config.json"  # machine-local pinned vault roots, written by install(), never part of a source
+_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME}  # written by install(), not part of the source manifest
 
 
 def _file_sha(path: Path) -> str:
@@ -384,6 +385,24 @@ def _is_installed_layout() -> bool:
     """True when this script is the INSTALLED copy: install() put the router and the policy inside it, and the
     repository layout `REPO = SKILL_SRC.parents[2]` would then be the home directory, not a checkout."""
     return (SKILL_SRC / "lib" / "claude_model_router.py").is_file() and (SKILL_SRC / "policy.json").is_file()
+
+
+def _vault_shaped(root: Path) -> bool:
+    return (root / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py").is_file()
+
+
+def _norm_root(path) -> str:
+    return os.path.normcase(os.path.realpath(str(path)))
+
+
+def read_pinned_roots(skill_dir: Path) -> list[str]:
+    """The vault roots recorded in an installed skill's config.json (empty when absent or malformed)."""
+    try:
+        data = json.loads((skill_dir / CONFIG_NAME).read_text(encoding="utf-8"))
+        roots = data.get("vault_roots")
+        return [r for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
+    except (OSError, ValueError, AttributeError):
+        return []
 
 
 def _repo_head(repo: Path | None = None) -> str:
@@ -470,12 +489,14 @@ def verify(home: Path, source_root: Path | None = None) -> dict:
             "missing": missing, "extra": extra, "differing": differing,
             "installed_version": version, "source_version": [head, manifest_hash(want)],
             "version_missing": not version, "version_problem": version_problem, "layout": layout,
+            "pinned_vault_roots": read_pinned_roots(skill_dir),
             **hook_status(home)}
 
 
 def install(home: Path, with_hook: bool, force: bool, session_start: bool = False,
             with_context: bool = True, source_ref: str | None = None, self_update: bool = False,
-            source_root: Path | None = None, pin_file: Path | None = None) -> list[str]:
+            source_root: Path | None = None, pin_file: Path | None = None,
+            pin_roots: tuple[Path, ...] = ()) -> list[str]:
     if source_root is not None:
         skill_src = source_root / ".claude" / "skills" / "cost-router"
         router_src = source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
@@ -509,6 +530,18 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         old_seq = _pin_seq(skill_dir / PIN_NAME)
         if old_seq is not None and new_seq < old_seq and not force:
             raise ValueError(f"downgrade refused: installed release pin seq {old_seq} > {new_seq} (--force to override)")
+    # Pinned vault roots (P1): the hooks run the Vault router only inside these. Kept from the previous install; this
+    # checkout is added only when the installer runs FROM a checkout (never for a --source-root staging tree, which
+    # is a temporary directory); --pin-root adds more (e.g. a vault worktree). Every root must really be a vault.
+    roots = read_pinned_roots(skill_dir)
+    candidates = list(pin_roots) + ([REPO] if source_root is None and not _is_installed_layout() else [])
+    for cand in candidates:
+        if not _vault_shaped(Path(cand)):
+            if cand in pin_roots:
+                raise ValueError(f"--pin-root {cand} has no 03_IMPLEMENTATION/packages/routing/route_cli.py")
+            continue  # a checkout without the router (a skill-only copy) pins nothing
+        roots.append(_norm_root(cand))
+    roots = list(dict.fromkeys(roots))
     written = _written(skill_dir)
     staging = home / ".claude" / f"cost-router.staging-{os.getpid()}"  # same filesystem, outside skills/
     for leftover in (*(home / ".claude").glob("cost-router.staging-*"), *(home / ".claude").glob("cost-router.old-*")):
@@ -519,6 +552,8 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     shutil.copy2(policy_src, staging / "policy.json")
     if pin_bytes is not None:
         (staging / PIN_NAME).write_bytes(pin_bytes)  # the pin being installed replaces whatever the source had
+    (staging / CONFIG_NAME).write_text(json.dumps({"schema": 1, "vault_roots": roots}, indent=2) + "\n",
+                                       encoding="utf-8")
     (staging / "VERSION").write_text(
         f"{source_ref or _repo_head()}\n{manifest_hash(manifest(staging))}\n", encoding="utf-8")
     agents_dir = home / ".claude" / "agents"
@@ -598,6 +633,10 @@ def main(argv=None) -> int:
     ap.add_argument("--source-root", type=Path,
                     help="copy the skill, router, policy and agents from this repo-shaped tree (the self-update hook "
                          "passes its verified staging dir)")
+    ap.add_argument("--pin-root", type=Path, action="append", default=[],
+                    help="pin one more vault root (a checkout or worktree with 03_IMPLEMENTATION/packages/routing/"
+                         "route_cli.py): only pinned roots ever run the Vault router from a hook. The checkout this "
+                         "installer runs from is pinned automatically; pins survive re-installs")
     ap.add_argument("--release-pin", type=Path,
                     help="release_pin.json to record in the install (validated); a lower seq than the installed pin "
                          "is refused unless --force")
@@ -658,7 +697,7 @@ def main(argv=None) -> int:
                 a.no_context = not _context_installed(a.home)
             touched = uninstall(a.home) if a.uninstall else install(
                 a.home, not a.no_hook, a.force, a.session_start, not a.no_context, a.source_ref, a.self_update,
-                a.source_root, a.release_pin)
+                a.source_root, a.release_pin, tuple(a.pin_root))
     except LockBusy as exc:
         print(f"skipped: {exc}" if quiet else f"not installed: {exc}", file=sys.stdout if quiet else sys.stderr)
         return 0 if quiet else 1

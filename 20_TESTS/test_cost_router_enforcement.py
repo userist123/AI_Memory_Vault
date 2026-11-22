@@ -170,6 +170,7 @@ def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home, t
     # and would win over a namespace-only fake, so the real router would run instead of this crashing one
     (cli.parent / "__init__.py").write_text("", encoding="utf-8")
     cli.write_text("import sys; sys.exit(1)", encoding="utf-8")
+    iso.pin_vault(home, proj)  # only a pinned vault root runs the in-hook router
     _prompt(home, IMPLEMENT)
     out = _agent(home, project=proj)
     assert out["permissionDecision"] == "deny"

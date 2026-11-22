@@ -444,8 +444,42 @@ def project_dir(data: Optional[dict] = None) -> Path:
     return Path(cwd) if cwd else Path.cwd()
 
 
-def in_vault(data: Optional[dict] = None) -> bool:
+CONFIG_NAME = "config.json"  # machine-local; written by install.py next to the INSTALLED skill, from a trusted checkout
+ROUTE_CLI_REL = ("03_IMPLEMENTATION", "packages", "routing", "route_cli.py")
+
+
+def normalize_root(path) -> str:
+    """The comparison form of a vault root: absolute, symlinks resolved, case-normalized (Windows)."""
+    return os.path.normcase(os.path.realpath(str(path)))
+
+
+def pinned_vault_roots() -> list:
+    """Vault roots pinned at install time, from ~/.claude/skills/cost-router/config.json ONLY. Never read from the
+    project or from the directory of the running hook: a project copy of the skill is attacker-controlled input.
+    Unreadable / malformed / non-absolute entries are dropped (fail closed: no pin, no router run)."""
     try:
-        return (project_dir(data) / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py").is_file()
+        cfg = Path.home() / ".claude" / "skills" / "cost-router" / CONFIG_NAME
+        data = json.loads(cfg.read_text(encoding="utf-8"))
+        roots = data.get("vault_roots") if isinstance(data, dict) else None
+        return [normalize_root(r) for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
     except Exception:
-        return False
+        return []
+
+
+def pinned_vault_root(data: Optional[dict] = None) -> Optional[Path]:
+    """The real path of the project when it IS a pinned vault root and still has the router entry point; else None."""
+    try:
+        root = project_dir(data)
+        real = normalize_root(root)
+        if real not in pinned_vault_roots():
+            return None
+        if not Path(os.path.realpath(str(root)), *ROUTE_CLI_REL).is_file():
+            return None
+        return Path(os.path.realpath(str(root)))
+    except Exception:
+        return None
+
+
+def in_vault(data: Optional[dict] = None) -> bool:
+    """True only for a vault root pinned at install time (not merely a directory shaped like the vault)."""
+    return pinned_vault_root(data) is not None

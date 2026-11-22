@@ -88,3 +88,129 @@ def test_p6_verify_reports_missing_hook_registration_and_onfailure(tmp_path):
     r = _run(inst, ["--home", str(home), "--verify", "--json", "--require-hooks"], home=home, cwd=tmp_path)
     rep = json.loads(r.stdout)
     assert rep["hooks_registered"] is True and rep["agent_hook_on_failure_block"] is False and r.returncode == 1
+
+
+# ---- shared fixtures for the hook probes --------------------------------------------------------------------------
+
+def _write_route(home: Path, **over):
+    state = {"task_class": "implement", "model": "sonnet", "subagent": "vault-worker", "main_calls": 0,
+             "delegated": False, "vault_routed": False, "direct": False, "epoch": "e1"}
+    state.update(over)
+    d = home / ".claude" / "cache" / "cost-router"
+    d.mkdir(parents=True, exist_ok=True)
+    for old in d.glob(f"route-{SID}*"):  # a fresh session: no receipt cached from an earlier spawn
+        old.unlink()
+    (d / f"route-{SID}.json").write_text(json.dumps(state), encoding="utf-8")
+
+
+def _sentinel_vault(base: Path, name: str) -> tuple[Path, Path]:
+    """A vault-shaped directory whose routing.route_cli writes <base>/<name>.sentinel and answers ROUTED."""
+    proj = base / name
+    pkg = proj / "03_IMPLEMENTATION" / "packages" / "routing"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    sentinel = base / f"{name}.sentinel"
+    (pkg / "route_cli.py").write_text(
+        "import json\n"
+        f"open({str(sentinel)!r}, 'a').write('ran')\n"
+        "print(json.dumps({'status': 'ROUTED', 'execution_contract': "
+        "{'subagent_type': 'vault-worker', 'execute_via': 'claude_code_agent_tool'}}))\n", encoding="utf-8")
+    return proj, sentinel
+
+
+def _pin(home: Path, *roots: Path):
+    cfg = _installed_skill(home) / "config.json"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text(json.dumps({"schema": 1, "vault_roots": [os.path.normcase(os.path.realpath(r)) for r in roots]}),
+                   encoding="utf-8")
+
+
+def _spawn(proj: Path, **tool_input) -> dict:
+    ti = {"description": "implement feature", "prompt": "implement it", "subagent_type": "vault-worker"}
+    ti.update(tool_input)
+    return {"session_id": SID, "hook_event_name": "PreToolUse", "tool_name": "Agent", "cwd": str(proj),
+            "tool_use_id": "sp1", "tool_input": ti}
+
+
+def _decision(r) -> dict:
+    return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else {}
+
+
+# ---- P1 (M2): a project shaped like the vault must not get its route_cli executed --------------------------------
+
+def test_p1_unpinned_vault_shaped_project_never_runs_its_route_cli(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    evil, evil_sentinel = _sentinel_vault(tmp_path, "evil")
+    _write_route(home)
+    # no config.json at all: nothing is pinned
+    r = _run(AGENT, stdin=json.dumps(_spawn(evil)), home=home, cwd=evil, CLAUDE_PROJECT_DIR=str(evil))
+    assert r.returncode == 0, r.stderr
+    assert not evil_sentinel.exists(), "the project's own route_cli was executed"
+    # another vault is pinned, the cloned repo is not
+    good, good_sentinel = _sentinel_vault(tmp_path, "good")
+    _pin(home, good)
+    _write_route(home)
+    r = _run(AGENT, stdin=json.dumps(_spawn(evil)), home=home, cwd=evil)
+    assert r.returncode == 0, r.stderr
+    assert not evil_sentinel.exists() and not good_sentinel.exists()
+
+
+def test_p1_pinned_root_still_routes_and_ignores_pythonpath_and_cwd_shadowing(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    good, good_sentinel = _sentinel_vault(tmp_path, "good")
+    evil, evil_sentinel = _sentinel_vault(tmp_path, "evil")
+    _pin(home, good)
+    _write_route(home)
+    # PYTHONPATH from the environment points at the attacker's packages: `python -I` ignores it
+    evil_pkgs = str(evil / "03_IMPLEMENTATION" / "packages")
+    r = _run(AGENT, stdin=json.dumps(_spawn(good)), home=home, cwd=good, PYTHONPATH=evil_pkgs)
+    assert r.returncode == 0, r.stderr
+    assert good_sentinel.exists() and not evil_sentinel.exists()
+    assert "vault-router: ROUTED -> vault-worker" in _decision(r)["permissionDecisionReason"]
+    # a dotted spelling of the same pinned root is the same root
+    good_sentinel.unlink()
+    _write_route(home)
+    r = _run(AGENT, stdin=json.dumps(_spawn(Path(str(good) + os.sep + "."))), home=home, cwd=good)
+    assert good_sentinel.exists()
+
+
+def test_p1_config_in_the_project_is_not_a_pin(tmp_path):
+    """A config.json planted inside the project's own copy of the skill must not pin the project."""
+    home = tmp_path / "home"
+    home.mkdir()
+    evil, evil_sentinel = _sentinel_vault(tmp_path, "evil")
+    planted = evil / ".claude" / "skills" / "cost-router"
+    planted.mkdir(parents=True)
+    (planted / "config.json").write_text(json.dumps({"schema": 1, "vault_roots": [os.path.realpath(evil)]}),
+                                         encoding="utf-8")
+    _write_route(home)
+    r = _run(AGENT, stdin=json.dumps(_spawn(evil)), home=home, cwd=evil, CLAUDE_PROJECT_DIR=str(evil))
+    assert r.returncode == 0 and not evil_sentinel.exists()
+
+
+def test_p1_install_pins_this_checkout_and_keeps_pins_across_reinstalls(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home, "--no-hook")
+    cfg = _installed_skill(home) / "config.json"
+    pinned = json.loads(cfg.read_text(encoding="utf-8"))["vault_roots"]
+    assert pinned == [os.path.normcase(os.path.realpath(ROOT))]
+    # an extra root must really be a vault
+    r = _run(INSTALL, ["--home", str(home), "--no-hook", "--pin-root", str(tmp_path)], home=home)
+    assert r.returncode == 1 and "route_cli.py" in r.stderr
+    extra, _ = _sentinel_vault(tmp_path, "wt")
+    _install(home, "--no-hook", "--pin-root", str(extra))
+    assert json.loads(cfg.read_text(encoding="utf-8"))["vault_roots"] == [
+        os.path.normcase(os.path.realpath(ROOT)), os.path.normcase(os.path.realpath(extra))]
+    # a --source-root (self-update staging tree) never adds its temporary directory, and keeps the pins
+    _install(home, "--no-hook", "--source-root", str(ROOT))
+    assert len(json.loads(cfg.read_text(encoding="utf-8"))["vault_roots"]) == 2
+    # the pin file is not drift for --verify
+    r = _run(_installed_skill(home) / "install.py", ["--home", str(home), "--verify", "--json"], home=home)
+    assert r.returncode == 0 and len(json.loads(r.stdout)["pinned_vault_roots"]) == 2
+    # and the installed hook honours exactly that file
+    _write_route(home)
+    r = _run(_installed_skill(home) / "hook_agent_model.py", stdin=json.dumps(_spawn(extra)), home=home, cwd=extra)
+    assert r.returncode == 0 and (tmp_path / "wt.sentinel").exists()

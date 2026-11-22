@@ -17,9 +17,9 @@ tier with a note. An explicit model the policy does not recognise (alias, exact 
 `[..]` suffix, longest model_id prefix) is never passed through: on a risky/review brief the floor
 applies, on a classified brief the route model, on an unclassified brief the session tier (with a note).
 Route state (lib/route_state.py): every spawn sets state.delegated=true, which unlocks the main
-session for hook_enforce_route.py. Inside the AI Memory Vault (the project has
-03_IMPLEMENTATION/packages/routing/route_cli.py) a spawn for an implement/review/design/frontier
-route first runs the Vault router in-hook (`routing.route_cli route`, 5 s): ROUTED/PLANNED records the
+session for hook_enforce_route.py. Inside a vault root PINNED at install time (~/.claude/skills/cost-router/config.json; a directory merely shaped like
+the vault is not enough) a spawn for an implement/review/design/frontier
+route first runs the Vault router in-hook (`python -I`, package path from the pinned root, never the project cwd; 5 s): ROUTED/PLANNED records the
 receipt and allows; BLOCKED or an unavailable router denies (delegated is not set then). A receipt from
 Bash (state.vault_routed, set by hook_enforce_route.py) also passes. "#direct" and
 COST_ROUTER_ENFORCE=0 skip that gate (they do NOT disable the Fable guard). Outside the Vault it is never required.
@@ -59,6 +59,8 @@ def _cached_receipt(route_state, sid, task_class) -> bool:
 
 
 ROUTER_TIMEOUT = 5
+_ROUTER_RUNNER = ("import sys, runpy; sys.path.insert(0, sys.argv[1]); sys.argv = ['route_cli'] + sys.argv[2:]; "
+                  "runpy.run_module('routing.route_cli', run_name='__main__', alter_sys=True)")
 _ROUTER_NOTE = ""  # one context line set by gate_and_mark when the in-hook Vault router allowed the spawn
 
 
@@ -69,13 +71,18 @@ def _goal(tool_input: dict) -> str:
 
 def _run_vault_router(route_state, data: dict, goal: str):
     """Run `routing.route_cli route` in-hook. Returns (decision dict, None) or (None, short cause)."""
-    root = route_state.project_dir(data)
-    env = dict(os.environ)
-    pkgs = "03_IMPLEMENTATION/packages"
-    env["PYTHONPATH"] = pkgs + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
-    # argv list (never a shell), one `--goal=<goal>` element so a dash-leading goal is not an option; stdout goes
-    # to a temp file, not a pipe, so a grandchild holding the handle cannot outlive the timeout.
-    cmd = [sys.executable, "-m", "routing.route_cli", "route", f"--goal={goal}"]
+    # Only a vault root PINNED at install time (~/.claude/skills/cost-router/config.json) ever runs code: the project
+    # directory is untrusted input (a cloned repo can be shaped like the vault).
+    root = route_state.pinned_vault_root(data)
+    if root is None:
+        return None, "project is not a pinned vault root"
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("PYTHON")}
+    pkgs = str(root / "03_IMPLEMENTATION" / "packages")
+    # `-I` (isolated): no PYTHONPATH, no cwd / script-dir on sys.path, no user site; the package path is explicit,
+    # taken from the pinned root. argv list (never a shell), one `--goal=<goal>` element so a dash-leading goal is
+    # not an option; stdout goes to a temp file, not a pipe, so a grandchild holding the handle cannot outlive the
+    # timeout.
+    cmd = [sys.executable, "-I", "-c", _ROUTER_RUNNER, pkgs, "route", f"--goal={goal}"]
     fd, tmp = tempfile.mkstemp(prefix="cost-router-route-", suffix=".out")
     returncode = None
     try:
