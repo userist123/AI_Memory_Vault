@@ -1,0 +1,99 @@
+name: Supply-chain security
+
+# Security program 2026-11-22 (09_SECURITY/SECURITY_PROGRAM.md). Gates the workflows themselves
+# (actionlint, zizmor) and dependency changes on pull requests (dependency review); scans known
+# vulnerabilities in lockfiles (OSV, report-only until the backlog is triaged) and runs OpenSSF
+# Scorecard weekly. Every action is pinned to a full commit SHA, the token is read-only.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-lint:
+    name: Workflow lint (actionlint + zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install pinned linters
+        run: python -m pip install zizmor==1.32.0 actionlint-py==1.7.12.25
+      - name: actionlint
+        # shellcheck/pyflakes integration off for now: the existing scripts were never linted by
+        # them; enabling it is a follow-up once that backlog is reviewed.
+        run: actionlint -shellcheck= -pyflakes=
+      - name: zizmor (medium and above)
+        run: zizmor --offline --min-severity medium .github/workflows
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: high
+
+  osv-scan:
+    name: OSV vulnerability scan (report-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: osv-scanner
+        # Report-only: the monorepo carries imported third-party projects whose lockfiles have a
+        # known backlog. The result is visible in the log; making it blocking is tracked in
+        # 09_SECURITY/SECURITY_PROGRAM.md.
+        continue-on-error: true
+        uses: google/osv-scanner-action/osv-scanner-action@32d3cd482bdadfb38b186c0ad1b031902d55d932 # v2.7.1
+        with:
+          scan-args: |-
+            --recursive
+            ./
+
+  scorecard:
+    name: OpenSSF Scorecard (weekly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5 # v2.6.0
+        with:
+          results_file: scorecard.json
+          results_format: json
+          publish_results: false
+      - name: Show the score
+        run: python3 -c "import json; d=json.load(open('scorecard.json')); print('score', d.get('score')); [print(c['score'], c['name']) for c in d.get('checks', [])]"
