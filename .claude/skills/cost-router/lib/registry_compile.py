@@ -295,6 +295,35 @@ def _privileged_names(found: dict) -> frozenset:
     return frozenset(names)
 
 
+WRITE_ORDER = ("none", "scratch", "tests", "workspace")
+NETWORK_ORDER = ("none", "fetch", "bridge")
+
+
+def _check_overlay_role(e: dict, found: dict) -> None:
+    """An overlay role (roles/<id>.json, kind overlay) is a brief template run on an existing trusted agent role. It
+    can never name a privileged agent, run above sonnet, or claim a tool or authority its target agent lacks."""
+    where = f"{e['id']}.json"
+    target_name = str(e["subagent_type"]).lower()
+    if target_name in PRIVILEGED_IDS:
+        raise RegistryError(f"{where}: an overlay role cannot run on the privileged agent {target_name!r}")
+    target = found.get(target_name)
+    if target is None or target["kind"] != "agent":
+        raise RegistryError(f"{where}: subagent_type {target_name!r} is an unknown agent role")
+    if target["tier"]["default"] in ("opus", "fable"):
+        raise RegistryError(f"{where}: an overlay role cannot run on the privileged agent {target_name!r}")
+    if any(e["tier"][k] in ("opus", "fable") for k in ("min", "default", "max")):
+        raise RegistryError(f"{where}: an overlay role tier is at most sonnet")
+    extra = sorted(set(e["tools"]) - set(target["tools"]))
+    if extra:
+        raise RegistryError(f"{where}: tools {extra} are not tools of {target_name!r}")
+    a, t = e["authority"], target["authority"]
+    if (WRITE_ORDER.index(a["write"]) > WRITE_ORDER.index(t["write"])
+            or NETWORK_ORDER.index(a["network"]) > NETWORK_ORDER.index(t["network"])
+            or (a["execute"] and not t["execute"]) or (a["spawn"] and not t["spawn"])):
+        raise RegistryError(f"{where}: authority exceeds that of {target_name!r}")
+    e["artifact_sha256"] = target["artifact_sha256"]  # the template's artifact is the agent file it runs on
+
+
 def _encode(found: dict) -> bytes:
     reg = {"schema_version": SCHEMA, "entries": [compact(found[k]) for k in sorted(found)]}
     return (json.dumps(reg, sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n").encode("ascii")
@@ -310,6 +339,7 @@ def compile_full(s_dir: Path, skills_dir: Path | None = None, agents_dir: Path |
     agents_dir = Path(agents_dir) if agents_dir is not None else s_dir.parents[1] / "agents"
     found: dict[str, dict] = {}
     skipped: list[str] = []
+    overlay_roles: list[str] = []
 
     def add(meta_path: Path, artifact: Path | None, name: str, role: bool) -> None:
         where = str(meta_path.name if role else f"{name}/route.meta.json")
@@ -318,12 +348,19 @@ def compile_full(s_dir: Path, skills_dir: Path | None = None, agents_dir: Path |
         if entry["id"] != name:
             raise RegistryError(f"{where}: id {entry['id']!r} must equal the artifact name {name!r}")
         if role:
-            if entry["kind"] != "agent" or entry["run_in"] != "subagent" or str(entry.get("subagent_type")).lower() != name:
-                raise RegistryError(f"{where}: a role sidecar is kind agent, run_in subagent, subagent_type == id (case-insensitive)")
             # ids are lowercase; an agent file may be capitalised (Explore.md): match case-insensitively
             cands = sorted(p for p in agents_dir.glob("*.md") if p.stem.lower() == name) if agents_dir.is_dir() else []
             artifact = cands[0] if cands else None
-            if artifact is not None:
+            if entry["kind"] == "overlay" and entry["run_in"] == "subagent":
+                # a brief template that runs on an existing agent (checked against it once every role is loaded)
+                if artifact is not None:
+                    raise RegistryError(f"{where}: an overlay role is a brief template and has no agent file "
+                                        f"({artifact.name})")
+                overlay_roles.append(name)
+            elif entry["kind"] != "agent" or entry["run_in"] != "subagent" or str(entry.get("subagent_type")).lower() != name:
+                raise RegistryError(f"{where}: a role sidecar is kind agent, run_in subagent, subagent_type == id "
+                                    "(case-insensitive), or kind overlay, run_in subagent on an existing agent")
+            if entry["kind"] == "agent" and artifact is not None:
                 fm = parse_frontmatter(artifact)
                 tools = sorted(t.strip() for t in fm.get("tools", "").split(",") if t.strip())
                 if tools != sorted(entry["tools"]):
@@ -359,6 +396,8 @@ def compile_full(s_dir: Path, skills_dir: Path | None = None, agents_dir: Path |
             if BAK_MARK in p.name or p.is_symlink():
                 continue
             add(p, None, p.stem, role=True)
+    for name in overlay_roles:
+        _check_overlay_role(found[name], found)
     for e in found.values():
         for ref in [*e.get("uses", []), *([e["escalates_to"]] if "escalates_to" in e else [])]:
             if ref not in found:

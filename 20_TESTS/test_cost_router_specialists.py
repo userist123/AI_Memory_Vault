@@ -84,7 +84,7 @@ def test_compile_is_byte_identical_twice_and_within_cap(tree):
     assert len(a) <= 16384
     reg = json.loads(a)
     ids = [e["id"] for e in reg["entries"]]
-    assert ids == sorted(ids) and len(ids) == 14
+    assert ids == sorted(ids) and len(ids) == 17
     assert all("src_sha256" not in e and "artifact_sha256" not in e for e in reg["entries"])  # hashes: own file
     hs = json.loads(rc.compile_full(s_dir, skills, agents).hashes)["entries"]
     assert all(h["artifact_sha256"] and len(h["src_sha256"]) == 64 for h in hs.values())
@@ -186,7 +186,7 @@ def test_bak_dirs_are_ignored(tree):
     shutil.copy2(_meta(s_dir, "surse-web"), dup)  # would be a mismatched id
     (s_dir / "roles" / "vault-worker.json.bak-1").write_text("{", encoding="utf-8")
     reg, _ = rc.compile_registry(s_dir, skills, agents)
-    assert len(reg["entries"]) == 14
+    assert len(reg["entries"]) == 17
 
 
 def test_size_cap_enforced(tree):
@@ -227,7 +227,8 @@ def test_shipped_sidecars_cover_the_required_set(tree):
     reg, _ = rc.compile_registry(s_dir, skills, agents)
     assert {e["id"] for e in reg["entries"]} == {
         "vault-worker", "vault-reviewer", "explore", "fable-consultant", "check-runner", "analist-juridic", "aplicatie-securizata",
-        "surse-web", "agent-bridge", "animatie-3d", "clips-kitty", "clip", "prompt-director", "cost-router"}
+        "surse-web", "agent-bridge", "animatie-3d", "clips-kitty", "clip", "prompt-director", "cost-router",
+        "dfir-analyst", "test-author", "repro-debugger"}
     by = {e["id"]: e for e in reg["entries"]}
     assert by["cost-router"]["kind"] == "overlay" and by["prompt-director"]["kind"] == "overlay"
     assert by["fable-consultant"]["authority"] == {} and by["fable-consultant"]["tier"] == ["fable"] * 3
@@ -338,11 +339,40 @@ GOLDEN = [
     ("review this diff and write a continuation prompt for the next session", "vault-reviewer"),
     # overlap resolved by priority
     ("ce spune legea despre garantia produselor, cauta pe internet", "analist-juridic"),
+    # DFIR (local only) -> dfir-analyst
+    ("analizeaza fisierul evtx din dosarul de probe si listeaza logon-urile", "dfir-analyst"),
+    ("fa o analiza criminalistica pe jurnalul de evenimente Security", "dfir-analyst"),
+    ("cauta indicatori de compromis in logurile exportate de LogAnalyzer", "dfir-analyst"),
+    ("triaj dfir pe imaginea de disc montata, ce procese au rulat", "dfir-analyst"),
+    ("analyze the evtx file and list failed logons with record ids", "dfir-analyst"),
+    ("do a forensic timeline of the incident from the Windows event logs", "dfir-analyst"),
+    ("incident response: check these logs for IOC matches", "dfir-analyst"),
+    ("dfir triage of the prefetch and SRUM artifacts", "dfir-analyst"),
+    ("extrage din jurnal de evenimente toate evenimentele 4625 cu EventRecordID", "dfir-analyst"),
+    # tests only -> test-author
+    ("scrie teste pentru parserul de date care sa pice inainte de reparatie", "test-author"),
+    ("scrie un test de regresie pentru bugul de la importul CSV", "test-author"),
+    ("vreau doar teste unitare noi pentru modulul de facturi, fara cod de productie", "test-author"),
+    ("scrie intai un test care pica pentru problema de rotunjire", "test-author"),
+    ("write tests for the date parser that fail before the fix", "test-author"),
+    ("write a regression test for the CSV import bug", "test-author"),
+    ("only write unit tests for the billing module, no production code", "test-author"),
+    ("write a failing test first for the rounding issue", "test-author"),
+    ("write a test that pins the timeout behaviour of the uploader", "test-author"),
+    # deterministic repro brief template (overlay on vault-worker) -> repro-debugger
+    ("reproduce the bug deterministically and give me file:line", "repro-debugger"),
+    ("need a minimal repro for the crash in the uploader", "repro-debugger"),
+    ("this test is flaky, make a deterministic repro", "repro-debugger"),
+    ("reproduce the failure reliably before anyone fixes it", "repro-debugger"),
+    ("reprodu bugul de la sincronizare si da-mi fisier:linie", "repro-debugger"),
+    ("fa un caz minim de reproducere pentru crash-ul din upload", "repro-debugger"),
+    ("testul pica intermitent, vreau o reproducere determinista", "repro-debugger"),
+    ("reproducere determinista pentru eroarea din exportul PDF", "repro-debugger"),
 ]
 
 
 def test_golden_set_accuracy(registry, capsys):
-    assert len(GOLDEN) >= 60
+    assert len(GOLDEN) >= 100
     misses = []
     for prompt, want in GOLDEN:
         sel = sp.select(prompt, _route_class(prompt), registry)
@@ -354,7 +384,7 @@ def test_golden_set_accuracy(registry, capsys):
         print(f"\nGOLDEN accuracy {acc:.1%} ({len(GOLDEN) - len(misses)}/{len(GOLDEN)})")
         for m in misses:
             print("  MISS:", ascii(m))
-    assert acc >= 0.90, misses
+    assert acc >= 0.95, misses
 
 
 def test_overlap_priority_and_overlay_pairing(registry):
@@ -565,7 +595,7 @@ def test_malformed_untrusted_json_is_skipped_and_reported(tree):
     (skills / "junk" / "route.meta.json").write_text("{bad", encoding="utf-8")
     report = []
     reg, _ = rc.compile_registry(s_dir, skills, agents, report=report)
-    assert len(reg["entries"]) == 14 and any("junk" in r for r in report)
+    assert len(reg["entries"]) == 17 and any("junk" in r for r in report)
 
 
 def test_trusted_priority_wins_ties_and_untrusted_never_outranks(tree):
@@ -641,3 +671,103 @@ def test_install_survives_hostile_and_malformed_user_sidecars_and_verify_reports
     v2 = subprocess.run([sys.executable, str(INSTALL), "--home", str(h), "--verify"], capture_output=True,
                         text=True, env=_env(h), timeout=120, encoding="utf-8")
     assert v2.returncode == 1
+
+
+# ---- M10 specialist roles: dfir-analyst, test-author, repro-debugger (brief template) -----------------------------
+
+def test_new_roles_compile_with_their_privacy_authority_and_tier(tree):
+    s_dir, skills, agents = tree
+    reg, data = rc.compile_registry(s_dir, skills, agents)
+    by = {e["id"]: e for e in reg["entries"]}
+    d = by["dfir-analyst"]
+    assert d["kind"] == "agent" and d["privacy"] == "local_only" and d["subagent_type"] == "dfir-analyst"
+    assert d["authority"] == {"execute": True} and d["tier"] == ["sonnet"] * 3  # write none, network none
+    t = by["test-author"]
+    assert t["kind"] == "agent" and t["authority"] == {"write": "tests", "execute": True}
+    assert t["tier"][1:] == ["sonnet", "sonnet"]
+    r = by["repro-debugger"]
+    assert r["kind"] == "overlay" and r["subagent_type"] == "vault-worker" and "Opus decides" in r["acceptance"]
+    assert "opus" not in r["tier"] and "fable" not in r["tier"]
+    assert len(data) <= 16384
+    full = {k: dict(v, tier=dict(zip(("min", "default", "max"), v["tier"]))) for k, v in by.items()}
+    assert not {"dfir-analyst", "test-author"} & rc._privileged_names(full)
+
+
+@pytest.mark.parametrize("name,tools", [
+    ("dfir-analyst", ["Read", "Grep", "Glob", "Bash"]),
+    ("test-author", ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]),
+])
+def test_new_agent_files_are_sonnet_not_privileged_and_match_the_sidecar(name, tools):
+    fm = rc.parse_frontmatter(AGENTS / f"{name}.md")
+    assert fm["name"] == name and fm["model"] == "sonnet"
+    assert [x.strip() for x in fm["tools"].split(",")] == tools
+    assert not any(x.startswith("mcp__") or x.startswith("Web") for x in tools)
+    sc = json.loads((SKILL / "roles" / f"{name}.json").read_text(encoding="utf-8"))
+    assert sorted(sc["tools"]) == sorted(tools) and sc["tier"]["max"] == "sonnet"
+    install = INSTALL.read_text(encoding="utf-8")
+    priv = [ln for ln in install.splitlines() if ln.startswith("PRIVILEGED_AGENTS")][0]
+    assert name not in priv and f'"{name}.md"' in install  # uninstall removes the copy install wrote
+    body = (AGENTS / f"{name}.md").read_text(encoding="utf-8").lower()
+    assert "fable" not in body and "opus" not in body
+
+
+def test_dfir_agent_states_its_evidence_rules():
+    text = (AGENTS / "dfir-analyst.md").read_text(encoding="utf-8")
+    fm = rc.parse_frontmatter(AGENTS / "dfir-analyst.md")
+    for needle in ("sha256", "record id", "UNKNOWN", "never executed", "size limits"):
+        assert needle in fm["description"], needle
+    assert "Write" not in fm["tools"] and "Edit" not in fm["tools"] and "never write" in text.lower()
+
+
+def test_test_author_never_edits_production_code():
+    fm = rc.parse_frontmatter(AGENTS / "test-author.md")
+    assert "never edits production code" in fm["description"].lower()
+    assert "git diff --name-only" in (AGENTS / "test-author.md").read_text(encoding="utf-8")
+
+
+def test_repro_debugger_is_a_template_not_an_agent():
+    assert not (AGENTS / "repro-debugger.md").exists()
+
+
+def _role(s_dir, name):
+    return s_dir / "roles" / f"{name}.json"
+
+
+def _run_main(d):
+    d["run_in"] = "main"
+    d.pop("subagent_type")
+
+
+@pytest.mark.parametrize("change,match", [
+    (lambda d: d.update(subagent_type="vault-reviewer"), "privileged"),
+    (lambda d: d.update(subagent_type="fable-consultant"), "privileged"),
+    (lambda d: d.update(subagent_type="no-such-agent"), "unknown"),
+    (lambda d: d.update(tier={"min": "haiku", "default": "sonnet", "max": "opus"}), "tier"),
+    (lambda d: d.update(tools=["Read", "WebFetch"]), "tools"),
+    (lambda d: d["authority"].update(network="fetch"), "authority"),
+    (lambda d: d.update(kind="skill"), "role sidecar"),
+    (_run_main, "role sidecar"),
+], ids=["reviewer", "fable", "dangling", "opus-tier", "extra-tool", "more-authority", "kind-skill", "run-main"])
+def test_overlay_role_cannot_exceed_or_hide_its_target_agent(tree, change, match):
+    s_dir, skills, agents = tree
+    p = _role(s_dir, "repro-debugger")
+    d = json.loads(p.read_text(encoding="utf-8"))
+    change(d)
+    p.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(rc.RegistryError, match=match):
+        rc.compile_registry(s_dir, skills, agents)
+
+
+def test_overlay_role_with_its_own_agent_file_fails(tree):
+    s_dir, skills, agents = tree
+    (agents / "repro-debugger.md").write_text("---\nname: repro-debugger\ntools: Read\nmodel: sonnet\n---\n",
+                                              encoding="utf-8")
+    with pytest.raises(rc.RegistryError, match="template"):
+        rc.compile_registry(s_dir, skills, agents)
+
+
+def test_overlay_selection_pairs_with_a_main_specialist(registry):
+    sel = sp.select("fix the failing test, it is a flaky test", "implement", registry)
+    assert sel["id"] == "vault-worker" and sel["overlay"] == "repro-debugger"
+    sel = sp.select("minimal repro please", "implement", registry)
+    assert sel["id"] == "repro-debugger" and sel["subagent_type"] == "vault-worker" and sel["overlay"] is None

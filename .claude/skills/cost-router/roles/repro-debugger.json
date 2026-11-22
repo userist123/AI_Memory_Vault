@@ -1,0 +1,64 @@
+{
+ "schema_version": 1,
+ "id": "repro-debugger",
+ "kind": "overlay",
+ "domain": [
+  "code"
+ ],
+ "task_classes": [
+  "implement",
+  "explore",
+  "review"
+ ],
+ "triggers": {
+  "ro": [
+   "reprodu bugul",
+   "reproducere determinista",
+   "caz minim de reproducere",
+   "pica intermitent",
+   "reproduce eroarea"
+  ],
+  "en": [
+   "reproduce the bug",
+   "minimal repro",
+   "deterministic repro",
+   "reproduce the failure",
+   "reproduce the crash",
+   "flaky test"
+  ]
+ },
+ "summary": "Brief template on vault-worker: produce a deterministic failing repro and the file:line; no fix.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "sonnet"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash",
+  "Write",
+  "Edit"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Deterministic failing repro + file:line; Opus decides the root cause.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 15,
+ "subagent_type": "vault-worker",
+ "uses": [
+  "vault-worker"
+ ],
+ "effort": "medium",
+ "cost": {
+  "class": "S",
+  "typical_usd": null
+ }
+}

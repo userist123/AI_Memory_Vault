@@ -1,0 +1,73 @@
+{
+ "schema_version": 1,
+ "id": "dfir-analyst",
+ "kind": "agent",
+ "domain": [
+  "dfir",
+  "security"
+ ],
+ "task_classes": [
+  "explore",
+  "summarize",
+  "review",
+  "design"
+ ],
+ "triggers": {
+  "ro": [
+   "dfir",
+   "evtx",
+   "jurnal de evenimente",
+   "jurnalul de evenimente",
+   "analiza criminalistica",
+   "criminalistica",
+   "raspuns la incident",
+   "indicatori de compromis",
+   "loganalyzer",
+   "probe digitale"
+  ],
+  "en": [
+   "forensic",
+   "forensics",
+   "incident response",
+   "event logs",
+   "windows event log",
+   "ioc matches",
+   "indicators of compromise",
+   "prefetch",
+   "srum"
+  ]
+ },
+ "summary": "Local-only forensic analysis of Windows evidence and logs; cites path, sha256 and record id; never writes.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "sonnet",
+  "default": "sonnet",
+  "max": "sonnet"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Each finding cites artifact path + sha256 + record id/line; missing artifact = UNKNOWN; evidence never executed.",
+ "risk_ceiling": "high",
+ "privacy": "local_only",
+ "priority": 55,
+ "subagent_type": "dfir-analyst",
+ "not_for": [
+  "writing reports to disk",
+  "web lookups of indicators"
+ ],
+ "effort": "medium",
+ "cost": {
+  "class": "M",
+  "typical_usd": null
+ }
+}

@@ -21,7 +21,8 @@
 What it does (idempotent, prints every path it touched):
   1. copies this skill directory to ~/.claude/skills/cost-router/ and the canonical router
      module + policy into its lib/ so it works outside this repository;
-  2. copies the four subagents (Explore, vault-worker, vault-reviewer, fable-consultant) to
+  2. copies the subagents (Explore, vault-worker, vault-reviewer, fable-consultant, check-runner,
+     dfir-analyst, test-author: every .claude/agents/*.md, all pinned in agents.pinned.json) to
      ~/.claude/agents/; a file of that name is replaced only when it is still the copy an earlier
      install wrote (owner edits are kept; --force overwrites them too);
   3. merges seven hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
@@ -103,6 +104,8 @@ HOOK_SPECS = (  # (event, script, matcher)
 )
 HOOK_TIMEOUT = {"hook_self_update.py": 60}  # seconds; a fetch is about two, the rest is margin
 PRIVILEGED_AGENTS = ("fable-consultant", "vault-reviewer")  # also pinned for the Agent hook
+SHIPPED_AGENTS = ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md", "check-runner.md",
+                  "dfir-analyst.md", "test-author.md")  # removed by --uninstall when still the copy install wrote
 AGENT_MANIFEST = "agents.sha256.json"  # under the installed skill: hashes of the agent files it wrote
 DENY_RULES = (  # pure caches only: never source, never worth reading (deny beats any project allow, so
     # dependency trees such as node_modules/.venv and build output such as dist/ stay readable for debugging)
@@ -704,7 +707,7 @@ def uninstall(home: Path) -> list[str]:
     if skill_dir.exists():
         shutil.rmtree(skill_dir)
         touched.append(f"removed {skill_dir}")
-    for name in ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md"):
+    for name in SHIPPED_AGENTS:
         p = home / ".claude" / "agents" / name
         if p.exists() and _sha(p) in {_sha(AGENTS_SRC / name), written.get(name)}:
             p.unlink()
