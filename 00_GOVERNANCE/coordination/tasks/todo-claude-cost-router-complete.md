@@ -16,7 +16,7 @@ Paths below: `S` = `.claude/skills/cost-router`.
 - [x] M8 `S/lib/check.py` acceptance receipts + `check-runner` agent (haiku, no write).
 - [x] M9 Global install on the PC: backup `~/.claude/settings.json`, pinned user-scope hooks, `--verify` 0, smoke in 2 non-vault projects + 1 vault worktree + 1 resumed session; `--uninstall` restores.
 - [x] M10 Roles: `dfir-analyst` (local_only), `test-author`, `repro-debugger` template; registry entries for analist-juridic, aplicatie-securizata, surse-web, agent-bridge, animatie-3d, clips-kitty, prompt-director (overlay).
-- [ ] M11 `fable-executor`, default off, own threat model + review.
+- [x] M11 `fable-executor`, default off, own threat model + review.
 - [ ] Antigravity branches: Explore inventory with diffstat; port only what passes `20_TESTS/test_cost_router_*.py`.
 
 ## Not to build
@@ -98,3 +98,4 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Combined brief command (temp HOME) first run: 20 failed (2 check.py tests, 18 specialists injection tests), all caused by the WIP. Fixed: check.py re-adds its own lib dir to sys.path at call time (cost_router_isolation.leave removed it when the executor test file ran first); injection test no longer asserts that state has no `spec` (the state now records hinted ids by design; it still asserts no tools/authority and a list of short strings).
 - Verification after fixes (commit f9859bec3): combined brief command, temp HOME: `1035 passed in 329.78s (0:05:29)`; real HOME (read-only): `1035 passed in 324.85s (0:05:24)`. Two earlier runs showed 1-3 failures only while the C: drive was 99-100% full (WinError 112 / git push failures / subprocess crash 0xC00000AD); they passed on rerun with `-o tmp_path_retention_policy=none`. Tip for a successor: free disk first.
 - Next: release pin seq 9 (only release_pin.json), tick M11.
+- DONE: release pin seq 9 pins cc6b9ba58 (last code commit); M11 ticked. The installed copy under ~/.claude is NOT updated; to enable the executor the owner edits the installed policy and re-runs install.py with a pin that includes it (SKILL.md 4G). Reviewer pass (Opus) on this branch still pending.
