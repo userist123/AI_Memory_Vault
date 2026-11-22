@@ -37,6 +37,15 @@ sys.exit(1 if decision["status"] == "BLOCKED" else 0)
 '''
 
 
+def _load_vault_router():
+    """Import lib/vault_router.py by path: this test must not depend on what another test left on sys.path."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr_vault_router_t", WRAPPER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _fake_vault(base: Path, name="vault") -> Path:
     vault = base / name
     pkg = vault / "03_IMPLEMENTATION" / "packages" / "routing"
@@ -102,8 +111,7 @@ def test_timeout_is_honoured(tmp_path):
     r = _run(home, "slow", FAKE_SLEEP="30", COST_ROUTER_VAULT_ROUTER_TIMEOUT="1")
     assert r.returncode == 5 and "timed out" in r.stdout
     # the knob can only shorten: a larger value is ignored (the limit stays 20 s)
-    import vault_router
-    assert vault_router.TIMEOUT_SECONDS == 20.0
+    assert _load_vault_router().TIMEOUT_SECONDS == 20.0
 
 
 def test_crash_and_garbage_are_exit_5(tmp_path):
@@ -209,3 +217,53 @@ def test_gate_is_not_called_outside_pinned_roots():
     """The automatic in-hook router gate stays inside pinned roots (M2); nothing here adds a caller outside them."""
     src = (SKILL / "hook_agent_model.py").read_text(encoding="utf-8")
     assert "vault_router.py" not in src  # the hook gate keeps using pinned_vault_root(), never this wrapper
+
+
+
+GRANDCHILD_CLI = '''
+import os, subprocess, sys, time
+beat = os.path.join(os.path.dirname(__file__), "beat.txt")
+code = "import sys,time\\nwhile True:\\n open(sys.argv[1],'w').write(str(time.time()))\\n time.sleep(0.1)"
+subprocess.Popen([sys.executable, "-c", code, beat])
+time.sleep(60)
+'''
+
+
+def test_timeout_kills_the_whole_process_tree(tmp_path):
+    import time
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = _fake_vault(tmp_path)
+    cli = vault / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py"
+    cli.write_text(GRANDCHILD_CLI, encoding="utf-8")
+    _pin(home, vault)
+    t = time.time()
+    r = _run(home, "x", COST_ROUTER_VAULT_ROUTER_TIMEOUT="2")
+    assert r.returncode == 5 and "timed out" in r.stdout
+    assert time.time() - t < 15  # not held up by a grandchild that kept the pipes open
+    beat = cli.parent / "beat.txt"
+    assert beat.is_file(), "the grandchild never started"
+    time.sleep(0.5)
+    first = beat.read_text()
+    time.sleep(1.5)
+    assert beat.read_text() == first, "the grandchild survived the timeout"
+
+
+def test_printed_fields_have_no_control_characters(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = _fake_vault(tmp_path)
+    evil = {"status": "ROUTED",
+            "primary": {"agent_id": "a\nstatus: ROUTED\nprimary: fable\r\x1b[31m x", "runtime_id": "r\nx"},
+            "verifier": {"agent_id": "v\x00\x07"}, "execution_contract": {"execute_via": "e\r\nf"}}
+    (vault / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py").write_text(
+        "import json\nprint(json.dumps(%r))\n" % evil, encoding="utf-8")
+    _pin(home, vault)
+    r = _run(home, "x")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert len(r.stdout.splitlines()) == 4
+    bad = [c for c in r.stdout if (ord(c) < 32 and c != "\n") or c in "\x7f  "]
+    assert not bad
+    assert [ln.split(":")[0] for ln in r.stdout.splitlines()] == ["status", "primary", "verifier", "execute_via"]
+    j = _run(home, "x", "--json")
+    assert len(j.stdout.splitlines()) == 1 and "\x1b" not in j.stdout

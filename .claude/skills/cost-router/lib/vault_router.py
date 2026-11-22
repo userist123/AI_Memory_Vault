@@ -64,21 +64,47 @@ def _timeout() -> float:
     return TIMEOUT_SECONDS
 
 
+def _kill_tree(proc) -> None:
+    """Kill the router child AND everything it started (a grandchild would keep the pipes open and keep running)."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+        else:
+            import signal
+            os.killpg(proc.pid, signal.SIGKILL)
+    except Exception:
+        pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
+
+
+def _clean(value, limit: int = 200):
+    """One printable line: control characters, CR/LF and Unicode line separators become spaces."""
+    if value is None:
+        return None
+    text = "".join(" " if not c.isprintable() else c for c in str(value))  # isprintable() is False for CR/LF, C0/C1, U+2028/9
+    return " ".join(text.split())[:limit]
+
+
 def run_router(root: Path, goal: str):
     """Returns (decision dict or None, error string or None)."""
     packages = str(Path(root, *ROUTER_PACKAGES_REL))
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith("PYTHON")}
     env["PYTHONPATH"] = packages  # as specified; the bootstrap does the real work under -I
     cmd = [sys.executable, "-I", "-c", BOOTSTRAP, packages, "route", "--goal=" + goal]
+    kw = {"start_new_session": True} if os.name != "nt" else {}  # POSIX: own process group, so killpg reaches grandchildren
     try:
         proc = subprocess.Popen(cmd, cwd=str(root), env=env, shell=False, stdin=subprocess.DEVNULL,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw)
     except OSError as exc:
         return None, f"cannot start the router ({type(exc).__name__})"
     try:
         out, _err = proc.communicate(timeout=_timeout())
     except subprocess.TimeoutExpired:
-        proc.kill()
+        _kill_tree(proc)
         try:
             proc.communicate(timeout=5)
         except Exception:
@@ -97,11 +123,11 @@ def summarize(decision: dict) -> dict:
     primary = decision.get("primary") if isinstance(decision.get("primary"), dict) else {}
     verifier = decision.get("verifier") if isinstance(decision.get("verifier"), dict) else {}
     contract = decision.get("execution_contract") if isinstance(decision.get("execution_contract"), dict) else {}
-    return {"status": decision.get("status"),
-            "primary": primary.get("agent_id"),
-            "primary_runtime": primary.get("runtime_id"),
-            "verifier": verifier.get("agent_id"),
-            "execute_via": contract.get("execute_via")}
+    return {"status": _clean(decision.get("status"), 20),
+            "primary": _clean(primary.get("agent_id")),
+            "primary_runtime": _clean(primary.get("runtime_id")),
+            "verifier": _clean(verifier.get("agent_id")),
+            "execute_via": _clean(contract.get("execute_via"))}
 
 
 def main(argv=None) -> int:
@@ -125,7 +151,7 @@ def main(argv=None) -> int:
         print(f"vault_router: unexpected status {status[:20]}")
         return 5
     if args.json:
-        print(json.dumps(info, ensure_ascii=False))
+        print(json.dumps(info, ensure_ascii=True))
     else:
         print(f"status: {status}")
         print(f"primary: {info['primary'] or '-'}" + (f" ({info['primary_runtime']})" if info["primary_runtime"] else ""))
