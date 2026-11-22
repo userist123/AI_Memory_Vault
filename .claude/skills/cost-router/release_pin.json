@@ -1,20 +1,20 @@
 {
-  "commit": "9a8b9826b8ff3d4d248675205c742d9ef2d9689a",
+  "commit": "09d632ca6681f7353dca064d5abee9576a01fa32",
   "files": {
     ".claude/agents/Explore.md": "071e47fdf97105de10d1169d392c97eb124377908e584234db891354998a5b19",
     ".claude/agents/fable-consultant.md": "3cb48cedcf3f893b5c0abb6fdefe9b1f7415c89b45c248d62e3a9ca5a8fda99e",
     ".claude/agents/vault-reviewer.md": "44d898a5e1448547233f979f16372bfa60d553181470c741a3de8b600ab5804f",
     ".claude/agents/vault-worker.md": "5896ba5545d342081e83100afa6e28bb801a91d61112e25d2720529ae7af9432",
-    ".claude/skills/cost-router/SKILL.md": "b48256de60734dc45886b1be45366a241867206a313ac2c19a94ca00464a9f2d",
+    ".claude/skills/cost-router/SKILL.md": "274eb9027390c685d84a1a6765b4c66a14ac1db7bd0817b6728d58d180b8a5d4",
     ".claude/skills/cost-router/chat/SKILL.md": "8a4775d1e44e567aadf8d0783b789158019e0d2cc0578b3ec472ca889dbcd312",
-    ".claude/skills/cost-router/hook_agent_model.py": "b2da2af5efca01d6196e3bac4bd55f3f0181b84be4a2d339d35a7d5d4f5bb301",
+    ".claude/skills/cost-router/hook_agent_model.py": "9ec42097a19d0a6b6b8bbdca542baccd23014540b87b8fe6e81bcf00491a568f",
     ".claude/skills/cost-router/hook_agent_usage.py": "8845a687a9ea96c7e358b98974dc975fe36b574a13c8df49145110d26c139cd8",
     ".claude/skills/cost-router/hook_enforce_route.py": "ed4a52fb816bf60457f09aaf7bd8626633f1647e8c0a866310ea9a178fcc365e",
     ".claude/skills/cost-router/hook_prompt_route.py": "18c168af7e41ccd14b19852692bca9283636a851eafe98ba3c5373001dbfc2ac",
     ".claude/skills/cost-router/hook_repo_map.py": "150f66d0682b728f14f1d861dc0774646b795660488dd1a8dbe8c12d92d55e87",
     ".claude/skills/cost-router/hook_resume_guard.py": "6a65256804e943afe9fcda317863e6a449ca718212b8d2e596845a3f361a9309",
     ".claude/skills/cost-router/hook_self_update.py": "51d6791288a6545c722f4cf93d19ebc380af89348cac17e0f1c1e245a1050f8a",
-    ".claude/skills/cost-router/install.py": "6136f97c4bb2158c127f1b78e667cde77094686ccf1b7e4a1545c0296fa97a8d",
+    ".claude/skills/cost-router/install.py": "a0be7cb590aea386742cdd6d767e5f38ab13302621f9747ac476ccd9b99dfc59",
     ".claude/skills/cost-router/lib/local_llm.py": "b5280a156f56ef6d8d70c52a2f4eb11bd2f604cfc258a093f29340823958bf75",
     ".claude/skills/cost-router/lib/release_pin.py": "58118ee14cf97c9a3d1e98fdf06e3bd3c2d943c190938dbc8b2f686cec6113dd",
     ".claude/skills/cost-router/lib/repo_map.py": "d87b7a783bdbe49a287cb8b652e7865934dd8780c66f6f9e1f5825731b999e1e",
@@ -24,7 +24,7 @@
     "03_IMPLEMENTATION/packages/routing/claude_model_router.py": "c0b7efaf70370624290688bdd0a1c1746614b6790224da94675891c958f6546f",
     "04_CONFIG/claude_model_routing.json": "20eaea88f9bc92d8ba4fa671b7fa42bb82b75b02c3101540fd13ba5a8a44b516"
   },
-  "files_sha256": "136e662be066750ae41397833f13538cc979b6642a78effd7170dd55d700dc98",
+  "files_sha256": "d07450e8db624db49c364ce54445bb9a1cdaa434135465e2b9e3bdf08c900c2f",
   "schema": 1,
-  "seq": 2
+  "seq": 3
 }
