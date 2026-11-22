@@ -1,0 +1,18 @@
+#!/bin/sh
+# Runs inside the container: /src (read-only: kit + src/ + public/) -> /out/dist. No network is available.
+set -eu
+W=/tmp/w
+mkdir -p "$W" "${HOME:-/tmp/home}"
+cp -R /src/. "$W/"
+cd "$W"
+# The lockfile must be the baked kit lockfile (the baked store only serves that dependency set).
+want=$(cat /opt/aas/kit.lock.sha256)
+have=$(sha256sum pnpm-lock.yaml | cut -d' ' -f1)
+[ "$want" = "$have" ] || { echo "aas-build-web: pnpm-lock.yaml differs from the baked kit lockfile" >&2; exit 3; }
+# pnpm registers the project inside the store, so give it a writable store shell (tmpfs) whose content-addressable
+# parts are symlinks to the read-only baked store (the baked store itself is never written).
+mkdir -p /tmp/store/v10
+ln -s /opt/aas/store/v10/files /tmp/store/v10/files
+ln -s /opt/aas/store/v10/index /tmp/store/v10/index
+pnpm install --offline --frozen-lockfile --ignore-scripts --store-dir /tmp/store
+./node_modules/.bin/vite build --outDir /out/dist --emptyOutDir
