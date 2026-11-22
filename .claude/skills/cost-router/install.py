@@ -84,6 +84,7 @@ def _load_registry_compile():
 
 
 registry_compile = _load_registry_compile()
+REGISTRY_HASHES_NAME = "registry.hashes.json"  # sha256 of every sidecar/artifact; same lifecycle as the registry
 REGISTRY_NAME = "registry.json"  # compiled at install time (never in a hook); part of the VERSION manifest and --verify
 PIN_NAME = release_pin.PIN_NAME
 REPO = SKILL_SRC.parents[2]
@@ -376,7 +377,7 @@ def manifest(root: Path, extra: dict[str, Path] | None = None, with_registry: bo
         for name in filenames:
             path = Path(dirpath) / name
             rel = path.relative_to(root).as_posix()
-            if rel not in _GENERATED and (with_registry or rel != REGISTRY_NAME):
+            if rel not in _GENERATED and (with_registry or rel not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)):
                 out[rel] = _file_sha(path)
     for rel, src in (extra or {}).items():
         out[rel] = _file_sha(src)
@@ -533,21 +534,27 @@ def verify(home: Path, source_root: Path | None = None) -> dict:
         agents_src = AGENTS_SRC
     have_all = manifest(skill_dir, with_registry=True) if skill_dir.is_dir() else {}
     if want is None:  # integrity only: the installed tree is its own reference, VERSION line 2 is the check
-        want = {k: v for k, v in have_all.items() if k != REGISTRY_NAME}  # the registry has its own check below
+        want = {k: v for k, v in have_all.items() if k not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)}  # the registry has its own check below
         for required in ("lib/claude_model_router.py", "policy.json", "hook_agent_model.py"):
             if required not in have_all:
                 want[required] = "missing"
     have = {k: v for k, v in have_all.items()
-            if (k != PIN_NAME or PIN_NAME in want) and k != REGISTRY_NAME}  # an installed pin / registry is not drift
+            if (k != PIN_NAME or PIN_NAME in want) and k not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)}  # an installed pin / registry is not drift
     registry_problem = ""
+    registry_skipped: list = []
     if skill_dir.is_dir():  # the registry must be exactly what the compiler yields from the installed sidecars
         try:
-            _, want_reg = registry_compile.compile_registry(
+            comp = registry_compile.compile_full(
                 skill_dir, home / ".claude" / "skills", agents_src if agents_src is not None else home / ".claude" / "agents")
+            registry_skipped = list(comp.skipped)
             if not (skill_dir / REGISTRY_NAME).is_file():
                 registry_problem = "registry.json is missing"
-            elif (skill_dir / REGISTRY_NAME).read_bytes() != want_reg:
+            elif (skill_dir / REGISTRY_NAME).read_bytes() != comp.data:
                 registry_problem = "registry.json differs from a fresh compile of the installed sidecars"
+            elif not (skill_dir / REGISTRY_HASHES_NAME).is_file():
+                registry_problem = "registry.hashes.json is missing"
+            elif (skill_dir / REGISTRY_HASHES_NAME).read_bytes() != comp.hashes:
+                registry_problem = "registry.hashes.json differs from a fresh compile of the installed sidecars"
         except ValueError as exc:
             registry_problem = f"registry does not compile: {exc}"
     vfile = skill_dir / "VERSION"
@@ -563,7 +570,7 @@ def verify(home: Path, source_root: Path | None = None) -> dict:
             version_problem = "line 2 does not match the manifest hash of the installed tree"
     pins = pins_status(skill_dir, home / ".claude" / "agents", agents_src)
     return {"ok": bool(version) and not (missing or extra or differing or version_problem or registry_problem)
-            and pins["pins_ok"], "registry_problem": registry_problem,
+            and pins["pins_ok"], "registry_problem": registry_problem, "registry_skipped": registry_skipped,
             "installed_dir": str(skill_dir),
             "missing": missing, "extra": extra, "differing": differing,
             "installed_version": version, "source_version": [head, manifest_hash(want)],
@@ -633,10 +640,12 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         (staging / PIN_NAME).write_bytes(pin_bytes)  # the pin being installed replaces whatever the source had
     (staging / CONFIG_NAME).write_text(json.dumps({"schema": 1, "vault_roots": roots}, indent=2) + "\n",
                                        encoding="utf-8")
-    try:  # specialist registry: sidecars shipped here + the installed user-scope skills; a bad sidecar fails the install
-        registry_compile.write_registry(staging, home / ".claude" / "skills", agents_src)
+    registry_skipped: list[str] = []
+    try:  # specialist registry: a bad SHIPPED sidecar fails the install; a bad user-scope one is skipped and reported
+        registry_compile.write_registry(staging, home / ".claude" / "skills", agents_src, report=registry_skipped)
     except ValueError as exc:
         raise ValueError(f"specialist registry does not compile: {exc}") from exc
+    touched.extend(f"registry: {line}" for line in registry_skipped)
     (staging / "VERSION").write_text(
         f"{source_ref or _repo_head()}\n{manifest_hash(manifest(staging, with_registry=True))}\n", encoding="utf-8")
     agents_dir = home / ".claude" / "agents"
@@ -788,6 +797,8 @@ def main(argv=None) -> int:
                 print("VERSION problem: " + r["version_problem"])
             if r.get("registry_problem"):
                 print("registry problem:  " + r["registry_problem"])
+            for line in r.get("registry_skipped", []):
+                print("registry: " + line)
             print("source VERSION:    " + " / ".join(r["source_version"]) + f"  (layout: {r['layout']})")
             print("hooks registered in user settings: " + ("yes" if r["hooks_registered"] else
                   "NO (" + ", ".join(k for k, v in r["hooks"].items() if not v) + ")"))

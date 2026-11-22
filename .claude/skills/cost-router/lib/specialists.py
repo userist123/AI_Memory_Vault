@@ -22,7 +22,8 @@ import unicodedata
 from pathlib import Path
 
 REGISTRY = Path(__file__).resolve().parent.parent / "registry.json"
-MAX_REGISTRY_BYTES = 64 * 1024  # a larger file is not the compiler's output (cap 8 KB): ignore it
+MAX_REGISTRY_BYTES = 64 * 1024  # a larger file is not the compiler's output (cap 16 KB): ignore it
+UNTRUSTED_PRIORITY_CAP = 10
 POLICY_CLASSES = ("explore", "summarize", "implement", "review", "design", "frontier")
 ID_RE = re.compile(r"^[a-z0-9-]{1,40}$")
 MAX_PROMPT = 8000  # only the head of the prompt is matched: bounded work, and pasted bulk is not the request
@@ -83,7 +84,9 @@ def select(prompt: str, task_class: str, registry: dict | None = None) -> dict |
             if not h or not _compatible(e, task_class):
                 continue
             slot = "overlay" if e["kind"] == "overlay" else "other"
-            key = (-e["priority"], -h, e["id"])
+            untrusted = bool(e.get("untrusted"))
+            prio = min(e["priority"], UNTRUSTED_PRIORITY_CAP) if untrusted else e["priority"]
+            key = (-prio, untrusted, -h, e["id"])  # trusted entries win a priority tie
             if best[slot] is None or key < best[slot][0]:
                 best[slot] = (key, e)
         main = best["other"][1] if best["other"] else None
@@ -96,7 +99,7 @@ def select(prompt: str, task_class: str, registry: dict | None = None) -> dict |
             return None
         return {"id": lead["id"], "kind": lead["kind"],
                 "overlay": over["id"] if (main is not None and over is not None) else None,
-                "acceptance": str(lead.get("acceptance") or "")[:200],
+                "acceptance": "" if lead.get("untrusted") else str(lead.get("acceptance") or "")[:200],
                 "tier": list(lead.get("tier") or []), "subagent_type": lead.get("subagent_type")}
     except Exception:
         return None

@@ -290,7 +290,7 @@ def main() -> int:
         kind = {"agent": "agent", "overlay": "overlay skill"}.get(sel["kind"], "skill")
         ctx += (f" Specialist hint (advisory, from the registry): {sel['id']} ({kind})"
                 + (f" + overlay {sel['overlay']}" if sel.get("overlay") else "")
-                + f". Acceptance: {sel['acceptance']}")
+                + (f". Acceptance: {sel['acceptance']}" if sel.get("acceptance") else "."))
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:
         try:
             from local_llm import probe  # noqa: E402
