@@ -647,6 +647,8 @@ _TOML_EP = re.compile(rf'"({_MOD}):[A-Za-z_]\w*"')
 _TOML_PKG_START = re.compile(r"^\s*(include|packages)\s*=")
 _TOML_PKG_ITEM = re.compile(r'"([A-Za-z_][\w.]*)\*?"')
 _MODNAME = re.compile(rf"^{_MOD}$")
+# ``runpy.run_module('x', ...)`` written inside a string constant (e.g. code passed to ``python -c``)
+_RUN_MODULE = re.compile(rf"""run_module\(\s*(['"])({_MOD})\1""")
 
 
 def _unit_for_module(res: Resolver, module: str) -> str | None:
@@ -670,7 +672,7 @@ def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[
         base = f.rsplit("/", 1)[-1]
         if f.endswith(".py"):
             text = read_text(root, f, limit=5_000_000)
-            if '"-m"' not in text and "'-m'" not in text:
+            if '"-m"' not in text and "'-m'" not in text and "run_module(" not in text:
                 continue
             try:
                 with warnings.catch_warnings():
@@ -690,6 +692,9 @@ def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[
                         if (isinstance(e, ast.Constant) and e.value == "-m" and isinstance(nxt, ast.Constant)
                                 and isinstance(nxt.value, str) and _MODNAME.match(nxt.value)):
                             add(f, nxt.lineno, "py_argv_m", nxt.value)
+                if isinstance(node, ast.Constant) and isinstance(node.value, str) and "run_module(" in node.value:
+                    for m in _RUN_MODULE.finditer(node.value):
+                        add(f, node.lineno, "py_run_module", m.group(2))
             continue
         if not (f.endswith(STR_TEXT_EXT) or base in TEXT_NAMES):
             continue
@@ -910,7 +915,7 @@ def build_inventory(root: Path, also_units: set[str] | None = None) -> dict:
     # imports that live in strings, from non-test files inside a unit, are edges for the ratchet
     str_edges: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
     for r in string_refs:
-        if r["kind"] in ("py_argv_m", "python_c") and r["unit"] and not effective_test(r["file"]):
+        if r["kind"] in ("py_argv_m", "py_run_module", "python_c") and r["unit"] and not effective_test(r["file"]):
             s_unit = unit_of_file(r["file"], by_len)
             if s_unit and s_unit != r["unit"]:
                 str_edges[s_unit][r["unit"]].add(r["file"])
@@ -1124,7 +1129,7 @@ def render_md(inv: dict) -> str:
         by_kind[x["kind"]] += 1
     L += ["## Importuri din șiruri de caractere", "",
           "AST-ul nu vede importurile din șiruri: `python -m X`, `python -c \"import X\"`, intrări pyproject, liste argv "
-          f"`[\"-m\", \"X\"]`. Total: {len(srefs)} ({', '.join(f'{k}={n}' for k, n in sorted(by_kind.items())) or '-'}); "
+          f"`[\"-m\", \"X\"]`, `run_module('X'` în șiruri .py. Total: {len(srefs)} ({', '.join(f'{k}={n}' for k, n in sorted(by_kind.items())) or '-'}); "
           f"rezolvate la o unitate: {sum(1 for x in srefs if x['unit'])}.", "",
           "| Fișier:rând | Fel | Modul | Unitate |", "|---|---|---|---|"]
     for x in [x for x in srefs if x["unit"]][:40]:

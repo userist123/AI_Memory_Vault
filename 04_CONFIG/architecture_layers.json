@@ -12,7 +12,7 @@
     "Reassigning a unit to another layer in this config is caught only by diff review.",
     "benchmarks/ files count as production.",
     "Relative imports and same-directory sys.path imports are not resolved.",
-    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m and python_c).",
+    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m, py_run_module and python_c).",
     "R1 (WP-04 review r2): `-c` argv in .py files ([sys.executable, '-c', 'import x']) is not parsed; python_c is read only from shell/yml-type files.",
     "R2: shell command strings inside .py files (os.system('python -m x'), subprocess with shell=True) are not scanned.",
     "R3: import_module aliased by assignment (im = importlib.import_module), getattr(importlib, 'import_module') and builtins.__import__ are not counted.",
