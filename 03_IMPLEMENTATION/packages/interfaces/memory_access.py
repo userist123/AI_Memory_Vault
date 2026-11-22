@@ -79,20 +79,72 @@ def _content_scanner():
     return mod.scan_text
 
 
+#: Latin look-alikes from Cyrillic and Greek that NFKC leaves alone (a homoglyph spelled "ignore"
+#: passed the scanner; security review 2026-11-22, finding 2). Lower-case targets: the scanner
+#: patterns are case-insensitive.
+_CONFUSABLES = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y",
+    "х": "x", "і": "i", "ј": "j", "ѕ": "s", "ԁ": "d", "һ": "h",
+    "А": "a", "Е": "e", "О": "o", "Р": "p", "С": "c", "Х": "x",
+    "І": "i", "Ј": "j", "Ѕ": "s", "К": "k", "М": "m", "Н": "h",
+    "Т": "t", "В": "b", "ο": "o", "α": "a", "ε": "e", "ι": "i",
+    "κ": "k", "ν": "v", "ρ": "p", "τ": "t", "υ": "u", "Ο": "o",
+    "Α": "a", "Ε": "e", "Ι": "i", "Κ": "k", "Μ": "m", "Ν": "n",
+    "Ρ": "p", "Τ": "t",
+})
+
+
+#: Categories that refuse a proposal at write time (finding 3): instruction override or concealment,
+#: invisible characters, and data access combined with a network destination (an exfiltration chain).
+#: A network mention alone (a URL, a curl command in a procedure) or a data word alone ("API keys")
+#: is accepted and stays flagged `review_required` on every read.
+_WRITE_REFUSAL_ALWAYS = frozenset({"instruction_override", "concealment", "invisible_unicode", "email_destination"})
+_DATA_CATEGORIES = frozenset({"browser_credentials", "secrets", "files", "memory_context"})
+_NETWORK_CATEGORIES = frozenset({"http_request", "webhook", "upload", "external_endpoint"})
+
+
+def _refused_at_write(scan: Dict[str, Any]) -> bool:
+    reasons = set(scan.get("review_reasons") or [])
+    if not scan.get("review_required"):
+        return False
+    if any(r.startswith("scanner_unavailable") or r == "verdict:BLOCK" for r in reasons):
+        return True
+    if reasons & _WRITE_REFUSAL_ALWAYS:
+        return True
+    return bool(reasons & _DATA_CATEGORIES) and bool(reasons & _NETWORK_CATEGORIES)
+
+
+def _normalised_views(text: str) -> List[str]:
+    """Views of the text in which common obfuscations no longer hide a pattern: NFKC (full-width and
+    compatibility forms), HTML entities decoded, Cyrillic/Greek look-alikes folded to Latin, and all
+    whitespace (line breaks included) collapsed to single spaces so a phrase split across lines is
+    one line. A lexical scanner is still a signal, not a boundary: paraphrase and other languages
+    pass it (OWASP LLM01:2025)."""
+    import html
+
+    folded = html.unescape(unicodedata.normalize("NFKC", text)).translate(_CONFUSABLES)
+    collapsed = re.sub(r"\s+", " ", folded).strip()
+    return [v for v in dict.fromkeys((folded, collapsed)) if v and v != text]
+
+
 def review_flags(text: str, label: str) -> Dict[str, Any]:
     """`review_required` + reasons when returned note text trips the content scanner. A flag for the
     reader only: ranking, lifecycle and the returned text are unchanged. A scanner that cannot run
-    flags the text (fail closed) instead of silently calling it clean."""
+    flags the text (fail closed) instead of silently calling it clean. The raw text and its
+    normalised views are all scanned; the strictest result wins."""
     if not text:
         return {"review_required": False, "review_reasons": []}
     try:
-        result = _content_scanner()(Path(f"<memory:{label}>"), text)
+        scan = _content_scanner()
+        results = [scan(Path(f"<memory:{label}>"), view) for view in [text, *_normalised_views(text)]]
     except Exception as exc:  # noqa: BLE001
         return {"review_required": True, "review_reasons": [f"scanner_unavailable:{type(exc).__name__}"]}
-    if result.verdict == "SAFE":
+    flagged = [r for r in results if r.verdict != "SAFE"]
+    if not flagged:
         return {"review_required": False, "review_reasons": []}
-    reasons = sorted({e.category for e in result.findings if e.active}) or [result.verdict.lower()]
-    return {"review_required": True, "review_reasons": [f"verdict:{result.verdict}", *reasons]}
+    worst = max(flagged, key=lambda r: r.score)
+    reasons = sorted({e.category for r in flagged for e in r.findings if e.active}) or [worst.verdict.lower()]
+    return {"review_required": True, "review_reasons": [f"verdict:{worst.verdict}", *reasons]}
 
 
 def _norm(text: str, fold: bool) -> str:
@@ -552,16 +604,18 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
         "lifecycle": "REVIEW",
         "content": f"# {title.strip()}\n\n{body.strip()}\n",
     }
-    # Write-time scan (threat T1/T2): the same scanner the read path uses, on title + body. The note schema
-    # (additionalProperties: false) does not accept a `quarantined` key on a new note and the controller and
-    # schema are out of scope here, so a proposal that is not SAFE (or whose scan cannot run) is refused and
-    # nothing is written. It does not consume a rate-limit slot.
-    scan = review_flags(title.strip() + "\n\n" + body.strip(), "proposal")
-    if scan["review_required"]:
-        raise ProposalRefused("proposal refused by the content scanner (quarantine): "
-                              + ", ".join(scan["review_reasons"]) + "; nothing was written")
+    # Write-time scan (threat T1/T2): the same scanner and normalised views the read path uses, on title +
+    # body. The note schema (additionalProperties: false) does not accept a `quarantined` key on a new note,
+    # so a proposal in a refused category (_refused_at_write) or whose scan cannot run is refused and nothing
+    # is written; the attempt keeps its rate-limit slot.
     _assert_outside_slots(controller, note_id, note)
-    token = _rate_reserve(client)  # only a proposal that would be written counts
+    # The slot is reserved before the scan (security review 2026-11-22, finding 4): a refused attempt
+    # keeps its slot, so an agent cannot probe the scanner with free retries, and the refusal names no
+    # rule it could tune a variant against.
+    token = _rate_reserve(client)
+    scan = review_flags(title.strip() + "\n\n" + body.strip(), "proposal")
+    if _refused_at_write(scan):
+        raise ProposalRefused("proposal refused by the content scanner; nothing was written")
     try:
         controller.propose(Principal.AI_AGENT, note)
     except BaseException:

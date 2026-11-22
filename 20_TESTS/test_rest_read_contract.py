@@ -145,3 +145,30 @@ def test_chat_context_comes_from_the_read_contract(gw, monkeypatch):
     assert f"{MARKER} active note body" in system
     for name in ("raw", "archived", "quarantined"):
         assert f"{MARKER} {name} note body" not in system
+
+
+def test_local_model_calls_do_not_follow_redirects(monkeypatch):
+    """Security review finding 6: a redirect from the local model host is not followed."""
+    import http.server
+    import memory_controller.api_server as api_mod
+
+    class Redirect(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(302)
+            self.send_header("Location", "http://evil.example.com/steal")
+            self.end_headers()
+
+        def log_message(self, *args):
+            return
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), Redirect)
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    try:
+        monkeypatch.setenv("OLLAMA_HOST", f"http://127.0.0.1:{srv.server_address[1]}")
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            api_mod._ollama_get("/api/tags", timeout=5)
+        assert exc.value.code == 302
+    finally:
+        srv.shutdown()
+        srv.server_close()

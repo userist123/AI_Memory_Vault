@@ -71,8 +71,11 @@ def _ollama_host():
     check_local_url(host)
     return host
 
-# No proxy: a proxy from the environment would carry vault context off the machine.
-_LOCAL_OPENER=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+# No proxy (a proxy from the environment would carry vault context off the machine) and no
+# redirects (a redirect from the local host must not send the request elsewhere), as
+# vault_access.ollama_assistant does.
+from vault_access.ollama_assistant import _NoRedirect
+_LOCAL_OPENER=urllib.request.build_opener(urllib.request.ProxyHandler({}),_NoRedirect())
 
 def _ollama_get(path,timeout=20):
     req=urllib.request.Request(_ollama_host()+path,method='GET')
