@@ -4,6 +4,9 @@ Milestone 1 supports the dry run only. Exit codes: 0 = COMPLETED, 3 = COMPLETED_
 (storage could not read some note files; listed in the record), 1 = FAILED or STALE_SNAPSHOT,
 2 = usage (no --dry-run) or missing HMAC secret when a benchmark runs.
 
+``python -m active_knowledge_engine split-plan --note-id ID`` writes a dry-run split manifest
+(exit 0 = PLANNED, 1 = UNSPLITTABLE / COVERAGE_FAILED).
+
 ``python -m active_knowledge_engine compare BASELINE.json CANDIDATE.json`` compares the
 retrieval_quality stage of two job records (exact McNemar). Exit codes: 0 = NO_CHANGE,
 IMPROVED or INCONCLUSIVE, 4 = REGRESSED, 2 = NOT_COMPARABLE.
@@ -34,10 +37,35 @@ def main(argv=None) -> int:
                      help="frozen benchmark JSON with a .sha256 sidecar; default: held-out v2 under the vault root, if present")
     run.add_argument("--no-benchmark", action="store_true", help="skip the retrieval_quality stage")
     run.add_argument("--k", type=int, default=5, help="agent page size (production memory_search default: 5)")
+    sp = sub.add_parser("split-plan", help="dry-run split manifest for a note too large for the agent pack")
+    sp.add_argument("--note-id", required=True)
+    sp.add_argument("--vault-root", default=str(REPO_ROOT))
     cmp = sub.add_parser("compare", help="paired comparison of two job records")
     cmp.add_argument("baseline")
     cmp.add_argument("candidate")
     args = parser.parse_args(argv)
+
+    if args.command == "split-plan":
+        from interfaces import vault_runtime
+        vault_runtime.configure_runtime_dirs()
+        from memory_controller.controller import MemoryController
+        from memory_controller.storage.file_engine import FileStorageEngine
+
+        from .split_plan import plan_split
+
+        vault = Path(args.vault_root).resolve()
+        plan = plan_split(MemoryController(storage=FileStorageEngine(str(vault))), args.note_id)
+        out_dir = vault / "08_OBSERVABILITY" / "active_knowledge_engine" / "split_plans"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in args.note_id)
+        out = out_dir / f"{safe_name}.json"
+        out.write_text(json.dumps(plan, indent=2, sort_keys=True, ensure_ascii=False) + chr(10),
+                       encoding="utf-8", newline=chr(10))
+        print(f"plan={out}")
+        print(f"status={plan['status']} children={len(plan['children'])} parent_chars={plan['parent_chars']}")
+        if plan["status"] == "UNSPLITTABLE":
+            print(f"blocking_line={plan['blocking_line']}")
+        return 0 if plan["status"] == "PLANNED" else 1
 
     if args.command == "compare":
         from .compare import compare_records

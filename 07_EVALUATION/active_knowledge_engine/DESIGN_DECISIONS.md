@@ -184,3 +184,25 @@ PR #398:
 The owner said "agents receive nothing unverified". Today's read contract (VAULT_STATE "Agent read contract" row) serves **REVIEW notes marked `unverified`** to agents, flagged as unverified; Fable reproduced this.
 - Closing that would withdraw about 229 notes (about 46% of what agents can read).
 - That is a contract change, so it has not been made without an explicit owner instruction.
+
+### Step 1 done: dry-run split plans (2026-11-22)
+
+`active_knowledge_engine/split_plan.py` (CLI `python -m active_knowledge_engine split-plan --note-id ID`) computes a deterministic, section-aware split and **changes nothing**.
+- It proves coverage: the children, concatenated in order, are exactly the parent body.
+- It proves fit: each child, built the way `cognitive_read` builds a one-note pack, passes the real `ContextPackBuilder`.
+- It cuts only on line boundaries, so no rule line is split.
+- Whitespace-only runs never become a child.
+- Failure states: `UNSPLITTABLE` (a single line longer than the smallest target) and `DOES_NOT_FIT` (the first failing child is named). Both fail closed.
+- The manifest holds offsets and hashes, never content. It is written to `08_OBSERVABILITY/active_knowledge_engine/split_plans/` (git-ignored).
+
+| Note | Result |
+|---|---|
+| `02_PRODUCT/projects/Continuity_Handoff.md` (21,576 chars) | **PLANNED**: 4 children of 5,173-5,696 chars, coverage proven |
+| `01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md` (919,796 chars) | **PLANNED**: 159 children of 340-5,998 chars, coverage proven |
+| `01_ARCHITECTURE/graphs/10 Imports and Sources Map.md` (28,048 chars) | **UNSPLITTABLE**: line 5 is one line of 27,900 chars; it can be served only if the owner reformats it (one link per line) |
+
+A first run marked the catalogue UNSPLITTABLE for a false reason. The body starts with a blank line, which was emitted as a 1-character child, and the pack rejects an empty child. It was fixed test-first: blank runs are carried into the next child, and other failures are reported as `DOES_NOT_FIT`.
+
+**Next steps are owner actions, as planned.** For each child: create it, re-hash it against `content_sha256`, attest it with `expected_content_sha256`, then promote it. After that, attest the manifest and supersede the parent.
+- Pilot on Continuity_Handoff (4 children) first.
+- The catalogue (159 children) needs a batch tool. It should run only after the pilot is verified.
