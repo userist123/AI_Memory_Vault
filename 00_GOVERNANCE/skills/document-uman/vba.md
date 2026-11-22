@@ -77,6 +77,24 @@ unlocks afterwards only those it locked, and reports how many it left alone. Upd
 fetch an attached template or a linked picture from a UNC path when a hostile document opens; keep
 batch folders to documents the owner trusts.
 
+Checker rules added in the last round (all FAIL unless noted): any `AutomationSecurity` assignment other
+than the literal 3 (the only exception is restoring a variable the same procedure read from
+`.AutomationSecurity` while it also sets 3); `CreateObject("Excel.Application"/"Word.Application")` is a
+WARN unless `AutomationSecurity = 3` follows in the same procedure (a new instance defaults to Low); XLM
+(`EXEC(`/`CALL(`/`REGISTER(` in strings, `Sheets.Add` Type 3/4, `Names.Add "Auto_..."`); startup persistence
+(`XLSTART`, `Startup`, `Start Menu`, `wdStartupPath`, `Options.DefaultFilePath(`), also when the path is
+split with `" & "` joins; UNC paths also via `Chr(92) & Chr(92)`; `.Follow`, `QueryTables.Add`,
+`Connections.Add`, `Fields.Add` with INCLUDE/LINK/DDE, `MailMerge.OpenDataSource` (allowed only with
+`' vba_ro:allow-mailmerge <need>` on the same line, then WARN), `Documents.Add Template:=` non-literal
+(WARN); any `Workbook_*`/`Worksheet_*`/`Document_*`/`App_*` Sub or `WithEvents` (macros start only from
+an explicit entry Sub); `AddOLEObject`.
+
+Residual risk, stated plainly: the checker is a heuristic text filter. A string or name built from pieces
+across statements or variables, or from data read at run time, can pass it. The backstop is the runtime:
+Office starts with `AutomationSecurity = 3`, so macros of files opened by the build/export steps cannot
+run, `ruleaza` runs only a file that passed the check, and the owner reads what the macro does before
+using it on documents he does not trust.
+
 ## 3. Professional rules (FAIL/WARN in the checker where testable)
 
 - `Option Explicit` in every module. Explicit types (`As Long`, `As String`), never `Dim x As New`.
@@ -246,16 +264,22 @@ python -P -E <skill dir>\vba_ro.py exporta out.xlsm <folder>       (review what 
 ```
 `construieste` and `exporta` need "Trust access to the VBA project object model". `vba_ro.acces_vbom`
 guards `HKCU\Software\Microsoft\Office\16.0\<Word|Excel>\Security\AccessVBOM`:
-- one run per app at a time: an exclusive lock file `%TEMP%\vba_ro_vbom\<App>.lock` (created with
+- one run per app at a time: an exclusive lock file `%LOCALAPPDATA%\vba_ro\<App>.lock` (a fixed per-user
+  folder from the Windows Known Folder API, not `%TEMP%`, so runs with different TEMP values exclude
+  each other; fallbacks in order: the `LOCALAPPDATA` variable, `<home>\AppData\Local`, the temp folder
+  only if none exists; created with
   O_EXCL, holds the owner PID and its process start time). A second run while the owner is alive is
   refused with "in use by another vba_ro run (PID n)"; a lock whose owner is dead (crash, kill) is
-  moved aside atomically and its backup restored before the new run starts;
-- the backup `%TEMP%\vba_ro_vbom\<App>.backup.json` records the exact original state: which keys
+  moved aside atomically and its backup restored before the new run starts. A run that lost the
+  rename race waits (at most 10 s) for the other recoverer, finishes the work itself if that recoverer
+  died, and otherwise refuses; a backup is deleted only if it is byte-identical to the one restored;
+- the backup `%LOCALAPPDATA%\vba_ro\<App>.backup.json` records the exact original state: which keys
   existed, whether the value existed, its registry type (DWORD or REG_SZ...) and data. The guard sets
   DWORD 1 only during the build and restores that state - same type, value deleted if it was absent,
   Security key deleted again if the guard created it - then checks the result;
 - an exception inside the build is never replaced by a restore error: the restore problem is printed
-  and the backup kept for `vba_ro.py restaureaza-vbom`, which leaves a live run alone.
+  and the backup kept for `vba_ro.py restaureaza-vbom`, which leaves a live run alone and also restores,
+  once, backups that versions 1-2 left under `%TEMP%\vba_ro_vbom` (never while a live lock exists).
 Check with `vba_ro.py stare-vbom` or `reg query`. Never change VBAWarnings, the macro security level or
 Trusted Locations.
 

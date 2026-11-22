@@ -21,8 +21,16 @@
   checker: continuations joined, ~30 new rules. Tests: `20_TESTS/test_document_uman_vba.py`
   (52 FAIL probes, 7 WARN probes, 8 templates PASS, 16 guard tests on a scratch HKCU key); live
   end-to-end 64/64 checks in Word/Excel (harness kept outside the repo).
-- Next: round-2 review of the delta only (reviewer gets vba.md section 2 as the probe list), then merge.
-- Residuals: the checker is a pattern filter (a ProgID or keyword built from unlisted pieces can pass);
+- Done (2026-11-23, final fix round, no further review): lock/backup moved from `%TEMP%` to the fixed
+  `%LOCALAPPDATA%\vba_ro` (Known Folder API; old TEMP location read once by `restaureaza-vbom`, never over a
+  live lock); recovery race: the loser of the lock rename waits (bounded) for the other recoverer, backup
+  deleted only if byte-identical; checker: AutomationSecurity literal 3 only, Office CreateObject WARN, XLM,
+  startup persistence, network/UNC after concat normalisation, event handlers, OLE (46 new probes);
+  `Word_CorespondentaPDF` carries the `vba_ro:allow-mailmerge` marker. 150 tests pass, hygiene FAILURES=0,
+  live Excel + Word template rebuild/run OK, AccessVBOM unchanged (absent before and after).
+- Next: main session verifies and merges (no further review round).
+- Residuals: the checker is a heuristic pattern filter (names built across variables/statements can pass;
+  backstop = AutomationSecurity 3 at runtime, see vba.md section 2);
   Word may fetch an attached template or linked picture from a UNC path when a hostile document opens.
 - Then: use on real owner documents; add lessons from each real use to SKILL.md / genuri.md.
 - Not implemented: fillable PDF forms, Bates stamping, redaction, PDF/A and PDF/UA validation

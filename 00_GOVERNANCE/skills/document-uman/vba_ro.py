@@ -47,8 +47,38 @@ except ImportError:  # pragma: no cover - non-Windows
 
 OFFICE_VER = "16.0"
 VBOM_BASE = rf"Software\Microsoft\Office\{OFFICE_VER}"
-STATE_DIR = Path(tempfile.gettempdir()) / "vba_ro_vbom"
+
+
+def _radacina_stare() -> Path:
+    """Fixed per-user folder for the lock and backup files. It must not depend on %TEMP% (two runs
+    with different TEMP values would take different locks): the Windows Known Folder LocalAppData,
+    else %LOCALAPPDATA%, else <home>/AppData/Local, and only as a last resort the temp folder."""
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            import uuid
+            guid = (ctypes.c_ubyte * 16).from_buffer_copy(
+                uuid.UUID("F1B32785-6FBA-4FCF-9D55-7B8E7F157091").bytes_le)  # FOLDERID_LocalAppData
+            out = ctypes.c_wchar_p()
+            shell32 = ctypes.WinDLL("shell32")
+            if shell32.SHGetKnownFolderPath(ctypes.byref(guid), 0, None, ctypes.byref(out)) == 0 and out.value:
+                val = out.value
+                ctypes.WinDLL("ole32").CoTaskMemFree(out)
+                return Path(val)
+        except Exception:  # noqa: BLE001 - fall through to the environment
+            pass
+    env = os.environ.get("LOCALAPPDATA")
+    if env:
+        return Path(env)
+    home = Path.home() / "AppData" / "Local"
+    return home if home.parent.exists() else Path(tempfile.gettempdir())
+
+
+STATE_DIR = _radacina_stare() / "vba_ro"
+# versions 1 and 2 kept their state under %TEMP%; read once by `restaureaza-vbom` for old backups
+LEGACY_DIR = Path(tempfile.gettempdir()) / "vba_ro_vbom"
 LEGACY_BACKUP = Path(tempfile.gettempdir()) / "vba_ro_vbom_backup.json"  # format of version 1
+RECOVERY_WAIT = 10.0  # seconds to wait for another run that is restoring a dead run's backup
 APPS = ("Word", "Excel")
 _ABSENT = "absent"
 SEC_FORCE_DISABLE = 3  # msoAutomationSecurityForceDisable
@@ -66,8 +96,20 @@ FORBIDDEN_ANY = [
     (r"URLDownloadToFile|XMLHTTP|WinHttp|ServerXMLHTTP|InternetExplorer\.Application|MSXML2|"
      r"Inet\w*\.|https?://|\bftp://|\bWEBSERVICE\b", "network access"),
     (r"\\\\", "UNC path (\\\\server\\share - network access, NTLM hash leak)"),
-    (r"XLSTART|\\Startup\b|Start Menu|\bStartupPath\b|\bAltStartupPath\b|NormalTemplate|"
-     r"Normal\.dotm|PERSONAL\.XLSB", "Startup folder / Normal template / PERSONAL.XLSB (persistence)"),
+    (r"XLSTART|\\Startup\b|\bStartup\b|Start Menu|\bwdStartupPath\b|\bStartupPath\b|\bAltStartupPath\b|"
+     r"NormalTemplate|Normal\.dotm|PERSONAL\.XLSB|\.DefaultFilePath\s*\(",
+     "Startup folder / Normal template / PERSONAL.XLSB (persistence)"),
+    (r"AddOLEObject|OLEObjects\.Add", "OLE object insertion (AddOLEObject)"),
+    (r"\b(Sub|Function)\s+(Workbook|Worksheet|Document|App|Application)_\w+|\bWithEvents\b",
+     "event handler / WithEvents (macros must run only from an explicit entry Sub)"),
+    (r"\.Follow\b", "Hyperlink .Follow (opens URLs / files)"),
+    (r"QueryTables\.Add|Connections\.Add", "data connection (QueryTables/Connections.Add - network)"),
+    (r"\.Fields\.Add\b.*(INCLUDE|LINK|DDE)", "Fields.Add with an INCLUDE/LINK/DDE field (network / DDE)"),
+    (r"\.Add\w*\b[^\n]*?\bType\s*:=\s*(3|4|xlExcel4(Intl)?MacroSheet)\b",
+     "Add with Type 3/4 (Excel 4.0 / XLM macro sheet)"),
+    (r"\b(Sheets|Worksheets)\.Add\s*\(?([^,\n]*,){3}\s*(3|4)\b", "Sheets.Add with positional Type 3/4 (XLM)"),
+    (r"\bNames\b[^\n]*\.Add\b\s*\(?\s*(Name\s*:=\s*)?\"Auto_|^\s*\.Add\s*\(?\s*(Name\s*:=\s*)?\"Auto_",
+     "Names.Add of an Auto_ name (auto-execution)"),
     (r"\bSaveSetting\b|\bDeleteSetting\b|RegWrite|RegDelete|StdRegProv", "registry write"),
     (r"\bSub\s+(Auto_?Open|Auto_?Close|Auto_?Exec|Auto_?New|Auto_?Exit)\b|"
      r"\bSub\s+(Document_Open|Document_New|Document_Close|Workbook_Open|Workbook_BeforeClose|"
@@ -103,6 +145,7 @@ WARN_CODE = [
     (r"(^|:)\s*Open\s+.+\s+For\s+(Output|Append|Binary|Random)\b",
      "Open ... For Output/Append writes a file - check path and overwrite rule"),
     (r"\.CreateTextFile\b|\.OpenTextFile\b", "writes a text file - check path and overwrite rule"),
+    (r"\bDocuments\.Add\b[^\n]*\bTemplate\s*:=\s*(?!\"\")", "Documents.Add with a non-literal Template (may be a URL/UNC)"),
 ]
 # CreateObject is allowed only for these ProgIDs, as a complete string literal.
 CREATEOBJECT_OK = {"scripting.dictionary", "scripting.filesystemobject", "word.application",
@@ -147,6 +190,17 @@ def _logical_lines(text: str):
         yield start, "\n".join(raw_buf), " ".join(code_buf)
 
 
+def _normaliza(code: str) -> str:
+    """Code with Chr(92)/Chr(&H5C) turned into a backslash literal and "a" & "b" joins removed, so a
+    path or a keyword split across a concatenation is seen whole (string literals are kept)."""
+    code = re.sub(r"\bChrW?\$?\s*\(\s*(92|&H5C)\s*\)", lambda m: '"' + chr(92) + '"', code, flags=re.I)
+    prev = None
+    while prev != code:
+        prev = code
+        code = re.sub(r'"\s*(?:&|\+)\s*"', "", code)
+    return code
+
+
 def _blank_strings(code: str) -> str:
     return re.sub(r'"[^"\n]*"', '""', code)
 
@@ -168,6 +222,32 @@ def _procedures(logical):
                 cur = None
             else:
                 cur[4].append(ln)
+
+
+def _automation_security(name, body, fails) -> None:
+    """Every AutomationSecurity assignment must be the literal 3 (ForceDisable). The only other value
+    allowed is restoring a variable that this procedure itself read from .AutomationSecurity, in a
+    procedure that also sets 3 (the templates' save / force-disable / restore pattern)."""
+    stmts = []
+    for ln in body:
+        stmts += [x.strip() for x in re.split(r":|\bThen\b|\bElse\b", _blank_strings(ln), flags=re.I)]
+    saved = set()
+    for x in stmts:
+        m = re.match(r"^(\w+)\s*=\s*[\w.]*\.AutomationSecurity$", x, re.I)
+        if m:
+            saved.add(m.group(1).lower())
+    sets3 = any(re.search(r"\bAutomationSecurity\s*=\s*(3|msoAutomationSecurityForceDisable)$", x, re.I)
+                for x in stmts)
+    for x in stmts:
+        m = re.search(r"\bAutomationSecurity\s*=\s*(.*)$", x, re.I)
+        if not m or re.match(r"^(If|ElseIf)\b", x, re.I):
+            continue  # not an assignment, or a comparison in an If condition
+        val = m.group(1).strip()
+        if val == "3" or val.lower() == "msoautomationsecurityforcedisable":
+            continue
+        if sets3 and val.lower() in saved:
+            continue
+        fails.append(f"{name}: AutomationSecurity assigned something other than the literal 3: {x[:60]}")
 
 
 def _fso_vars(logical_ns) -> set:
@@ -193,6 +273,7 @@ def verifica_sursa(text: str, nume: str = "<sursa>"):
     logical = list(_logical_lines(text))
     code = [c for _, _, c in logical]
     code_ns = [_blank_strings(c) for c in code]
+    code_n = [_normaliza(c) for c in code]
     joined = "\n".join(code)
     joined_ns = "\n".join(code_ns)
 
@@ -207,9 +288,20 @@ def verifica_sursa(text: str, nume: str = "<sursa>"):
     in_fso_with = False
     for idx, ((i, raw, ln), ns) in enumerate(zip(logical, code_ns)):
         short = " ".join(raw.split())[:90]
+        nn = code_n[idx]
         for rx, msg in FORBIDDEN_ANY:
-            if re.search(rx, ln, re.I):
+            if re.search(rx, ln, re.I) or re.search(rx, nn, re.I):
                 fails.append(f"line {i}: {msg}: {short}")
+        for sm in re.findall(r'"([^"\n]*)"', nn):  # XLM formulas written as text, e.g. "=EXEC(...)"
+            if re.search(r"\b(EXEC|CALL|REGISTER)\s*\(", sm, re.I):
+                fails.append(f"line {i}: Excel 4.0 (XLM) function in a string: {short}")
+                break
+        if re.search(r"\.OpenDataSource\b", ns, re.I):
+            if "vba_ro:allow-mailmerge" in raw:
+                warns.append(f"line {i}: MailMerge.OpenDataSource with documented need: {short}")
+            else:
+                fails.append(f"line {i}: MailMerge.OpenDataSource (allowed only with ' vba_ro:allow-mailmerge "
+                             f"<documented need> on the same line): {short}")
         for rx, msg in FORBIDDEN_CODE:
             if re.search(rx, ns, re.I):
                 fails.append(f"line {i}: {msg}: {short}")
@@ -281,9 +373,17 @@ def verifica_sursa(text: str, nume: str = "<sursa>"):
                 if not re.search(r"\bExit\s+(Sub|Function)\b|^\s*GoTo\s+\w+", tail, re.I | re.M):
                     fails.append(f"{name}: no Exit Sub/Function (or GoTo cleanup) before {label}: - "
                                  "the normal path falls into the error handler")
+        _automation_security(name, body, fails)
+        bn = _normaliza(b)
+        for m in re.finditer(r'Create\w*Object\s*\(\s*"(Excel|Word)\.Application"', bn, re.I):
+            if not re.search(r"\.AutomationSecurity\s*=\s*3\b", bn[m.end():]):
+                warns.append(f"{name}: CreateObject(\"{m.group(1)}.Application\") without a following "
+                             "AutomationSecurity = 3 (a new instance defaults to Low)")
         if entry and "MsgBox" not in b:
             warns.append(f"{name}: entry macro without a MsgBox report to the user")
         for s in SETTINGS:
+            if s == "AutomationSecurity" and re.search(r"Create\w*Object", b, re.I):
+                continue  # a private new instance is only forced to 3, there is nothing to restore
             if re.search(rf"\.{s}\s*=\s*(False|xlCalculationManual|-4135|0|wdAlertsNone|3|"
                          r"msoAutomationSecurityForceDisable)\b", b) and \
                     len(re.findall(rf"\.{s}\s*=", b)) < 2:
@@ -443,10 +543,16 @@ def _proprietar_viu(owner) -> bool:
     return start is not None and start == owner.get("start")
 
 
+def _punct(nume: str) -> None:  # test hook: a no-op that tests patch to force an interleaving
+    return None
+
+
 class _Garda:
     """One AccessVBOM change for one app, serialized by an exclusive lock file."""
 
-    def __init__(self, app: str, base: str = VBOM_BASE, state_dir=STATE_DIR):
+    def __init__(self, app: str, base: str = VBOM_BASE, state_dir=None):
+        if state_dir is None:
+            state_dir = STATE_DIR
         if app not in APPS:
             raise ValueError(f"unknown app {app!r}")
         self.app, self.base = app, base
@@ -495,7 +601,10 @@ class _Garda:
         try:
             os.rename(self.lock, aside)
         except FileNotFoundError:
-            return  # someone else recovered it first
+            # someone else moved the lock aside first. They may still be restoring the backup: the
+            # caller must not take the lock (and back up the forced value) until they are done.
+            self._attinde_recuperare()
+            return
         try:
             got = json.loads(aside.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -508,14 +617,48 @@ class _Garda:
         self._restaureaza_backup()
         aside.unlink(missing_ok=True)
 
+    def _stale(self) -> list:
+        return sorted(self.dir.glob(f"{self.lock.name}.stale.*"))
+
+    def _attinde_recuperare(self) -> None:
+        """Wait (bounded) while another run holds a moved-aside lock, i.e. is restoring a backup. A
+        recoverer that died (its PID in the file name is gone) is finished here instead."""
+        end = time.monotonic() + RECOVERY_WAIT
+        while True:
+            alive = []
+            for st in self._stale():
+                try:
+                    pid = int(st.name.rsplit(".stale.", 1)[1].split(".")[0])
+                except (IndexError, ValueError):
+                    pid = 0
+                if pid and _start_proces(pid) is None:  # the recoverer is dead: complete its work
+                    self._restaureaza_backup()
+                    st.unlink(missing_ok=True)
+                else:
+                    alive.append(st)
+            if not alive:
+                return
+            if time.monotonic() >= end:
+                raise RuntimeError(f"AccessVBOM for {self.app}: another run is still restoring the backup "
+                                   f"({alive[0].name}); refusing - try again")
+            time.sleep(0.05)
+
     def _restaureaza_backup(self):
-        if not self.backup.exists():
+        try:
+            raw = self.backup.read_bytes()
+            mt = self.backup.stat().st_mtime_ns
+        except FileNotFoundError:
             return None
-        stare = json.loads(self.backup.read_text(encoding="utf-8"))
+        stare = json.loads(raw.decode("utf-8"))
         _aplica_stare(self.app, self.base, stare)
         if citeste_stare(self.app, self.base)["value"] != stare["value"]:
             raise RuntimeError(f"AccessVBOM for {self.app} could not be restored from {self.backup}")
-        self.backup.unlink()
+        _punct("inainte_de_stergere_backup")
+        try:  # delete only the very backup that was restored, never one a newer run has written since
+            if self.backup.read_bytes() == raw and self.backup.stat().st_mtime_ns == mt:
+                self.backup.unlink()
+        except FileNotFoundError:
+            pass
         return stare
 
     # -- change and restore
@@ -576,7 +719,7 @@ class _Garda:
 
 
 @contextlib.contextmanager
-def acces_vbom(app: str, base: str = VBOM_BASE, state_dir=STATE_DIR):
+def acces_vbom(app: str, base: str = VBOM_BASE, state_dir=None):
     """Temporarily set AccessVBOM=1 for Word or Excel; always restore the exact original state.
     Refuses (RuntimeError) while another run holds the same app. An exception from the body is never
     replaced by a restore error."""
@@ -593,14 +736,21 @@ def acces_vbom(app: str, base: str = VBOM_BASE, state_dir=STATE_DIR):
         g.elibereaza(strict=True)
 
 
-def restaureaza_vbom(base: str = VBOM_BASE, state_dir=STATE_DIR) -> dict:
-    """Restore what a crashed run left behind (idempotent). Live runs are left alone."""
-    rez = {}
+def _lacat_viu(state_dir, app: str) -> bool:
+    g = _Garda(app, VBOM_BASE, state_dir)
+    owner = g._citeste_lacat() if g.lock.exists() else None
+    return owner is not None and _proprietar_viu(owner)
+
+
+def _restaureaza_dir(base: str, state_dir, rez: dict, live_elsewhere=()) -> None:
     for app in APPS:
         g = _Garda(app, base, state_dir)
         owner = g._citeste_lacat() if g.lock.exists() else None
         if owner is not None and _proprietar_viu(owner):
             rez[app] = f"in use by PID {owner['pid']} - not touched"
+            continue
+        if any(_lacat_viu(d, app) for d in live_elsewhere):
+            rez.setdefault(app, "in use by a live run - legacy backup not applied")
             continue
         if g.lock.exists():
             g._recupereaza_orfan(owner)
@@ -608,12 +758,36 @@ def restaureaza_vbom(base: str = VBOM_BASE, state_dir=STATE_DIR) -> dict:
         elif g.backup.exists():
             g._restaureaza_backup()
             rez[app] = "restored from backup"
+
+
+def restaureaza_vbom(base: str = VBOM_BASE, state_dir=None, legacy_dir=None) -> dict:
+    """Restore what a crashed run left behind (idempotent). Live runs are left alone. Backups that
+    older versions wrote under %TEMP% are restored once too, unless a live lock exists for that app
+    in the fixed state folder (a live run always wins over any backup)."""
+    if state_dir is None:
+        state_dir = STATE_DIR
+    if legacy_dir is None and base == VBOM_BASE:
+        legacy_dir = LEGACY_DIR
+    rez = {}
+    _restaureaza_dir(base, state_dir, rez)
+    if legacy_dir is not None and Path(legacy_dir).exists() and Path(legacy_dir) != Path(state_dir):
+        legacy = {}
+        _restaureaza_dir(base, legacy_dir, legacy, live_elsewhere=(state_dir,))
+        for app, msg in legacy.items():
+            rez.setdefault(app, "legacy: " + msg)
     if LEGACY_BACKUP.exists() and base == VBOM_BASE:  # backup written by version 1 (DWORD only)
-        for app, val in json.loads(LEGACY_BACKUP.read_text(encoding="utf-8")).items():
+        data = json.loads(LEGACY_BACKUP.read_text(encoding="utf-8"))
+        done = True
+        for app, val in data.items():
+            if app in APPS and (_lacat_viu(state_dir, app) or _lacat_viu(LEGACY_DIR, app)):
+                rez[app] = "in use by a live run - legacy backup not applied"
+                done = False
+                continue
             _aplica_stare(app, base, {"missing_keys": [], "value": None if val == _ABSENT else
                                       {"type": winreg.REG_DWORD, "data": int(val)}})
             rez[app] = f"restored from legacy backup: {val}"
-        LEGACY_BACKUP.unlink()
+        if done:
+            LEGACY_BACKUP.unlink()
     return rez
 
 

@@ -57,7 +57,7 @@ Public Function ImbinaFisiere(ByVal principal As String, ByVal registru As Strin
     doc.MailMerge.OpenDataSource Name:=registru, ConfirmConversions:=False, ReadOnly:=True, _
         LinkToSource:=True, AddToRecentFiles:=False, Revert:=False, Format:=wdOpenFormatAuto, _
         Connection:="Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & registru & ";Mode=Read;", _
-        SQLStatement:="SELECT * FROM `" & foaie & "$`", SubType:=wdMergeSubTypeAccess
+        SQLStatement:="SELECT * FROM `" & foaie & "$`", SubType:=wdMergeSubTypeAccess ' vba_ro:allow-mailmerge registrul de date ales de utilizator, deschis doar pentru citire
     ImbinaFisiere = ImbinaInPDF(doc, camp, dest, prefix, suprascrie)
 Curatare:
     On Error Resume Next

@@ -431,4 +431,311 @@ def test_killed_holder_is_recovered_by_next_run(reg, tmp_path):
 @win
 def test_guard_never_uses_the_real_office_key_in_tests(reg):
     assert "Microsoft\\Office" not in _sec(reg)
-    assert os.path.commonpath([str(reg["state"]), str(vba_ro.STATE_DIR)]) != str(vba_ro.STATE_DIR)
+    state = Path(reg["state"]).resolve()
+    real = Path(vba_ro.STATE_DIR).resolve()
+    assert state != real and real not in state.parents
+
+
+# ----------------------------------------------------------------------------- checker rules, round 3
+BS = chr(92)
+EXTRA_FAIL_PROBES = {
+    # AutomationSecurity: only the literal 3 (or restoring a value the procedure itself saved)
+    "autosec_two": ("    Application.AutomationSecurity = 2", ""),
+    "autosec_variable": ("    Application.AutomationSecurity = x", ""),
+    "autosec_named_low": ("    Application.AutomationSecurity = msoAutomationSecurityLow", ""),
+    "autosec_after_then": ("    If x = 1 Then Application.AutomationSecurity = 1", ""),
+    "autosec_on_new_instance_low": ('    Set f = CreateObject("Excel.Application")\n    f.AutomationSecurity = 1', ""),
+    "autosec_restore_without_save": ("    Application.AutomationSecurity = 3\n    Application.AutomationSecurity = x", ""),
+    # XLM
+    "xlm_exec_string": ('    x = "=EXEC(1)"', ""),
+    "xlm_call_string": ('    x = "=CALL(1)"', ""),
+    "xlm_register_string": ('    x = "=REGISTER(1)"', ""),
+    "xlm_concatenated": ('    x = "=EX" & "EC(1)"', ""),
+    "xlm_sheets_add_type3": ("    ThisWorkbook.Sheets.Add Type:=3", ""),
+    "xlm_worksheets_add_type4": ("    ThisWorkbook.Worksheets.Add(Type:=4)", ""),
+    "xlm_sheets_add_positional": ("    ThisWorkbook.Sheets.Add , , 1, 3", ""),
+    "xlm_intl_macro_sheet": ("    ThisWorkbook.Sheets.Add Type:=xlExcel4IntlMacroSheet", ""),
+    "names_add_auto_open": ('    ThisWorkbook.Names.Add "Auto_Open", "=x"', ""),
+    "names_add_auto_concatenated": ('    ThisWorkbook.Names.Add Name:="Auto" & "_Open", RefersTo:="=x"', ""),
+    "names_add_auto_with_block": ('    With ThisWorkbook.Names\n        .Add "Auto_Close", "=x"\n    End With', ""),
+    # startup persistence
+    "startup_word_default_path": ("    x = Options.DefaultFilePath(wdStartupPath)", ""),
+    "startup_const_only": ("    x = wdStartupPath", ""),
+    "startup_xlstart_split": ('    x = "XLS" & "TART"', ""),
+    "startup_start_menu_split": ('    x = "Start" & " Menu"', ""),
+    "startup_folder_split": ('    x = "C:' + BS + 'a' + BS + 'Startu" & "p' + BS + 'b.xlsm"', ""),  # hygiene: intentional-absolute-path
+    "startup_savecopyas": ('    ThisWorkbook.SaveCopyAs Environ("APPDATA") & "' + BS + 'Microsoft' + BS + 'Excel' + BS + 'XLS" & "TART' + BS + 'a.xlsm"', ""),  # hygiene: intentional-absolute-path
+    "startup_copyfile": ('    fso.CopyFile x, "C:' + BS + 'Startup' + BS + '"', ""),  # hygiene: intentional-absolute-path
+    "startup_createtextfile": ('    Set f = fso.CreateTextFile("XLS" & "TART' + BS + 'a.txt")', ""),
+    "startup_open_for_output": ('    Open "XLS" & "TART' + BS + 'a.txt" For Output As #1', ""),  # hygiene: intentional-absolute-path
+    # network
+    "unc_two_literals_concatenated": ('    x = "' + BS + '" & "' + BS + 'srv' + BS + 'share"', ""),  # hygiene: intentional-absolute-path
+    "unc_chr92_chr92": ('    x = Chr(92) & Chr(92) & "srv"', ""),
+    "unc_chr92_hex": ('    x = Chr(&H5C) & Chr(&H5C) & "srv"', ""),
+    "unc_prefix_concatenated": ('    x = "' + BS + BS + '" & "srv"', ""),  # hygiene: intentional-absolute-path
+    "follow_method": ("    f.Follow", ""),
+    "hyperlinks_follow": ("    ActiveDocument.Hyperlinks(1).Follow", ""),
+    "querytables_add": ("    ActiveSheet.QueryTables.Add x, x", ""),
+    "connections_add": ("    ThisWorkbook.Connections.Add x, x, x", ""),
+    "mailmerge_without_marker": ("    ActiveDocument.MailMerge.OpenDataSource Name:=x", ""),
+    "fields_add_include": ('    ActiveDocument.Fields.Add f, -1, "INCLUDETEXT x"', ""),
+    "fields_add_include_split": ('    ActiveDocument.Fields.Add f, -1, "INCLU" & "DETEXT x"', ""),
+    "fields_add_link": ('    ActiveDocument.Fields.Add f, -1, "LINK Excel.Sheet.12 x"', ""),
+    "fields_add_dde_split": ('    ActiveDocument.Fields.Add f, -1, "DD" & "E x"', ""),
+    # event handlers
+    "event_workbook_sheetchange": ("    x = 1", "Private Sub Workbook_SheetChange(ByVal s As Object)\nEnd Sub"),
+    "event_worksheet_change": ("    x = 1", "Private Sub Worksheet_Change(ByVal t As Object)\nEnd Sub"),
+    "event_document_contentcontrol": ("    x = 1", "Private Sub Document_ContentControlOnEnter(ByVal c As Object)\nEnd Sub"),
+    "event_app_documentopen": ("    x = 1", "Private Sub App_DocumentOpen(ByVal d As Object)\nEnd Sub"),
+    "event_withevents": ("    x = 1", "Private WithEvents app As Application"),
+    # OLE
+    "ole_inlineshapes": ('    ActiveDocument.InlineShapes.AddOLEObject ClassType:="x"', ""),
+    "ole_shapes": ('    ActiveDocument.Shapes.AddOLEObject ClassType:="x"', ""),
+}
+
+
+@pytest.mark.parametrize("name", sorted(EXTRA_FAIL_PROBES))
+def test_round3_probe_fails(name):
+    body, decl = EXTRA_FAIL_PROBES[name]
+    fails, _ = vba_ro.verifica_sursa(modul(body, decl))
+    assert fails, f"probe {name} was not caught"
+
+
+def test_automation_security_literal_3_and_saved_restore_pass():
+    ok = ("    Dim sec As Long\n    sec = Application.AutomationSecurity\n"
+          "    Application.AutomationSecurity = 3\n    Application.AutomationSecurity = sec")
+    fails, _ = vba_ro.verifica_sursa(modul(ok))
+    assert fails == [], fails
+    fails, _ = vba_ro.verifica_sursa(modul("    If Application.AutomationSecurity = 2 Then x = 1"))
+    assert fails == [], fails
+
+
+def test_createobject_office_warns_unless_security_forced():
+    _, warns = vba_ro.verifica_sursa(modul('    Set f = CreateObject("Excel.Application")'))
+    assert any("AutomationSecurity = 3" in w for w in warns), warns
+    _, warns = vba_ro.verifica_sursa(modul('    Set f = CreateObject("Word.Application")\n    f.AutomationSecurity = 3'))
+    assert not any("defaults to Low" in w for w in warns), warns
+    fails, _ = vba_ro.verifica_sursa(modul('    Set f = CreateObject("Word.Application")\n    f.AutomationSecurity = 3'))
+    assert fails == [], fails
+    _, warns = vba_ro.verifica_sursa(modul('    f.AutomationSecurity = 3\n    Set f = CreateObject("Word.Application")'))
+    assert any("defaults to Low" in w for w in warns), warns  # the 3 comes before the CreateObject
+
+
+def test_mailmerge_with_marker_warns_only():
+    body = "    ActiveDocument.MailMerge.OpenDataSource Name:=x ' vba_ro:allow-mailmerge registru ales de utilizator"
+    fails, warns = vba_ro.verifica_sursa(modul(body))
+    assert fails == [], fails
+    assert any("OpenDataSource" in w for w in warns), warns
+
+
+def test_documents_add_nonliteral_template_warns():
+    _, warns = vba_ro.verifica_sursa(modul("    Documents.Add Template:=x"))
+    assert any("non-literal Template" in w for w in warns), warns
+    _, warns = vba_ro.verifica_sursa(modul('    Documents.Add Template:="Normal"'))
+    assert not any("non-literal Template" in w for w in warns), warns
+
+
+def test_messages_with_event_like_words_do_not_trip():
+    fails, _ = vba_ro.verifica_sursa(modul('    MsgBox "Worksheet_Change CALL and EXEC words, link, include"'))
+    assert fails == [], fails
+
+
+# ----------------------------------------------------------------------------- guard: D1 (fixed state dir)
+def _load_copy(tag):
+    spec = importlib.util.spec_from_file_location(f"vba_ro_copy_{tag}", SKILL / "vba_ro.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.fixture
+def two_temps(tmp_path, monkeypatch):
+    """Two copies of the module, each imported under a different %TEMP%."""
+    import tempfile
+    mods = []
+    for tag in ("a", "b"):
+        t = tmp_path / f"temp_{tag}"
+        t.mkdir()
+        monkeypatch.setenv("TEMP", str(t))
+        monkeypatch.setenv("TMP", str(t))
+        monkeypatch.setattr(tempfile, "tempdir", None)
+        mods.append(_load_copy(tag))
+    return mods
+
+
+def test_state_dir_does_not_depend_on_temp(two_temps, tmp_path):
+    m1, m2 = two_temps
+    assert m1.LEGACY_DIR != m2.LEGACY_DIR  # the old location did follow TEMP
+    assert m1.STATE_DIR == m2.STATE_DIR
+    for m in (m1, m2):
+        assert str(tmp_path) not in str(m.STATE_DIR)
+
+
+@win
+def test_guards_under_different_temp_exclude_each_other(reg, two_temps):
+    m1, m2 = two_temps
+    for m in (m1, m2):
+        m.STATE_DIR = reg["state"]  # default state_dir=None resolves STATE_DIR at call time
+    _set(reg, reg["winreg"].REG_DWORD, 0)
+    with m1.acces_vbom("Word", base=reg["base"]):
+        with pytest.raises(RuntimeError, match="in use"):
+            with m2.acces_vbom("Word", base=reg["base"]):
+                pass
+        assert _get(reg)[0] == 1
+    assert _get(reg) == (0, reg["winreg"].REG_DWORD)
+    _assert_clean_state_dir(reg)
+
+
+@win
+def test_restore_from_other_temp_finds_crash_backup(reg, two_temps):
+    m1, m2 = two_temps
+    for m in (m1, m2):
+        m.STATE_DIR = reg["state"]
+    _set(reg, reg["winreg"].REG_DWORD, 1)  # forced value left by a crashed run under TEMP a
+    reg["state"].mkdir(parents=True)
+    (reg["state"] / "Word.lock").write_text(json.dumps({"pid": _dead_pid(), "start": 1}), encoding="utf-8")
+    (reg["state"] / "Word.backup.json").write_text(json.dumps(
+        {"missing_keys": [], "value": {"type": reg["winreg"].REG_DWORD, "data": 0}}), encoding="utf-8")
+    rez = m2.restaureaza_vbom(base=reg["base"], legacy_dir=reg["state"] / "none")
+    assert "Word" in rez and _get(reg) == (0, reg["winreg"].REG_DWORD)
+    _assert_clean_state_dir(reg)
+
+
+@win
+def test_legacy_temp_backup_is_restored_once(reg, tmp_path):
+    _set(reg, reg["winreg"].REG_DWORD, 1)
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "Word.backup.json").write_text(json.dumps(
+        {"missing_keys": [], "value": {"type": reg["winreg"].REG_DWORD, "data": 0}}), encoding="utf-8")
+    rez = vba_ro.restaureaza_vbom(base=reg["base"], state_dir=reg["state"], legacy_dir=legacy)
+    assert rez["Word"].startswith("legacy") and _get(reg) == (0, reg["winreg"].REG_DWORD)
+    assert not (legacy / "Word.backup.json").exists()
+
+
+@win
+def test_legacy_backup_respects_a_live_lock(reg, tmp_path):
+    _set(reg, reg["winreg"].REG_DWORD, 0)
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "Word.backup.json").write_text(json.dumps(
+        {"missing_keys": [], "value": None}), encoding="utf-8")
+    with _guard(reg):  # live run (this process) holds the lock in the fixed state dir
+        rez = vba_ro.restaureaza_vbom(base=reg["base"], state_dir=reg["state"], legacy_dir=legacy)
+        assert "in use" in rez["Word"]
+        assert _get(reg)[0] == 1  # not touched
+        assert (legacy / "Word.backup.json").exists()  # kept for later
+    assert _get(reg) == (0, reg["winreg"].REG_DWORD)
+
+
+@win
+def test_legacy_lock_of_live_run_also_blocks_its_backup(reg, tmp_path):
+    _set(reg, reg["winreg"].REG_DWORD, 1)
+    legacy = tmp_path / "legacy"
+    legacy.mkdir()
+    (legacy / "Word.lock").write_text(json.dumps(vba_ro._Garda("Word", reg["base"], legacy).eu), encoding="utf-8")
+    (legacy / "Word.backup.json").write_text(json.dumps(
+        {"missing_keys": [], "value": None}), encoding="utf-8")
+    rez = vba_ro.restaureaza_vbom(base=reg["base"], state_dir=reg["state"], legacy_dir=legacy)
+    assert "in use" in rez["Word"] and _get(reg)[0] == 1
+
+
+# ----------------------------------------------------------------------------- guard: D2 (recovery race)
+def _crashed_run(reg, forced=1, original=0):
+    _set(reg, reg["winreg"].REG_DWORD, forced)
+    reg["state"].mkdir(parents=True)
+    (reg["state"] / "Word.lock").write_text(json.dumps({"pid": _dead_pid(), "start": 1}), encoding="utf-8")
+    (reg["state"] / "Word.backup.json").write_text(json.dumps(
+        {"missing_keys": [], "value": {"type": reg["winreg"].REG_DWORD, "data": original}}), encoding="utf-8")
+
+
+def _other_recoverer_wins_rename(monkeypatch, state, pid, real_rename=os.rename):
+    """The first rename of Word.lock is won by 'another recoverer' (moved to a .stale file) and ours
+    raises FileNotFoundError, as in the reviewer's interleaving."""
+    other = state / f"Word.lock.stale.{pid}.1"
+    first = [True]
+
+    def fake_rename(src, dst):
+        if first[0] and Path(src).name == "Word.lock":
+            first[0] = False
+            real_rename(src, other)
+            raise FileNotFoundError(src)
+        return real_rename(src, dst)
+    monkeypatch.setattr(vba_ro.os, "rename", fake_rename)
+    return other
+
+
+@win
+def test_recovery_waits_for_the_other_recoverer_before_taking_the_lock(reg, monkeypatch):
+    _crashed_run(reg)
+    state = reg["state"]
+    other = _other_recoverer_wins_rename(monkeypatch, state, os.getpid())  # alive recoverer
+    seen = []
+
+    def fake_sleep(_):
+        seen.append({"lock": (state / "Word.lock").exists(), "backup": (state / "Word.backup.json").exists(),
+                     "value": _get(reg)[0]})
+        g2 = vba_ro._Garda("Word", reg["base"], state)  # the other recoverer finishes its restore now
+        g2._restaureaza_backup()
+        other.unlink()
+    monkeypatch.setattr(vba_ro.time, "sleep", fake_sleep)
+    with _guard(reg) as orig:
+        assert orig["value"] == {"type": reg["winreg"].REG_DWORD, "data": 0}  # the true original, not 1
+    assert seen, "the caller did not wait for the other recoverer"
+    assert seen[0] == {"lock": False, "backup": True, "value": 1}  # lock not taken while it restores
+    assert _get(reg) == (0, reg["winreg"].REG_DWORD)
+    _assert_clean_state_dir(reg)
+
+
+@win
+def test_recovery_wait_is_bounded_and_refuses(reg, monkeypatch):
+    _crashed_run(reg)
+    _other_recoverer_wins_rename(monkeypatch, reg["state"], os.getpid())
+    monkeypatch.setattr(vba_ro, "RECOVERY_WAIT", 0.2)
+    with pytest.raises(RuntimeError, match="still restoring"):
+        with _guard(reg):
+            pass
+    assert not (reg["state"] / "Word.lock").exists()  # never took the lock
+    assert _get(reg)[0] == 1  # nothing was changed behind the recoverer's back
+
+
+@win
+def test_dead_recoverer_is_finished_by_the_waiting_run(reg, monkeypatch):
+    _crashed_run(reg)
+    _other_recoverer_wins_rename(monkeypatch, reg["state"], _dead_pid())
+    with _guard(reg) as orig:
+        assert orig["value"] == {"type": reg["winreg"].REG_DWORD, "data": 0}
+    assert _get(reg) == (0, reg["winreg"].REG_DWORD)
+    _assert_clean_state_dir(reg)
+
+
+@win
+def test_backup_replaced_during_restore_is_not_deleted(reg, monkeypatch):
+    """A new run writes its own backup between our restore and our unlink: ours must not delete it."""
+    _set(reg, reg["winreg"].REG_DWORD, 1)
+    state = reg["state"]
+    state.mkdir(parents=True)
+    backup = state / "Word.backup.json"
+    backup.write_text(json.dumps({"missing_keys": [], "value": {"type": reg["winreg"].REG_DWORD, "data": 0}}),
+                      encoding="utf-8")
+    newer = json.dumps({"missing_keys": [], "value": {"type": reg["winreg"].REG_DWORD, "data": 7}})
+
+    def hook(nume):
+        if nume == "inainte_de_stergere_backup":
+            backup.write_text(newer, encoding="utf-8")
+    monkeypatch.setattr(vba_ro, "_punct", hook)
+    vba_ro._Garda("Word", reg["base"], state)._restaureaza_backup()
+    assert backup.read_text(encoding="utf-8") == newer  # the newer run's backup survived
+    assert _get(reg) == (0, reg["winreg"].REG_DWORD)  # and the restore itself was applied
+
+
+@win
+def test_backup_removed_during_restore_is_tolerated(reg, monkeypatch):
+    _set(reg, reg["winreg"].REG_DWORD, 1)
+    state = reg["state"]
+    state.mkdir(parents=True)
+    backup = state / "Word.backup.json"
+    backup.write_text(json.dumps({"missing_keys": [], "value": None}), encoding="utf-8")
+    monkeypatch.setattr(vba_ro, "_punct", lambda nume: backup.unlink())
+    assert vba_ro._Garda("Word", reg["base"], state)._restaureaza_backup() is not None
+    assert _get(reg) is None
