@@ -893,6 +893,13 @@ def _main() -> int:
         print("cost-router: malformed Agent tool input; blocking spawn", file=sys.stderr)
         return 2
     stype = str(tool_input.get("subagent_type") or "").strip().lower()
+    if stype != FABLE_CONSULTANT and _requests_fable(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL")):
+        # CLAUDE_CODE_SUBAGENT_MODEL may override ANY model key (tool_input.model, frontmatter, our own rewrite), so
+        # rewriting `model` cannot keep a non-consultant spawn off Fable: deny it, also under COST_ROUTER_OFF
+        print("cost-router: CLAUDE_CODE_SUBAGENT_MODEL resolves to a Fable model and overrides every model setting; "
+              "only the pinned fable-consultant may run on Fable. Unset CLAUDE_CODE_SUBAGENT_MODEL (or set it to a "
+              "non-Fable model); blocking spawn", file=sys.stderr)
+        return 2
     agent_frontmatter = (
         _agent_frontmatter(stype)
         if stype == FABLE_CONSULTANT or stype in PRIVILEGED_AGENTS or not tool_input.get("model") else None

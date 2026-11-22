@@ -443,10 +443,9 @@ def test_r1_p3_off_still_guards_env_override_and_inherit_in_a_fable_session(tmp_
     proj = tmp_path / "proj"
     home.mkdir()
     proj.mkdir()
-    # CLAUDE_CODE_SUBAGENT_MODEL=fable routes every subagent to Fable
+    # CLAUDE_CODE_SUBAGENT_MODEL=fable routes every subagent to Fable (round 2: denied, see test_r2_p3_env_fable_*)
     r = _off_run(home, proj, _plain_spawn(proj, "opus"), CLAUDE_CODE_SUBAGENT_MODEL="fable")
-    assert r.returncode == 0, r.stderr
-    assert _decision(r).get("updatedInput", {}).get("model") == "opus", r.stdout
+    assert r.returncode == 2 and "CLAUDE_CODE_SUBAGENT_MODEL" in r.stderr, r.stderr
     # `model: inherit` in the tool input while the session runs Fable
     r = _off_run(home, proj, _plain_spawn(proj, FABLE_SESSION, model="inherit"))
     assert r.returncode == 0, r.stderr
@@ -685,4 +684,25 @@ def test_r2_p3_spawn_without_any_model_is_fable_sensitive_in_a_fable_session_als
     # outside a Fable session, OFF stays inert for a spawn without a model
     r = _off_run(home, proj, _plain_spawn(proj, "claude-opus-5-5", subagent_type="nomodel"))
     assert r.returncode == 0 and r.stdout == "" and r.stderr == ""
+
+
+# ---- review round 2, item 2: CLAUDE_CODE_SUBAGENT_MODEL resolving to Fable is denied, not rewritten ----------------
+
+def test_r2_p3_env_fable_denies_every_spawn_but_the_pinned_consultant(tmp_path):
+    home = tmp_path / "home"
+    proj = tmp_path / "proj"
+    home.mkdir()
+    proj.mkdir()
+    _install(home, "--no-hook")
+    for off in (None, "1"):
+        extra = {"COST_ROUTER_OFF": off} if off else {}
+        for env in ("fable", "claude-fable-5-2"):
+            for over in ({}, {"model": "sonnet"}, {"model": "opus"}):
+                r = _hook_run(home, proj, _plain_spawn(proj, "opus", **over), CLAUDE_CODE_SUBAGENT_MODEL=env, **extra)
+                assert r.returncode == 2 and "CLAUDE_CODE_SUBAGENT_MODEL" in r.stderr, (off, env, over, r.stdout, r.stderr)
+    _project_agent(proj, "fable-consultant")
+    r = _hook_run(home, proj, _consultant_spawn(proj), CLAUDE_CODE_SUBAGENT_MODEL="fable")
+    assert r.returncode == 0, r.stderr
+    r = _hook_run(home, proj, _plain_spawn(proj, "opus"), CLAUDE_CODE_SUBAGENT_MODEL="sonnet")
+    assert r.returncode == 0, r.stderr
 
