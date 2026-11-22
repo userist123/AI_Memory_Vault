@@ -15,7 +15,7 @@ Paths below: `S` = `.claude/skills/cost-router`.
 - [x] M7 `S/lib/vault_router.py`: on-demand Agent Router for Opus from any project; receipts recognised by `hook_enforce_route`.
 - [x] M8 `S/lib/check.py` acceptance receipts + `check-runner` agent (haiku, no write).
 - [x] M9 Global install on the PC: backup `~/.claude/settings.json`, pinned user-scope hooks, `--verify` 0, smoke in 2 non-vault projects + 1 vault worktree + 1 resumed session; `--uninstall` restores.
-- [ ] M10 Roles: `dfir-analyst` (local_only), `test-author`, `repro-debugger` template; registry entries for analist-juridic, aplicatie-securizata, surse-web, agent-bridge, animatie-3d, clips-kitty, prompt-director (overlay).
+- [x] M10 Roles: `dfir-analyst` (local_only), `test-author`, `repro-debugger` template; registry entries for analist-juridic, aplicatie-securizata, surse-web, agent-bridge, animatie-3d, clips-kitty, prompt-director (overlay).
 - [ ] M11 `fable-executor`, default off, own threat model + review.
 - [ ] Antigravity branches: Explore inventory with diffstat; port only what passes `20_TESTS/test_cost_router_*.py`.
 
@@ -73,3 +73,11 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - Backup of settings.json, CLAUDE.md, the previous skill and agents: `~/.claude/backups/cost-router-global-20261122-193615/`. Rollback: `install.py --uninstall`, then restore that folder.
 - Smoke (real installed hooks): home dir, D:/Projects/AI_AGENT_BRIDGE and a vault worktree: legal prompt -> spec=analist-juridic, fix -> vault-worker/sonnet, Explore -> haiku, `continua` keeps the route.
 - Next: M10 roles, M11 fable-executor (default off), Antigravity branch inventory; residuals from the M5-M8 fix round (check.py session chars, Windows cwd exe resolution, receipt size cap).
+
+## M10 done 2026-11-22 (worker run, branch claude/cost-router-complete)
+- 4a3576ab2: check.py residuals, tests red first (11 failed -> 35 passed): `--session` must match `[A-Za-z0-9_-]{1,64}` (exit 2, run and last); a bare command resolves on PATH without the cwd (Windows: found only in cwd -> refused, exit 2); receipts > 256 KB are never read by last/last_failing.
+- f1794a6f5: roles. `dfir-analyst` (sonnet; Read/Grep/Glob/Bash; local_only, network none, write none; path+sha256+record id per finding, missing = UNKNOWN, evidence never executed) and `test-author` (sonnet; + Write/Edit; write tests; diff only test files, red run shown). `repro-debugger` = brief template: roles/ overlay, subagent_type vault-worker; the compiler now accepts an overlay role only without its own agent file, on an existing non-privileged agent, tier <= sonnet, tools/authority within the target's. install.py `--uninstall` removes every shipped agent copy (SHIPPED_AGENTS; check-runner had been missing). Pins: agents.pinned.json already covers every .claude/agents/*.md (glob).
+- Golden set 100/100 (24 new prompts, RO+EN, 8 per role), threshold raised 0.90 -> 0.95; entry counts 14 -> 17; registry 7737 bytes (cap 16384).
+- Tests (one command, temp HOME): 862 passed. With the REAL HOME, `test_fable_consultant_routing.py::test_frontmatter_fable_request_fails_closed_when_policy_is_unavailable` fails at the base commit too: it reads the installed `~/.claude/skills/cost-router/agents.pinned.json` (present since M9). Test-hygiene residual: give it a temp HOME.
+- b8df729b4: release pin seq 7 pins f1794a6f5. The installed copy under ~/.claude is NOT updated (owner: re-run install.py with the seq 7 pin to get the new agents and check.py fixes).
+- Next: M11 fable-executor (default off), Antigravity branch inventory.
