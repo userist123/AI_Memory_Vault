@@ -120,21 +120,26 @@ def test_21st_distinct_proposal_refused_and_not_written(env):
     assert all(n["lifecycle"] == "REVIEW" and n["verification"] == "unverified" for n in c.written)
 
 
-def test_other_client_still_allowed(env):
+def test_another_client_name_shares_the_principal_limit(env):
+    # Tightened 2026-11-22 (security program, threat path 3): the limit is keyed on the principal,
+    # not on the self-declared client name, so a second name no longer gets a fresh bucket.
     c = _Controller()
     for i in range(20):
         _p(c, i)
-    assert _p(c, 100, client="c2")["lifecycle"] == "REVIEW"
+    with pytest.raises(ma.ProposalRefused, match="rate limit"):
+        _p(c, 100, client="c2")
 
 
-def test_expired_client_buckets_are_dropped(env):
-    # Reviewer residual 2026-10-22: rotating self-declared client names must not grow the counters unbounded.
+def test_rotating_client_names_cannot_evade_the_limit(env):
+    # Reviewer residual 2026-10-22 (unbounded counters from rotating names) is closed by
+    # construction since 2026-11-22: one principal-keyed bucket, persisted in the state dir.
     c = _Controller()
-    for i in range(50):
+    for i in range(20):
         _p(c, i, client=f"rot{i}")
+    with pytest.raises(ma.ProposalRefused, match="rate limit"):
+        _p(c, 20, client="rot-new")
     env.t += 3601
-    _p(c, 999, client="fresh")
-    assert set(ma._rate_events) == {"fresh"}
+    assert _p(c, 999, client="fresh")["deduplicated"] is False
 
 
 def test_window_expiry_allows_again(env):

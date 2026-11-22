@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import os
 import re
 import sys
@@ -111,18 +112,160 @@ class ProposalRefused(ValueError):
     """The proposal breaks a rule of this interface (before the controller sees it)."""
 
 
-# Per-client rate limit on NEW proposals (sliding window, in-process). Residual: the counters live in this
-# process only, so a restarted MCP server resets them; the client name is self-declared by the MCP client.
+# Rate limit on NEW proposals (sliding window), persisted so a restarted MCP server or a rotated client
+# name cannot reset it. Events live in a JSON file in the per-user state directory, keyed on the principal
+# (the client name is only informational), guarded by a cross-process file lock and replaced atomically.
+# Any problem with the store (corrupt, unreadable, unwritable, lock timeout) refuses the proposal.
+# Residual: a process that can write the user's state directory can delete the store (same trust level),
+# and a missing store is a fresh install (empty), not an error.
 PROPOSE_RATE_ENV = "VAULT_PROPOSE_RATE"  # "<count>/<seconds>"
 DEFAULT_PROPOSE_RATE = (20, 3600)
-_rate_clock = time.monotonic  # replaceable in tests
+RATE_STORE_NAME = "propose_rate.json"
+RATE_LOCK_NAME = "propose_rate.lock"
+RATE_LOCK_TIMEOUT = 5.0  # seconds; bounded wait for the cross-process lock
+_RATE_LOCK_POLL = 0.02
+_rate_clock = time.time  # wall clock (shared across processes); replaceable in tests
 _rate_lock = threading.Lock()
-_rate_events: Dict[str, List[float]] = {}
+
+
+class _FileLock:
+    """Exclusive cross-process lock on a file (msvcrt on Windows, fcntl elsewhere), bounded wait."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self._fh = None
+
+    def acquire(self, timeout: float) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        fh = open(self.path, "a+b")
+        deadline = time.monotonic() + max(0.0, timeout)
+        while True:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    fh.seek(0)
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self._fh = fh
+                return
+            except OSError:
+                if time.monotonic() >= deadline:
+                    fh.close()
+                    raise TimeoutError(f"lock {self.path.name} not acquired within {timeout} s") from None
+                time.sleep(_RATE_LOCK_POLL)
+
+    def release(self) -> None:
+        fh, self._fh = self._fh, None
+        if fh is None:
+            return
+        try:
+            if os.name == "nt":
+                import msvcrt
+                fh.seek(0)
+                msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        except OSError:
+            pass
+        finally:
+            fh.close()
+
+
+class _LimitReached(ProposalRefused):
+    """The window is full (distinct from a store failure; neither writes anything)."""
+
+
+def _store_refused(reason: str) -> ProposalRefused:
+    return ProposalRefused(f"proposal rate limit store unavailable ({reason}): proposals refused, "
+                           "nothing was written")
+
+
+def _rate_state_dir() -> Path:
+    from interfaces import vault_runtime
+    return vault_runtime.state_dir()
+
+
+def _load_events(path: Path) -> Dict[str, List[Dict[str, Any]]]:
+    """Events by principal. A missing file is a fresh store; anything unreadable or malformed raises."""
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}
+    data = json.loads(raw)
+    events = data.get("events") if isinstance(data, dict) else None
+    if not isinstance(events, dict):
+        raise ValueError("unexpected structure")
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for key, items in events.items():
+        if not isinstance(items, list):
+            raise ValueError("unexpected structure")
+        clean = []
+        for item in items:
+            stamp = item.get("t") if isinstance(item, dict) else None
+            if isinstance(stamp, bool) or not isinstance(stamp, (int, float)):
+                raise ValueError("unexpected structure")
+            clean.append({"t": float(stamp), "client": str(item.get("client", ""))[:100]})
+        out[str(key)] = clean
+    return out
+
+
+def _save_events(path: Path, events: Dict[str, List[Dict[str, Any]]]) -> None:
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump({"version": 1, "events": events}, fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+
+
+def _with_store(mutate):
+    """Run mutate(events) under the thread and file locks and persist the result. Fails closed."""
+    try:
+        state = _rate_state_dir()
+        lock = _FileLock(state / RATE_LOCK_NAME)
+    except Exception as exc:  # noqa: BLE001
+        raise _store_refused(type(exc).__name__) from exc
+    with _rate_lock:
+        try:
+            lock.acquire(RATE_LOCK_TIMEOUT)
+        except (OSError, TimeoutError) as exc:
+            raise _store_refused(f"lock: {type(exc).__name__}") from exc
+        try:
+            path = state / RATE_STORE_NAME
+            try:
+                events = _load_events(path)
+            except (OSError, ValueError) as exc:  # JSONDecodeError is a ValueError
+                raise _store_refused(f"unreadable or corrupt: {type(exc).__name__}") from exc
+            result = mutate(events)  # may raise _LimitReached; nothing is persisted then
+            try:
+                _save_events(path, events)
+            except OSError as exc:
+                raise _store_refused(f"not writable: {type(exc).__name__}") from exc
+            return result
+        finally:
+            lock.release()
+
+
+def _rate_reset_memory() -> None:
+    """Nothing is kept in process memory any more (kept so a server restart can be simulated in tests)."""
 
 
 def _rate_reset() -> None:
-    with _rate_lock:
-        _rate_events.clear()
+    """Test helper: empty the persisted store (best effort)."""
+    try:
+        (_rate_state_dir() / RATE_STORE_NAME).unlink(missing_ok=True)
+    except OSError:
+        pass
 
 
 def _rate_config() -> tuple:
@@ -140,37 +283,48 @@ def _rate_config() -> tuple:
 
 
 def _rate_key(client: Optional[str]) -> str:
-    name = client.strip().lower() if isinstance(client, str) else ""
-    return name or "unknown"
+    """The bucket is the principal, never the self-declared client name."""
+    return str(Principal.AI_AGENT.value)
 
 
 def _rate_reserve(client: Optional[str]) -> tuple:
-    """Atomically count one new proposal for this client or refuse. Returns (key, timestamp) to release."""
+    """Atomically count one new proposal for the principal or refuse. Returns (key, timestamp) to release."""
     count, seconds = _rate_config()
     key = _rate_key(client)
-    with _rate_lock:
-        now = _rate_clock()
-        # Drop clients whose window has fully expired, so rotating client names cannot grow memory unbounded.
-        for stale in [k for k, ts in _rate_events.items() if k != key and not any(now - t < seconds for t in ts)]:
-            del _rate_events[stale]
-        events = [t for t in _rate_events.get(key, []) if now - t < seconds]
-        if len(events) >= count:
-            _rate_events[key] = events
-            raise ProposalRefused(f"proposal rate limit reached for this client ({count} new proposals per "
-                                  f"{seconds} s); nothing was written")
-        events.append(now)
-        _rate_events[key] = events
+    label = client.strip()[:100] if isinstance(client, str) else ""
+    now = _rate_clock()
+
+    def mutate(events):
+        # Drop principals whose window has fully expired, so the store cannot grow unbounded.
+        for stale in [k for k, items in events.items() if not any(now - e["t"] < seconds for e in items)]:
+            del events[stale]
+        live = [e for e in events.get(key, []) if now - e["t"] < seconds]
+        if len(live) >= count:
+            raise _LimitReached(f"proposal rate limit reached for this principal ({count} new proposals per "
+                                f"{seconds} s); nothing was written")
+        live.append({"t": now, "client": label})
+        events[key] = live
+
+    _with_store(mutate)
     return key, now
 
 
 def _rate_release(token: tuple) -> None:
     key, stamp = token
-    with _rate_lock:
-        events = _rate_events.get(key, [])
-        if stamp in events:
-            events.remove(stamp)
-        if not events:
-            _rate_events.pop(key, None)
+
+    def mutate(events):
+        items = events.get(key, [])
+        for i, e in enumerate(items):
+            if e["t"] == stamp:
+                del items[i]
+                break
+        if not items:
+            events.pop(key, None)
+
+    try:
+        _with_store(mutate)
+    except ProposalRefused:
+        pass  # best effort: an extra counted slot is the safe side
 
 
 def _vault_root(controller) -> Path:
@@ -383,6 +537,7 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
             "lifecycle": str(existing.get("lifecycle") or "UNKNOWN"),
             "verification": str(existing.get("verification") or "unknown"),
             "deduplicated": True,
+            "quarantined": existing.get("quarantined") is True,
             "status": "identical proposal already stored; nothing new was written; only the owner can attest it",
         }
     note = {
@@ -397,6 +552,14 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
         "lifecycle": "REVIEW",
         "content": f"# {title.strip()}\n\n{body.strip()}\n",
     }
+    # Write-time scan (threat T1/T2): the same scanner the read path uses, on title + body. The note schema
+    # (additionalProperties: false) does not accept a `quarantined` key on a new note and the controller and
+    # schema are out of scope here, so a proposal that is not SAFE (or whose scan cannot run) is refused and
+    # nothing is written. It does not consume a rate-limit slot.
+    scan = review_flags(title.strip() + "\n\n" + body.strip(), "proposal")
+    if scan["review_required"]:
+        raise ProposalRefused("proposal refused by the content scanner (quarantine): "
+                              + ", ".join(scan["review_reasons"]) + "; nothing was written")
     _assert_outside_slots(controller, note_id, note)
     token = _rate_reserve(client)  # only a proposal that would be written counts
     try:
@@ -410,5 +573,6 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
         "lifecycle": "REVIEW",
         "verification": "unverified",
         "deduplicated": False,
+        "quarantined": False,
         "status": "candidate: not canonical, not verified; only the owner can attest it",
     }
