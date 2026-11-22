@@ -102,8 +102,8 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   userLibrary?: import('./user-library').UserLibraryItem[];
   /** statusul constatărilor de coordonare, pe id-ul lor stabil (core/issues.ts); lipsă = toate „new” */
   issues?: Record<string, IssueRecord>;
-  /** orientarea casei (core/north.ts): nordul real față de sus-ul planului; lipsă = nedeclarată */
-  site?: import('./north').SiteOrientation }
+  /** orientarea casei și localitatea (core/north.ts): nordul real față de sus-ul planului și coordonatele; fiecare lipsă = nedeclarată */
+  site?: import('./north').SiteInfo }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }

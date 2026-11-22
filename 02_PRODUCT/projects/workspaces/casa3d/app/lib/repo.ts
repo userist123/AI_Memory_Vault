@@ -1,5 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
-import { parseNorth } from '../core/north';
+import { parseSite } from '../core/north';
 import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
 import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
@@ -150,8 +150,8 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   if (s.joinery != null){ const out: Record<string, unknown> = {}, ids = new Set((s.placements as any[]).map(p => p?.id));
     if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
-  // orientarea casei (core/north.ts): declarată de utilizator; o valoare greșită dispare (nedeclarat), nu oprește salvarea
-  if (s.site != null){ const n = parseNorth(s.site); if (n) s.site = n; else delete s.site; }
+  // orientarea casei și localitatea (core/north.ts): declarate de utilizator; o valoare greșită dispare (nedeclarat), nu oprește salvarea
+  if (s.site != null){ const n = parseSite(s.site); if (n) s.site = n; else delete s.site; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   if (mc) pruneProducts(s as Snapshot, mc);

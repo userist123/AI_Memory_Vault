@@ -13,9 +13,34 @@ export function parseNorth(x: unknown): SiteOrientation | null {
   return { northDeg: n >= 360 ? 0 : n };
 }
 
-/** Azimutul real (0 = nord, 90 = est, în sensul acelor) trecut în azimutul planului, pe care îl înțeleg lumina și soarele din 3D. */
-export const planAzimuth = (trueAzimuthDeg: number, site: SiteOrientation | null | undefined) =>
-  site ? (((trueAzimuthDeg + site.northDeg) % 360) + 360) % 360 : trueAzimuthDeg;
+/** Coordonatele geografice ale casei, în grade zecimale (nord și est pozitive), la 0,01° (≈ 1 km: destul pentru soare, fără adresă exactă). */
+export interface SiteLocation { lat: number; lon: number }
+/** Valoare citită din date nesigure: ambele numere finite, în intervalele geografice, rotunjite la 0,01°; altfel null (nedeclarată). */
+export function parseLocation(x: unknown): SiteLocation | null {
+  if (!x || typeof x !== 'object') return null;
+  const { lat, lon } = x as { lat?: unknown; lon?: unknown };
+  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  const r = (v: number) => { const n = Math.round(v * 100) / 100; return n === 0 ? 0 : n; };
+  return { lat: r(lat), lon: r(lon) };
+}
+
+/** Ce se păstrează pe Snapshot.site: nordul și/sau localitatea, fiecare doar dacă a fost declarată de utilizator (art. 4). */
+export interface SiteInfo { northDeg?: number; lat?: number; lon?: number }
+/** Curăță Snapshot.site din date nesigure: păstrează separat nordul valid și localitatea validă; nimic valid → null (nedeclarat). */
+export function parseSite(x: unknown): SiteInfo | null {
+  const n = parseNorth(x), l = parseLocation(x);
+  return n || l ? { ...(n ?? {}), ...(l ?? {}) } : null;
+}
+/** Nordul declarat, dacă există (Snapshot.site poate purta doar localitatea). */
+export const siteNorth = (site: SiteInfo | null | undefined): SiteOrientation | null => site && typeof site.northDeg === 'number' ? { northDeg: site.northDeg } : null;
+/** Localitatea declarată, dacă există. */
+export const siteLocation = (site: SiteInfo | null | undefined): SiteLocation | null => site && typeof site.lat === 'number' && typeof site.lon === 'number' ? { lat: site.lat, lon: site.lon } : null;
+
+/** Azimutul real (0 = nord, 90 = est, în sensul acelor) trecut în azimutul planului, pe care îl înțeleg lumina și soarele din 3D.
+ *  Fără nord declarat (chiar dacă localitatea e declarată) rămâne convenția planului. */
+export const planAzimuth = (trueAzimuthDeg: number, site: SiteInfo | null | undefined) =>
+  site && typeof site.northDeg === 'number' ? (((trueAzimuthDeg + site.northDeg) % 360) + 360) % 360 : trueAzimuthDeg;
 
 const POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SV', 'V', 'NV'] as const;
 const POINTS_EN = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;

@@ -107,4 +107,9 @@ create table if not exists site_log(id uuid primary key default gen_random_uuid(
   date date not null, text text not null, weather text not null default '', workers int, trades jsonb not null default '[]'::jsonb, photos jsonb not null default '[]'::jsonb,
   client_visible boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
 create index if not exists site_log_project on site_log(project_id, date desc);
+-- situațiile de lucrări (core/progress.ts): devizul de bază înghețat (copia ofertei la momentul fixării) și situațiile pe perioade
+create table if not exists progress_baseline(project_id uuid primary key references projects(id) on delete cascade, data jsonb not null, created_at timestamptz not null default now());
+create table if not exists progress_statements(id text not null, project_id uuid not null references projects(id) on delete cascade, number int not null, data jsonb not null,
+  updated_at timestamptz not null default now(), primary key(project_id, id));
+create unique index if not exists progress_statements_number on progress_statements(project_id, number);
 `;

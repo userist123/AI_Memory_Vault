@@ -225,7 +225,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
         <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg>
-        {snap.site && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}</div>
+        {snap.site?.northDeg != null && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}</div>
     {renderTitleBlock(multi ? t('print.levelPlan', { name: levelName(i) }) : t('tb.plan'), `1:${sc.denominator}`)}</section>); })}
     {/* renovare: situația existentă, demolările și situația propusă — doar pe nivelurile cu pereți noi sau de demolat, la scara planului */}
     {phaseSheets(snap).map(({ level: i, phase }) => { const { box, sc, mm } = plans[i]!, pv = phaseView(snap, phase, i), name = t(`phv.${phase}`), title = multi ? t('phv.level', { title: name, name: levelName(i) }) : name;
@@ -233,7 +233,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
         <h2>{title} <small>1:{sc.denominator}</small></h2>
         <PlanSvg snap={pv.snap} catalog={catalog} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims phase={phase} voids={stairwells(snap, i)} aria={t('phv.aria', { title })} />
         <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
-          {snap.site && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}
+          {snap.site?.northDeg != null && <NorthArrow deg={snap.site.northDeg} label={t('north.arrowAria', { deg: snap.site.northDeg })} />}
           <PhaseLegend t={t} /></div>
         <p className="phase-note">{t('phv.note')}</p>
       {renderTitleBlock(title, `1:${sc.denominator}`)}</section>); })}
