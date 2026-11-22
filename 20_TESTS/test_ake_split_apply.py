@@ -192,3 +192,116 @@ def test_cli_dry_run_writes_nothing_and_execute_needs_a_terminal(setup, tmp_path
                          stdin=subprocess.DEVNULL)
     assert run.returncode == 2 and "terminal" in run.stderr
     assert all(_controller(vault).storage.get(ch["child_id_proposed"]) is None for ch in plan["children"])
+
+
+# --- security review round 1 ----------------------------------------------------------------------
+
+def _set_parent(c, nid, **fields):
+    note = c.storage.get(nid)
+    note.update(fields)
+    c.storage.set(nid, note)
+
+
+@pytest.mark.parametrize("fields", [
+    {"lifecycle": "REVIEW", "verification": "unverified"},
+    {"lifecycle": "REVIEW", "verification": "verified"},
+    {"lifecycle": "ACTIVE", "verification": "unverified"},
+    {"lifecycle": "ARCHIVED", "verification": "verified"},
+])
+def test_only_an_active_verified_parent_can_be_split(setup, fields):
+    """Finding 1: the owner attests slicing fidelity of an already-verified note, never new text."""
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    _set_parent(c, nid, **fields)
+    with pytest.raises(ManifestError, match="ACTIVE and verified"):
+        apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert all(c.storage.get(ch["child_id_proposed"]) is None for ch in plan["children"])
+
+
+def test_forged_child_ids_or_line_numbers_are_refused_before_any_write(setup):
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    for mutate in (lambda m: m["children"][0].__setitem__("child_id_proposed", str(uuid.uuid4())),
+                   lambda m: m["children"][1].__setitem__("line_start", 9999),
+                   lambda m: m["children"][2].__setitem__("child_id_proposed", nid)):
+        bad = json.loads(json.dumps(plan))
+        mutate(bad)
+        with pytest.raises(ManifestError):
+            apply_split(c, bad, principal=Principal.HUMAN, confirm=_yes)
+        assert all(c.storage.get(ch["child_id_proposed"]) is None for ch in plan["children"])
+
+
+def test_parent_with_ai_provenance_is_refused_up_front(setup):
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    _set_parent(c, nid, provenance={"source_type": "ai", "source_ref": "x"})
+    plan = plan_split(c, nid)
+    with pytest.raises(ManifestError, match="source_type"):
+        apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert all(c.storage.get(ch["child_id_proposed"]) is None for ch in plan["children"])
+
+
+def test_metadata_changed_before_attestation_stops_the_run_unattested(setup, monkeypatch):
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    target = plan["children"][0]["child_id_proposed"]
+    real_attest = c.attest
+
+    def retag_then_attest(principal, note_id, **kw):
+        if note_id == target:
+            c.update(Principal.AI_AGENT, note_id, {"tags": ["hijacked"], "category": "elsewhere"})
+        return real_attest(principal, note_id, **kw)
+
+    monkeypatch.setattr(c, "attest", retag_then_attest)
+    result = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert result["status"] == "FAILED" and result["failed_child"]["index"] == 0
+    # attestation binds content only, so the swap inside attest() is caught after promotion and
+    # the child is archived: an agent is not served it
+    assert result["failed_child"]["remediation"] == "archived"
+    from interfaces import memory_access
+    with pytest.raises(ValueError):
+        memory_access.get(c, target)
+
+
+def test_verification_changed_before_promotion_is_not_reported_applied(setup, monkeypatch):
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    target = plan["children"][0]["child_id_proposed"]
+    real_review = c.review
+
+    def downgrade_then_review(principal, note_id, decision, comments=None):
+        if note_id == target:
+            c.update(Principal.AI_AGENT, note_id, {"verification": "inferred"})
+        return real_review(principal, note_id, decision, comments)
+
+    monkeypatch.setattr(c, "review", downgrade_then_review)
+    result = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert result["status"] == "FAILED" and result["failed_child"]["index"] == 0
+
+
+def test_a_failed_run_resumes_its_own_partial_children(setup, monkeypatch):
+    from memory_controller.authorizer import Principal
+
+    vault, c, nid, plan = setup
+    target = plan["children"][1]["child_id_proposed"]
+    real_promote = c.promote
+    calls = {"n": 0}
+
+    def flaky_promote(principal, note_id):
+        if note_id == target and calls["n"] == 0:
+            calls["n"] += 1
+            raise RuntimeError("transient")
+        return real_promote(principal, note_id)
+
+    monkeypatch.setattr(c, "promote", flaky_promote)
+    first = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert first["status"] == "FAILED" and first["failed_child"]["state"] == "REVIEW/verified"
+    second = apply_split(c, plan, principal=Principal.HUMAN, confirm=_yes)
+    assert second["status"] == "APPLIED"
+    actions = {ch["index"]: ch["action"] for ch in second["children"]}
+    assert actions[0] == "already_applied" and actions[1] == "resumed"

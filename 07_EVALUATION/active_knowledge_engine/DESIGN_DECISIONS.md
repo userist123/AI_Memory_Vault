@@ -240,4 +240,11 @@ A first run marked the catalogue UNSPLITTABLE for a false reason. The body start
 
 It depends on PR #398 and is on the stacked branch `claude/ake-split-apply`. Dry run on the real Continuity_Handoff manifest: 4 children listed, nothing written.
 
+Security review round 1 (`vault-reviewer`) returned CHANGES_REQUIRED, all reproduced. Fixed test-first:
+- **What is attested.** The parent must be ACTIVE and verified. The owner attests exact slices of an already-verified note, never new text. Before, an agent could plan a split of its own unverified note, and the owner would have attested text they never read.
+- **Pre-flight, before any write.** Child ids must equal their deterministic derivation, line numbers must match the offsets, and a parent with `source_type: ai` is refused.
+- **Every field the tool writes is checked:** before attestation, and again after promotion (plus `verification`, `verification_source` and the attested hash). A child that fails an integrity check is **archived**, so it is no longer served.
+- **Resume.** A re-run picks up the tool's own partial children from the state they are in.
+- **Authority limit, stated plainly.** The principal is an argument, as for every controller call in this vault, because the runtime authority layer is not wired. Any code that imports the module can pass HUMAN. The terminal check and the typed parent id guard against piped or scripted runs; they do not prove the owner is present.
+
 **Owner pilot:** `python -m active_knowledge_engine split-plan --note-id 8c7d5c90-9c29-450b-b5a9-e2b2024db502`, then `apply-split --manifest <plan> --execute` in your own terminal. Supersede or keep the parent afterwards; that is a separate owner decision.
