@@ -269,8 +269,10 @@ def test_quarantined_note_has_empty_snippet_in_search_results(world):
     
     out = ma.search(controller, "Sensitive quarantined payload", limit=5)
     matching = [r for r in out["query_results"] if r["id"] == note_id]
-    assert len(matching) == 1
-    assert matching[0]["snippet"] == ""
+    # Tightened 2026-11-22: a quarantined note is not listed at all (it was listed with an empty
+    # snippet, which still gave an agent its id and file path). Stricter than the old assertion.
+    assert matching == []
+    assert "Sensitive quarantined payload" not in str(out)
     
     # get() must refuse to return quarantined notes to AI_AGENT
     with pytest.raises(ValueError, match="quarantined"):

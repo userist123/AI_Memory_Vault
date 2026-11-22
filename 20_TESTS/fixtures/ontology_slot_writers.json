@@ -126,6 +126,12 @@
       "role": "read_only",
       "gate": "n/a",
       "conclusion": "Reviewed: this scanner. Writes its own report and JSON, never the slots."
+    },
+    {
+      "path": "03_IMPLEMENTATION/packages/interfaces/memory_access.py",
+      "role": "read_only",
+      "gate": "`_assert_outside_slots` refuses any proposal whose resolved path is the slots directory (SLOTS_RELATIVE) before anything is written; notes are written only through `MemoryController.propose`. The one file it writes itself is the proposal rate-limit store (`propose_rate.json`) in the per-user state directory, outside the repository (security program 2026-11-22)",
+      "conclusion": "Reviewed: never writes the ontology slots (the slot reference exists only to refuse them); its own file write is the proposal rate-limit store in the per-user state directory, outside the repository."
     }
   ],
   "not_visible_to_the_scan": [

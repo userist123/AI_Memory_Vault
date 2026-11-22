@@ -22,6 +22,7 @@ from pathlib import Path, PurePosixPath
 from typing import Optional
 
 from .errors import ErrorCode, VaultAccessError
+from .links import is_link
 
 MAX_URI = 512
 _URI_RE = re.compile(
@@ -141,21 +142,7 @@ def static_prefix(pattern: str) -> str:
     return "/".join(fixed)
 
 
-def _is_link(path: Path) -> bool:
-    if path.is_symlink():
-        return True
-    is_junction = getattr(path, "is_junction", None)
-    if is_junction is not None:
-        try:
-            return bool(is_junction())
-        except OSError:
-            return True
-    if os.name == "nt":  # Python < 3.12: inspect the reparse-point attribute directly
-        try:
-            return bool(os.lstat(path).st_file_attributes & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
-        except (OSError, AttributeError):
-            return False
-    return False
+_is_link = is_link  # shared helper, see links.py
 
 
 def contained_path(base: Path, rel_posix: str) -> Path:

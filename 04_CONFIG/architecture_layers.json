@@ -72,6 +72,7 @@
     {
       "name": "L7_cognition",
       "units": [
+        "packages/active_knowledge_engine",
         "packages/book_to_memory",
         "packages/learning"
       ]
@@ -138,6 +139,7 @@
     },
     "packages/memory_vault": {
       "__path__": [
+        "packages/active_knowledge_engine",
         "packages/agent_bridge",
         "packages/book_to_memory",
         "packages/cognitive_core",
