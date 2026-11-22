@@ -75,12 +75,17 @@ and has no extra frontmatter capability fields. Missing, ambiguous, unreadable, 
 definitions block the spawn; unexpected hook errors and malformed hook payloads exit 2. With no
 explicit model override, the exact model ID in frontmatter is preserved; explicit non-Fable overrides
 are respected. Provider-prefixed Fable IDs are detected, while `inherit` on any other subagent is
-forced to Opus, and so is `CLAUDE_CODE_SUBAGENT_MODEL=fable` or `inherit` (tool input or agent frontmatter) in a
-Fable session: all of these count as Fable-sensitive even with `COST_ROUTER_OFF=1`. Privileged definitions
-(`fable-consultant`, `vault-reviewer`) must match the sha256 in `agents.pinned.json` (written at install); any project
-`.claude/agents/*.md` claiming such a name (normalized: comment, BOM, zero-width, NFKC, casefold) or stem that does not
-match blocks a Fable-sensitive spawn and adds a note to an Opus reviewer; a missing `agents.pinned.json` blocks the
-consultant. A user-scope hook shadows the project hook only when the actual blocking
+forced to Opus, and so is `inherit` (tool input or agent frontmatter) or NO model at all (no tool-input model, none in
+the agent frontmatter: general-purpose, built-ins, project agents without `model:`) in a Fable session: all of these count
+as Fable-sensitive even with `COST_ROUTER_OFF=1`. `CLAUDE_CODE_SUBAGENT_MODEL` resolving to a Fable model is DENIED
+(exit 2) for every spawn except the pinned `fable-consultant`, because the variable may override any model key, so a
+rewritten `model` would not hold. Privileged definitions (`fable-consultant`, `vault-reviewer`) must match the sha256 in
+`agents.pinned.json` (written at install; line endings normalized to LF before hashing, so CRLF checkouts match). Every
+file in a project `.claude/agents/` must carry exactly one plain `name: <[A-Za-z0-9_-]+>` line (trailing `# comment`
+allowed; no quotes, escapes, tags, anchors, block scalars, flow mappings, `? name`); a file that does not may claim a
+privileged name and blocks a Fable-sensitive spawn, naming the file. Only files whose name or stem equals the spawned
+agent (plus `fable-consultant` on a Fable-sensitive spawn) are compared with the pins; a differing file blocks a
+Fable-sensitive spawn and adds a note to an Opus reviewer; a missing `agents.pinned.json` blocks the consultant. A user-scope hook shadows the project hook only when the actual blocking
 `PreToolUse`/`Agent|Task` registration is present; a project copy whose release-pin `seq` is above the installed one
 is a stale install (exit 2), otherwise the installed copy answers (shadow by `seq`, never by bytes). The consultant's
 recommendation is not verification or approval. Pass a model yourself only to escalate one notch
@@ -315,6 +320,9 @@ it lists missing/extra/differing files and both VERSION lines; exit 0 only when 
 It also checks the trust data: `config.json` (pinned vault roots, listed) and `agents.pinned.json` against `pins.sha256.json`
 (what install wrote), the privileged agent files in `~/.claude/agents` against the pins, and (with a source) the pins against the
 source agents; `--require-hooks` needs the exact command of the installed copy, not a substring.
+Residual: `pins.sha256.json` and `config.json` are not authenticated. An attacker who can write `~/.claude` can rewrite
+both together (and could replace the hooks themselves anyway), so `--verify` detects accidental drift and project-level
+tampering, not a same-user attacker with write access to `~/.claude`.
 
 ## 5. Report shape (end of task)
 
