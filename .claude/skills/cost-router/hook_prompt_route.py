@@ -10,7 +10,7 @@ error exits 0 with no output: this hook must never block a prompt.
 It also persists the route to ~/.claude/cache/cost-router/route-<session_id>.json (lib/route_state.py)
 so the PreToolUse hooks can make it binding. A trivial prompt (continua, ok, fewer than 4 words, a
 slash command) keeps the current route: it continues that task. Only a new non-trivial prompt
-replaces the state; a prompt containing "#direct" stores subagent null (owner override: the main
+replaces the state; a prompt whose FIRST line contains "#direct" (like "#escalate": never pasted content below it) stores subagent null (owner override: the main
 session does the work itself).
 
 Once the main transcript's context (last assistant usage, lib/transcript_usage.py) exceeds
@@ -115,12 +115,25 @@ def is_synthetic_turn(prompt: str) -> bool:
     return bool(SYNTHETIC_RE.match(prompt or ""))
 
 
-ESCALATE_RE =re.compile(r"(?<![\w#])#escalate\b", re.IGNORECASE)
+ESCALATE_RE = re.compile(r"(?<![\w#])#escalate\b", re.IGNORECASE)
+DIRECT_MARK = "#direct"
+DIRECT_RE = re.compile(r"(?<![\w#])#direct\b", re.IGNORECASE)  # a whole marker: not #directory
+
+
+def first_line(prompt: str) -> str:
+    """The owner's markers (#escalate, #direct) count on the FIRST line of the prompt only: anything below it may be
+    pasted content (a web page, a log, a file) that carries someone else's instructions."""
+    text = (prompt or "").strip()
+    return text.splitlines()[0] if text else ""
+
+
+def direct_requested(prompt: str) -> bool:
+    return bool(DIRECT_RE.search(first_line(prompt)))
 
 
 def escalation_authorized(prompt: str) -> bool:
-    """True only for the owner's own UserPromptSubmit text: tool_input can never reach this parser."""
-    return bool(ESCALATE_RE.search(prompt or ""))
+    """True only for the owner's own UserPromptSubmit text, first line only: tool_input can never reach this parser."""
+    return bool(ESCALATE_RE.search(first_line(prompt)))
 
 
 def sync_escalation(data: dict, flag: bool) -> None:
@@ -136,8 +149,9 @@ def sync_escalation(data: dict, flag: bool) -> None:
         pass
 
 
-def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bool = False) -> None:
-    """Write the session's route state; never raises."""
+def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bool = False, spec=()) -> None:
+    """Write the session's route state; never raises. `spec`: the specialist ids hinted for this prompt (lead, overlay),
+    recorded so the fable-executor gate (hook_agent_model) can refuse a prompt routed to a local_only specialist."""
     try:
         import route_state  # noqa: E402
         sid = data.get("session_id")
@@ -148,8 +162,9 @@ def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bo
             state = route_state.new_state("direct" if direct else "unrouted", None, None, digest, direct=direct)
         else:
             state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
-                                          direct=route_state.DIRECT_MARK in prompt.lower())
+                                          direct=direct_requested(prompt))
         state["escalation_authorized"] = escalation_authorized(prompt)  # this prompt epoch only
+        state["spec"] = [str(x)[:40] for x in spec if x][:8]
         if d is not None:
             state["risk"] = _risk_of(d)
         if same_tier and not state.get("direct"):
@@ -159,13 +174,33 @@ def persist(data: dict, prompt: str, d=None, direct: bool = False, same_tier: bo
         pass
 
 
-def _route_changed(data: dict, d, risky: bool, same_tier: bool = False) -> bool:
+def pick_specialist(prompt: str, d):
+    """Advisory specialist hint from the compiled registry (lib/specialists.py); None on any failure (fail open).
+    It never feeds the route state, the tier, the tools or the Fable guard."""
+    try:
+        from specialists import select  # noqa: E402
+        return select(prompt, d.task_class)
+    except Exception:
+        return None
+
+
+def _local_only(prompt: str) -> list:
+    """Ids of the trusted local_only (privacy) specialists triggered anywhere in the prompt; [] on any failure (the
+    fable-executor gate re-scans the brief against the installed registry and fails closed without one)."""
+    try:
+        from specialists import local_only_hits  # noqa: E402
+        return list(local_only_hits(prompt))
+    except Exception:
+        return []
+
+
+def _route_changed(data: dict, d, risky: bool, same_tier: bool = False, spec: str = "") -> bool:
     """True when the route line must be printed: first prompt of the session, a changed (class, model, subagent),
     risk >= high. Records the signature. COST_ROUTER_VERBOSE_ROUTE=1 never reaches here (always prints)."""
     try:
         import route_state  # noqa: E402
         sid = data.get("session_id")
-        sig = f"{d.task_class}|{d.model}|{d.subagent}" + ("|same" if same_tier else "")
+        sig = f"{d.task_class}|{d.model}|{d.subagent}" + ("|same" if same_tier else "") + (f"|{spec}" if spec else "")
         if not sid:
             return True
         same = route_state.last_route_sig(sid) == sig
@@ -208,8 +243,8 @@ def main() -> int:
         _emit("cost-router: synthetic turn (subagent/notification) - route unchanged" + (" " + warning if warning else ""))
         return 0
     esc = escalation_authorized(prompt)
-    if "#direct" in prompt.lower() and len(words) < 4:
-        persist(data, prompt, None, direct=True)  # owner override, however short the prompt
+    if direct_requested(prompt) and len(words) < 4:
+        persist(data, prompt, None, direct=True, spec=_local_only(prompt))  # owner override, however short the prompt
         if warning:
             _emit(warning)
         return 0
@@ -222,22 +257,32 @@ def main() -> int:
         from route import decide, one_line  # noqa: E402
         d = decide(prompt)
     except Exception:
-        persist(data, prompt)
+        persist(data, prompt, spec=_local_only(prompt))  # router error: the privacy scan still runs and is recorded
         if warning:
             _emit(warning)
         return 0
-    same_tier = "#direct" not in prompt.lower() and is_same_tier(resolve_model(data), d)
-    persist(data, prompt, d, same_tier=same_tier)
+    same_tier = not direct_requested(prompt) and is_same_tier(resolve_model(data), d)
+    sel = pick_specialist(prompt, d)
+    spec_ids = [sel.get("id"), sel.get("overlay")] if isinstance(sel, dict) else []
+    # a privacy (local_only) trigger anywhere in the prompt is recorded whatever the class (fable-executor gate)
+    spec_ids += [x for x in _local_only(prompt) if x not in spec_ids]
+    persist(data, prompt, d, same_tier=same_tier, spec=spec_ids)
+    try:
+        from specialists import spec_token  # noqa: E402
+        spec = spec_token(sel)
+    except Exception:
+        spec = ""
     if os.environ.get("COST_ROUTER_VERBOSE_ROUTE", "").strip() != "1":  # compact is the default (<=120 chars)
         target = f"{d.subagent} subagent" if d.subagent else "main"
         lang_code = owner_language().split()[0][:8] if owner_language() else ""
         suffix = f" lang={lang_code}" if lang_code else ""
         risk = f" risk={_risk_of(d)}" if _risk_of(d) else ""
+        tail = (" " + spec if spec else "") + suffix  # the spec hint is never the part that gets cut
         if same_tier:
-            line = f"cost-router: {d.task_class} same tier ({d.model}): direct work ok"[:120 - len(suffix)] + suffix
+            line = f"cost-router: {d.task_class} same tier ({d.model}): direct work ok"[:120 - len(tail)] + tail
         else:
-            line = f"cost-router: {d.task_class} -> {target}, {d.model}{risk}"[:120 - len(suffix)] + suffix
-        if not _route_changed(data, d, bool(risk), same_tier):  # same route as the previous prompt: say nothing (state is saved)
+            line = f"cost-router: {d.task_class} -> {target}, {d.model}{risk}"[:120 - len(tail)] + tail
+        if not _route_changed(data, d, bool(risk), same_tier, spec):  # same route as the previous prompt: say nothing (state is saved)
             if warning:
                 _emit(warning)
             return 0
@@ -254,8 +299,14 @@ def main() -> int:
     elif d.subagent:
         ctx += (f" Do the work in a subagent of any type ({d.subagent} fits); the Agent hook sets its model"
                 f" to {d.model}. Keep only its conclusion in this session.")
-        if "#direct" not in prompt.lower():
+        if not direct_requested(prompt):
             ctx += " Enforced: after 3 direct tool calls the main session must delegate (unless the Agent gate itself refused the spawn)."
+    if sel:
+        kind = {"agent": "agent", "overlay": "overlay skill"}.get(sel["kind"], "skill")
+        who = f"{sel['id']} (overlay) on {sel['subagent_type']}" if sel["kind"] == "overlay" and sel.get("subagent_type")             else f"{sel['id']} ({kind})"
+        ctx += (f" Specialist hint (advisory, from the registry): {who}"
+                + (f" + overlay {sel['overlay']}" if sel.get("overlay") else "")
+                + (f". Acceptance: {sel['acceptance']}" if sel.get("acceptance") else "."))
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:
         try:
             from local_llm import probe  # noqa: E402

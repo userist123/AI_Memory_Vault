@@ -1,0 +1,48 @@
+{
+ "schema_version": 1,
+ "id": "prompt-director",
+ "kind": "overlay",
+ "domain": [
+  "prompts"
+ ],
+ "task_classes": [
+  "implement",
+  "design",
+  "frontier"
+ ],
+ "triggers": {
+  "ro": [
+   "scrie un prompt",
+   "prompt de continuare",
+   "prompt pentru agent",
+   "brief pentru",
+   "meta-prompt"
+  ],
+  "en": [
+   "write a prompt",
+   "continuation prompt",
+   "hand-over brief",
+   "worker brief"
+  ]
+ },
+ "summary": "Overlay: prompts for agents are a META-PROMPT plus TASK PROMPT pair.",
+ "run_in": "main",
+ "tier": {
+  "min": "sonnet",
+  "default": "opus",
+  "max": "opus"
+ },
+ "tools": [
+  "Read"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": false,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Meta-prompt and task prompt pair with numbered steps.",
+ "risk_ceiling": "low",
+ "privacy": "standard",
+ "priority": 10
+}

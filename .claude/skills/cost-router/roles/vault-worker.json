@@ -1,0 +1,61 @@
+{
+ "schema_version": 1,
+ "id": "vault-worker",
+ "kind": "agent",
+ "domain": [
+  "code"
+ ],
+ "task_classes": [
+  "implement"
+ ],
+ "triggers": {
+  "ro": [
+   "implementeaza",
+   "repara testul",
+   "adauga un test",
+   "redenumeste",
+   "scrie un script",
+   "refactorizeaza"
+  ],
+  "en": [
+   "implement",
+   "fix the failing test",
+   "add a test",
+   "rename",
+   "write a script",
+   "refactor"
+  ]
+ },
+ "summary": "Bounded implementation on Sonnet with a given spec and check.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "opus"
+ },
+ "tools": [
+  "Read",
+  "Edit",
+  "Write",
+  "Grep",
+  "Glob",
+  "Bash"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Targeted tests pass; diff within the brief.",
+ "risk_ceiling": "high",
+ "privacy": "standard",
+ "priority": 20,
+ "subagent_type": "vault-worker",
+ "escalates_to": "vault-reviewer",
+ "effort": "medium",
+ "cost": {
+  "class": "M",
+  "typical_usd": null
+ }
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "id": "test-author",
+ "kind": "agent",
+ "domain": [
+  "code"
+ ],
+ "task_classes": [
+  "implement"
+ ],
+ "triggers": {
+  "ro": [
+   "scrie teste",
+   "scrie un test de",
+   "test de regresie",
+   "teste unitare",
+   "test care pica",
+   "doar teste"
+  ],
+  "en": [
+   "write tests",
+   "write a test",
+   "regression test",
+   "unit tests for",
+   "failing test first",
+   "only write tests",
+   "only write unit tests"
+  ]
+ },
+ "summary": "Writes tests only; each new test fails before the fix and passes after; never edits production code.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "haiku",
+  "default": "sonnet",
+  "max": "sonnet"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash",
+  "Write",
+  "Edit"
+ ],
+ "authority": {
+  "write": "tests",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "git diff --name-only lists only test files; the red run (fails before the fix) is shown.",
+ "risk_ceiling": "medium",
+ "privacy": "standard",
+ "priority": 25,
+ "subagent_type": "test-author",
+ "escalates_to": "vault-worker",
+ "effort": "medium",
+ "cost": {
+  "class": "S",
+  "typical_usd": null
+ }
+}

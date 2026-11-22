@@ -5,7 +5,10 @@
     python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only
     python3 .claude/skills/cost-router/install.py --no-context # no global CLAUDE.md rules, no deny rules
     python3 .claude/skills/cost-router/install.py --uninstall
-    python3 .claude/skills/cost-router/install.py --verify [--json]  # read-only: installed == source? exit 1 if not
+    python3 .claude/skills/cost-router/install.py --verify [--json] [--source-root <checkout>] [--require-hooks]
+                                                                  # read-only: installed == source? exit 1 if not; run
+                                                                  # from the installed copy it checks its own integrity
+                                                                  # (or the given checkout) and reports hook registration
     python3 .claude/skills/cost-router/install.py --home <dir>    # another HOME (tests)
     python3 .claude/skills/cost-router/install.py --session-start # what the SessionStart hook runs:
                                                                   # skill + agents only, and nothing at
@@ -18,7 +21,8 @@
 What it does (idempotent, prints every path it touched):
   1. copies this skill directory to ~/.claude/skills/cost-router/ and the canonical router
      module + policy into its lib/ so it works outside this repository;
-  2. copies the four subagents (Explore, vault-worker, vault-reviewer, fable-consultant) to
+  2. copies the subagents (Explore, vault-worker, vault-reviewer, fable-consultant, check-runner,
+     dfir-analyst, test-author: every .claude/agents/*.md, all pinned in agents.pinned.json) to
      ~/.claude/agents/; a file of that name is replaced only when it is still the copy an earlier
      install wrote (owner edits are kept; --force overwrites them too);
   3. merges seven hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
@@ -70,6 +74,19 @@ def _load_release_pin():
 
 
 release_pin = _load_release_pin()
+
+
+def _load_registry_compile():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cost_router_registry_compile", SKILL_SRC / "lib" / "registry_compile.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+registry_compile = _load_registry_compile()
+REGISTRY_HASHES_NAME = "registry.hashes.json"  # sha256 of every sidecar/artifact; same lifecycle as the registry
+REGISTRY_NAME = "registry.json"  # compiled at install time (never in a hook); part of the VERSION manifest and --verify
 PIN_NAME = release_pin.PIN_NAME
 REPO = SKILL_SRC.parents[2]
 ROUTER_SRC = REPO / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
@@ -86,6 +103,9 @@ HOOK_SPECS = (  # (event, script, matcher)
     ("SessionStart", "hook_self_update.py", "startup|resume"),
 )
 HOOK_TIMEOUT = {"hook_self_update.py": 60}  # seconds; a fetch is about two, the rest is margin
+PRIVILEGED_AGENTS = ("fable-consultant", "fable-executor", "vault-reviewer")  # also pinned for the Agent hook
+SHIPPED_AGENTS = ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md", "check-runner.md",
+                  "dfir-analyst.md", "test-author.md", "fable-executor.md")  # removed by --uninstall when still the copy install wrote
 AGENT_MANIFEST = "agents.sha256.json"  # under the installed skill: hashes of the agent files it wrote
 DENY_RULES = (  # pure caches only: never source, never worth reading (deny beats any project allow, so
     # dependency trees such as node_modules/.venv and build output such as dist/ stay readable for debugging)
@@ -141,11 +161,11 @@ def hook_entry(skill_dir: Path, script: str = "hook_prompt_route.py", matcher=No
     target = (skill_dir / script).as_posix()
     if script == "hook_agent_model.py":
         cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-               f'"$py" "{target}"; exit $?; fi; done; '
+               f'"$py" -I "{target}"; exit $?; fi; done; '
                'echo "cost-router: Python is required for Agent routing; blocking the spawn" >&2; exit 2')
     else:
         cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-               f'"$py" "{target}"; exit 0; fi; done; exit 0')
+               f'"$py" -I "{target}"; exit 0; fi; done; exit 0')
     handler = {"type": "command", "command": cmd, "timeout": HOOK_TIMEOUT.get(script, 10)}
     if script == "hook_agent_model.py":
         handler["onFailure"] = "block"
@@ -335,14 +355,24 @@ def _context_installed(home: Path) -> bool:
 
 
 _IGNORE = ("__pycache__", "chat")
-_GENERATED = {"VERSION", AGENT_MANIFEST}  # written by install(), not part of the source manifest
+CONFIG_NAME = "config.json"  # machine-local pinned vault roots, written by install(), never part of a source
+PINNED_AGENTS = "agents.pinned.json"  # sha256 of the SOURCE agent files: the trust root of privileged definitions
+PIN_RECORD = "pins.sha256.json"  # sha256 of config.json, agents.pinned.json and policy.json as install() wrote them
+POLICY_NAME = "policy.json"  # the fable-executor gate reads its flag ONLY from this copy, verified against PIN_RECORD
+_GENERATED = {"VERSION", AGENT_MANIFEST, CONFIG_NAME, PINNED_AGENTS, PIN_RECORD}  # written by install(), not part of the source manifest
 
 
 def _file_sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def manifest(root: Path, extra: dict[str, Path] | None = None) -> dict[str, str]:
+def _lf_sha(path: Path) -> str:
+    """sha256 with CRLF and CR normalized to LF: how agent definitions are pinned and checked (hook_agent_model
+    applies the same normalization, so a CRLF checkout of the same text matches)."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
+
+
+def manifest(root: Path, extra: dict[str, Path] | None = None, with_registry: bool = False) -> dict[str, str]:
     """relative path -> sha256 of the files install() copies from `root` (same ignore rules), plus `extra`
     (relative path -> source file). VERSION and the agent manifest are generated per install and excluded."""
     out: dict[str, str] = {}
@@ -351,7 +381,7 @@ def manifest(root: Path, extra: dict[str, Path] | None = None) -> dict[str, str]
         for name in filenames:
             path = Path(dirpath) / name
             rel = path.relative_to(root).as_posix()
-            if rel not in _GENERATED:
+            if rel not in _GENERATED and (with_registry or rel not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)):
                 out[rel] = _file_sha(path)
     for rel, src in (extra or {}).items():
         out[rel] = _file_sha(src)
@@ -377,9 +407,34 @@ def manifest_hash(m: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(dict(sorted(m.items())), sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _repo_head() -> str:
+def _is_installed_layout() -> bool:
+    """True when this script is the INSTALLED copy: install() put the router and the policy inside it, and the
+    repository layout `REPO = SKILL_SRC.parents[2]` would then be the home directory, not a checkout."""
+    return (SKILL_SRC / "lib" / "claude_model_router.py").is_file() and (SKILL_SRC / "policy.json").is_file()
+
+
+def _vault_shaped(root: Path) -> bool:
+    return (root / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py").is_file()
+
+
+def _norm_root(path) -> str:
+    return os.path.normcase(os.path.realpath(str(path)))
+
+
+def read_pinned_roots(skill_dir: Path) -> list[str]:
+    """The vault roots recorded in an installed skill's config.json (empty when absent or malformed)."""
     try:
-        git = dict(cwd=REPO, capture_output=True, text=True, timeout=10)
+        data = json.loads((skill_dir / CONFIG_NAME).read_text(encoding="utf-8"))
+        roots = data.get("vault_roots")
+        return [r for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
+    except (OSError, ValueError, AttributeError):
+        return []
+
+
+def _repo_head(repo: Path | None = None) -> str:
+    repo = repo or REPO
+    try:
+        git = dict(cwd=repo, capture_output=True, text=True, timeout=10)
         head = subprocess.run(["git", "rev-parse", "HEAD"], **git)
         if head.returncode != 0 or not head.stdout.strip():
             return "unknown"
@@ -394,12 +449,119 @@ def _repo_head() -> str:
 _VERSION_REF = re.compile(r"^([0-9a-f]{7,40}|unknown|[A-Za-z0-9._/-]+)(\+dirty)?$")
 
 
-def verify(home: Path) -> dict:
-    """Read-only: compare what install() would copy with the installed skill directory."""
+def hook_status(home: Path) -> dict:
+    """Read-only: which of our hooks are registered in the user settings, and does the Agent hook block on failure."""
+    try:
+        hooks = load_settings(home / ".claude" / "settings.json").get("hooks")
+    except ValueError:
+        hooks = None
+    hooks = hooks if isinstance(hooks, dict) else {}
+    found: dict[str, bool] = {}
+    on_failure_block = False
+    installed = home / ".claude" / "skills" / "cost-router"
+    for event, script, matcher in HOOK_SPECS:
+        ok = False
+        expected = hook_entry(installed, script, matcher)["hooks"][0]["command"]  # the exact command of the INSTALLED copy
+        for entry in hooks.get(event) or []:
+            if not isinstance(entry, dict) or entry.get("matcher") != matcher:
+                continue
+            for h in entry.get("hooks") or []:
+                if isinstance(h, dict) and h.get("command") == expected:
+                    ok = True
+                    if script == "hook_agent_model.py" and h.get("onFailure") == "block":
+                        on_failure_block = True
+        found[script] = ok
+    return {"hooks": found, "hooks_registered": all(found.values()),
+            "agent_hook_on_failure_block": on_failure_block}
+
+
+def _json_dict(path: Path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def pins_status(skill_dir: Path, agents_dir: Path, agents_src: Path | None) -> dict:
+    """Read-only checks of the trust data install() writes: config.json (pinned vault roots) and agents.pinned.json
+    must be the files install() recorded (pins.sha256.json); the privileged agent files in ~/.claude/agents must be the
+    pinned ones; with a known source, the pins must equal the source agents. Other (non-privileged) agent files may be
+    edited by the owner and are only listed."""
+    record = _json_dict(skill_dir / PIN_RECORD) or {}
+    def sha_of(name):
+        try:
+            return _file_sha(skill_dir / name)
+        except OSError:
+            return None
+    config_ok = bool(record) and record.get(CONFIG_NAME) == sha_of(CONFIG_NAME) is not None
+    pinned = _json_dict(skill_dir / PINNED_AGENTS)
+    agents_pinned_ok = bool(record) and pinned is not None and record.get(PINNED_AGENTS) == sha_of(PINNED_AGENTS)
+    policy_ok = bool(record) and record.get(POLICY_NAME) == sha_of(POLICY_NAME) is not None
+    differing, edited = [], []
+    for name, want in sorted((pinned or {}).items()):
+        try:
+            same = _lf_sha(agents_dir / name) == want
+        except OSError:
+            same = False
+        if not same:
+            (differing if Path(name).stem in PRIVILEGED_AGENTS else edited).append(name)
+    if agents_src is not None and pinned is not None:
+        source = {p.name: _lf_sha(p) for p in sorted(agents_src.glob("*.md"))}
+        if source != pinned:
+            agents_pinned_ok = False
+    return {"pins_recorded": bool(record), "config_ok": config_ok, "agents_pinned_ok": agents_pinned_ok,
+            "policy_ok": policy_ok, "agents_differing": differing, "agents_edited": edited,
+            "pins_ok": bool(record) and config_ok and agents_pinned_ok and policy_ok and not differing}
+
+
+def verify(home: Path, source_root: Path | None = None) -> dict:
+    """Read-only: compare what install() would copy with the installed skill directory.
+
+    Source: `source_root` (a checkout), else this checkout. From the INSTALLED copy without `source_root` there is
+    no checkout to compare with: the installed tree is checked against its own VERSION manifest hash (integrity)."""
     skill_dir = home / ".claude" / "skills" / "cost-router"
-    want = source_manifest()
-    have_all = manifest(skill_dir) if skill_dir.is_dir() else {}
-    have = {k: v for k, v in have_all.items() if k != PIN_NAME or PIN_NAME in want}  # an installed pin is not drift
+    layout = "source"
+    if source_root is not None:
+        want = manifest(source_root / ".claude" / "skills" / "cost-router", {
+            "lib/claude_model_router.py": source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
+            "policy.json": source_root / "04_CONFIG" / "claude_model_routing.json"})
+        head = _repo_head(source_root)
+        agents_src = source_root / ".claude" / "agents"
+    elif _is_installed_layout():
+        layout = "installed"
+        want = None
+        head = "unknown"
+        agents_src = None
+    else:
+        want = source_manifest()
+        head = _repo_head()
+        agents_src = AGENTS_SRC
+    have_all = manifest(skill_dir, with_registry=True) if skill_dir.is_dir() else {}
+    if want is None:  # integrity only: the installed tree is its own reference, VERSION line 2 is the check
+        want = {k: v for k, v in have_all.items() if k not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)}  # the registry has its own check below
+        for required in ("lib/claude_model_router.py", "policy.json", "hook_agent_model.py"):
+            if required not in have_all:
+                want[required] = "missing"
+    have = {k: v for k, v in have_all.items()
+            if (k != PIN_NAME or PIN_NAME in want) and k not in (REGISTRY_NAME, REGISTRY_HASHES_NAME)}  # an installed pin / registry is not drift
+    registry_problem = ""
+    registry_skipped: list = []
+    if skill_dir.is_dir():  # the registry must be exactly what the compiler yields from the installed sidecars
+        try:
+            comp = registry_compile.compile_full(
+                skill_dir, home / ".claude" / "skills", agents_src if agents_src is not None else home / ".claude" / "agents")
+            registry_skipped = list(comp.skipped)
+            if not (skill_dir / REGISTRY_NAME).is_file():
+                registry_problem = "registry.json is missing"
+            elif (skill_dir / REGISTRY_NAME).read_bytes() != comp.data:
+                registry_problem = "registry.json differs from a fresh compile of the installed sidecars"
+            elif not (skill_dir / REGISTRY_HASHES_NAME).is_file():
+                registry_problem = "registry.hashes.json is missing"
+            elif (skill_dir / REGISTRY_HASHES_NAME).read_bytes() != comp.hashes:
+                registry_problem = "registry.hashes.json differs from a fresh compile of the installed sidecars"
+        except ValueError as exc:
+            registry_problem = f"registry does not compile: {exc}"
     vfile = skill_dir / "VERSION"
     version = vfile.read_text(encoding="utf-8").splitlines() if vfile.is_file() else []
     missing = sorted(set(want) - set(have))
@@ -411,16 +573,21 @@ def verify(home: Path) -> dict:
             version_problem = f"line 1 is not a git ref or 'unknown': {version[0][:40]!r}"
         elif len(version) < 2 or version[1].strip() != manifest_hash(have_all):
             version_problem = "line 2 does not match the manifest hash of the installed tree"
-    return {"ok": bool(version) and not (missing or extra or differing or version_problem),
+    pins = pins_status(skill_dir, home / ".claude" / "agents", agents_src)
+    return {"ok": bool(version) and not (missing or extra or differing or version_problem or registry_problem)
+            and pins["pins_ok"], "registry_problem": registry_problem, "registry_skipped": registry_skipped,
             "installed_dir": str(skill_dir),
             "missing": missing, "extra": extra, "differing": differing,
-            "installed_version": version, "source_version": [_repo_head(), manifest_hash(want)],
-            "version_missing": not version, "version_problem": version_problem}
+            "installed_version": version, "source_version": [head, manifest_hash(want)],
+            "version_missing": not version, "version_problem": version_problem, "layout": layout,
+            "pinned_vault_roots": read_pinned_roots(skill_dir), **pins,
+            **hook_status(home)}
 
 
 def install(home: Path, with_hook: bool, force: bool, session_start: bool = False,
             with_context: bool = True, source_ref: str | None = None, self_update: bool = False,
-            source_root: Path | None = None, pin_file: Path | None = None) -> list[str]:
+            source_root: Path | None = None, pin_file: Path | None = None,
+            pin_roots: tuple[Path, ...] = ()) -> list[str]:
     if source_root is not None:
         skill_src = source_root / ".claude" / "skills" / "cost-router"
         router_src = source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
@@ -454,6 +621,18 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         old_seq = _pin_seq(skill_dir / PIN_NAME)
         if old_seq is not None and new_seq < old_seq and not force:
             raise ValueError(f"downgrade refused: installed release pin seq {old_seq} > {new_seq} (--force to override)")
+    # Pinned vault roots (P1): the hooks run the Vault router only inside these. Kept from the previous install; this
+    # checkout is added only when the installer runs FROM a checkout (never for a --source-root staging tree, which
+    # is a temporary directory); --pin-root adds more (e.g. a vault worktree). Every root must really be a vault.
+    roots = read_pinned_roots(skill_dir)
+    candidates = list(pin_roots) + ([REPO] if source_root is None and not _is_installed_layout() else [])
+    for cand in candidates:
+        if not _vault_shaped(Path(cand)):
+            if cand in pin_roots:
+                raise ValueError(f"--pin-root {cand} has no 03_IMPLEMENTATION/packages/routing/route_cli.py")
+            continue  # a checkout without the router (a skill-only copy) pins nothing
+        roots.append(_norm_root(cand))
+    roots = list(dict.fromkeys(roots))
     written = _written(skill_dir)
     staging = home / ".claude" / f"cost-router.staging-{os.getpid()}"  # same filesystem, outside skills/
     for leftover in (*(home / ".claude").glob("cost-router.staging-*"), *(home / ".claude").glob("cost-router.old-*")):
@@ -464,8 +643,16 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     shutil.copy2(policy_src, staging / "policy.json")
     if pin_bytes is not None:
         (staging / PIN_NAME).write_bytes(pin_bytes)  # the pin being installed replaces whatever the source had
+    (staging / CONFIG_NAME).write_text(json.dumps({"schema": 1, "vault_roots": roots}, indent=2) + "\n",
+                                       encoding="utf-8")
+    registry_skipped: list[str] = []
+    try:  # specialist registry: a bad SHIPPED sidecar fails the install; a bad user-scope one is skipped and reported
+        registry_compile.write_registry(staging, home / ".claude" / "skills", agents_src, report=registry_skipped)
+    except ValueError as exc:
+        raise ValueError(f"specialist registry does not compile: {exc}") from exc
+    touched.extend(f"registry: {line}" for line in registry_skipped)
     (staging / "VERSION").write_text(
-        f"{source_ref or _repo_head()}\n{manifest_hash(manifest(staging))}\n", encoding="utf-8")
+        f"{source_ref or _repo_head()}\n{manifest_hash(manifest(staging, with_registry=True))}\n", encoding="utf-8")
     agents_dir = home / ".claude" / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     agent_hashes = {}
@@ -478,12 +665,26 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
                 touched.append(f"{dst} (already current)")
                 continue
             if written.get(src.name) != current:
-                touched.append(f"{dst} (kept existing: edited here; --force to overwrite)")
-                continue
+                if src.stem in PRIVILEGED_AGENTS:
+                    # the hooks trust only the pinned definition of a privileged agent: keeping an edited copy would
+                    # leave every spawn blocked or noted, so back it up and install the pinned one
+                    backup = dst.with_name(f"{dst.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
+                    shutil.copy2(dst, backup)
+                    touched.append(f"{dst} (edited here: backed up to {backup}, replaced by the pinned definition)")
+                else:
+                    touched.append(f"{dst} (kept existing: edited here; --force to overwrite)")
+                    continue
         shutil.copy2(src, dst)
         agent_hashes[src.name] = _sha(dst)
         touched.append(str(dst))
     (staging / AGENT_MANIFEST).write_text(json.dumps(agent_hashes, indent=2) + "\n", encoding="utf-8")
+    # hook_agent_model compares a resolved privileged definition (fable-consultant, vault-reviewer, any opus/fable
+    # agent) with these hashes: a project .claude/agents/<name>.md is searched before ~/.claude/agents
+    (staging / PINNED_AGENTS).write_text(
+        json.dumps({src.name: _lf_sha(src) for src in sorted(agents_src.glob("*.md"))}, indent=2) + "\n", encoding="utf-8")
+    (staging / PIN_RECORD).write_text(
+        json.dumps({n: _file_sha(staging / n) for n in (CONFIG_NAME, PINNED_AGENTS, POLICY_NAME)}, indent=2) + "\n",
+        encoding="utf-8")
     try:
         _swap_in(staging, skill_dir)
     finally:
@@ -509,7 +710,7 @@ def uninstall(home: Path) -> list[str]:
     if skill_dir.exists():
         shutil.rmtree(skill_dir)
         touched.append(f"removed {skill_dir}")
-    for name in ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md"):
+    for name in SHIPPED_AGENTS:
         p = home / ".claude" / "agents" / name
         if p.exists() and _sha(p) in {_sha(AGENTS_SRC / name), written.get(name)}:
             p.unlink()
@@ -543,6 +744,10 @@ def main(argv=None) -> int:
     ap.add_argument("--source-root", type=Path,
                     help="copy the skill, router, policy and agents from this repo-shaped tree (the self-update hook "
                          "passes its verified staging dir)")
+    ap.add_argument("--pin-root", type=Path, action="append", default=[],
+                    help="pin one more vault root (a checkout or worktree with 03_IMPLEMENTATION/packages/routing/"
+                         "route_cli.py): only pinned roots ever run the Vault router from a hook. The checkout this "
+                         "installer runs from is pinned automatically; pins survive re-installs")
     ap.add_argument("--release-pin", type=Path,
                     help="release_pin.json to record in the install (validated); a lower seq than the installed pin "
                          "is refused unless --force")
@@ -550,6 +755,8 @@ def main(argv=None) -> int:
     ap.add_argument("--session-start", action="store_true", help="quiet mode for the SessionStart hook: implies --no-hook, honours the disabled marker")
     ap.add_argument("--verify", action="store_true", help="read-only: compare the installed skill with this source; exit 1 on any difference")
     ap.add_argument("--json", action="store_true", help="with --verify: print a JSON object")
+    ap.add_argument("--require-hooks", action="store_true",
+                    help="with --verify: also exit 1 unless every hook is registered and the Agent hook has onFailure=block")
     a = ap.parse_args(argv)
     if (a.session_start or a.self_update) and (os.environ.get("COST_ROUTER_NO_SELF_INSTALL", "").strip() == "1"
                             or os.environ.get("COST_ROUTER_OFF", "").strip().lower() in ("1", "true", "yes", "on")):
@@ -564,6 +771,12 @@ def main(argv=None) -> int:
         checks = (a.source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
                   a.source_root / "04_CONFIG" / "claude_model_routing.json", a.source_root / ".claude" / "agents",
                   a.source_root / ".claude" / "skills" / "cost-router" / "SKILL.md")
+    elif a.verify and _is_installed_layout():
+        checks = ()  # the installed copy has no checkout beside it: --verify checks its own integrity
+    elif _is_installed_layout():
+        print("this is the installed copy: run install.py from a checkout, or pass --source-root <checkout>",
+              file=sys.stderr)
+        return 1
     else:
         checks = (ROUTER_SRC, POLICY_SRC, AGENTS_SRC)
     for p in checks:
@@ -571,7 +784,7 @@ def main(argv=None) -> int:
             print(f"missing source: {p}", file=sys.stderr)
             return 1
     if a.verify:
-        r = verify(a.home)
+        r = verify(a.home, a.source_root)
         if a.json:
             print(json.dumps(r, indent=2))
         else:
@@ -579,11 +792,27 @@ def main(argv=None) -> int:
                 for rel in r[key]:
                     print(f"{key}: {rel}")
             print("installed VERSION: " + (" / ".join(r["installed_version"]) or "MISSING"))
+            print("pinned vault roots (config.json): " + (", ".join(r["pinned_vault_roots"]) or "none"))
+            if not r["pins_ok"]:
+                print("PINS problem: config.json ok=%s, agents.pinned.json ok=%s, policy.json ok=%s, recorded=%s, privileged "
+                      "agent files differing: %s" % (r["config_ok"], r["agents_pinned_ok"], r["policy_ok"],
+                                                     r["pins_recorded"],
+                                         ", ".join(r["agents_differing"]) or "none"))
+            if r["agents_edited"]:
+                print("agent files edited here (not privileged, informational): " + ", ".join(r["agents_edited"]))
             if r["version_problem"]:
                 print("VERSION problem: " + r["version_problem"])
-            print("source VERSION:    " + " / ".join(r["source_version"]))
+            if r.get("registry_problem"):
+                print("registry problem:  " + r["registry_problem"])
+            for line in r.get("registry_skipped", []):
+                print("registry: " + line)
+            print("source VERSION:    " + " / ".join(r["source_version"]) + f"  (layout: {r['layout']})")
+            print("hooks registered in user settings: " + ("yes" if r["hooks_registered"] else
+                  "NO (" + ", ".join(k for k, v in r["hooks"].items() if not v) + ")"))
+            print("Agent hook onFailure=block: " + ("yes" if r["agent_hook_on_failure_block"] else "NO"))
             print("OK: installed skill matches this source" if r["ok"] else "DIFFERENT: run install.py to refresh")
-        return 0 if r["ok"] else 1
+        hooks_ok = r["hooks_registered"] and r["agent_hook_on_failure_block"]
+        return 0 if r["ok"] and (hooks_ok or not a.require_hooks) else 1
     quiet = a.session_start or a.self_update  # hook-driven: never wait on another run, skip instead
     try:
         with install_lock(a.home, wait=0 if quiet else 30):
@@ -591,7 +820,7 @@ def main(argv=None) -> int:
                 a.no_context = not _context_installed(a.home)
             touched = uninstall(a.home) if a.uninstall else install(
                 a.home, not a.no_hook, a.force, a.session_start, not a.no_context, a.source_ref, a.self_update,
-                a.source_root, a.release_pin)
+                a.source_root, a.release_pin, tuple(a.pin_root))
     except LockBusy as exc:
         print(f"skipped: {exc}" if quiet else f"not installed: {exc}", file=sys.stdout if quiet else sys.stderr)
         return 0 if quiet else 1

@@ -170,6 +170,7 @@ def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home, t
     # and would win over a namespace-only fake, so the real router would run instead of this crashing one
     (cli.parent / "__init__.py").write_text("", encoding="utf-8")
     cli.write_text("import sys; sys.exit(1)", encoding="utf-8")
+    iso.pin_vault(home, proj)  # only a pinned vault root runs the in-hook router
     _prompt(home, IMPLEMENT)
     out = _agent(home, project=proj)
     assert out["permissionDecision"] == "deny"
@@ -299,6 +300,23 @@ def test_worker_with_the_same_brief_stays_cheap(home):
     "echo routing.route_cli route",
     "grep -r 'python -m routing.route_cli route' .",
     "cat notes.txt # routing.route_cli dispatch",
+    # review round 1: a router call that is not the whole command is no receipt
+    "cd /repo && /usr/bin/python3 -m routing.route_cli route --goal x",
+    "export PYTHONPATH=p; python -m routing.route_cli route --goal x",
+    "true; python -m routing.route_cli route --goal x; sed -i s/a/b/ src/*.py",
+    "python -m routing.route_cli route --goal x && rm -rf build",
+    "python -m routing.route_cli route --goal x | sh",
+    "python -c \"import os; os.system('rm -rf build') #routing.route_cli\" -m routing.route_cli route",
+    'python -c "pass #-m routing.route_cli route"',
+    "# python -m routing.route_cli route",
+    "echo python -m routing.route_cli route",
+    'echo "a; python -m routing.route_cli route"',
+    "python -m routing.route_cli route\nsed -i s/a/b/ src/*.py",
+    "python -m routing.route_cli route $(touch x)",
+    "python -m routing.route_cli route `touch x`",
+    "python -m routing.route_cli route > out.txt",
+    "python -m routing.other route",
+    "python -m routing.route_cli status",
 ])
 def test_mentioning_the_router_does_not_mark_vault_routed(home, command):
     _prompt(home, IMPLEMENT)
@@ -309,8 +327,8 @@ def test_mentioning_the_router_does_not_mark_vault_routed(home, command):
 @pytest.mark.parametrize("command", [
     "python -m routing.route_cli route --goal x",
     "PYTHONPATH=03_IMPLEMENTATION/packages python3 -m routing.route_cli dispatch --goal x --execute",
-    "cd /repo && /usr/bin/python3 -m routing.route_cli route --goal x",
-    "export PYTHONPATH=p; python -m routing.route_cli route --goal x",
+    "/usr/bin/python3 -m routing.route_cli route --goal x",
+    'python -m routing.route_cli route --goal "a; b & c | d"',  # separators inside quotes are data
 ])
 def test_invoking_the_router_marks_vault_routed(home, command):
     _prompt(home, IMPLEMENT)

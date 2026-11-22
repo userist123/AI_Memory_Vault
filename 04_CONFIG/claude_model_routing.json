@@ -427,7 +427,11 @@
     "fable_subagent_allowlist": [
       "fable-consultant"
     ],
-    "fable_main_session_allowed": false
+    "fable_main_session_allowed": false,
+    "fable_executor": {
+      "enabled": false,
+      "max_per_session": 2
+    }
   },
   "local_llm": {
     "runtime": "ollama",

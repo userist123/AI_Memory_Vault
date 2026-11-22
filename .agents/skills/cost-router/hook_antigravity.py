@@ -67,6 +67,12 @@ def _transcript_path(payload: dict) -> str:
     return str(payload.get("transcriptPath") or payload.get("transcript_path") or "").strip()
 
 
+def _direct_requested(prompt: str) -> bool:
+    """#direct counts on the FIRST line of the owner's prompt only (anything below may be pasted content)."""
+    text = (prompt or "").strip()
+    return bool(re.search(r"(?<![\w#])#direct\b", text.splitlines()[0] if text else "", re.IGNORECASE))
+
+
 def _persist(session_id: str, prompt: str, d=None, direct: bool = False) -> None:
     if not session_id:
         return
@@ -79,7 +85,7 @@ def _persist(session_id: str, prompt: str, d=None, direct: bool = False) -> None
             d.model,
             d.subagent,
             digest,
-            direct=route_state.DIRECT_MARK in prompt.lower(),
+            direct=_direct_requested(prompt),
         )
     route_state.reset(session_id, state)
 
@@ -121,7 +127,7 @@ def handle_pre_invocation(payload: dict) -> dict | None:
             "`00_GOVERNANCE/coordination/tasks/todo-antigravity-<task>.md` and recommend `/compact`."
         )
 
-    if "#direct" in prompt.lower() and len(words) < 4:
+    if _direct_requested(prompt) and len(words) < 4:
         _persist(session_id, prompt, None, direct=True)
         return {"injectSteps": [{"ephemeralMessage": warning}]} if warning else None
 

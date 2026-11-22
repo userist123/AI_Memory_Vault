@@ -1,0 +1,57 @@
+{
+ "schema_version": 1,
+ "id": "vault-reviewer",
+ "kind": "agent",
+ "domain": [
+  "code",
+  "security"
+ ],
+ "task_classes": [
+  "review"
+ ],
+ "triggers": {
+  "ro": [
+   "revizuieste diff",
+   "verifica afirmatia",
+   "recenzie",
+   "review la pr",
+   "verifica codul"
+  ],
+  "en": [
+   "review this diff",
+   "review the pr",
+   "code review",
+   "verify the claim",
+   "verify done"
+  ]
+ },
+ "summary": "Independent read-only reviewer on Opus: diffs, DONE claims.",
+ "run_in": "subagent",
+ "tier": {
+  "min": "opus",
+  "default": "opus",
+  "max": "opus"
+ },
+ "tools": [
+  "Read",
+  "Grep",
+  "Glob",
+  "Bash"
+ ],
+ "authority": {
+  "write": "none",
+  "execute": true,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Findings with file:line evidence and test output.",
+ "risk_ceiling": "critical",
+ "privacy": "standard",
+ "priority": 30,
+ "subagent_type": "vault-reviewer",
+ "effort": "high",
+ "cost": {
+  "class": "M",
+  "typical_usd": null
+ }
+}

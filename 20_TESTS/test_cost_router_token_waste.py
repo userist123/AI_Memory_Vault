@@ -16,6 +16,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "03_IMPLEMENTATION" / "packages"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cost_router_isolation as iso  # noqa: E402
 
 from routing.agent_router import AgentRouter  # noqa: E402
 from routing.claude_model_router import ClaudeModelPolicy, route  # noqa: E402
@@ -193,7 +195,7 @@ def _router_calls(home):
 
 
 def test_unavailable_router_denies_until_a_bash_receipt_for_the_same_task_class(home, tmp_path):
-    vault = _fake_vault(tmp_path)  # environment-independent: the real router is never consulted
+    vault = iso.pin_vault(home, _fake_vault(tmp_path))  # environment-independent; pinned like install.py does
     _prompt(home, "implement the bounded parser change and add tests")
     deny = _agent_in(home, vault, "CRASH", "implement the bounded parser change and add tests")
     assert deny and deny["permissionDecision"] == "deny"
@@ -211,7 +213,7 @@ def test_unavailable_router_denies_until_a_bash_receipt_for_the_same_task_class(
 
 
 def test_routed_decision_records_a_receipt_reused_for_the_same_task_class(home, tmp_path):
-    vault = _fake_vault(tmp_path)
+    vault = iso.pin_vault(home, _fake_vault(tmp_path))
     _prompt(home, "implement the bounded parser change and add tests")
     out = _agent_in(home, vault, "ROUTED", "implement the bounded parser change and add tests")
     assert out["permissionDecision"] == "allow" and "vault-router: ROUTED -> vault-worker" in out["permissionDecisionReason"] and "additionalContext" not in out

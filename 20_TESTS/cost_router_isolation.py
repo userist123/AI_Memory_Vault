@@ -27,3 +27,17 @@ def leave(lib: Path) -> None:
     purge()
     while str(lib) in sys.path:
         sys.path.remove(str(lib))
+
+
+def pin_vault(home: Path, root: Path) -> Path:
+    """Pin `root` as a vault root in a TEMPORARY home, the way install.py does (~/.claude/skills/cost-router/config.json).
+    Since the global registration only runs the Vault router for pinned roots, tests that exercise the in-hook router
+    must pin their fake vault; a vault-shaped directory alone is no longer enough."""
+    import json
+    import os
+    cfg = Path(home) / ".claude" / "skills" / "cost-router" / "config.json"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    roots = json.loads(cfg.read_text(encoding="utf-8"))["vault_roots"] if cfg.exists() else []
+    roots.append(os.path.normcase(os.path.realpath(str(root))))
+    cfg.write_text(json.dumps({"schema": 1, "vault_roots": roots}), encoding="utf-8")
+    return root

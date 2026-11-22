@@ -1,0 +1,47 @@
+{
+ "schema_version": 1,
+ "id": "clip",
+ "kind": "skill",
+ "domain": [
+  "media-video"
+ ],
+ "task_classes": [
+  "implement",
+  "explore"
+ ],
+ "triggers": {
+  "ro": [
+   "/clip",
+   "comanda clip",
+   "proceseaza streamul"
+  ],
+  "en": [
+   "/clip",
+   "clip command",
+   "process the stream"
+  ]
+ },
+ "summary": "/clip command: queue a stream link or file in Clips Kitty.",
+ "run_in": "main",
+ "tier": {
+  "min": "haiku",
+  "default": "haiku",
+  "max": "sonnet"
+ },
+ "tools": [
+  "mcp__clips-kitty"
+ ],
+ "authority": {
+  "write": "workspace",
+  "execute": false,
+  "network": "none",
+  "spawn": false
+ },
+ "acceptance": "Job queued and reported.",
+ "risk_ceiling": "low",
+ "privacy": "standard",
+ "priority": 65,
+ "uses": [
+  "clips-kitty"
+ ]
+}
