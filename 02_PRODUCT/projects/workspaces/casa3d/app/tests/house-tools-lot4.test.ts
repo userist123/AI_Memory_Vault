@@ -140,7 +140,7 @@ describe('tavan fals pe zonă: deviz, 3D, plan, DXF', () => {
     assert.deepEqual(selectionBox(s, cat, { kind: 'ceiling_zone', id: 'tavan-1' }), cz().rect);
     const items = describePlan(s, cat, { t, units: 'metric', lang: 'ro' })[0]!.items;
     assert.equal(items.find(i => i.kind === 'ceiling_zone')!.label, 'Masă · 1,50 m × 1,20 m · coborât 15 cm');
-    const dxf = planToDxf(s, cat, { lang: 'ro' }); assert.match(dxf, /2\nCEILING_ZONES/); assert.match(dxf, /TF -15 cm/);
+    const dxf = planToDxf(s, cat, { lang: 'ro' }); assert.match(dxf, /2\nZONE_TAVAN/); assert.match(dxf, /TF -15 cm/);
   });
 });
 
@@ -195,7 +195,7 @@ describe('balustradă și tipul spațiului', () => {
     assert.equal(up.railings!.length, 1); assert.notEqual(up.railings![0]!.id, 'bal-1'); assert.equal('ceilingZones' in up, false, 'tavanele false țin de camerele nivelului');
     assert.ok(planItems(s).some(i => i.kind === 'railing')); assert.deepEqual(selectionBox(s, cat, { kind: 'railing', id: 'bal-1' }), { x0: -.025, x1: 3.025, z0: 4.475, z1: 4.525 });
     assert.ok(describePlan(s, cat, { t, units: 'metric', lang: 'ro' }).flatMap(g => g.items).some(i => i.kind === 'railing' && i.label === 'Balustradă · Metal · 3,00 m · h 1,00 m'));
-    assert.match(planToDxf(s, cat, { lang: 'ro' }), /2\nRAILINGS/);
+    assert.match(planToDxf(s, cat, { lang: 'ro' }), /2\nBALUSTRADE/);
   });
 });
 

@@ -79,9 +79,9 @@ describe('starea peretelui: plan, 3D, deviz, DXF, cititor de ecran, niveluri', (
     const vi = viewerInput(s, cat); assert.equal(vi.plan.pereti[0].demolat, true); assert.equal(vi.plan.pereti[1].demolat, undefined);
   });
   test('DXF: straturi separate WALLS_NEW / WALLS_DEMOLISH doar când există; peretele demolat fără goluri', () => {
-    const old = planToDxf(blank(), cat, { lang: 'ro' }); assert.ok(!/WALLS_NEW|WALLS_DEMOLISH|FLOOR_ZONES/.test(old));
+    const old = planToDxf(blank(), cat, { lang: 'ro' }); assert.ok(!/PERETI_NOI|PERETI_DE_DEMOLAT|ZONE_PARDOSEALA/.test(old));
     const s = blank(); s.floor.walls[0]!.status = 'demolish'; s.floor.walls.push(inner({ status: 'new' }));
-    const d = planToDxf(s, cat, { lang: 'ro' }); assert.match(d, /2\nWALLS_NEW/); assert.match(d, /2\nWALLS_DEMOLISH/); assert.ok((d.match(/8\nWALLS_NEW/g) ?? []).length > 3, 'hașura peretelui nou');
+    const d = planToDxf(s, cat, { lang: 'ro' }); assert.match(d, /2\nPERETI_NOI/); assert.match(d, /2\nPERETI_DE_DEMOLAT/); assert.ok((d.match(/8\nPERETI_NOI/g) ?? []).length > 3, 'hașura peretelui nou');
     assert.equal((d.match(/8\nWINDOWS/g) ?? []).length, 0, 'fereastra peretelui demolat nu mai apare');
   });
   test('cititorul de ecran: starea apare în descrierea peretelui; peretele existent rămâne ca înainte', () => {
@@ -198,7 +198,7 @@ describe('zona de pardoseală (Floor.zones)', () => {
     const s = blank(); s.floor.zones = [zone({ label: 'Intrare' })];
     assert.deepEqual(planItems(s).slice(0, 2).map(i => i.kind), ['room', 'floor_zone']); assert.deepEqual(selectionBox(s, cat, { kind: 'floor_zone', id: 'zona-1' }), zone().rect);
     const items = describePlan(s, cat, { t, units: 'metric', lang: 'ro' })[0]!.items; assert.match(items.find(i => i.kind === 'floor_zone')!.label, /^Intrare · 3,00? m²/);
-    assert.match(planToDxf(s, cat, { lang: 'ro' }), /2\nFLOOR_ZONES/);
+    assert.match(planToDxf(s, cat, { lang: 'ro' }), /2\nZONE_PARDOSEALA/);
   });
 });
 
@@ -228,7 +228,7 @@ describe('proiectele vechi se comportă identic', () => {
       assert.ok(!boq.items.some(i => /wall-new|:zone:/.test(i.key)), tpl);
       assert.ok(boq.items.filter(i => i.key.endsWith(':floor')).every(i => !/fără zonele/.test(i.label)));
       const vi = viewerInput(s, cat, undefined, { mc }).plan as any; assert.equal('tehnice' in vi, false); assert.equal('zonePardoseala' in vi, false); assert.ok(vi.pereti.every((p: any) => !p.demolat && !p.nou));
-      assert.ok(!/WALLS_NEW|WALLS_DEMOLISH|FLOOR_ZONES/.test(planToDxf(s, cat, { lang: 'ro' })));
+      assert.ok(!/PERETI_NOI|PERETI_DE_DEMOLAT|ZONE_PARDOSEALA/.test(planToDxf(s, cat, { lang: 'ro' })));
       assert.ok(!validateFloor(s.floor).some(i => ['WALL_DEMOLISH', 'ZONE_OUTSIDE_ROOM', 'ZONE_OVERLAP'].includes(i.code)));
       assert.ok(!describePlan(s, cat, { t, units: 'metric', lang: 'ro' }).some(g => g.items.some(i => /De demolat|Nou \(de construit\)/.test(i.label)))); }
   });

@@ -147,7 +147,7 @@ describe('devizul folosește prețul doar când produsul e ales', () => {
     const s = blank(), p = placeTechPoint(s, 'radiator', 2.5, .3)!;
     assert.equal(techBodyFields({ ...p, product: 'dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse' }).product, 'dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse');
     assert.equal(techBodyFields({ ...p, product: '<script>' }).product, undefined);
-    assert.equal(techBodyFields({ kind: 'hvac_split', product: 'x-1' }).product, 'x-1'); assert.deepEqual(techBodyFields({ kind: 'outlet', product: 'x-1' }), {});
+    assert.equal(techBodyFields({ kind: 'hvac_split', product: 'x-1' }).product, 'x-1'); assert.deepEqual(techBodyFields({ kind: 'light_point', product: 'x-1' }), {}); assert.equal(techBodyFields({ kind: 'outlet', product: 'x-1' }).product, 'x-1');   // aparatajul are produs din 2026-11
     assert.equal(sanitizeTech([{ ...p, product: 'x-1' }], s)![0]!.product, 'x-1');
     const r: Railing = { id: 'bal-1', a: [0, 4.5], b: [3, 4.5], product: 'x-1' };
     assert.equal(sanitizeRailing(r).product, 'x-1'); assert.equal(sanitizeRailing({ ...r, kind: 'glass' }).product, undefined); assert.equal(sanitizeRailing({ ...r, product: 'a b' }).product, undefined);

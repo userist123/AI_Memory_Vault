@@ -6,14 +6,14 @@
 export const ROOM_GROUPS: Record<string, string[]> = {
   dormitor: ['pat', 'dulap', 'noptiera', 'comoda', 'oglinda', 'birou', 'scaunBirou', 'fotoliu', 'biblioteca', 'comodaTv', 'veioza', 'lampadar', 'plantaNaturala', 'plantaArtificiala'],
   living: ['canapea', 'fotoliu', 'masuta', 'comodaTv', 'biblioteca', 'comoda', 'masa', 'dulap', 'lampadar', 'plantaArtificiala', 'plantaNaturala', 'veioza', 'semineu', 'focarLemne'],
-  bucatarie: ['bucatarie', 'frigider', 'plita', 'cuptor', 'hota', 'masa', 'boiler', 'plantaNaturala'],
-  baie: ['lavoar', 'wc', 'dus', 'cada', 'dulapOglinda', 'oglinda', 'coloanaBaie', 'caloriferBaie', 'bideu', 'boiler'],
+  bucatarie: ['bucatarie', 'frigider', 'plita', 'cuptor', 'hota', 'masinaVase', 'microunde', 'masinaSpalat', 'masa', 'centrala', 'boiler', 'plantaNaturala'],
+  baie: ['lavoar', 'wc', 'dus', 'cada', 'dulapOglinda', 'oglinda', 'coloanaBaie', 'caloriferBaie', 'bideu', 'masinaSpalat', 'uscator', 'boiler', 'centrala'],
   hol: ['pantofar', 'dulap', 'oglinda', 'comoda', 'plantaArtificiala', 'veioza'],
   birou: ['birou', 'scaunBirou', 'biblioteca', 'dulap', 'fotoliu', 'comoda', 'veioza', 'lampadar', 'plantaNaturala', 'plantaArtificiala'],
 };
 /** Grupele care țin de baie sau de bucătărie: nu se propun în alte camere (doar dacă designerul le alege explicit din „Toate”). */
 const WET_ONLY = new Set(['lavoar', 'wc', 'dus', 'cada', 'dulapOglinda', 'coloanaBaie', 'caloriferBaie', 'bideu']);
-const KITCHEN_ONLY = new Set(['bucatarie', 'frigider', 'plita', 'cuptor', 'hota']);
+const KITCHEN_ONLY = new Set(['bucatarie', 'frigider', 'plita', 'cuptor', 'hota', 'masinaVase', 'microunde']);
 /** Șemineul și focarul nu se propun în baie sau în bucătărie (umezeală, gaze, materiale combustibile din jur). */
 const NOT_WET = new Set(['semineu', 'focarLemne']);
 

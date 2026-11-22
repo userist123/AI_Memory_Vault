@@ -53,6 +53,8 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   files.push({ name: 'alegeri-variante.json', data: JSON.stringify(await listChoices(owner, id), null, 2) });
   files.push({ name: 'contract.json', data: JSON.stringify(await orRaw(() => getContractData(owner, id), () => readStoredContract(id)), null, 2) });
   files.push({ name: 'sarcini.json', data: JSON.stringify(await listTasks(owner, id), null, 2) });
+  for (const pf of (await q('select series, number, issued_at, data from issued_proformas where project_id=$1 order by issued_at', [id])).rows)
+    files.push({ name: `proforme-emise/proforma-${String(pf.series).replace(/[^\w.-]+/g, '-')}-${pf.number}.json`, data: JSON.stringify({ series: pf.series, number: pf.number, issuedAt: pf.issued_at, document: typeof pf.data === 'string' ? JSON.parse(pf.data) : pf.data }, null, 2) });
   files.push({ name: 'comercial.json', data: JSON.stringify(await orRaw(() => getCommercialData(owner, id), () => readStoredCommercial(id)), null, 2) });   // discount, adaos, grafic de plăți (doar pentru designer)
   // randările de pe disc (doar imaginile, nu scena intermediară)
   const root = path.join(process.env.CASA3D_RENDER_DIR || path.join(process.cwd(), '.data', 'renders'), id);

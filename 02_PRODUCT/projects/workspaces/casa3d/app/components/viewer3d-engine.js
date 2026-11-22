@@ -217,6 +217,9 @@ function model(it){
   const body = (c) => s.wood ? MAT('wood', c) : MAT('paint', c);
   const SLAB = (shape, t, y, m) => { const o = new THREE.Mesh(slabGeo(shape, t), m); o.position.y = y; o.castShadow = o.receiveShadow = true; g.add(o); return o; };
   const name = String(it.nume || '');
+  // accesoriile de punere în scenă (televizorul pe comodă, lampa pe noptieră, oglinda peste lavoar, burlanul sobei...): nu fac parte
+  // din produs; comutatorul Decor le ascunde, iar măsurătoarea produsului (measureModel) le ignoră
+  const prop = fn => { const n0 = g.children.length; fn(); for (let i = n0; i < g.children.length; i++) g.children[i].userData.prop = true; };
   const handleM = MAT('metal', s.col && lumOf(s.col) < .35 ? '#a9a9a9' : '#2b2b2d');
   // un front de corp: sertar (cu mâner orizontal), ușă (mâner vertical lângă margine), vitrină (sticlă în ramă)
   const front = (kind, x, y, fw, fh, z, m, side = 1) => { if (kind === 'door') m = vgrain(m); B(fw - .006, fh - .006, .018, x, y, z + .009, kind === 'glass' ? MAT('paint', s.col2 || s.col || '#f2f2ef') : m);
@@ -252,7 +255,9 @@ function model(it){
       { const light = lumOf(s.col || '#cccccc') > .5, cols = light ? ['#a8714a', '#7d8a72'] : ['#d9cfc0', '#b9a58a'];
         [[-1, 0], [1, 1]].forEach(([a, i]) => { if (s.chaise && a > 0) return; const c = RB(.44, .42, .13, .07, a * (sw / 2 - arm - .26), .6, -ad / 2 + .32, MAT('velvet', cols[i])); c.rotation.x = -.28; c.rotation.z = a * -.12; }); }
       g.children.forEach(o => { o.position.z -= (d - ad) / 2 * (s.chaise ? 1 : 0); }); if (s.chaise) g.children.forEach(o => { o.position.z += 0; });
-      if (s.chaise) g.position.z = 0; break; }
+      if (s.chaise) g.position.z = 0;
+      { const top = new THREE.Box3().setFromObject(g).max.y; if (top > .3 && Math.abs(top - h) > .02) g.children.forEach(o => { o.position.y *= h / top; o.scale.y *= h / top; }); }
+      break; }
     case 'coffee': { const c = s.col;
       if (s.type === 'lack'){ const m = MAT('paint', c); B(w, .05, d, 0, h - .025, 0, m); B(w - .1, .02, d - .1, 0, .16, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .05, .05, a * (w / 2 - .035), (h - .05) / 2, b * (d / 2 - .035), m)); }
       else if (s.type === 'vittsjo'){ const m = MAT('metal', c); CY(w / 2, w / 2, .008, 0, h - .004, 0, MAT('glass', '#dfeaee'), 48); CY(w / 2 - .02, w / 2 - .02, .01, 0, .12, 0, MAT('paint', '#1f1c1a'), 48); for (let i = 0; i < 4; i++){ const a = i * Math.PI / 2 + Math.PI / 4; CY(.008, .008, h - .01, Math.cos(a) * (w / 2 - .03), (h - .01) / 2, Math.sin(a) * (w / 2 - .03), m, 8); } { const r = new THREE.Mesh(new THREE.TorusGeometry(w / 2 - .03, .007, 6, 48), m); r.rotation.x = Math.PI / 2; r.position.y = h - .02; g.add(r); } }
@@ -263,7 +268,7 @@ function model(it){
         for (let i = 0; i < 3; i++){ const a = i * Math.PI * 2 / 3; CY(.012, .012, h - .03, Math.cos(a) * (w / 2 - .05), (h - .03) / 2, Math.sin(a) * (w / 2 - .05), leg, 10); }
         const ring = new THREE.Mesh(new THREE.TorusGeometry(w / 2 - .03, .008, 8, 48), leg); ring.rotation.x = Math.PI / 2; ring.position.y = h - .035; g.add(ring); }
       else { const m = MAT('wood', c); RB(w, .035, d, .008, 0, h - .018, 0, m); for (let i = 0; i < 9; i++) B(w - .16, .015, .045, 0, .12, -d / 2 + .08 + i * (d - .16) / 8, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .035, .05, a * (w / 2 - .06), (h - .035) / 2, b * (d / 2 - .06), m)); }
-      const deco = MAT('paint', '#2f5d50'); CY(.06, .05, .12, w * .18, h + .06, 0, deco, 16); B(.22, .03, .16, -w * .2, h + .015, 0, MAT('paint', '#c8b89a')); break; }
+      prop(() => { const deco = MAT('paint', '#2f5d50'); CY(.06, .05, .12, w * .18, h + .06, 0, deco, 16); B(.22, .03, .16, -w * .2, h + .015, 0, MAT('paint', '#c8b89a')); }); break; }
     case 'tv': { const m = body(s.col); if (s.open){ B(w, .02, d, 0, h - .01, 0, m); B(w, .02, d, 0, .01, 0, m); for (let i = 0; i <= 3; i++) B(.02, h, d, -w / 2 + .01 + i * (w - .02) / 3, h / 2, 0, m); B(w, h, .01, 0, h / 2, -d / 2 + .005, m); }
       else if (s.doors || s.drawers || s.glass){ const carc = s.col2 ? body(s.col2) : m, legs = h > .4 ? .08 : .03, fh = h - legs;
         B(w, fh, d - .02, 0, legs + fh / 2, -.01, carc); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, legs, .03, a * (w / 2 - .05), legs / 2, b * (d / 2 - .06), MAT('paint', '#2a2a2a')));
@@ -274,7 +279,7 @@ function model(it){
           else front(k, x, legs + fh / 2, cw, fh - .02, d / 2 - .02, m, i < cols.length / 2 ? 1 : -1); });
         if (s.lights) B(w - .06, .012, .02, 0, h - .025, d / 2 + .004, MAT('emit', '#fff1d6')); }
       else { B(w, h - .01, d, 0, h / 2 + .005, 0, m); const n = s.fronts || 3; for (let i = 0; i < n; i++){ B(w / n - .006, h - .03, .016, -w / 2 + w / n * (i + .5), h / 2 + .005, d / 2 + .008, body(s.col)); } }
-      { const tw = Math.min(1.45, Math.max(.8, w * .72)), th = tw * .5625; B(tw, th, .03, 0, h + .09 + th / 2, -.06, MAT('screen', '#0b0c0e')); } B(.32, .02, .2, 0, h + .01, -.06, MAT('metal', '#222')); B(.04, .09, .04, 0, h + .065, -.06, MAT('metal', '#222')); break; }
+      prop(() => { const tw = Math.min(1.45, Math.max(.8, w * .72)), th = tw * .5625; B(tw, th, .03, 0, h + .09 + th / 2, -.06, MAT('screen', '#0b0c0e')); B(.32, .02, .2, 0, h + .01, -.06, MAT('metal', '#222')); B(.04, .09, .04, 0, h + .065, -.06, MAT('metal', '#222')); }); break; }
     case 'shelf': { const m = body(s.col);
       if (s.type === 'kallax'){ const t = .035; B(w, t, d, 0, t / 2, 0, m); B(w, t, d, 0, h - t / 2, 0, m); B(t, h, d, -w / 2 + t / 2, h / 2, 0, m); B(t, h, d, w / 2 - t / 2, h / 2, 0, m); B(.015, h - t * 2, d, 0, h / 2, 0, m);
         for (let i = 1; i < 4; i++) B(w - t * 2, .015, d, 0, t + i * (h - 2 * t) / 4, 0, m);
@@ -289,7 +294,7 @@ function model(it){
       const pos = []; for (const sd of [-1, 1]) for (let i = 0; i < Math.min(perSide, total - (sd > 0 ? perSide : 0)); i++) pos.push([-w / 2 + w / perSide * (i + .5), sd, 0]);
       for (let i = 0; i < Math.min(ends, 2); i++) pos.push([0, i ? 1 : -1, 1]);
       pos.forEach(([x, sd, end]) => { const cg = new THREE.Group(); if (end){ cg.position.set(sd * (w / 2 + .12), 0, 0); cg.rotation.y = sd > 0 ? -Math.PI / 2 : Math.PI / 2; }
-        else { cg.position.set(x, 0, sd * (d / 2 + .12)); cg.rotation.y = sd > 0 ? Math.PI : 0; } g.add(cg);
+        else { cg.position.set(x, 0, sd * (d / 2 + .12)); cg.rotation.y = sd > 0 ? Math.PI : 0; } cg.userData.setPiece = true; g.add(cg);   // scaunele setului: produs, dar cotele din fișă sunt ale mesei
         const add = (bw, bh, bd, px, py, pz, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), m); o.position.set(px, py, pz); o.castShadow = true; cg.add(o); };
         const fr = s.chair === 'ingolf' || s.chair === 'orrstaWhite' ? MAT('paint', '#f1f1ee') : s.chair === 'rattan' ? MAT('paint', '#1c1c1c') : MAT('wood', '#3f2d22');
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => add(.03, .45, .03, a * .19, .225, b * .19, fr));
@@ -298,21 +303,21 @@ function model(it){
         else { const cu = MAT('fabric', s.chair === 'orrstaWhite' ? '#d9d9d6' : '#9a9c98'); const o = new THREE.Mesh(rgeo(.43, .06, .43, .02), cu); o.position.set(0, .48, 0); o.castShadow = true; cg.add(o); add(.42, .08, .025, 0, .88, -.2, fr); add(.42, .02, .02, 0, .66, -.2, fr); add(.03, .45, .03, -.19, .7, -.2, fr); add(.03, .45, .03, .19, .7, -.2, fr); } });
       break; }
     case 'bed': { const up = s.uph || /tapi[tț]at/i.test(name), fr = up || s.mat ? MAT(s.mat || 'fabric', s.col) : body(s.col), hb = up || s.mat ? MAT(s.mat || 'fabric', s.col) : s.wood ? MAT('wood', s.col) : MAT('paint', s.col);
-      if (up){ RB(w + .04, .32, d + .02, .04, 0, .2, .01, fr); RB(w + .06, h - .02, .12, .05, 0, (h - .02) / 2 + .02, -d / 2 + .05, hb); for (let i = 1; i < 6; i++) B(.006, h - .2, .006, -w / 2 + (w + .06) * i / 6, h / 2 + .05, -d / 2 + .112, MAT(s.mat || 'fabric', s.col)); }   // pat tapițat: bază îmbrăcată și tăblie capitonată
+      if (up){ RB(w, .32, d - .02, .04, 0, .2, .01, fr); RB(w, h - .02, .12, .05, 0, (h - .02) / 2 + .02, -d / 2 + .06, hb); for (let i = 1; i < 6; i++) B(.006, h - .2, .006, -w / 2 + w * i / 6, h / 2 + .05, -d / 2 + .112, MAT(s.mat || 'fabric', s.col)); }   // pat tapițat: bază îmbrăcată și tăblie capitonată
       B(w, .3, .02, 0, .2, d / 2 - .01, fr); B(.02, .3, d - .1, -w / 2 + .01, .2, .04, fr); B(.02, .3, d - .1, w / 2 - .01, .2, .04, fr); B(w, h, .05, 0, h / 2, -d / 2 + .025, hb);
       [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .05, .03, a * (w / 2 - .03), .025, b * (d / 2 - .03), MAT('paint', '#222')));
-      if (s.boxes){ for (let i = 0; i < 2; i++) [-1, 1].forEach(sd => B(.02, .16, .9, sd * (w / 2 + .012), .12, -.35 + i * .95, fr)); }
+      if (s.boxes){ for (let i = 0; i < 2; i++) [-1, 1].forEach(sd => B(.02, .16, .9, sd * (w / 2 - .02), .12, -.35 + i * .95, fr)); }
       RB(w - .1, .2, d - .14, .05, 0, .44, .05, MAT('fabric', '#f7f7f5'));                   // saltea
       // lenjeria: pilota groasă care cade peste margini, întoarsă la cap, pled la picioare, perne și perne decorative
       // lenjeria: pilota cu fața de sus bombată și marginile rotunjite care cad peste laterale și la picioare, cearșaful
       // întors la cap, pledul împăturit (două straturi) pe treimea de la picioare; o singură suprafață textilă fiecare
       const duvet = MAT('cloth', '#eeeae3'), throwC = MAT('cloth', s.throw || '#9a7b5c'), D2 = (geo, x, y, z, m) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
       const wm = w - .08, z0 = -d * .2, z1 = d / 2 - .03, dd = z1 - z0, top = .556, drop = up ? .17 : .19;
-      D2(drapeGeo(wm, dd, drop, drop, .03), 0, top, z0 + dd / 2, duvet);
+      prop(() => { D2(drapeGeo(wm, dd, drop, drop, .03), 0, top, z0 + dd / 2, duvet);
       RB(w - .1, .05, .22, .025, 0, .6, z0 + .09, MAT('fabric', '#f7f5f0'));                                                     // cearșaful întors
       D2(drapeGeo(wm + .02, .46, drop - .02, 0, .006), 0, top + .036, z1 - .3, throwC); D2(drapeGeo(wm + .04, .2, .1, 0, .004), 0, top + .048, z1 - .2, throwC);   // pled împăturit
       [-1, 1].forEach(a => { const pl = RB(.6, .15, .4, .07, a * (w / 4 - .02), .66, -d / 2 + .3, MAT('fabric', '#ffffff')); pl.rotation.x = -.25; });
-      [-1, 1].forEach((a, i) => { const c = RB(.42, .36, .12, .06, a * (w / 6), .76, -d / 2 + .5, MAT('velvet', i ? '#c9b79c' : (s.throw || '#9a7b5c'))); c.rotation.x = -.35; c.rotation.z = a * .06; });
+      [-1, 1].forEach((a, i) => { const c = RB(.42, .36, .12, .06, a * (w / 6), .76, -d / 2 + .5, MAT('velvet', i ? '#c9b79c' : (s.throw || '#9a7b5c'))); c.rotation.x = -.35; c.rotation.z = a * .06; }); });
       break; }
     case 'night': { const m = body(s.col);
       if (s.type === 'hemnes'){ B(w, .03, d, 0, h - .015, 0, MAT('wood', '#b98f63')); B(w - .02, .22, d - .02, 0, h - .14, 0, m); B(w - .04, .02, d - .04, 0, .2, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.04, h - .03, .04, a * (w / 2 - .025), (h - .03) / 2, b * (d / 2 - .025), m)); CY(.012, .012, .02, 0, h - .14, d / 2, MAT('metal', '#8a7a64'), 10); }
@@ -324,8 +329,8 @@ function model(it){
         if (s.doors){ const rest = y - foot - open, n = Math.max(1, Math.min(2, s.doors)); for (let i = 0; i < n; i++) front('door', -w / 2 + w / n * (i + .5), foot + open + rest / 2, w / n, rest, d / 2 - .02, m, n === 1 ? 1 : (i ? -1 : 1)); }
         if (open) B(w - .04, .015, d - .06, 0, foot + open, -.02, body2); }
       else { B(w, h, d, 0, h / 2, 0, m); B(w - .03, .14, .01, 0, h - .1, d / 2 + .005, MAT('frost', '#e9ecec')); B(w - .04, .015, d - .04, 0, h * .4, 0, m); }
-      CY(.075, .08, .02, 0, h + .01, 0, MAT('metal', '#2b2b2b')); CY(.01, .01, .3, 0, h + .16, 0, MAT('metal', '#2b2b2b'), 8);
-      { const sh = new THREE.Mesh(new THREE.CylinderGeometry(.09, .14, .18, 28, 1, true), new THREE.MeshStandardMaterial({ color: lin('#efe6d6'), side: THREE.DoubleSide, roughness: .9, emissive: lin('#ffd9a0'), emissiveIntensity: .35 })); sh.position.set(0, h + .37, 0); g.add(sh); } break; }
+      prop(() => { CY(.075, .08, .02, 0, h + .01, 0, MAT('metal', '#2b2b2b')); CY(.01, .01, .3, 0, h + .16, 0, MAT('metal', '#2b2b2b'), 8);
+      const sh = new THREE.Mesh(new THREE.CylinderGeometry(.09, .14, .18, 28, 1, true), new THREE.MeshStandardMaterial({ color: lin('#efe6d6'), side: THREE.DoubleSide, roughness: .9, emissive: lin('#ffd9a0'), emissiveIntensity: .35 })); sh.position.set(0, h + .37, 0); g.add(sh); }); break; }
     case 'wardrobe': { const m = vgrain(body(s.col));
       if (s.type === 'kleppstad'){ B(w, h, d - .04, 0, h / 2, -.02, m); B(w / 2 + .02, h - .06, .02, -w / 4 + .01, h / 2, d / 2 - .03, m); B(w / 2 + .02, h - .06, .02, w / 4 - .01, h / 2, d / 2 - .005, m); B(.012, h - .2, .02, -.06, h / 2, d / 2 - .01, MAT('metal', '#9a9a9a')); B(.012, h - .2, .02, .06, h / 2, d / 2 + .01, MAT('metal', '#9a9a9a')); }
       else if (s.doors || s.sliding || s.drawers){ B(w, h - .05, d - .02, 0, (h - .05) / 2 + .05, -.01, s.col2 ? body(s.col2) : m); B(w - .04, .05, d - .04, 0, .025, 0, m);
@@ -342,9 +347,10 @@ function model(it){
     case 'desk': { const m = s.col ? body(s.col) : MAT('paint', '#f2f2ef');
       if (s.type === 'torald'){ B(w, .02, d, 0, h - .01, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => CY(.012, .012, h - .02, a * (w / 2 - .03), (h - .02) / 2, b * (d / 2 - .03), MAT('metal', '#e8e8e6'), 10)); }
       else { B(w, .03, d, 0, h - .015, 0, m); B(.02, h - .03, d, -w / 2 + .01, (h - .03) / 2, 0, m); B(.35, h - .03, d, w / 2 - .175, (h - .03) / 2, 0, m); { const nd = s.drawers || (s.doors ? 1 : 2), ph = h - .05, dh = s.doors ? .16 : ph / nd; for (let i = 0; i < nd; i++) front('drawer', w / 2 - .175, h - .03 - dh * (i + .5), .35, dh, d / 2 - .02, m); if (s.doors) front('door', w / 2 - .175, (h - .03 - dh * nd) / 2, .35, h - .03 - dh * nd, d / 2 - .02, m, -1); } B(w - .37, .3, .01, -.17, h - .3, -d / 2 + .01, m); }
-      B(.54, .32, .02, -w * .12, h + .23, -d / 2 + .12, MAT('screen', '#0c0d0f')); B(.05, .12, .05, -w * .12, h + .06, -d / 2 + .12, MAT('metal', '#333')); B(.42, .015, .14, -w * .12, h + .008, .06, MAT('paint', '#2b2d31')); break; }
+      prop(() => { B(.54, .32, .02, -w * .12, h + .23, -d / 2 + .12, MAT('screen', '#0c0d0f')); B(.05, .12, .05, -w * .12, h + .06, -d / 2 + .12, MAT('metal', '#333')); B(.42, .015, .14, -w * .12, h + .008, .06, MAT('paint', '#2b2d31')); }); break; }
     case 'ochair': { const fab = MAT('fabric', s.col || '#3b3d42'), mesh = MAT('paint', '#1d1e21');
-      for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2, leg = B(.3, .03, .04, Math.cos(a) * .15, .07, Math.sin(a) * .15, mesh); leg.rotation.y = -a; CY(.025, .025, .04, Math.cos(a) * .3, .025, Math.sin(a) * .3, mesh, 10); }
+      const sr = Math.min(w, d) / 2 - .02;   // raza bazei stea (roțile la margine)
+      for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2, leg = B(sr, .03, .04, Math.cos(a) * sr / 2, .07, Math.sin(a) * sr / 2, mesh); leg.rotation.y = -a; CY(.025, .025, .04, Math.cos(a) * sr, .025, Math.sin(a) * sr, mesh, 10); }
       CY(.028, .028, .38, 0, .28, 0, MAT('chrome', '#bbb')); RB(.5, .09, .5, .03, 0, .5, .02, fab);
       { const bh = Math.min(.62, h - .78), back = MAT('fabric', s.col ? s.col : '#2c2e33'); B(.05, .3, .03, 0, .66, -.26, mesh);                       // coloana spătarului
         { const bp = RB(.46, bh, .035, .03, 0, .8 + bh / 2, -.29, back); bp.rotation.x = .12; RB(.48, .04, .045, .015, 0, .8 + .02, -.27, mesh); } // spătar dintr-o bucată, ușor înclinat, cu buiandrug lombar
@@ -360,38 +366,59 @@ function model(it){
       B(sxc - .3 + w / 2, .78, wd - .02, (-w / 2 + sxc - .3) / 2, .47, -d / 2 + wd / 2, carc); B(w / 2 - sxc - .3, .78, wd - .02, (sxc + .3 + w / 2) / 2, .47, -d / 2 + wd / 2, carc); B(.6, .56, wd - .02, sxc, .36, -d / 2 + wd / 2, carc);
       const n = Math.round(w / .6); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .74, .018, cx, .46, -d / 2 + wd + .009, front); handle(cx, htype === 'profile' ? .82 : .78, -d / 2 + wd + .025, false); }
       // blatul cu decupajul chiuvetei (ca la montaj: gaura e mai mică decât rama chiuvetei)
-      { const sh = rrectPath(new THREE.Shape(), 0, 0, w + .01, d, .003); sh.holes.push(rrectPath(new THREE.Path(), -w / 2 + .45, 0, .42, .36, .03)); SLAB(sh, topM, .86 + topM, topMat); }
+      // chiuveta aleasă la mărimea ei (ramă = lățimea × adâncimea produsului; cuva cel mult 45 cm, restul e picurătorul)
+      const skw = k && k.sinkCm ? Math.min(w * .45, k.sinkCm[0] / 100) : .48, skd = k && k.sinkCm ? Math.min(.54, k.sinkCm[1] / 100) : .42, bww = Math.min(skw - .08, .45), bdd = skd - .08;
+      { const sh = rrectPath(new THREE.Shape(), 0, 0, w + .01, d, .003); sh.holes.push(rrectPath(new THREE.Path(), -w / 2 + .45, 0, skw - .06, skd - .06, .03)); SLAB(sh, topM, .86 + topM, topMat); }
       const sinkMat = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#c6c9cc'), tapMat = MAT('chrome', k ? k.tapColor : '#c6c9cc');
       // chiuveta: ramă subțire și cuva (mai închisă, cu scurgere), bateria cu pipă curbată
       const ct = .86 + topM, sx = -w / 2 + .45;
       { // chiuveta încastrată: rama subțire pe blat, cuva adâncă de 18 cm cu pereți și fund, sita de scurgere
-        const rim = rrectPath(new THREE.Shape(), sx, 0, .48, .42, .035); rim.holes.push(rrectPath(new THREE.Path(), sx, 0, .4, .34, .025)); SLAB(rim, .006, ct + .006, sinkMat);
+        const rim = rrectPath(new THREE.Shape(), sx, 0, skw, skd, .035); rim.holes.push(rrectPath(new THREE.Path(), sx, 0, bww, bdd, .025)); SLAB(rim, .006, ct + .006, sinkMat);
         const bowlM = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#b9bcbf'), dep = .18, by = ct - dep;
-        B(.4, .006, .34, sx, by, 0, bowlM); B(.4, dep, .006, sx, by + dep / 2, -.17, bowlM); B(.4, dep, .006, sx, by + dep / 2, .17, bowlM); B(.006, dep, .34, sx - .2, by + dep / 2, 0, bowlM); B(.006, dep, .34, sx + .2, by + dep / 2, 0, bowlM);
+        B(bww, .006, bdd, sx, by, 0, bowlM); B(bww, dep, .006, sx, by + dep / 2, -bdd / 2, bowlM); B(bww, dep, .006, sx, by + dep / 2, bdd / 2, bowlM); B(.006, dep, bdd, sx - bww / 2, by + dep / 2, 0, bowlM); B(.006, dep, bdd, sx + bww / 2, by + dep / 2, 0, bowlM);
         CY(.035, .035, .004, sx + .08, by + .005, .06, MAT('metal', '#6a6d71'), 24); CY(.012, .012, .005, sx + .08, by + .007, .06, MAT('paint', '#2a2b2d'), 12); }
-      CY(.022, .026, .03, sx, ct + .015, -.2, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, -.2, tapMat, 12);
-      { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, -.11); sp.castShadow = true; g.add(sp); }
-      B(.016, .05, .016, sx, ct + .26, -.02, tapMat); B(.012, .012, .1, sx + .03, ct + .27, -.2, tapMat);
-      // plita: sticlă neagră cu cele patru zone de gătit marcate
-      const hx = w / 2 - .55; B(.58, .006, .5, hx, ct + .003, 0, MAT('screen', '#0d0d0e'));
-      for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
+      const tz = -skd / 2 + .01;   // bateria în spatele ramei chiuvetei
+      CY(.022, .026, .03, sx, ct + .015, tz, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, tz, tapMat, 12);
+      { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, tz + .09); sp.castShadow = true; g.add(sp); }
+      B(.016, .05, .016, sx, ct + .26, tz + .18, tapMat); B(.012, .012, .1, sx + .03, ct + .27, tz, tapMat);
+      // plita: sticlă neagră cu cele patru zone de gătit marcate; pe gaz (produsul ales), arzătoarele cu grătare de fontă
+      const hx = w / 2 - .55, gas = s.hob && /gas/.test(s.hob.kind || ''); B(.58, .006, .5, hx, ct + .003, 0, gas && s.hob.col && lumOf(s.hob.col) > .5 ? MAT('metal', s.hob.col) : MAT('screen', '#0d0d0e'));
+      if (gas) for (const [dx, dz, r] of [[-.14, -.1, .05], [.14, -.1, .04], [-.14, .12, .04], [.14, .12, .06]]){ CY(r, r, .02, hx + dx, ct + .016, dz, MAT('paint', '#1b1b1c'), 20); B(.2, .012, .012, hx + dx, ct + .03, dz, MAT('paint', '#121213')); B(.012, .012, .2, hx + dx, ct + .03, dz, MAT('paint', '#121213')); }
+      // hota aleasă, deasupra plitei: coș de perete (inox sau sticlă), telescopică sub suspendat sau de tavan
+      if (s.hood){ const hk = s.hood.kind || 'hood_chimney', hw = (s.hood.w || 60) / 100, hm = s.hood.col && lumOf(s.hood.col) < .3 ? MAT('paint', s.hood.col) : MAT('metal', s.hood.col || '#c8cacc'), dark = MAT('screen', '#151618'), hb = ct + .65, hz = -d / 2 + .25;
+        if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, hm);   // sertarul telescopic, sub corpul suspendat
+        else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, (s.hood.ceil || 2.55) - .05, hz, hm);   // lipită de tavanul camerei
+        // cu corpuri suspendate deasupra (implicit), hota de perete rămâne doar baldachinul sub ele: coșul și sticla ar intra în corpuri
+        // hota de insulă fără corpuri suspendate: baldachin centrat pe plită și coș până la tavanul camerei, desprinse de perete
+        else if (hk === 'hood_island' && k && k.upper === 'none'){ const top = s.hood.ceil || 2.55, cw = Math.min(hw * .4, .3); B(hw, .05, .6, hx, hb + .025, 0, hm);
+          // cu sticlă: placa de sticlă stă pe ramă și coșul pornește din ea; fără sticlă: capacul piramidal, apoi coșul
+          const cb = s.hood.glass ? hb + .062 : hb + .25; if (s.hood.glass) B(hw - .01, .012, .58, hx, hb + .056, 0, dark); else B(hw * .7, .2, .42, hx, hb + .15, 0, hm);
+          if (top > cb + .02) B(cw, top - cb, cw * .8, hx, (top + cb) / 2, 0, hm); }
+        else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
+        // hota de perete: înclinată cu sticlă (marginea de jos pe rama din față, cea de sus la perete) sau cu capac; coșul urcă până la tavanul camerei
+        else { const top = s.hood.ceil || 2.55; let cb = hb + .27;
+          if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const zf = hz + .225, zb = -d / 2 + .03, rise = .3, gl = B(hw, .012, Math.hypot(zf - zb, rise), hx, hb + .02 + rise / 2, (zf + zb) / 2, dark);
+            gl.rotation.x = Math.atan2(rise, zf - zb); cb = hb + .02 + rise - .02; }
+          else { B(hw, .05, .48, hx, hb + .025, hz, hm); B(hw * .6, .22, .32, hx, hb + .16, hz - .06, hm); }
+          if (top > cb + .02) B(.26, top - cb, .22, hx, (top + cb) / 2, -d / 2 + .11, hm); } }
+      if (!gas) for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
       // cuptorul: rama inox, ușa de sticlă cu geam fumuriu, mânerul bară și panoul de comandă
-      const oz = -d / 2 + wd + .02; B(.58, .58, .012, hx, .46, oz, MAT('metal', '#9da0a3')); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
+      const oz = -d / 2 + wd + .02, ov = s.oven, ovM = ov && ov.col ? (ov.inox ? MAT('metal', ov.col) : MAT('paint', ov.col)) : MAT('metal', '#9da0a3'); B(.58, .58, .012, hx, .46, oz, ovM); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
       B(.46, .016, .016, hx, .62, oz + .035, MAT('metal', '#c4c7ca')); [-.18, .18].forEach(a => B(.012, .012, .03, hx + a, .62, oz + .02, MAT('metal', '#c4c7ca')));
       [-.2, -.14, .14, .2].forEach(a => CY(.014, .014, .015, hx + a, .68, oz + .015, MAT('metal', '#c4c7ca'), 16).rotation.x = Math.PI / 2);
       // pe blat, ca într-o casă locuită: tocătorul sprijinit de perete, ibricul, un bol cu fructe, sticlele lângă plită
-      { const wood = MAT('wood', '#b38a5e'), bx = w > 2 ? -w / 2 + 1.05 : sx; const cb = B(.3, .4, .02, bx, ct + .2, -d / 2 + .06, wood); cb.rotation.x = -.12; B(.22, .3, .018, bx + .2, ct + .15, -d / 2 + .07, MAT('wood', '#8a6340')).rotation.x = -.12;
+      prop(() => { const wood = MAT('wood', '#b38a5e'), bx = w > 2 ? -w / 2 + 1.05 : sx; const cb = B(.3, .4, .02, bx, ct + .2, -d / 2 + .06, wood); cb.rotation.x = -.12; B(.22, .3, .018, bx + .2, ct + .15, -d / 2 + .07, MAT('wood', '#8a6340')).rotation.x = -.12;
         if (w > 1.6){ const kx = hx - .45; CY(.075, .085, .2, kx, ct + .1, -.1, MAT('ceramic', '#ece8e0'), 24); CY(.05, .07, .02, kx, ct + .21, -.1, MAT('ceramic', '#ece8e0'), 24); B(.03, .14, .06, kx - .09, ct + .1, -.1, MAT('paint', '#2b2b2b'));
           const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.14, .07, .07, 32, 1, true), MAT('ceramic', '#cfc5b4')); bowl.material.side = THREE.DoubleSide; bowl.position.set(kx - .35, ct + .04, .05); bowl.castShadow = true; g.add(bowl);
           [['#c9572f', -.04, .02], ['#e0a83a', .05, -.02], ['#8aa04a', 0, .06], ['#c9572f', .03, .05]].forEach(([c, a, b], i) => { const f = new THREE.Mesh(new THREE.SphereGeometry(.038, 16, 12), MAT('paint', c)); f.position.set(kx - .35 + a, ct + .07 + (i > 2 ? .03 : 0), .05 + b); f.castShadow = true; g.add(f); }); }
-        [['#3d4a2a', .32, .03], ['#6b3f22', .24, .028]].forEach(([c, hh, r], i) => { CY(r, r, hh, hx + .36 + i * .07, ct + hh / 2, -d / 2 + .08, MAT('glass', c), 16); CY(.01, .01, .04, hx + .36 + i * .07, ct + hh + .02, -d / 2 + .08, MAT('wood', '#9c7a52'), 8); }); }
+        [['#3d4a2a', .32, .03], ['#6b3f22', .24, .028]].forEach(([c, hh, r], i) => { CY(r, r, hh, hx + .36 + i * .07, ct + hh / 2, -d / 2 + .08, MAT('glass', c), 16); CY(.01, .01, .04, hx + .36 + i * .07, ct + hh + .02, -d / 2 + .08, MAT('wood', '#9c7a52'), 8); }); });
       const upper = k ? k.upper : 'open', top = h - .02, wallBottom = upper === 'none' ? 1.5 : top - .72;
       if (upper === 'open'){ // polițe ENHET cu cadru deschis + uși pe jumătate din module
         B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
         B(w, .015, .3, 0, top - .36, -d / 2 + .16, frame); for (let i = 0; i < n; i += 2){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .01, .7, .015, cx, top - .36, -d / 2 + .32, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .335, true); }
         for (let i = 1; i < n; i += 2){ B(.1, .12, .1, -w / 2 + w / n * (i + .5) - .08, top - .64, -d / 2 + .15, MAT('ceramic', '#eae6de')); B(.14, .1, .14, -w / 2 + w / n * (i + .5) + .08, top - .3, -d / 2 + .15, MAT('ceramic', '#6a7c72')); } }
       else if (upper === 'closed'){ B(w, .72, .32, 0, top - .36, -d / 2 + .16, MAT('paint', '#2d2f33')); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .7, .018, cx, top - .36, -d / 2 + .329, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .345, true); } }
-      if (upper !== 'none') B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5'));
+      if (upper !== 'none' && !s.hood) B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5'));   // hota generică, doar fără produs ales
       // placarea dintre blat și suspendate
       const bsH = Math.max(.2, wallBottom - (.86 + topM)), bsY = .86 + topM + bsH / 2;
       if (k && k.backsplash === 'tile' && k.backsplashTile){ const t = wallTexture({ kind: 'tile', color: k.backsplashColor, sizeCm: k.backsplashTile }, 'kit:' + k.backsplashColor), tc = t.clone(); tc.userData = { owned: true }; tc.needsUpdate = true; tc.repeat.set(w / t.userData.size, bsH / t.userData.size);
@@ -401,17 +428,51 @@ function model(it){
       if (k && k.led && upper !== 'none'){ const lm = new THREE.MeshStandardMaterial({ color: lin(k.led), emissive: lin(k.led), emissiveIntensity: 1.4 }); B(w - .04, .008, .015, 0, wallBottom - .006, -d / 2 + .3, lm); }
       break; }
     case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
+    // electrocasnicele după produs: culoarea și tipul din stilul variantei (s.kind, s.col), dimensiunile din fișa produsului
+    case 'washer': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#f4f4f2'), dark = MAT('screen', '#16181b'), ring = MAT(s.ringDark ? 'paint' : 'chrome', s.ringDark ? '#2a2c30' : '#cfd2d6');
+      RB(w, h, d, .015, 0, h / 2, 0, body);
+      if (s.kind === 'washer_top'){ B(w - .04, .01, d * .55, 0, h + .004, -d * .1, MAT('paint', '#e9e9e7')); B(w * .7, .05, .06, 0, h + .02, -d / 2 + .05, dark); break; }
+      const builtin = s.kind === 'washer_builtin' || s.kind === 'dishwasher_builtin';
+      B(w - .02, .09, .01, 0, h - .06, d / 2 + .004, builtin ? body : MAT('paint', s.col && lumOf(s.col) < .3 ? '#2a2c30' : '#ececea'));   // panoul de comandă
+      B(.12, .04, .006, w * .15, h - .06, d / 2 + .01, dark); const kn = CY(.03, .03, .025, -w * .3, h - .06, d / 2 + .015, MAT('chrome', '#c9ccd0'), 24); kn.rotation.x = Math.PI / 2;
+      if (s.kind === 'dryer'){ const r = Math.min(w, h) * .26, c = h * .48; const tor = new THREE.Mesh(new THREE.TorusGeometry(r, .03, 12, 40), ring); tor.position.set(0, c, d / 2 + .02); g.add(tor);
+        const gl = CY(r - .02, r - .02, .01, 0, c, d / 2 + .02, MAT('screen', '#3a3f45'), 40); gl.rotation.x = Math.PI / 2; B(w * .5, .03, .02, 0, .06, d / 2 + .005, MAT('paint', '#d6d6d4')); break; }
+      // hublou: inel, sticla fumurie, mânerul în lateral; mașina cu uscător are același hublou
+      const r = Math.min(w, h) * .25, c = h * .5; const tor = new THREE.Mesh(new THREE.TorusGeometry(r, .035, 14, 48), ring); tor.position.set(0, c, d / 2 + .02); g.add(tor);
+      const gl = CY(r - .02, r - .02, .012, 0, c, d / 2 + .018, MAT('glass', '#8fa4ad'), 48); gl.rotation.x = Math.PI / 2; B(.03, .1, .02, r + .03, c, d / 2 + .03, ring); break; }
+    case 'dishwasher': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#f4f4f2'), builtin = s.kind === 'dishwasher_builtin';
+      RB(w, h, d, .012, 0, h / 2, 0, body);
+      if (builtin){ B(w - .01, h - .12, .02, 0, (h - .12) / 2 + .1, d / 2 + .01, MAT('paint', '#e8e4dc')); B(w * .5, .015, .025, 0, h - .1, d / 2 + .03, MAT('metal', '#9a9a9a')); B(w - .02, .09, .01, 0, .045, d / 2 - .02, MAT('paint', '#1f2023')); break; }
+      B(w - .01, .1, .01, 0, h - .06, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2a2c30' : '#ececea')); B(.14, .035, .006, 0, h - .06, d / 2 + .011, MAT('screen', '#16181b'));
+      B(w * .6, .02, .03, 0, h - .14, d / 2 + .02, MAT('chrome', '#c9ccd0')); B(w - .02, .08, .01, 0, .04, d / 2 - .015, MAT('paint', '#1f2023')); break; }
+    case 'microwave': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#1e1f21'), y0 = 0;
+      // pe blatul sau pe piesa de sub el: cota vine din plan (surfaceSupport → it.y), modelul pornește de la 0
+      RB(w, h, d, .02, 0, y0 + h / 2, 0, body); B(w * .68, h * .78, .01, -w * .14, y0 + h / 2, d / 2 + .004, MAT('screen', '#202326'));
+      B(w * .2, h * .78, .01, w * .36, y0 + h / 2, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2b2d31' : '#e3e3e1')); B(.1, .03, .006, w * .36, y0 + h * .78, d / 2 + .01, MAT('screen', '#0e0f11'));
+      B(.02, h * .6, .02, w * .2 - .02, y0 + h / 2, d / 2 + .02, MAT('chrome', '#c9ccd0')); break; }
+    case 'hood': { const m = MAT(s.glass ? 'screen' : 'metal', s.col || '#c8cacc'), steel = MAT('metal', s.col && !s.glass ? s.col : '#c8cacc'), bottom = 1.55;
+      // hota: coș (de perete sau de insulă) cu baldachinul la 65 cm peste plită, telescopică sub corpul suspendat
+      if (s.kind === 'hood_telescopic'){ B(w, .18, d, 0, 1.45 + .09, 0, MAT('paint', '#e9e9e7')); B(w - .02, .03, .06, 0, 1.45 + .015, d / 2 - .03, steel); break; }
+      const top = 2.55, cw = Math.min(w * .4, .3), cd = Math.min(d * .7, .25);
+      if (s.kind === 'hood_ceiling'){ B(w, .12, d, 0, top - .06, 0, steel); break; }
+      if (s.glass){ B(w, .02, d, 0, bottom + .01, 0, steel); const gl = B(w, .015, d * .75, 0, bottom + .18, -d * .05, m); gl.rotation.x = -.35; }
+      else { B(w, .06, d, 0, bottom + .03, 0, steel); const cap = B(w * .7, .2, d * .7, 0, bottom + .16, s.kind === 'hood_island' ? 0 : -d * .12, steel); cap.scale.x = 1; }
+      B(cw, top - bottom - .2, cd, 0, (top + bottom + .2) / 2, s.kind === 'hood_island' ? 0 : -d / 2 + cd / 2, steel); break; }
+    case 'gasboiler': { const m = MAT('paint', s.col || '#f4f4f2'), y = 1.35 + h / 2;
+      // centrala murală: corpul pe perete (bază la ~1,35 m), afișajul jos pe față, racordurile și coșul
+      RB(w, h, d, .02, 0, y, 0, m); B(w * .7, .07, .01, 0, 1.35 + .08, d / 2 + .003, MAT('paint', '#d9dadb')); B(.08, .035, .006, -w * .15, 1.35 + .08, d / 2 + .01, MAT('screen', '#14161a'));
+      prop(() => { [-.12, -.05, .02, .09].forEach(a => CY(.011, .011, .25, a, 1.35 - .125, -d * .1, MAT('chrome', '#c9ccd0'), 10)); CY(.05, .05, .35, 0, 1.35 + h + .17, -d * .15, MAT('metal', '#d0d2d4'), 24); }); break; }
     case 'shower': { const bm = s.b || null, pm = MAT('metal', bm ? bm.metal : s.prof), fit = MAT('chrome', bm ? bm.metal : '#cfcfcf'), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2');
       // poliță de nișă în perete cu sticle (șampon, gel, ulei de corp)
-      B(.3, .012, .1, -w / 2 + .45, 1.0, -d / 2 + .05, MAT('ceramic', '#f2f0eb')); [['#e9e3d8', .17], ['#5f6b5c', .2], ['#b9824f', .14]].forEach(([c, hh], i) => CY(.026, .026, hh, -w / 2 + .37 + i * .08, 1.006 + hh / 2, -d / 2 + .06, MAT('ceramic', c), 16));
+      prop(() => { B(.3, .012, .1, -w / 2 + .45, 1.0, -d / 2 + .05, MAT('ceramic', '#f2f0eb')); [['#e9e3d8', .17], ['#5f6b5c', .2], ['#b9824f', .14]].forEach(([c, hh], i) => CY(.026, .026, hh, -w / 2 + .37 + i * .08, 1.006 + hh / 2, -d / 2 + .06, MAT('ceramic', c), 16)); });
       // walk-in: fără cădiță și fără ușă, doar un panou fix de sticlă cu profil sus și o bară de rigidizare
-      if (s.walkin){ const p = new THREE.Mesh(new THREE.BoxGeometry(.008, h - .06, d * .8), gl); p.position.set(w / 2 - .004, h / 2 + .01, -d * .1); g.add(p); B(.02, .02, d * .8, w / 2 - .004, h - .02, -d * .1, pm);
-        B(w * .6, .004, .06, w * .1, .003, d / 2 - .05, MAT('metal', '#444')); CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.12, .12, .012, -w / 2 + .25, h - .08, -d / 2 + .25, fit, 24); break; }
+      if (s.walkin){ const p = new THREE.Mesh(new THREE.BoxGeometry(.008, h - .02, d), gl); p.position.set(w / 2 - .004, h / 2, 0); g.add(p); B(.02, .02, d, w / 2 - .01, h - .01, 0, pm);
+        B(w, .004, .06, 0, .003, d / 2 - .05, MAT('metal', '#444')); prop(() => { CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.12, .12, .012, -w / 2 + .25, h - .08, -d / 2 + .25, fit, 24); }); break; }
       B(w, .05, d, 0, .025, 0, MAT('ceramic', '#fafafa'));
       if (s.round){ const arc = new THREE.Mesh(new THREE.CylinderGeometry(w - .02, w - .02, h - .06, 32, 1, true, 0, Math.PI / 2), gl); arc.position.set(-w / 2 + .01, h / 2 + .03, -d / 2 + .01); g.add(arc); }
       else { const t = s.thick ? .03 : .02; [[w, .008, 0, d / 2 - .004], [.008, d, w / 2 - .004, 0]].forEach(([a, b, x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(a, h - .06, b), gl); p.position.set(x, h / 2 + .03, z); g.add(p); });
         B(t, h - .05, t, w / 2 - t / 2, h / 2, d / 2 - t / 2, pm); B(w, t, t, 0, h - t / 2, d / 2 - t / 2, pm); B(t, t, d, w / 2 - t / 2, h - t / 2, 0, pm); }
-      CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, fit, 24); break; }
+      prop(() => { CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, fit, 24); }); break; }
     case 'vanity': { const m = body(s.col), top = s.hang ? .86 : h, bot = s.hang ? Math.max(.12, top - h) : (s.legs ? .15 : .02), lip = .1;
       // înălțimea din catalog e a ansamblului (corp + lavoar); suspendatul are muchia lavoarului la 86 cm, ca la montaj
       if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
@@ -428,13 +489,13 @@ function model(it){
       { const sh = rrectPath(new THREE.Shape(), 0, bz, bw, bd, .03); sh.holes.push(ellipsePath(new THREE.Path(), 0, oz, ow / 2, od / 2)); SLAB(sh, lip, top, cer); }
       { const prof = [[0, -.15], [.22, -.148], [.38, -.125], [.46, -.08], [.495, -.03], [.5, 0]].map(([x, y]) => new THREE.Vector2(x, y)), bowl = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), cer);
         bowl.scale.set(ow, 1, od); bowl.position.set(0, top - .004, oz); bowl.receiveShadow = true; g.add(bowl); CY(.018, .018, .004, 0, top - .152, oz, MAT('chrome', '#9a9a9a'), 16); }
-      { const tm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), tz = bz - bd / 2 + .05; CY(.024, .026, .04, 0, top + .02, tz, tm, 20); CY(.016, .016, .14, 0, top + .1, tz, tm, 16);
-        B(.026, .02, .12, 0, top + .16, tz + .05, tm); B(.012, .045, .05, 0, top + .19, tz - .005, tm); }
+      prop(() => { const tm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), tz = bz - bd / 2 + .05; CY(.024, .026, .04, 0, top + .02, tz, tm, 20); CY(.016, .016, .14, 0, top + .1, tz, tm, 16);
+        B(.026, .02, .12, 0, top + .16, tz + .05, tm); B(.012, .045, .05, 0, top + .19, tz - .005, tm); });
       const ty = top - .14;
-      B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1'));
+      prop(() => { B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1'));
       // ce stă pe un lavoar folosit: dozatorul de săpun și paharul, pe puntea din spate (fronturile rămân la vedere)
       const tt = ty + .14; CY(.032, .032, .13, w / 2 - .1, tt + .065, -d / 2 + .07, MAT('ceramic', '#7c8a7d'), 20); CY(.006, .006, .03, w / 2 - .1, tt + .145, -d / 2 + .07, MAT('chrome', '#bbb'), 8); B(.04, .006, .006, w / 2 - .085, tt + .158, -d / 2 + .07, MAT('chrome', '#bbb'));
-      CY(.035, .03, .1, w / 2 - .19, tt + .05, -d / 2 + .07, MAT('glass', '#d8e2e0'), 20);
+      CY(.035, .03, .1, w / 2 - .19, tt + .05, -d / 2 + .07, MAT('glass', '#d8e2e0'), 20); });
       break; }
     case 'wc': { const cer = MAT('ceramic', s.col || '#fbfbfa'),   // vasele negre mat (Dura Petra) rămân negre
       metal = MAT('chrome', s.b ? s.b.metal : '#d4d4d4'), nm = name.toLowerCase();
@@ -442,10 +503,10 @@ function model(it){
       const hung = s.mount ? s.mount === 'wall' : /suspendat/.test(nm) || !!(s.b && s.b.wallHung);
       const tank = s.cistern ? s.cistern === 'ceramic' : /cu rezervor|monobloc/.test(nm) && !/[îi]ncastrat/.test(nm);
       const square = s.shape ? s.shape === 'square' : /square|p[ăa]trat/.test(nm);
-      const bw = Math.min(w, .4), back = -d / 2, tankD = tank ? .17 : 0, frameD = tank ? 0 : .12, z0 = back + tankD + frameD, L = Math.max(.4, Math.min(.6, d - tankD)), rim = .41, cz = z0 + L / 2;
+      const bw = Math.min(w, .4), back = -d / 2, tankD = tank ? .17 : 0, frameD = tank ? 0 : .12, z0 = back + tankD, L = Math.max(.4, Math.min(.6, d - tankD)), rim = .41, cz = z0 + L / 2;
       // vasul: oval (profil rotunjit spre pardoseală) sau pătrat cu colțuri rotunjite
       if (square){ RB(bw, .2, L, .05, 0, rim - .1, cz, cer); RB(bw * .82, hung ? .12 : rim - .2, L * .7, .04, 0, hung ? rim - .26 : (rim - .2) / 2, cz - L * .1, cer); }
-      else { const prof = [[0, -1], [.3, -1], [.37, -.85], [.43, -.5], [.48, -.18], [.5, 0]].map(([x, y]) => new THREE.Vector2(x, y)), hb = hung ? .3 : .22;
+      else { const prof = [[0, -1], [.3, -1], [.37, -.85], [.43, -.5], [.48, -.18], [.5, 0]].map(([x, y]) => new THREE.Vector2(x, y)), hb = hung ? Math.max(.25, Math.min(.45, h - .042)) : .22;
         const bowl = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), cer); bowl.scale.set(bw, hb, L); bowl.position.set(0, rim, cz); bowl.castShadow = bowl.receiveShadow = true; g.add(bowl);
         if (!hung){ const ft = CY(.5, .5, rim - hb + .03, 0, (rim - hb + .03) / 2, cz - L * .08, cer, 32); ft.scale.set(bw * .55, 1, L * .55); } }   // piciorul vasului pe pardoseală
       // colacul și capacul închis, cu aceeași formă ca vasul
@@ -454,12 +515,12 @@ function model(it){
       B(.06, .03, .05, 0, rim + .02, z0 + .025, cer);                                                                    // balamalele colacului
       if (tank){ RB(bw * .92, .38, tankD - .01, .03, 0, rim + .19, back + tankD / 2, cer); RB(bw * .95, .03, tankD + .005, .012, 0, rim + .395, back + tankD / 2, cer); CY(.022, .022, .01, 0, rim + .415, back + tankD / 2, metal, 20); }
       else { // rezervor încastrat: placarea instalației (până la 1,2 m) și clapeta de acționare pe ea
-        const fz = back + frameD; B(Math.max(.5, bw + .14), 1.15, frameD, 0, .575, back + frameD / 2, MAT('paint', '#efefec')); B(.25, .165, .012, 0, 1.0, fz + .006, metal); B(.11, .14, .004, -.06, 1.0, fz + .014, MAT('chrome', s.b ? s.b.metal : '#e2e2e2')); B(.11, .14, .004, .06, 1.0, fz + .014, MAT('chrome', s.b ? s.b.metal : '#e2e2e2')); }
+        prop(() => { const fz = back; B(Math.max(.5, bw + .14), 1.15, frameD, 0, .575, back - frameD / 2, MAT('paint', '#efefec')); B(.25, .165, .012, 0, 1.0, fz + .006, metal); B(.11, .14, .004, -.06, 1.0, fz + .014, MAT('chrome', s.b ? s.b.metal : '#e2e2e2')); B(.11, .14, .004, .06, 1.0, fz + .014, MAT('chrome', s.b ? s.b.metal : '#e2e2e2')); }); }
       // suportul de hârtie pe peretele lateral din dreapta vasului
-      { const hm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'); B(.012, .05, .03, bw / 2 + .2, .72, back + .015, hm); B(.11, .008, .008, bw / 2 + .25, .72, back + .05, hm); const roll = CY(.055, .055, .1, bw / 2 + .26, .72, back + .06, MAT('paint', '#f7f6f2'), 24); roll.rotation.z = Math.PI / 2; } break; }
+      prop(() => { const hm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'); B(.012, .05, .03, bw / 2 + .2, .72, back + .015, hm); B(.11, .008, .008, bw / 2 + .25, .72, back + .05, hm); const roll = CY(.055, .055, .1, bw / 2 + .26, .72, back + .06, MAT('paint', '#f7f6f2'), 24); roll.rotation.z = Math.PI / 2; }); break; }
     case 'bathtub': { const cer = MAT('ceramic', '#fbfbfa'), metal = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), water = MAT('glass', '#cfe3e6');
       // cada după produs: încastrată cu mască (dreptunghiulară sau asimetrică pe colț) sau freestanding (ovală / dreptunghiulară, cu sau fără picioare)
-      const rim = Math.min(h, .6), free = s.type === 'freestanding', corner = s.type === 'corner', lip = .06;
+      const free = s.type === 'freestanding', rim = free ? Math.min(h, .85) : Math.min(h, .6), corner = s.type === 'corner', lip = .06;
       if (free && s.shape === 'oval'){ const prof = [[0, 0], [.42, 0], [.47, .3], [.5, 1]].map(([x, y]) => new THREE.Vector2(x, y)); const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), cer); const lift = s.legs ? .1 : 0;
         shell.scale.set(w, rim - lift, d); shell.position.y = lift; shell.castShadow = shell.receiveShadow = true; g.add(shell);
         const inner = new THREE.Mesh(new THREE.CylinderGeometry(.5, .44, .02, 48), MAT('ceramic', '#f1f1ef')); inner.scale.set(w - .1, 1, d - .1); inner.position.y = rim - .02; g.add(inner);
@@ -472,31 +533,31 @@ function model(it){
         RB(w - lip * 2, .012, d - lip * 2, .006, 0, rim + .001, 0, MAT('ceramic', '#efefed'));       // fundul cuvei văzut de sus
         { const r = rrectPath(new THREE.Shape(), 0, 0, w, d, .05); r.holes.push(rrectPath(new THREE.Path(), 0, 0, w - lip * 2, d - lip * 2, .18)); SLAB(r, .02, rim + .02, cer); } }
       // bateria pe perete, deasupra capătului cu scurgere, și para de duș pe suport
-      { const tx = (corner && s.hand === 'left' ? 1 : -1) * (w / 2 - .25), tz = -d / 2 - .0; B(.16, .05, .05, tx, rim + .22, tz + .025, metal); CY(.016, .016, .12, tx, rim + .2, tz + .1, metal, 12).rotation.x = Math.PI / 2; B(.03, .14, .03, tx + .12, rim + .45, tz + .02, metal); }
+      prop(() => { const tx = (corner && s.hand === 'left' ? 1 : -1) * (w / 2 - .25), tz = -d / 2 - .0; B(.16, .05, .05, tx, rim + .22, tz + .025, metal); CY(.016, .016, .12, tx, rim + .2, tz + .1, metal, 12).rotation.x = Math.PI / 2; B(.03, .14, .03, tx + .12, rim + .45, tz + .02, metal); });
       break; }
-    case 'bidet': { const cer = MAT('ceramic', s.col || '#fbfbfa'), metal = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), rim = .4, L = Math.min(.56, d - .12), cz = -d / 2 + .12 + L / 2;
-      B(Math.max(.5, w + .14), 1.15, .12, 0, .575, -d / 2 + .06, MAT('paint', '#efefec'));   // cadrul încastrat placat, ca la WC-ul suspendat
+    case 'bidet': { const cer = MAT('ceramic', s.col || '#fbfbfa'), metal = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), rim = .4, L = Math.min(.6, d), cz = -d / 2 + L / 2;
+      prop(() => B(Math.max(.5, w + .14), 1.15, .12, 0, .575, -d / 2 - .06, MAT('paint', '#efefec')));   // cadrul încastrat placat, ca la WC-ul suspendat
       if (s.shape === 'square') RB(Math.min(w, .38), .22, L, .05, 0, rim - .11, cz, cer);
       else { const prof = [[0, -1], [.3, -1], [.4, -.6], [.48, -.2], [.5, 0]].map(([x, y]) => new THREE.Vector2(x, y)), b = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), cer); b.scale.set(Math.min(w, .38), .26, L); b.position.set(0, rim, cz); b.castShadow = true; g.add(b); }
       const bowl = CY(.5, .45, .012, 0, rim + .002, cz + .04, MAT('ceramic', '#efefed'), 32); bowl.scale.set(Math.min(w, .38) * .7, 1, L * .6);
       CY(.02, .022, .05, 0, rim + .025, cz - L / 2 + .06, metal, 16); B(.02, .02, .08, 0, rim + .06, cz - L / 2 + .1, metal); break; }
-    case 'towelrad': { const m = s.metal ? MAT('chrome', s.col || '#cfcfcf') : MAT('paint', s.col || '#f4f4f2'), y0 = .15, tz = -d / 2 + .05;
+    case 'towelrad': { const m = s.metal ? MAT('chrome', s.col || '#cfcfcf') : MAT('paint', s.col || '#f4f4f2'), y0 = .15, tz = d / 2 - .015;
       // calorifer port-prosop: doi montanți și barele (rotunde sau plate), la 15 cm de pardoseală
-      [-1, 1].forEach(a => CY(.014, .014, h, a * (w / 2 - .015), y0 + h / 2, tz, m, 12));
+      [-1, 1].forEach(a => { CY(.014, .014, h, a * (w / 2 - .015), y0 + h / 2, tz, m, 12); [.15, h - .15].forEach(yy => B(.02, .02, d, a * (w / 2 - .015), y0 + yy, 0, m)); });
       const n = Math.max(6, Math.round(h / .065)); for (let i = 0; i < n; i++){ const y = y0 + .04 + (h - .08) * i / (n - 1); if (s.flat) B(w - .03, .012, .03, 0, y, tz, m); else { const bar = CY(.009, .009, w - .03, 0, y, tz, m, 10); bar.rotation.z = Math.PI / 2; } }
       if (!s.metal) B(.07, .05, .04, w / 2 - .05, y0 - .04, tz, MAT('paint', '#e9e9e6')); break; }
     case 'column': { const m = body(s.col || '#f5f5f3'), y0 = s.hang ? .3 : 0, doors = s.doors || 1, hm = MAT('metal', '#9a9a9a');
       // dulap înalt de baie (suspendat sau pe sol); dulapul pentru mașina de spălat are golul mașinii jos
       if (s.washer){ B(w, h - .9, d, 0, .9 + (h - .9) / 2, 0, m); [-1, 1].forEach(a => B(.018, .9, d, a * (w / 2 - .009), .45, 0, m)); B(w, .02, d, 0, .89, 0, m);
-        const wm = MAT('paint', '#f7f7f5'); B(.6, .85, .5, 0, .425, -d / 2 + .25 + .02, wm); const door = CY(.17, .17, .02, 0, .5, -d / 2 + .53, MAT('glass', '#9fb3ba'), 32); door.rotation.x = Math.PI / 2; B(.5, .08, .01, 0, .79, -d / 2 + .525, MAT('screen', '#2b2b2b'));
+        prop(() => { const wm = MAT('paint', '#f7f7f5'); B(.6, .85, .5, 0, .425, -d / 2 + .25 + .02, wm); const door = CY(.17, .17, .02, 0, .5, -d / 2 + .53, MAT('glass', '#9fb3ba'), 32); door.rotation.x = Math.PI / 2; B(.5, .08, .01, 0, .79, -d / 2 + .525, MAT('screen', '#2b2b2b')); });
         for (let i = 0; i < doors; i++) B(w / doors - .006, h - .92, .018, -w / 2 + w / doors * (i + .5), .9 + (h - .9) / 2, d / 2 + .009, m); }
       else { const ch = s.hang ? h : h - .05; B(w, ch, d, 0, y0 + (s.hang ? 0 : .05) + ch / 2, 0, m);
         const dh = (ch - .006 * doors) / doors; for (let i = 0; i < doors; i++){ const y = y0 + (s.hang ? 0 : .05) + dh * (i + .5) + .003 * (2 * i + 1); B(w - .006, dh, .018, 0, y, d / 2 + .009, m); B(.012, .12, .02, w / 2 - .04, y + (i === 0 ? dh / 2 - .1 : -dh / 2 + .1), d / 2 + .025, hm); } }
       break; }
     case 'mirrorcab': { const top = 1.85, mir = MAT('mirror', '#dfe6ea');
       // oglinda / dulapul cu oglindă peste lavoar, cu muchia de sus la 1,85 m; rotundă cu LED în spate sau dulap cu 1–3 uși oglindă
-      if (s.round){ const r = Math.min(w, h) / 2, cy = top - r; const disc = CY(r, r, .02, 0, cy, -d / 2 + .02, mir, 48); disc.rotation.x = Math.PI / 2;
-        if (s.led){ const glow = CY(r * .97, r * .97, .01, 0, cy, -d / 2 + .008, MAT('emit', '#fff4e0'), 48); glow.rotation.x = Math.PI / 2; }
+      if (s.round){ const r = h / 2, cy = top - r, ex = w / h; const disc = CY(r, r, .02, 0, cy, -d / 2 + .02, mir, 48); disc.rotation.x = Math.PI / 2; disc.scale.x = ex;
+        if (s.led){ const glow = CY(r * .97, r * .97, .01, 0, cy, -d / 2 + .008, MAT('emit', '#fff4e0'), 48); glow.rotation.x = Math.PI / 2; glow.scale.x = ex; }
         if (s.shelf) B(w * .8, .02, .1, 0, cy - r + .02, -d / 2 + .07, MAT('glass', '#e8eef0')); }
       else { const m = body(s.col || '#f5f5f3'), doors = s.doors || 1, y = top - h / 2; B(w, h, d - .02, 0, y, -.01, m);
         for (let i = 0; i < doors; i++) B(w / doors - .006, h - .01, .012, -w / 2 + w / doors * (i + .5), y, d / 2 - .006, mir);
@@ -506,8 +567,8 @@ function model(it){
       // boiler electric pe perete: plat (Velis) sau cilindric, cu racordurile jos
       if (s.flat){ RB(w, h, d, .06, 0, y, 0, m); B(w * .5, .05, .005, 0, y + h * .3, d / 2 + .002, MAT('screen', '#3b3d40')); }
       else { const c = CY(w / 2, w / 2, h, 0, y, 0, m, 40); c.scale.z = d / w; }
-      [-.08, .08].forEach(a => CY(.01, .01, .25, a, top - h - .125, 0, MAT('chrome', '#cfcfcf'), 10)); break; }
-    case 'shoe': { const m = body(s.col); B(w, h - .04, d, 0, (h - .04) / 2 + .04, 0, m); B(w + .02, .025, d + .02, 0, h - .012, 0, m); [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .04, .03, a * (w / 2 - .03), .02, b * (d / 2 - .03), m));
+      prop(() => [-.08, .08].forEach(a => CY(.01, .01, .25, a, top - h - .125, 0, MAT('chrome', '#cfcfcf'), 10))); break; }
+    case 'shoe': { const m = body(s.col); B(w, h - .04, d, 0, (h - .04) / 2 + .04, 0, m); B(w, .025, d, 0, h - .012, 0, m); [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .04, .03, a * (w / 2 - .03), .02, b * (d / 2 - .03), m));
       if (s.doors){ // pantofar înalt cu uși (2K), oglinda pe una dintre uși dacă produsul o are
         const n = s.doors, fh = h - .1; for (let i = 0; i < n; i++){ const x = -w / 2 + w / n * (i + .5), mir = s.mirrors && i === n - 1;
           if (mir){ B(w / n - .006, fh, .018, x, .06 + fh / 2, d / 2 + .009, m); B(w / n - .07, fh - .1, .006, x, .06 + fh / 2, d / 2 + .021, MAT('mirror', '#dfe6ea')); }
@@ -548,11 +609,11 @@ function model(it){
       // lampadar: piciorul (soclu și tijă, trepied de lemn sau soclu de marmură) și abajurul aprins; cotele: înălțimea și diametrul declarate
       if (s.globe){ const gr = Math.min(sr, .2), base = MAT('ceramic', s.col || '#9a9a96'); CY(.12, .13, .05, 0, .025, 0, base, 32); CY(.012, .012, h - 2 * gr - .05, 0, .05 + (h - 2 * gr - .05) / 2, 0, MAT('metal', '#8f9092'), 12);
         const glob = new THREE.Mesh(sharedGeo('lampGlobe', () => new THREE.SphereGeometry(1, 32, 20)), shadeM); glob.scale.setScalar(gr); glob.position.set(0, h - gr, 0); glob.castShadow = true; g.add(glob); break; }
-      const sh = Math.min(.36, h * .2), rb = s.tripod ? sr : s.two ? Math.min(sr, .13) : sr * .9, rt = s.tripod ? sr * .95 : rb * (s.cone ? .4 : .75);
+      const sh = Math.min(.36, h * .2), rb = s.tripod ? sr : sr * .9, rt = s.tripod ? sr * .95 : rb * (s.cone ? .4 : .75);
       if (s.tripod){ const leg = MAT('wood', s.col || '#c2a47a'), top = h - sh * .6; [0, 1, 2].forEach(i => { const a = i * Math.PI * 2 / 3 + .5, fx = Math.cos(a) * sr * .85, fz = Math.sin(a) * sr * .85, L = Math.hypot(fx, top, fz);
           const c = CY(.012, .014, L, fx / 2, top / 2, fz / 2, leg, 8); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-fx, top, -fz).normalize()); }); }
       else { const br = Math.min(.17, sr * (s.two ? .45 : .9)); CY(br, br, .025, 0, .0125, 0, metal, 32); CY(.01, .01, h - sh, 0, (h - sh) / 2, 0, metal, 10);
-        if (s.two){ const ay = h * .55; const arm = CY(.007, .007, .3, .12, ay, 0, metal, 8); arm.rotation.z = -1; CY(.04, .07, .12, .24, ay + .02, 0, shadeM, 24); } }
+        if (s.two){ const ay = h * .55, ax = Math.max(.05, sr - .08); const arm = CY(.007, .007, ax * 1.2, ax / 2, ay, 0, metal, 8); arm.rotation.z = -1; CY(.04, .07, .12, ax, ay + .02, 0, shadeM, 24); } }
       CY(rt, rb, sh, 0, h - sh / 2, 0, shadeM, 36); break; }
     case 'tablelamp': { const sr = Math.min(w, d) / 2, shadeM = MAT('shade', s.shade || '#f4f4f2'), sh = Math.min(h * (s.mono ? .5 : .42), .26);
       // veioză: corpul (plastic, lemn, alamă, sticlă fumurie sau ceramică) și abajurul aprins
@@ -573,7 +634,7 @@ function model(it){
       B(dw + .05, dh + .05, .02, 0, dy, fz + .01, iron); B(dw, dh, .005, 0, dy, fz + .022, MAT('screen', '#141110'));
       B(dw * .8, dh * .2, .003, 0, dy - dh * .3, fz + .026, MAT('emit', '#ff6a2a')); [-.2, 0, .2].forEach((x, i) => B(.05, dh * (.3 + .12 * (i % 2)), .002, x * dw, dy - dh * .2 + dh * (.15 + .06 * (i % 2)), fz + .027, MAT('emit', '#ffa040')));
       B(.02, .1, .03, dw / 2 + .015, dy, fz + .035, MAT('chrome', '#9a9a9a')); const reg = CY(.025, .025, .02, 0, legH + .07, fz + .01, MAT('chrome', '#9a9a9a'), 16); reg.rotation.x = Math.PI / 2;
-      const pr = .09, pz = -d / 2 + Math.max(pr + .02, d * .3), ph = Math.max(.3, 2.45 - h); CY(pr, pr, ph, 0, h + ph / 2, pz, iron, 24); break; }
+      prop(() => { const pr = .09, pz = -d / 2 + Math.max(pr + .02, d * .3), ph = Math.max(.3, 2.45 - h); CY(pr, pr, ph, 0, h + ph / 2, pz, iron, 24); }); break; }
     case 'mirror': { const mir = MAT('mirror', '#dfe6ea');
       if (d < .08){ // oglindă decorativă: rama subțire în culoarea produsului (negru mat, auriu, stejar), rotundă sau dreptunghiulară; pe perete sau pe suport de podea
         const fc = s.col || '#1e1e20', fm = s.wood ? MAT('wood', fc) : MAT(/auriu|alam/i.test(name) ? 'chrome' : 'metal', fc), floor = /podea|suport/i.test(name) || !s.wall, y0 = floor ? .02 : Math.max(.9, 1.6 - h / 2), lean = floor ? .08 : 0;
@@ -582,12 +643,29 @@ function model(it){
         if (s.round){ const r = Math.min(w, h) / 2; const ring = add(new THREE.Mesh(new THREE.TorusGeometry(r - .012, .014, 10, 64), fm)); ring.position.y = r; const glass = add(new THREE.Mesh(new THREE.CylinderGeometry(r - .015, r - .015, .006, 64), mir)); glass.rotation.x = Math.PI / 2; glass.position.y = r; }
         else { const t = s.wood ? .04 : .018; [[w, t, 0, h - t / 2], [w, t, 0, t / 2], [t, h, -w / 2 + t / 2, h / 2], [t, h, w / 2 - t / 2, h / 2]].forEach(([bw, bh, x, y]) => { const o = add(new THREE.Mesh(new THREE.BoxGeometry(bw, bh, .025), fm)); o.position.set(x, y, 0); });
           const glass = add(new THREE.Mesh(new THREE.BoxGeometry(w - 2 * t, h - 2 * t, .006), mir)); glass.position.set(0, h / 2, 0); }
-        if (floor) B(.02, h * .9, .02, 0, h * .45, -.25, fm);
+        if (floor) prop(() => B(.02, h * .9, .02, 0, h * .45, -.25, fm));
         break; }
       // corp cu ușă-oglindă (HEMNES): corpul alb și oglinda pe ușă
       const m = MAT('paint', s.col || '#f3f3f0'), y0 = s.wall ? .95 : 0; B(w, h, d, 0, y0 + h / 2, 0, m); B(w - .06, h - .08, .01, 0, y0 + h / 2, d / 2 + .006, mir); break; }
   }
+  fitToProduct(g, it);
   return g;
+}
+// Precizie: produsul desenat (fără accesoriile de punere în scenă) are exact cotele din fișa produsului. Dacă un model generic
+// iese mai mare sau mai mic cu peste 2 cm pe o axă, piesele produsului se scalează împreună pe acea axă, centrate pe amprentă,
+// cu baza la aceeași cotă (pardoseală sau înălțimea de montaj). Excepții: oglinda pe suport (înclinată), planta (cotele sunt
+// ale ghiveciului) și dușul walk-in (amprenta e zona de duș).
+const FIT_SKIP = new Set(['mirror', 'plant', 'shower']), FIT_TOL = .02;
+function fitToProduct(g, it){
+  if (!it || !it.model || FIT_SKIP.has(it.model) || !(it.w > 0 && it.d > 0 && it.h > 0)) return;
+  const kids = g.children.filter(c => !c.userData.prop && !c.userData.setPiece); if (!kids.length) return;
+  g.updateMatrixWorld(true); const b = new THREE.Box3(); kids.forEach(c => b.expandByObject(c)); if (b.isEmpty()) return;
+  const sz = b.getSize(new THREE.Vector3()), W = it.w / 100, D = it.d / 100, H = it.h / 100;
+  const sx = Math.abs(sz.x - W) > FIT_TOL && sz.x > .01 ? W / sz.x : 1, sy = Math.abs(sz.y - H) > FIT_TOL && sz.y > .01 ? H / sz.y : 1, sz2 = Math.abs(sz.z - D) > FIT_TOL && sz.z > .01 ? D / sz.z : 1;
+  const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, recenter = Math.abs(cx) > FIT_TOL || Math.abs(cz) > FIT_TOL;
+  if (sx === 1 && sy === 1 && sz2 === 1 && !recenter) return;
+  const sub = new THREE.Group(); kids.forEach(c => sub.add(c));
+  sub.scale.set(sx, sy, sz2); sub.position.set(-cx * sx, b.min.y - b.min.y * sy, -cz * sz2); g.add(sub);
 }
 
 
@@ -707,11 +785,12 @@ function model(it){
     (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c'), shade = owned(sm.clone()); shade.side = THREE.DoubleSide;
       const T = f.top || H;
       if (f.kind === 'pendant'){ const drop = Math.max(.1, T - f.y - .22), c = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, drop, 6), cord); c.position.set(f.x, T - drop / 2, f.z); ceilings.add(c);
-        const sh = new THREE.Mesh(new THREE.ConeGeometry(.17, .22, 28, 1, true), shade); sh.position.set(f.x, f.y + .11, f.z); sh.castShadow = true; ceilings.add(sh);
+        const pr = f.diam ? f.diam / 2 : .17, ph = f.diam ? Math.min(.45, Math.max(.12, pr * 1.3)) : .22;   // abajurul la diametrul produsului
+        const sh = new THREE.Mesh(new THREE.ConeGeometry(pr, ph, 28, 1, true), shade); sh.position.set(f.x, f.y + ph / 2, f.z); sh.castShadow = true; ceilings.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 10), bulb); b.position.set(f.x, f.y + .05, f.z); ceilings.add(b);
         const cp = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .02, 16), sm); cp.position.set(f.x, T - .01, f.z); ceilings.add(cp); }
       else if (f.kind === 'sconce'){ const x = f.x + f.nx * .02, z = f.z + f.nz * .02, rot = Math.atan2(f.nx, f.nz);
-        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sh = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, .14, 20, 1, true), shade); sh.position.set(f.x + f.nx * .12, f.y + .03, f.z + f.nz * .12); house.add(sh);
+        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sr = f.diam ? f.diam / 2 : .08, sh = new THREE.Mesh(new THREE.CylinderGeometry(sr * .75, sr, f.diam ? Math.min(.3, sr * 1.4) : .14, 20, 1, true), shade); sh.position.set(f.x + f.nx * (sr + .04), f.y + .03, f.z + f.nz * (sr + .04)); house.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 8), bulb); b.position.set(f.x + f.nx * .12, f.y, f.z + f.nz * .12); house.add(b); }
       else if (f.kind === 'track'){ const L = f.len || 2, bar = box(f.alongX ? L : .035, .035, f.alongX ? .035 : L, sm, f.x, T - .02, f.z, 0, ceilings); bar.castShadow = false;
         const n = Math.max(2, Math.round(L / .5)); for (let k = 0; k < n; k++){ const o = ((k + .5) / n - .5) * L, x = f.alongX ? f.x + o : f.x, z = f.alongX ? f.z : f.z + o;
@@ -732,7 +811,8 @@ function model(it){
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
       // plintă de 7 cm pe fețele care dau într-o cameră uscată (baia și bucătăria au faianță/gresie)
       const skirting = (s0, s1, m) => { for (const sg of [1, -1]){ const px = ax + ux * m + nx * sg * off, pz = az + uz * m + nz * sg * off, r = roomAt(px, pz); if (!r || r.tip === 'baie' || r.tip === 'bucatarie') continue;
-        const k = th / 2 + .006; box(s1 - s0, .07, .012, skirtMat, ax + ux * m + nx * sg * k, .035, az + uz * m + nz * sg * k, rot, walls).castShadow = false; } };
+        const bb = r.fin && r.fin.baseboard, bh = bb ? bb.h : .07, k = th / 2 + .006;   // plinta aleasă: înălțimea și culoarea produsului
+        box(s1 - s0, bh, .012, bb ? MAT('paint', bb.color) : skirtMat, ax + ux * m + nx * sg * k, bh / 2, az + uz * m + nz * sg * k, rot, walls).castShadow = false; } };
       const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls).userData.wall = true; if (y0 === 0) skirting(s0, s1, m); };
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
@@ -743,7 +823,7 @@ function model(it){
           if (!flush){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false; }
           // foaia ușii pe balamale reale: capătul și partea din plan (core/doors.ts doorSwing), deschisă sau închisă (clic pe ușă)
           const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
-          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat, lh = dh - .012;
+          const us = g.usa, ent = !!(g.intrare || us && us.entrance), lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : us.entrance ? MAT('metal', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat, lh = dh - .012;
           // o foaie: `atStart` = balamaua (sau capătul spre care parchează / se strânge) la începutul segmentului [la0, la0 + span]; `kind`:
           // null = se rotește (batantă, dublă), 'pivot' = se rotește în jurul unui pivot la w/4, 'slide' = alunecă pe fața peretelui, 'pocket' = intră în perete, 'fold' = se strânge
           const leaf = (atStart, la0, span, kind, half = false) => { const hs = atStart ? la0 + .025 : la0 + span - .025, lw = Math.max(.15, span - (half ? .028 : .05));   // dubla: fără toc la mijloc, foile se întâlnesc (3 mm rost)
@@ -753,16 +833,21 @@ function model(it){
             // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
             const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot); const inner = new THREE.Group(); inner.position.x = -pv; pivot.add(inner);
             const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; inner.add(o); return o; };
-            const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
+            const bal = us && us.style === 'balcony', lt = ent || bal ? .07 : .04;
+            // ușa de balcon: cercevea de PVC în culoarea produsului (profil 9 cm, jos 12 cm) și geam clar pe aproape toată foaia
+            if (bal){ const pw = .09, pb = .12; P(lw, pw, lt, lw / 2, lh - pw / 2 + .006, 0, lm); P(lw, pb, lt, lw / 2, pb / 2 + .006, 0, lm); P(pw, lh, lt, pw / 2, lh / 2 + .006, 0, lm); P(pw, lh, lt, lw - pw / 2, lh / 2 + .006, 0, lm);
+              P(lw - 2 * pw, lh - pw - pb, .02, lw / 2, pb + (lh - pw - pb) / 2 + .006, 0, glass, false); }
+            else P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
             if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
-            if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
+            if (us && us.entrance && us.glass) [1, -1].forEach(sg => P(lw * .22, lh * .62, .006, lw * .3, lh * .55, sg * (lt / 2 + .003), MAT('frost', '#dfe3e3'), false));
+            if (us && us.style === 'panel' || ent && !(us && us.entrance && us.glass)) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
             if (kind === 'slide' || kind === 'pocket') [1, -1].forEach(sg => P(.025, .16, .004, lw - .06, 1.02, sg * (lt / 2 + .002), hm, false));   // mâner îngropat (foaia trece pe lângă perete sau intră în el)
             else {
               // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
               [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
                 P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
               if (kind !== 'pivot' && !flush) [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false)); }
-            if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); inner.add(o); });
+            if (ent) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); inner.add(o); });
             const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
             // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens; glisantele nu se rotesc, ci alunecă spre capătul de parcare
             const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), rotates = !kind || kind === 'pivot', maxOpen = rotates ? Math.sign(dAng) * Math.PI * .48 : 0;
@@ -783,15 +868,17 @@ function model(it){
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           // fereastră reală: toc PVC de 6 cm, canaturi cu profil, montant între canaturi, mânere, glaf interior și pervaz exterior
-          { const pf = .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
+          // produsul ales (g.fer): culoarea și materialul tocului, canatele, fixă (fără canat mobil și mâner), aluminiul mai subțire
+          { const fw = g.fer, fm = fw ? MAT(fw.frame === 'aluminium' ? 'metal' : 'paint', fw.color) : (g.culoare ? lookMat('frame', g.culoare, .5) : frameMat), pf = fw && fw.frame === 'aluminium' ? .045 : .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
             const sIn = ((ax + ux * m - (pMinX + pMaxX) / 2) * nx + (az + uz * m - (pMinZ + pMaxZ) / 2) * nz) > 0 ? -1 : 1;   // partea dinspre casă
             at(g.la + pf / 2, cy, pf, wh, pd, fm); at(g.la + g.l - pf / 2, cy, pf, wh, pd, fm); at(m, sl + pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm); at(m, top - pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm);
-            const n2 = g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
-            for (let k = 0; k < n2; k++){ const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
+            const n2 = fw ? fw.sashes : g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
+            for (let k = 0; k < n2 && !(fw && fw.fixed); k++){ if (fw && fw.fixedSashes && k < fw.fixedSashes) continue;   // canatul fix: doar geamul în toc, fără ramă mobilă și mâner
+              const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
               [[c0 - sw2 / 2 + .03, sy, .06, sh2], [c0 + sw2 / 2 - .03, sy, .06, sh2]].forEach(([sv, y, w2, h2]) => at(sv, y, w2, h2, .06, fm, sIn * .012));
               [sy - sh2 / 2 + .03, sy + sh2 / 2 - .03].forEach(y => at(c0, y, sw2 - .118, .06, .056, fm, sIn * .012));
               const hx = k === 0 && n2 === 2 ? c0 + sw2 / 2 - .03 : c0 - sw2 / 2 + .03; at(hx, sy, .02, .14, .02, handleMat, sIn * (.06)); at(hx, sy + .05, .035, .035, .012, handleMat, sIn * .05); }
-            if (n2 === 2) at(m, cy, .02, wh - 2 * pf, pd, fm);
+            for (let k = 1; k < n2; k++) at(g.la + pf + iw * k, cy, .02 + (fw && (fw.fixed || fw.fixedSashes && k <= fw.fixedSashes) ? .03 : 0), wh - 2 * pf, pd, fm);
             at(m, sl - .01, g.l + .08, .025, .2, MAT('paint', '#f4f2ee'), sIn * (th / 2 + .06));               // glaf
             if (wl.ext) at(m, sl - .04, g.l + .06, .015, .14, MAT('metal', '#d8d6d0'), -sIn * (th / 2 + .05)); }   // pervaz
           if (g.trat){ const tr = g.trat, sg = tr.inward, at = (s, d, y, w2, h2, dp, mat) => { const px = ax + ux * s + nx * sg * d, pz = az + uz * s + nz * sg * d; const o = box(w2, h2, dp, mat, px, y, pz, rot, walls); o.castShadow = false; return o; };
@@ -909,6 +996,10 @@ function model(it){
     (p.tehnice || []).forEach(t => { const rot = -Math.atan2(t.uz, t.ux), at = (dn, du, y, w2, h2, d2, mat) => box(w2, h2, d2, mat, t.x + t.nx * dn + t.ux * du, y, t.z + t.nz * dn + t.uz * du, rot, walls);
       if (t.kind === 'ac'){ const body = MAT('paint', '#f6f6f3'), slit = MAT('paint', '#2b2d30'), g = .01;
         at(g + t.d / 2, 0, t.y + t.h / 2, t.w, t.h, t.d, body).userData.tech = t.id; at(g + t.d + .002, 0, t.y + .05, t.w * .86, .025, .004, slit).castShadow = false; return; }
+      // ventilatorul de extracție: masca (cotele și culoarea produsului ales) cu fante orizontale pe față
+      if (t.kind === 'fan'){ const body = MAT('paint', t.model), slit = MAT('paint', lumOf(t.model) < .3 ? '#5a5c60' : '#2b2d30'), d = Math.min(.08, t.d), g = .005;
+        at(g + d / 2, 0, t.y + t.h / 2, t.w, t.h, d, body).userData.tech = t.id;
+        for (let k = 1; k <= 5; k++) at(g + d + .001, 0, t.y + t.h * (.2 + .6 * k / 6), t.w * .7, .006, .002, slit).castShadow = false; return; }
       const y = t.y + t.h / 2, g = .03;
       if (t.model === 'towel'){ const bar = MAT('chrome', '#d8d8d8'); at(g + t.d / 2, -t.w / 2 + .015, y, .03, t.h, .03, bar).userData.tech = t.id; at(g + t.d / 2, t.w / 2 - .015, y, .03, t.h, .03, bar);
         for (let k = t.y + .06; k < t.y + t.h - .03; k += .08) at(g + t.d / 2, 0, k, t.w - .03, .018, .018, bar).castShadow = false; return; }
@@ -1040,7 +1131,7 @@ function model(it){
     contact = new THREE.Mesh(g, mat); contact.name = 'contact'; contact.userData = { noExport: true }; contact.matrixAutoUpdate = false; contact.renderOrder = 1; scene.add(contact); }
   let furnBatch = null;   // mobilierul unit pe material (static-batch.js); originalele rămân pentru selecție și export
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
-    for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, it.y || 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
+    for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); if (!decorOn) m.children.filter(c => c.userData.prop).forEach(c => m.remove(c)); m.position.set(it.x, it.y || 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
       if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); }
     lastItems = items; freeze(furniture); if (furnBatch){ disposeGroup(furnBatch); scene.remove(furnBatch); } furnBatch = batchStatic(furniture, { cell: 4 }); scene.add(furnBatch); buildContact(); buildDecor(items); refreshMarks(); dirty(); }
 
@@ -1472,10 +1563,14 @@ function model(it){
     setTier(t, adapt = false){ autoDrop = !!adapt; slowMs = []; return applyTier(t); },
     tierNow(){ return tier; },
     getStats,
-    setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
+    // fără decor: și accesoriile de pe piese (televizorul, lampa, oglinda peste lavoar) dispar, rămân doar produsele la cotele lor
+    setDecor(on){ decorOn = !!on; buildFurniture(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama: solid(renderPanorama), exportScene: solid(exportScene), exportGLB: solid(exportGLB),
     setCameraPreset,
+    // măsurătoare (fără efecte asupra scenei): cutia reală a modelului unei variante, în cm; pentru auditul de precizie
+    measureModel(v){ const g = model(v), b = new THREE.Box3(); g.updateMatrixWorld(true); g.children.forEach(c => { if (!c.userData.prop && !c.userData.setPiece) b.expandByObject(c); }); const sz = b.getSize(new THREE.Vector3()); disposeGroup(g);
+      return { w: sz.x * 100, d: sz.z * 100, h: sz.y * 100, x0: b.min.x * 100, x1: b.max.x * 100, z0: b.min.z * 100, z1: b.max.z * 100, y0: b.min.y * 100 }; },
     setSelection(pid){ selPid = pid || null; refreshMarks(); },
     setHover(pid){ if ((pid || null) === hovPid) return; hovPid = pid || null; refreshMarks(); },
     setXray(on){ xrayWant = !!on; if (!solidDepth){ xray = xrayWant; applyXray(); } },

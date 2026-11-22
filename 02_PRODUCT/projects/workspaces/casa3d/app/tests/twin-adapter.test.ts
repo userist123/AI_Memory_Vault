@@ -34,7 +34,8 @@ test('catalogul twin păstrează prețurile cunoscute, provenienţa și UNKNOWN'
   assert.ok(items.length >= 60 && items.length <= cat.variants.length);
   const sofa = items.find(i => i.id === 'canapea-0')!;
   assert.deepEqual(sofa.price, { amount: 1699, currency: 'RON' }); assert.equal(sofa.retailer, 'IKEA'); assert.equal(sofa.role, 'canapea'); assert.equal(sofa.w, 2.28);
-  assert.equal(sofa.provenance?.verifiedAt, '2026-10-10');
+  const { PRICE_RECHECKS } = await import('../lib/price-rechecks');
+  assert.equal(sofa.provenance?.verifiedAt, PRICE_RECHECKS.find(r => r.kind === 'o' && r.id === 'offer-canapea-0')?.seenAt ?? '2026-10-10');
   const noDims = cat.variants.filter(v => !v.dimensionsCm).length; assert.equal(items.length, cat.variants.length - noDims);
 });
 test('issueTarget rezolvă piesa, scara, ușa, peretele sau camera din erori și avertismente', async () => {

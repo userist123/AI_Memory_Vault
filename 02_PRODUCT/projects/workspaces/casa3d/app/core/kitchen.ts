@@ -24,7 +24,11 @@ export function kitchenQuantities(run: { lengthM: number; modules: number }, k: 
 }
 export interface KitchenIssue { key: string; roomId: string; vars?: Record<string, string | number> }
 export function kitchenIssues(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, roomId: string, f: RoomFinishes): KitchenIssue[] {
-  const out: KitchenIssue[] = [], run = kitchenRun(snap, cat, roomId); if (!run || !f.kitchen) return out; const k = kitchenOf(f), top = materialOf(mc, k.countertop);
+  const out: KitchenIssue[] = [], run = kitchenRun(snap, cat, roomId); if (!run) return out;
+  // hota de insulă atârnă de tavan cu coșul la mijloc: deasupra plitei nu pot rămâne corpuri suspendate (și fără ele rămâne o hotă de insulă lângă perete)
+  const hood = snap.selections?.hota ? resolve(cat, snap.selections.hota) : null;
+  if ((hood?.variant.style as { kind?: string } | undefined)?.kind === 'hood_island' && kitchenOf(f).upper !== 'none') out.push({ key: 'kit.islandHoodUpper', roomId });
+  if (!f.kitchen) return out; const k = kitchenOf(f), top = materialOf(mc, k.countertop);
   if (k.backsplash === 'tile' && !f.wallTile) out.push({ key: 'kit.noTile', roomId });
   if (k.underLed && k.upper === 'none') out.push({ key: 'kit.ledNoUpper', roomId });
   if (top?.specs?.sizeCm && top.specs.sizeCm[1] / 100 < .6) out.push({ key: 'kit.topShallow', roomId, vars: { cm: top.specs.sizeCm[1] } });
@@ -49,5 +53,7 @@ export function kitchenVisual(mc: MaterialsCatalog, f: RoomFinishes){
   const topColor = top?.specs?.color ?? k.countertopColor, cct = led?.specs?.cctK ?? 3000;
   return { frontColor: k.frontColor, frontFinish: k.frontFinish, handle: k.handle, handleColor: k.handleColor, upper: k.upper, topColor, topWood: k.countertop ? !!top?.specs?.wood : k.countertopColor === KITCHEN_DEFAULT.countertopColor,
     topM: (top?.specs?.thicknessMm ?? k.countertopMm) / 1000, backsplash: k.backsplash, backsplashColor: k.backsplash === 'countertop' ? topColor : k.backsplash === 'tile' ? (tile?.specs?.color ?? '#e9e5dc') : (k.backsplashColor ?? '#e8e6e1'),
-    backsplashTile: k.backsplash === 'tile' ? (tile?.specs?.sizeCm ?? [30, 60]) : null, sinkColor: sink?.specs?.color ?? '#c6c9cc', tapColor: tap?.specs?.color ?? '#c6c9cc', led: led ? (cct <= 3000 ? '#ffd29a' : '#fff1dc') : null };
+    backsplashTile: k.backsplash === 'tile' ? (tile?.specs?.sizeCm ?? [30, 60]) : null, sinkColor: sink?.specs?.color ?? '#c6c9cc', tapColor: tap?.specs?.color ?? '#c6c9cc', led: led ? (cct <= 3000 ? '#ffd29a' : '#fff1dc') : null,
+    // mărimea chiuvetei alese (lățime × adâncime, cm); fără ea motorul desenează chiuveta implicită de 48 × 42 cm
+    ...(sink?.specs?.sizeCm ? { sinkCm: sink.specs.sizeCm } : {}) };
 }

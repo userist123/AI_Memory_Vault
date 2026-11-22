@@ -121,7 +121,7 @@ describe('integrare', () => {
     assert.ok(viewerInput(s, cat).plan.pereti.some((w: any) => w.goluri.some((q: any) => q.tipUsa === 'pivot' && q.filomuro && q.sw)));
   });
   test('DXF: dubla are două arce, glisantele doar linii, filomuro nu schimbă nimic la arc', () => {
-    const n = (s: Snapshot, type: string) => planToDxf(s, cat, { lang: 'ro' }).split(`0\n${type}\n8\nDOORS\n`).length - 1;
+    const n = (s: Snapshot, type: string) => planToDxf(s, cat, { lang: 'ro' }).split(`0\n${type}\n8\nUSI\n`).length - 1;
     const base = withInner(); assert.equal(n(withInner({ doorType: 'double', width: 1.2 }), 'ARC'), n(base, 'ARC') + 1);
     for (const t of ['sliding', 'pocket', 'folding'] as const){ const s = withInner({ doorType: t }); assert.equal(n(s, 'ARC'), n(base, 'ARC') - 1, t); assert.ok(n(s, 'LINE') > n(base, 'LINE'), t); }
   });

@@ -3,6 +3,7 @@ import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { roomVisual } from '@/core/finishes';
 import { textileVisual } from '@/core/textiles';
 import { doorVisual, doorSwing } from '@/core/doors';
+import { windowVisual } from '@/core/windows';
 import { kitchenVisual } from '@/core/kitchen';
 import { bathVisual } from '@/core/bath';
 import { allFixturePoints } from '@/core/fixtures';
@@ -24,6 +25,8 @@ import type { RoomFinishes } from '@/core/types';
 
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
 export interface PlateVoid { x0: number; z0: number; x1: number; z1: number; dir: [number, number] }
+/** Lățimea declarată în titlul produsului („90cm”, „60 cm”) când pagina nu are fișă de dimensiuni; altfel null (motorul desenează 60 cm). */
+export const widthInName = (name: string): number | null => { const m = /(?:^|[\s,(])(\d{2,3})\s?cm\b/i.exec(name); const w = m ? Number(m[1]) : NaN; return w >= 30 && w <= 150 ? w : null; };
 
 export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnType<typeof toEngineCatalog> = toEngineCatalog(catalog), extra: { voids?: PlateVoid[]; mc?: MaterialsCatalog | null } = {}){
   const items = snap.placements.map(p => { const g = engineCat[groupOf(p.variantId)], vv = g?.v[indexOf(p.variantId)];
@@ -43,13 +46,20 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // bucătăria ca sistem: fronturile, blatul, placarea și LED-ul ajung în stilul piesei de bucătărie
   if (mc) for (const it of items) if (it.group === 'bucatarie' && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const kv = r ? kitchenVisual(mc, finishesOf(snap, r)) : null; if (kv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), k: kv } }; }
+  // hota și plita alese (incluse în bucătărie): tipul și culoarea produsului ajung în desenul bucătăriei
+  for (const it of items) if (it.group === 'bucatarie' && it.variant){ const st = (g: string) => { const id = snap.selections?.[g]; const v = id ? catalog.variants.find(x => x.id === id) : null; return v && (v.style as { kind?: string } | undefined)?.kind ? { ...(v.style as Record<string, unknown>), w: v.dimensionsCm?.w ?? widthInName(v.name) } : null; };   // doar produsele cu tipul declarat (proiectele vechi rămân neschimbate)
+    const hood0 = st('hota'), hood = hood0 && ['hood_ceiling', 'hood_island', 'hood_chimney'].includes((hood0 as { kind?: unknown }).kind as string) ? { ...hood0, ceil: snap.floor.ceilingHeight || 2.6 } : hood0, hob = st('plita'), oven = st('cuptor'); if (hood || hob || oven) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), ...(hood ? { hood } : {}), ...(hob ? { hob } : {}), ...(oven ? { oven } : {}) } }; }
   if (mc) for (const it of items) if ((it.group === 'dus' || it.group === 'lavoar' || it.group === 'wc') && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
-  if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
+  if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle, ...('entrance' in d ? { entrance: true, glass: d.glass } : {}) }; }
+  // tâmplăria aleasă pe fiecare fereastră: culoarea tocului, canatele, fixă sau mobilă, aluminiu sau PVC
+  if (mc) for (const w of windowVisual(snap, mc, 0)){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.fer = { color: w.color, sashes: w.sashes, fixed: w.fixed, frame: w.frame, triple: w.triple, ...('fixedSashes' in w && w.fixedSashes ? { fixedSashes: w.fixedSashes } : {}) }; }
   // sensul de deschidere al fiecărei uși (balamaua și partea), același ca în plan
   snap.floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const g = plan.pereti[wi]?.goluri[oi]; if (g) g.sw = doorSwing(snap.floor, wi, oi); }));
   // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
-  const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
+  const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c',
+    // diametrul abajurului produsului ales (fișa produsului); fără el motorul păstrează abajurul implicit
+    ...(() => { const dm = mc ? materialOf(mc, f.material)?.specs?.diameterCm : undefined; return dm ? { diam: dm / 100 } : {}; })() }));
   const stalpi = snap.floor.columns ?? [];
   const grinzi = snap.floor.beams ?? [];
   // balustradele: cele de sticlă refolosesc pereții de sticlă (cu înălțimea lor, `h`), cele de metal au lista lor
@@ -68,7 +78,12 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // punctele tehnice cu corp: unitatea de aer condiționat (cutie albă pe perete) și caloriferul nou (cu nervuri), pe fața peretelui
   // din dreptul lor; grosimea e cea a peretelui din 3D (motorul desenează pereții de 25 / 15 cm)
   const ceil = snap.floor.ceilingHeight;
-  const tehnice = (snap.tech ?? []).flatMap(t => { const ac = t.kind === 'hvac_split'; if (!ac && !isSizedRadiator(t)) return [];
+  const tehnice = (snap.tech ?? []).flatMap(t => {
+    // ventilatorul de extracție ales (cu cote pe pagină): masca pe fața peretelui, centrată pe înălțimea punctului
+    if (t.kind === 'vent_exhaust'){ const fm = mc ? materialOf(mc, t.product) : undefined, b = fm?.category === 'bath_fan' ? fm.specs?.bodyCm : undefined, f = b && techFrame(snap.floor, t); if (!b || !f) return [];
+      const th = f.wall?.exterior ? .25 : .15, k = th / 2 - f.thickness / 2, w = b[0] / 100, h = b[1] / 100, d = b[2] / 100, y = Math.max(0, Math.min(ceil - h - .02, t.height - h / 2));
+      return [{ id: t.id, kind: 'fan', model: fm!.specs?.color ?? '#f2f2f0', x: f.face[0] + f.n[0] * k, z: f.face[1] + f.n[1] * k, nx: f.n[0], nz: f.n[1], ux: f.u[0], uz: f.u[1], w, h, d, y }]; }
+    const ac = t.kind === 'hvac_split'; if (!ac && !isSizedRadiator(t)) return [];
     const f = techFrame(snap.floor, t); if (!f) return []; const th = f.wall?.exterior ? .25 : .15, k = th / 2 - f.thickness / 2, s = ac ? hvacSize(t) : radiatorSize(t);
     const y = Math.max(0, Math.min(ceil - s.h - .02, t.height));
     return [{ id: t.id, kind: ac ? 'ac' : 'radiator', model: t.model ?? 'panel', x: f.face[0] + f.n[0] * k, z: f.face[1] + f.n[1] * k, nx: f.n[0], nz: f.n[1], ux: f.u[0], uz: f.u[1], w: s.w, h: s.h, d: s.d, y }]; });

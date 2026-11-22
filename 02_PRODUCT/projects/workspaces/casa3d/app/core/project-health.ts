@@ -125,6 +125,8 @@ export function evaluateProjectHealth(
     }
   }
 
+  // numele obiectului pentru utilizator, niciodată id-ul intern al grupei (ex. „dus”)
+  const SANITARY_RO: Record<string, string> = { lavoar: 'Lavoarul', dus: 'Dușul', wc: 'Vasul WC' }, SANITARY_EN: Record<string, string> = { lavoar: 'Washbasin', dus: 'Shower', wc: 'Toilet' };
   for (const p of placements) {
     if (['lavoar', 'dus', 'wc'].includes(p.group)) {
       const hasDrain = tech.some(t => t.kind === 'drain' && t.roomId === p.roomId);
@@ -135,8 +137,8 @@ export function evaluateProjectHealth(
           category: 'technical',
           severity: 'WARNING',
           title: {
-            ro: `Obiectul sanitar (${p.group}) nu are un punct de scurgere asociat în încăpere.`,
-            en: `Sanitary fixture (${p.group}) lacks an associated drain in the room.`,
+            ro: `${resolve(cat, p.variantId)?.product.name || SANITARY_RO[p.group]}: nu are un punct de scurgere asociat în încăpere.`,
+            en: `${resolve(cat, p.variantId)?.product.name || SANITARY_EN[p.group]}: no drain point in the room.`,
           },
           actionLabel: { ro: 'Adaugă scurgere', en: 'Add drain' },
           targetKind: 'placement',

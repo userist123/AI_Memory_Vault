@@ -10,5 +10,5 @@ export const LIGHTS_EXTRA_PER_M2 = 12;       // un corp de iluminat pe cameră +
 export const VAT_RATE = .21;                 // cota standard TVA România din 1 august 2025
 export const WET_ROOMS = new Set(['baie', 'bucatarie']);
 export const SANITARY = new Set(['dus', 'lavoar', 'wc', 'cada', 'bideu']);
-export const APPLIANCES = new Set(['frigider', 'plita', 'cuptor', 'hota', 'boiler', 'caloriferBaie']);
+export const APPLIANCES = new Set(['frigider', 'plita', 'cuptor', 'hota', 'boiler', 'caloriferBaie', 'masinaSpalat', 'uscator', 'masinaVase', 'microunde', 'centrala']);
 export const DEFAULT_BUDGET = { target: null, contingencyPct: 10, includeLabor: true, laborScenario: 'expected' as const, deliveryIkea: true, deliveryDedeman: null, furnitureAssembly: null, kitchenAssembly: true, design: 0 };

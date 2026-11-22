@@ -4,7 +4,7 @@ process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
 import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
 import { suggestTechPoints } from '../core/technical';
-import { planToDxf, dxfText, DXF_LAYERS } from '../core/dxf';
+import { planToDxf, dxfText, DXF_LAYERS, dxfLayerName, dxfLayerId } from '../core/dxf';
 import { roomSchedule } from '../core/dimensions';
 import { addLevel, floors, stairGeometry, stairVoids, SLAB } from '../core/levels';
 import { resetDbForTests } from '../lib/db';
@@ -22,7 +22,7 @@ function entities(dxf: string): Ent[] {
   for (let i = 0; i < ps.length; i++){ const [c, v] = ps[i];
     if (c === 2 && ps[i - 1]?.[1] === 'SECTION') inEnt = v === 'ENTITIES';
     if (!inEnt) continue;
-    if (c === 0){ cur = { type: v, layer: '', p: [] }; out.push(cur); } else if (cur){ if (c === 8) cur.layer = v; cur.p.push([c, v]); } }
+    if (c === 0){ cur = { type: v, layer: '', p: [] }; out.push(cur); } else if (cur){ if (c === 8) cur.layer = dxfLayerId(v); cur.p.push([c, v]); } }
   return out;
 }
 const coords = (e: Ent) => e.p.filter(([c]) => (c >= 10 && c <= 59) && c !== 40 && c !== 50 && c !== 51).map(([, v]) => Number(v));
@@ -33,7 +33,7 @@ test('structura: HEADER la început, EOF la sfârșit, straturile definite și f
   assert.ok(dxf.trimEnd().endsWith('\n0\nEOF'));
   assert.ok(dxf.includes('$INSUNITS\n70\n4') && dxf.includes('$EXTMIN') && dxf.includes('$EXTMAX') && dxf.includes('AC1009'));
   const table = dxf.slice(dxf.indexOf('2\nLAYER'), dxf.indexOf('2\nENTITIES')), ents = entities(dxf);
-  for (const { name } of DXF_LAYERS){ assert.ok(table.includes(`2\n${name}\n`), `${name} în tabelul LAYER`); assert.ok(ents.some(e => e.layer === name), `${name} are entități`); }
+  for (const { name } of DXF_LAYERS){ assert.ok(table.includes(`2\n${dxfLayerName(name, 'ro')}\n`), `${name} în tabelul LAYER`); assert.ok(ents.some(e => e.layer === name), `${name} are entități`); }
   assert.equal(new Set(DXF_LAYERS.map(l => l.color)).size, DXF_LAYERS.length, 'culori ACI distincte');
 });
 test('toate coordonatele sunt finite', () => {
@@ -136,5 +136,14 @@ test('titluri de nivel: unul pe nivel, cu numele nivelului', () => {
 test('un singur nivel: fără entități LEVELS/STAIRS, dar straturile în tabel', () => {
   const dxf = planToDxf(demo(), cat, { lang: 'ro' });
   assert.equal(entities(dxf).filter(e => e.layer === 'LEVELS' || e.layer === 'STAIRS').length, 0);
-  assert.ok(dxf.includes('2\nLEVELS\n') && dxf.includes('2\nSTAIRS\n'));
+  assert.ok(dxf.includes('2\nNIVELURI\n') && dxf.includes('2\nSCARI\n'));
 });
+
+test('straturile în română: nume românești (ASCII) în tabel și pe entități, niciun nume englezesc; exportul englez rămâne neschimbat', () => {
+  const ro = planToDxf(demo(), cat, { lang: 'ro' }), en = planToDxf(demo(), cat, { lang: 'en' });
+  for (const { name } of DXF_LAYERS){ const r = dxfLayerName(name, 'ro'); assert.notEqual(r, name, name); assert.match(r, /^[A-Z_]+$/, r);
+    assert.ok(new RegExp('\\n(2|8)\\n' + r + '\\n').test(ro), r + ' în fișierul românesc'); assert.ok(!new RegExp('\\n(2|8)\\n' + name + '\\n').test(ro), name + ' nu apare în română');
+    assert.ok(new RegExp('\\n2\\n' + name + '\\n').test(en), name + ' rămâne în engleză'); }
+  assert.match(ro, /Linie continua/); assert.match(en, /Solid line/);
+});
+

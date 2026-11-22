@@ -115,10 +115,22 @@ export function termsFor(d: Pick<CommercialData, 'defaults' | 'suppliers'>, supp
 /** O linie de deviz, minimal: ce trebuie pentru profit și proformă. */
 export type LineCategory = BoqCategory | 'custom';
 /** `costTotal`: costul real al liniei (produs propriu cu preț de achiziție); lipsă/null → din discountul furnizorului. */
-export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null }
+/** De unde vine prețul unui produs: magazinul, pagina produsului și data la care prețul a fost citit acolo (preț observat, nu ofertă). */
+export interface PriceSource { store: string; url: string; seenAt: string }
+/** Linkul e pagina unui produs, nu o categorie sau o listă de magazin (…/cat/…, …/c/123): doar atunci prețul poate fi arătat
+ *  clientului ca „preț observat” pe pagina produsului. Altfel linia rămâne fără sursă, iar nota despre prețuri nu o acoperă. */
+export function isProductPage(url: string): boolean {
+  let p: URL; try { p = new URL(url); } catch { return false; }
+  if (p.protocol !== 'https:') return false;
+  const path = p.pathname.toLowerCase();
+  if (/\/p\/|\/pd\//.test(path)) return true;                   // IKEA, Dedeman, Hornbach (…/p/…), eMAG (…/pd/…)
+  if (/\/(cat|c|category|categorie|categorii)\/|\/c\/\d+\/?$/.test(path)) return false;
+  return path.split('/').filter(Boolean).length >= 1;
+}
+export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null; source?: PriceSource | null }
 export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number }
 export interface ProfitLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string;
-  list: number | null; cost: number | null; client: number | null; profit: number | null; clientUnit: number | null; discountPct: number; markupPct: number }
+  list: number | null; cost: number | null; client: number | null; profit: number | null; clientUnit: number | null; discountPct: number; markupPct: number; source?: PriceSource | null }
 export interface ProfitGroup { list: number | null; cost: number | null; client: number | null; profit: number | null; lines: number; unknown: number }
 const addG = (g: ProfitGroup, l: Pick<ProfitLine, 'list' | 'cost' | 'client' | 'profit'>) => { g.lines++;
   if (l.list == null){ g.unknown++; return; } for (const k of ['list', 'cost', 'client', 'profit'] as const) g[k] = r2((g[k] ?? 0) + (l[k] as number)); };
@@ -127,7 +139,7 @@ const newG = (): ProfitGroup => ({ list: null, cost: null, client: null, profit:
 export function profitLine(d: Pick<CommercialData, 'defaults' | 'suppliers'>, s: SourceLine): ProfitLine {
   const t = termsFor(d, s.supplier), list = s.total, cost = list != null && s.costTotal != null ? r2(s.costTotal) : costOf(list, t.discountPct), client = clientPriceOf(list, t.markupPct);
   return { key: s.key, category: s.category, label: s.label, supplier: s.supplier, qty: s.qty, unit: s.unit, list, cost, client,
-    profit: client == null || cost == null ? null : r2(client - cost), clientUnit: list == null ? null : s.qty > 0 ? r2(client! / s.qty) : client, ...t };
+    profit: client == null || cost == null ? null : r2(client - cost), clientUnit: list == null ? null : s.qty > 0 ? r2(client! / s.qty) : client, ...t, ...(s.source ? { source: s.source } : {}) };
 }
 export interface ProfitReport { lines: ProfitLine[]; bySupplier: Record<string, ProfitGroup>; byCategory: Record<string, ProfitGroup>; goods: ProfitGroup;
   /** onorariul NET (fără TVA) și TVA-ul lui (0 dacă studioul nu e plătitor) */
@@ -167,7 +179,8 @@ export function paymentSchedule(ms: Milestone[], contractTotal: number, today: s
 
 // ---------- proforma ----------
 // Ce vede clientul: doar prețuri de client. Nicio linie nu poartă cost, discount, adaos sau profit (testat).
-export interface ProformaLine { code: string; name: string; unit: string; qty: number; unitNet: number; vatPct: number; net: number; vat: number; gross: number }
+export interface ProformaLine { code: string; name: string; unit: string; qty: number; unitNet: number; vatPct: number; net: number; vat: number; gross: number;
+  /** produsele din catalog: prețul observat pe pagina magazinului, cu data (clientul vede de unde vine prețul) */ source?: PriceSource }
 export interface ProformaGroup { category: string; lines: ProformaLine[]; net: number; vat: number; gross: number }
 export interface Proforma { groups: ProformaGroup[]; net: number; vat: number; gross: number; vatPct: number; unknownLines: number;
   /** false: studioul nu e plătitor de TVA, deci onorariul are TVA 0 (proforma o spune) */
@@ -185,7 +198,7 @@ export function buildProforma(r: ProfitReport, laborLines: SourceLabor[], feeLab
     const q = qty > 0 ? qty : 1, unitNet = r2(grossTotal / q / (1 + vatRate)), net = r2(unitNet * q), vat = r2(net * vatRate);
     return { code: cleanCode(code), name, unit, qty: q, unitNet, vatPct: r2(vatRate * 100), net, vat, gross: r2(net + vat) }; };
   const groups = new Map<string, ProformaLine[]>();
-  for (const l of r.lines){ if (l.client == null) continue; const g = groups.get(l.category) ?? []; g.push(mk(l.key, l.label, l.unit, l.qty, l.client)); groups.set(l.category, g); }
+  for (const l of r.lines){ if (l.client == null) continue; const g = groups.get(l.category) ?? []; g.push({ ...mk(l.key, l.label, l.unit, l.qty, l.client), ...(l.source ? { source: l.source } : {}) }); groups.set(l.category, g); }
   const lab = laborLines.filter(l => l.amount > 0).map(l => mk(l.key, l.label, l.unit, l.qty, l.amount)); if (lab.length) groups.set('labor', lab);
   const ex = extraLines.filter(l => l.amount > 0).map(l => mk(l.key, l.label, l.unit, l.qty, l.amount)); if (ex.length) groups.set('extras', ex);
   if (r.fee != null && r.fee > 0){ const net = r2(r.fee), rate = vatPayer ? vatRate : 0, vat = r2(net * rate);
@@ -222,7 +235,8 @@ export interface CustomSource { id: string; name: string; supplier: string; qty:
  * transportul / montajul cunoscute. Aceeași funcție pe server (raport, proformă) și în buget, deci aceleași sume.
  */
 export function commercialSources(b: Budget, custom: CustomSource[] = []): { items: SourceLine[]; labor: SourceLabor[]; extras: SourceLabor[] } {
-  const items: SourceLine[] = b.items.map(i => ({ key: i.key, category: i.category, label: i.label, supplier: i.supplier, qty: i.orderedQty, unit: i.unit, unitPrice: i.unitPrice, total: i.total }));
+  const items: SourceLine[] = b.items.map(i => ({ key: i.key, category: i.category, label: i.label, supplier: i.supplier, qty: i.orderedQty, unit: i.unit, unitPrice: i.unitPrice, total: i.total,
+    ...(i.sourceUrl && i.verifiedAt && isProductPage(i.sourceUrl) ? { source: { store: i.supplier, url: i.sourceUrl, seenAt: i.verifiedAt } } : {}) }));
   // produsele proprii: `price` e prețul de listă / către client (cu TVA, ca în catalog); costul real, dacă e cunoscut, e costPrice
   for (const c of custom) items.push({ key: 'c|' + c.id, category: 'custom', label: c.name, supplier: c.supplier, qty: c.qty, unit: c.unit,
     unitPrice: c.price, total: c.price == null ? null : r2(c.price * c.qty), costTotal: c.costPrice == null ? null : r2(c.costPrice * c.qty) });

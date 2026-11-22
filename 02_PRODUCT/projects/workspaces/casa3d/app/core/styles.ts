@@ -127,7 +127,7 @@ export function applyStyle(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, p
   s.finishes = finishes;
   s.appearance = { ...(s.appearance || {}), rooms: { ...(s.appearance?.rooms || {}), ...Object.fromEntries(Object.entries(rooms).map(([k, v]) => [k, { ...(s.appearance?.rooms?.[k] || {}), ...v }])) } };
   // ușile de interior și mânerele lor (ușa de intrare rămâne cum e)
-  if (has(pkg.door)){ const doors = { ...(s.doors || {}) }; for (const o of doorOpenings(s)) if (!o.entrance) doors[o.id] = { product: pkg.door, handle: has(pkg.handle) ? pkg.handle : null }; s.doors = doors; }
+  if (has(pkg.door)){ const doors = { ...(s.doors || {}) }; for (const o of doorOpenings(s)) if (!o.entrance && !o.exterior) doors[o.id] = { product: pkg.door, handle: has(pkg.handle) ? pkg.handle : null }; s.doors = doors; }
   // brieful ține același stil (propunerile automate și textul lor folosesc stilul ales aici)
   s.brief = { ...(s.brief ?? DEFAULT_BRIEF), style: STYLE_BRIEF[pkg.id] };
   return s;
@@ -175,7 +175,7 @@ function hasRoomOverride(snap: Snapshot, room: Room): boolean {
 export function previewStyle(snap: Snapshot, pkg: StylePackage, scope: StyleScope = { kind: 'project' }): StylePreview {
   const targets = roomsInScope(snap, scope);
   const overridden = targets.filter(r => hasRoomOverride(snap, r));
-  const doorsChanged = scope.kind === 'project' ? doorOpenings(snap).filter(o => !o.entrance).length : 0;
+  const doorsChanged = scope.kind === 'project' ? doorOpenings(snap).filter(o => !o.entrance && !o.exterior).length : 0;
   return {
     scope,
     affectedRoomIds: targets.map(r => r.id),

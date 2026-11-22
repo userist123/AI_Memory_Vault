@@ -7,6 +7,7 @@ import { newSnapshot } from '../core/project';
 import { adviseProject } from '../core/advisor';
 import { i5ExtractFlow } from '../core/trade-checks';
 import type { Catalog, Snapshot } from '../core/types';
+const groupOfVariant = (v: { productId: string }) => cat.products.find(p => p.id === v.productId)?.group;
 
 const cat = catalogV1 as unknown as Catalog;
 const demo = (): Snapshot => newSnapshot(cat, 'Verificări', 'demo');
@@ -44,4 +45,25 @@ test('baie: priză în volumul 2 al dușului, WC lipit de perete, baie fără fe
   const hasWindow = s.floor.walls.some(w => w.openings.some(o => o.kind === 'window'));
   assert.ok(hasWindow); const noWin = { ...s, floor: { ...s.floor, walls: s.floor.walls.map(w => ({ ...w, openings: w.openings.filter(o => o.kind !== 'window') })) } };
   assert.ok(codes(noWin).includes('VENT_BATH'), 'fără ferestre deloc, baia cere ventilator');
+});
+
+test('baie (revizia Fable): cada intră în volumul verificat; ventilator / lumină lângă duș cu IP declarat; ventilarea după ventilatorul ales', () => {
+  const s = demo(), b = room(s, 'baie'), shower = s.placements.find(p => p.roomId === 'baie' && p.group === 'dus')!;
+  const bath = cat.variants.find(v => groupOfVariant(v) === 'cada'); assert.ok(bath, 'catalogul are cadă');
+  // dușul înlocuit cu o cadă în același loc: priza lipită de ea e tot semnalată
+  const withTub = { ...s, placements: s.placements.map(p => p.id === shower.id ? { ...p, group: 'cada', variantId: bath!.id } : p), tech: [tp('o1', 'outlet', 'baie', shower.x, shower.z)] };
+  assert.ok(codes(withTub).includes('BATH_ZONE'), 'priză lângă cadă');
+  const info = (ip?: string, flow?: number) => (id: string) => id === 'fan' ? { name: 'Ventilator test', ip, flowM3h: flow } : undefined;
+  const fanAt = (x: number, z: number, product?: string) => ({ ...tp('v1', 'vent_exhaust', 'baie', x, z), height: 2.3, ...(product ? { product } : {}) });
+  const adv = (snap: Snapshot, po: ReturnType<typeof info>) => adviseProject(snap, cat, { productOf: po });
+  s.tech = [fanAt(shower.x, shower.z, 'fan')];
+  const a1 = adv(s, info('IP45', 97)).find(a => a.code === 'BATH_ZONE_DEVICE'); assert.ok(a1, 'notă cu IP'); assert.equal(a1!.vars?.ip, 'IP45'); assert.equal(a1!.severity, 'TIP', 'doar notă, nu avertisment');
+  assert.ok(adv(s, info(undefined, 97)).some(a => a.code === 'BATH_ZONE_DEVICE_NOIP'), 'fără IP declarat');
+  // baie fără fereastră: fără ventilator → avertisment; ventilator fără debit → de verificat; sub cerință → avertisment; peste → nimic
+  const noWin = (t: Snapshot['tech']) => ({ ...s, tech: t, floor: { ...s.floor, walls: s.floor.walls.map(w => ({ ...w, openings: w.openings.filter(o => o.kind !== 'window' || !(w.a[0] < 3.3 && w.b[0] < 3.3)) })) } });
+  const ventCode = (snap: Snapshot, po: ReturnType<typeof info>) => adv(snap, po).filter(a => a.code.startsWith('VENT_BATH')).map(a => a.code);
+  const base = noWin([]); if (!ventCode(base, info()).includes('VENT_BATH')) return assert.fail('baia demo trebuie să rămână fără fereastră în test');
+  assert.deepEqual(ventCode(noWin([fanAt(b.rect.x0 + .1, b.rect.z0 + .1)]), info()), ['VENT_BATH_UNKNOWN']);
+  assert.deepEqual(ventCode(noWin([fanAt(b.rect.x0 + .1, b.rect.z0 + .1, 'fan')]), info('IP45', 10)), ['VENT_BATH_LOW']);
+  assert.deepEqual(ventCode(noWin([fanAt(b.rect.x0 + .1, b.rect.z0 + .1, 'fan')]), info('IP45', 97)), []);
 });

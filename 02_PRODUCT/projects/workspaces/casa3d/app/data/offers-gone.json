@@ -1,0 +1,155 @@
+{
+ "note": "Oferte a căror pagină de produs nu mai există (404/410) sau trimite acum la o categorie, la reverificare (scripts/recheck-prices.mjs). La pornire, oferta primește disponibilitatea OUT_OF_STOCK; editorul arată de ce. Fișier mic, separat, pentru că îl citește și interfața.",
+ "items": [
+  {
+   "id": "offer-canapea-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tresund-bej-deschis-s89482830/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "canapea-0",
+   "replacementWhy": "Aceeași canapea KIVIK cu 3 locuri; husa Tibbleby bej/gri în locul Tresund bej deschis."
+  },
+  {
+   "id": "offer-canapea-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-antracit-s99482839/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "canapea-16",
+   "replacementWhy": "Aceeași canapea KIVIK cu șezlong (280×163 cm); husa Tresund bej deschis în locul antracitului."
+  },
+  {
+   "id": "offer-masuta-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-masuta-cafea-negru-maro-10176292/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masuta-13",
+   "replacementWhy": "TRANERED în locul HEMNES: tot 90×90 cm, maro închis; mai joasă (41 cm față de 46)."
+  },
+  {
+   "id": "offer-masuta-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/listerby-masuta-cafea-frnr-stjr-30513904/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-4-scaune-maro-i-orrsta-gri-s69221278/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masa-17",
+   "replacementWhy": "ÅLHULT în locul EKEDALEN: tot 120×80 cu 4 scaune; se extinde la 170 cm (nu 180); 74 cm înălțime."
+  },
+  {
+   "id": "offer-masa-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-aelvsta-masa-4-scaune-maro-i-ratan-negru-s49570819/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masa-18",
+   "replacementWhy": "ÅLHULT/ODGER în locul EKEDALEN/ÄLVSTA: tot 120×80 cu 4 scaune, dar fără ratan; se extinde la 170 cm."
+  },
+  {
+   "id": "offer-masa-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/laneberg-ekedalen-masa-4-scaune-alb-alb-gri-s89304791/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masa-19",
+   "replacementWhy": "NÄSINGE în locul LANEBERG/EKEDALEN: aceleași dimensiuni (130/190×80), alb, 4 scaune."
+  },
+  {
+   "id": "offer-masa-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ingolf-masa-4-scaune-alb-alb-s69482968/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masa-20",
+   "replacementWhy": "TONSTAD 80/120×70 alb murdar, dar doar cu 2 scaune (setul vechi avea 4): celelalte 2 se cumpără separat."
+  },
+  {
+   "id": "offer-masa-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-2-scaune-maro-i-orrsta-gri-s29296874/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "masa-21",
+   "replacementWhy": "TONSTAD/KRYLBO 80/120×70 cu 2 scaune; masa e din furnir de stejar (nu maro închis) și costă mai mult."
+  },
+  {
+   "id": "offer-pat-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-4-cutii-depozitare-alb-s99931611/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pat-17",
+   "replacementWhy": "Același MALM alb 160×200, dar fără cele 4 cutii de depozitare (nu se mai vând)."
+  },
+  {
+   "id": "offer-pat-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-furnir-stejar-alb-luroey-s59027390/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pat-18",
+   "replacementWhy": "Același MALM 160×200 cu Luröy, dar alb: varianta cu furnir de stejar nu se mai vinde."
+  },
+  {
+   "id": "offer-bucatarie-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "bucatarie-3",
+   "replacementWhy": "KNOXHULT 240×61×220, gri închis, în locul ENHET 243×64×241 antracit/alb: mai joasă cu 21 cm."
+  },
+  {
+   "id": "offer-bucatarie-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-gri-cadru-s19337399/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "bucatarie-4",
+   "replacementWhy": "METOD 210×64×227, albă (Veddinge), în locul ENHET 203 antracit/gri: alt sistem, altă culoare."
+  },
+  {
+   "id": "offer-bucatarie-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s99337282/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "bucatarie-5",
+   "replacementWhy": "METOD 170×64×227, albă (Veddinge), în locul ENHET 163 antracit/alb: cu 7 cm mai lată, altă culoare."
+  },
+  {
+   "id": "offer-pantofar-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-alb-60156121/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pantofar-9",
+   "replacementWhy": "GULLABERG alb 105×22×107 în locul HEMNES 107×22×101."
+  },
+  {
+   "id": "offer-pantofar-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-negru-maro-80156120/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pantofar-10",
+   "replacementWhy": "GULLABERG 105×22×107, gri în locul negru-maro (HEMNES)."
+  },
+  {
+   "id": "offer-pantofar-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pantofar-11",
+   "replacementWhy": "GULLABERG 2 compartimente 88×30×122, gri în locul negru-maro (HEMNES 89×30×127)."
+  },
+  {
+   "id": "offer-pat-5",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s69002431/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "pat-19",
+   "replacementWhy": "Același MALM 140×200 cu Luröy, dar negru-maro: varianta albă de 140 nu se mai vinde."
+  },
+  {
+   "id": "offer-dulap-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/songesand-dulap-de-haine-alb-90347351/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)",
+   "replacement": "dulap-11",
+   "replacementWhy": "HAUGA alb cu uși glisante 118×55×199 în locul SONGESAND 120×60×191: mai puțin adânc, mai înalt."
+  }
+ ]
+}

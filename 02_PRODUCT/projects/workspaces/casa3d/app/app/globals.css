@@ -1501,3 +1501,33 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .side.pane-structure > :not(.sidetabs):not(.sheet-pane):not(.outliner){display:none}
 .side.pane-structure .outliner{margin:0 -14px}
 @media (prefers-reduced-motion:reduce){ .splitter::after{transition:none} }
+
+/* Telefon (proprietar, 2026-11-17: „nu e bine cum se vede și cum se încadrează”): antetul ocupa 233 px din 892 și planul rămânea
+   de 94 px. Antetul trece pe două rânduri compacte (înapoi · nume · stare · Salvează · ⋯ / căutare · anulare · vederi · sănătate),
+   bara de nivele se subțiază, foaia pornește de la 40% din ecran, iar butoanele planului devin o coloană îngustă. */
+@media (max-width:639px){
+  .topbar.studio-topbar{flex-wrap:wrap;align-items:center;padding:6px 8px;column-gap:6px;row-gap:6px;min-height:0}
+  .topbar.studio-topbar > a.icon-btn{order:0;flex:0 0 auto}
+  .topbar.studio-topbar .name{order:1;flex:1 1 0;min-width:0;font-size:var(--fs-md)}
+  .topbar.studio-topbar .status{order:2;flex:0 0 auto;width:auto;padding:0 6px}
+  .topbar.studio-topbar .status .status-main{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .topbar.studio-topbar .tb-save{order:3;flex:0 0 auto;height:36px;min-height:36px;padding:0 12px}
+  .topbar.studio-topbar .tb-more{order:4;flex:0 0 auto}
+  .topbar.studio-topbar .tb-actions{order:5;flex:1 0 100%;flex-wrap:nowrap;gap:4px;justify-content:space-between;align-items:center}
+  .topbar.studio-topbar .tb-actions .seg{flex:0 1 auto;min-width:0}
+  .topbar.studio-topbar .tb-health{flex:0 0 auto}
+  .topbar.studio-topbar .tb-health small{display:none}
+  .levelbar{padding-top:4px;padding-bottom:4px}
+  .levelbar .btn{min-height:40px}
+  .side.sheet.sheet-half{height:40dvh}
+  .plan-nudge{right:6px;top:6px;grid-template-columns:40px;gap:4px}
+  .plan-nudge .btn.btn{min-height:40px;min-width:40px}
+  .plan-nudge .nudge-arrow{display:none}
+  .plan-nudge.is-move{grid-template-columns:repeat(2,40px)}
+  .plan-nudge.is-move .nudge-arrow{display:inline-flex}
+}
+.plan-nudge .nudge-toggle{display:none}
+@media (max-width:639px){ .plan-nudge .nudge-toggle{display:inline-flex} }
+
+/* variantele scoase din vânzare (data/offers-gone.json): la sfârșitul listei, estompate */
+.var.gone{opacity:.6} .var.gone small{color:var(--err)}

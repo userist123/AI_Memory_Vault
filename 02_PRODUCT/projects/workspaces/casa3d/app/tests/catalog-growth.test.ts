@@ -44,11 +44,12 @@ test('repornirea pe o bază existentă adaugă produsele lipsă și prețurile m
   await q("delete from offers where verified_at = '2026-10-10' and id <> 'offer-canapea-0'");
   await q("update offers set price = 2299, verified_at = '2026-09-30' where id = 'offer-canapea-0'");
   await reseedForTests(); await reseedForTests();
-  assert.equal(await count('offers'), before.offers); assert.equal(await count('offer_links'), before.links); assert.equal(await count('price_history'), before.hist);
+  assert.equal(await count('offers'), before.offers); assert.equal(await count('offer_links'), before.links); const { PRICE_RECHECKS } = await import('../lib/price-rechecks'), sofaRk = PRICE_RECHECKS.find(r => r.kind === 'o' && r.id === 'offer-canapea-0');
+  assert.equal(await count('price_history'), before.hist + (sofaRk ? 1 : 0));
   const o = (await q("select price, verified_at from offers where id = 'offer-canapea-0'")).rows[0];
-  assert.equal(Number(o.price), cat.offers.find(x => x.id === 'offer-canapea-0')!.price);
-  // un preț pus manual după ultima verificare din catalog rămâne
-  await q("update offers set price = 1500, verified_at = '2026-10-11' where id = 'offer-canapea-0'"); await reseedForTests();
+  assert.equal(Number(o.price), sofaRk?.price ?? cat.offers.find(x => x.id === 'offer-canapea-0')!.price);
+  // un preț pus manual după ultima verificare (din catalog sau reverificare) rămâne
+  await q("update offers set price = 1500, verified_at = '2026-12-01' where id = 'offer-canapea-0'"); await reseedForTests();
   assert.equal(Number((await q("select price from offers where id = 'offer-canapea-0'")).rows[0].price), 1500);
 });
 test('baia completă (2026-10-11): cadă, bideu, walk-in, calorifer, coloană, dulap cu oglindă, boiler — cu model 3D, simbol, preț citit pe pagină', async () => {
