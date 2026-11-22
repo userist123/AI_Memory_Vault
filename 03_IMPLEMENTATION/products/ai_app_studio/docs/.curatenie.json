@@ -1,0 +1,4 @@
+{
+  "keep": ["DESIGN.md", "THREAT_MODEL.md", "CHECKPOINT.md", "DESIGN_DRAFT.md", "RESEARCH_2026-11-22.md"],
+  "delete": [{"path": ".THREAT_MODEL.v1.bak.md", "olderThanDays": 14}]
+}

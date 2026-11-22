@@ -1,0 +1,14 @@
+node_modules/
+.venv/
+dist/
+build/
+*.h264
+spike/*.png
+spike/rec.*
+*.log
+.env*
+__pycache__/
+artifacts/
+data/
+*.keystore
+*.jks
