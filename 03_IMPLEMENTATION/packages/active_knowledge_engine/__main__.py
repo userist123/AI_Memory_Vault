@@ -5,7 +5,7 @@ Milestone 1 supports the dry run only. Exit codes: 0 = COMPLETED, 3 = COMPLETED_
 2 = usage (no --dry-run) or missing HMAC secret when a benchmark runs.
 
 ``python -m active_knowledge_engine split-plan --note-id ID`` writes a dry-run split manifest
-(exit 0 = PLANNED, 1 = UNSPLITTABLE / COVERAGE_FAILED).
+(exit 0 = PLANNED; 1 = NEEDS_PROVENANCE, UNSPLITTABLE, DOES_NOT_FIT or COVERAGE_FAILED).
 
 ``python -m active_knowledge_engine compare BASELINE.json CANDIDATE.json`` compares the
 retrieval_quality stage of two job records (exact McNemar). Exit codes: 0 = NO_CHANGE,

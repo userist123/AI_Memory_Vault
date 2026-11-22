@@ -2,18 +2,22 @@
 
 Step 1 of the plan recorded in 07_EVALUATION/active_knowledge_engine/DESIGN_DECISIONS.md: compute
 a deterministic, section-aware split, prove it, and change nothing. The manifest says how the
-parent body would be cut into child notes (character offsets, hashes, heading path) and proves:
+parent body would be cut into child notes (character offsets, hashes, heading line numbers) and
+proves:
 
 - coverage: the children, concatenated in order, are exactly the parent body;
-- fit: each child, built the way ``cognitive_read`` builds a one-note pack, passes the real
-  ``ContextPackBuilder`` (token and byte budgets, protected content included);
-- integrity: every cut falls on a line boundary, so no line (and no MUST/NEVER rule) is split.
+- integrity: every cut falls right after a "\\n" (only "\\n" is a line boundary; U+2028, U+0085 or
+  a form feed never are), so no line, and no MUST/NEVER rule, is split;
+- fit: each child, as the owner batch will create it (lifecycle ACTIVE, the parent's own
+  provenance, never a fabricated one), passes the real ``ContextPackBuilder`` with
+  ``cognitive_read``'s rule for an ACTIVE note (``allow_unverified=True``) **and comes back whole**:
+  a child the pack shortens does not fit.
 
-A single line longer than the smallest child target makes the plan ``UNSPLITTABLE``; children
-that cannot pass the pack for another reason make it ``DOES_NOT_FIT``, with the first failing
-child named (both fail closed). A whitespace-only run never becomes a child.
+Fail-closed outcomes: ``NEEDS_PROVENANCE`` (the parent has no provenance, so the egress contract
+would drop every child), ``UNSPLITTABLE`` (one line does not fit the pack even on its own), and
+``DOES_NOT_FIT`` (children of whole lines cannot be made to fit; the first failing child is named).
 Creating, attesting and promoting the children is the owner's step; nothing here writes a note.
-The manifest carries offsets and hashes, never note content.
+The manifest carries offsets, hashes and line numbers, never note content.
 """
 from __future__ import annotations
 
@@ -22,10 +26,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from memory_controller.authorizer import Principal
 
-SCHEMA = "ake.split_plan/1"
+SCHEMA = "ake.split_plan/2"
 #: First greedy target for a child, in characters (the pack's token limit is about 9 KB at
-#: 3 chars/token). Each child is then checked against the real pack builder; a child that does
-#: not fit makes the planner retry with a smaller target.
+#: 3 chars/token). Each child is then checked against the real pack builder; while one fails,
+#: the target is halved, down to MIN_TARGET_CHARS.
 INITIAL_TARGET_CHARS = 6000
 MIN_TARGET_CHARS = 500
 NL = chr(10)
@@ -36,22 +40,23 @@ def _sha(text: str) -> str:
 
 
 def _lines(body: str) -> List[Tuple[int, int, str]]:
-    """(start, end, text) for every line, end including its newline, covering the whole body."""
+    """(start, end, text) per line, split on "\\n" only, end including it; covers the whole body."""
     out = []
     pos = 0
-    for raw in body.splitlines(keepends=True):
-        out.append((pos, pos + len(raw), raw))
-        pos += len(raw)
+    while pos < len(body):
+        nxt = body.find(NL, pos)
+        end = len(body) if nxt == -1 else nxt + 1
+        out.append((pos, end, body[pos:end]))
+        pos = end
     return out
 
 
-def _heading(text: str) -> Optional[Tuple[int, str]]:
+def _heading(text: str) -> Optional[int]:
     stripped = text.rstrip(NL)
     if not stripped.startswith("#"):
         return None
     level = len(stripped) - len(stripped.lstrip("#"))
-    title = stripped[level:].strip()
-    return (level, title) if title and level <= 6 else None
+    return level if stripped[level:].strip() and level <= 6 else None
 
 
 def _blocks(lines: List[Tuple[int, int, str]]) -> List[Tuple[int, int]]:
@@ -60,84 +65,87 @@ def _blocks(lines: List[Tuple[int, int, str]]) -> List[Tuple[int, int]]:
     return [(a, b) for a, b in zip(starts, starts[1:] + [len(lines)]) if a < b]
 
 
+def _blank(lines, a: int, b: int) -> bool:
+    return all(not lines[i][2].strip() for i in range(a, b))
+
+
 def _fits(controller, parent: Dict[str, Any], piece: str, child_id: str) -> bool:
-    child = dict(parent)
-    child["id"] = child_id
-    child["content"] = piece
-    if not isinstance(child.get("provenance"), dict):
-        child["provenance"] = {"source_type": "derived", "source_ref": str(parent.get("id"))}
+    """The child, in its target state, passes the real pack and is served whole."""
+    child = dict(parent, id=child_id, content=piece, lifecycle="ACTIVE")
     try:
         pack = controller.pack_builder.build(
             request_id="ake_split_plan", agent_id=Principal.AI_AGENT.value, budget={},
-            results=[child], disclosure_level="full", allow_unverified=True,
+            results=[child], disclosure_level="full",
+            allow_unverified=True,  # cognitive_read's rule for an ACTIVE note (memory/controller.py)
         )
     except Exception:  # noqa: BLE001 - any refusal means "does not fit"
         return False
-    return bool(pack.get("results"))
+    results = pack.get("results") or []
+    return bool(results) and results[0].get("content") == piece
 
 
-def _pack_greedy(lines, blocks, target: int) -> Optional[List[Tuple[int, int]]]:
-    """Greedy packing of whole lines into children of at most `target` chars.
+def _pack_greedy(lines, blocks, target: int) -> List[Tuple[int, int]]:
+    """Greedy packing of whole lines into children of about `target` chars.
 
-    Blocks (sections) are kept together when they fit; a block too large is packed line by line.
-    Returns line-index ranges, or None when a single line exceeds the target.
+    A section is kept whole when it fits the target; a larger section is packed line by line; a
+    single line longer than the target becomes a child of its own (the pack decides whether it
+    fits). A whitespace-only run never becomes a child: it joins the previous child, or the next
+    one when it is at the very start.
     """
     children: List[Tuple[int, int]] = []
     cur_start, cur_len = None, 0
 
-    def blank(a, b):
-        return all(not lines[i][2].strip() for i in range(a, b))
-
-    def flush(end):
-        # A whitespace-only run is never a child (the pack rejects it): it is carried into the
-        # next child, or appended to the previous one at the very end.
+    def flush(end: int) -> None:
         nonlocal cur_start, cur_len
-        if cur_start is not None and cur_start < end:
-            if blank(cur_start, end):
-                return
-            children.append((cur_start, end))
+        if cur_start is None or cur_start >= end:
+            cur_start, cur_len = None, 0
+            return
+        if _blank(lines, cur_start, end):
+            if children:
+                children[-1] = (children[-1][0], end)
+                cur_start, cur_len = None, 0
+            return  # leading blank run: carried into the next child
+        children.append((cur_start, end))
         cur_start, cur_len = None, 0
+
+    def add_line_range(a: int, b: int, length: int) -> None:
+        nonlocal cur_start, cur_len
+        if cur_start is not None and cur_len + length > target and not _blank(lines, cur_start, a):
+            flush(a)
+        if cur_start is None:
+            cur_start = a
+        cur_len += length
 
     for a, b in blocks:
         block_len = lines[b - 1][1] - lines[a][0]
         if block_len <= target:
-            if cur_start is not None and cur_len + block_len > target:
-                flush(a)
-            if cur_start is None:
-                cur_start = a
-            cur_len += block_len
+            add_line_range(a, b, block_len)
             continue
-        flush(a)
         for i in range(a, b):
             ln = lines[i][1] - lines[i][0]
             if ln > target:
-                return None
-            if cur_start is not None and cur_len + ln > target:
                 flush(i)
-            if cur_start is None:
-                cur_start = i
-            cur_len += ln
-        flush(b)
+                carried = cur_start  # a leading blank run stays in front of the long line
+                children.append((carried if carried is not None else i, i + 1))
+                cur_start, cur_len = None, 0
+                continue
+            add_line_range(i, i + 1, ln)
     flush(len(lines))
-    if cur_start is not None and cur_start < len(lines):  # trailing whitespace-only run
-        if children:
-            children[-1] = (children[-1][0], len(lines))
-        else:
-            return []
+    if cur_start is not None and cur_start < len(lines):  # trailing blank run, no child before it
+        children.append((cur_start, len(lines)))
     return children
 
 
-def _heading_paths(lines) -> List[List[str]]:
-    """Heading stack in effect at the start of each line."""
-    stack: List[Tuple[int, str]] = []
-    paths = []
-    for _, _, text in lines:
-        h = _heading(text)
-        if h:
-            level, title = h
-            stack = [s for s in stack if s[0] < level] + [(level, title)]
-        paths.append([t for _, t in stack])
-    return paths
+def _heading_lines(lines) -> List[List[int]]:
+    """1-based line numbers of the headings in effect at the start of each line."""
+    stack: List[Tuple[int, int]] = []
+    out = []
+    for idx, (_, _, text) in enumerate(lines):
+        level = _heading(text)
+        if level:
+            stack = [s for s in stack if s[0] < level] + [(level, idx + 1)]
+        out.append([n for _, n in stack])
+    return out
 
 
 def plan_split(controller, note_id: str) -> Dict[str, Any]:
@@ -145,11 +153,11 @@ def plan_split(controller, note_id: str) -> Dict[str, Any]:
     if not parent:
         raise ValueError(f"note not found: {note_id}")
     body = str(parent.get("content") or "")
-    if not body:
-        raise ValueError(f"note has no body: {note_id}")
+    if not body.strip():
+        raise ValueError(f"note has no non-blank body: {note_id}")
     lines = _lines(body)
     blocks = _blocks(lines)
-    paths = _heading_paths(lines)
+    heading_lines = _heading_lines(lines)
     manifest: Dict[str, Any] = {
         "schema": SCHEMA,
         "mode": "DRY_RUN",
@@ -160,24 +168,28 @@ def plan_split(controller, note_id: str) -> Dict[str, Any]:
         "parent_chars": len(body),
         "parent_lines": len(lines),
         "children": [],
-        "notice": "Dry run: nothing was created or changed. Creating, attesting and promoting "
-                  "the children is an owner action; each child must be re-hashed against "
-                  "content_sha256 before attestation.",
+        "fit_assumption": "each child is checked as the owner batch creates it: lifecycle ACTIVE, the "
+                          "parent's provenance, cognitive_read's ACTIVE rule (allow_unverified=True); "
+                          "it fits only if the pack serves it whole",
+        "notice": "Dry run: nothing was created or changed. Creating, attesting and promoting the "
+                  "children is an owner action; re-hash each child against content_sha256 and pass "
+                  "it as expected_content_sha256 when attesting.",
     }
+    if not isinstance(parent.get("provenance"), dict) and parent.get("source_ref") is None:
+        manifest.update(status="NEEDS_PROVENANCE",
+                        reason="the parent has no provenance; the egress contract would drop every child "
+                               "and none is fabricated")
+        return manifest
+
     target = INITIAL_TARGET_CHARS
     first_failure = None
     while target >= MIN_TARGET_CHARS:
         ranges = _pack_greedy(lines, blocks, target)
-        if ranges is None:
-            break  # a single line exceeds the target: smaller targets cannot help
         children = []
-        all_fit = True
         for index, (a, b) in enumerate(ranges):
             start, end = lines[a][0], lines[b - 1][1]
             piece = body[start:end]
             child_id = f"{note_id}--part-{index + 1:03d}"
-            fits = _fits(controller, parent, piece, child_id)
-            all_fit &= fits
             children.append({
                 "index": index,
                 "child_id_proposed": child_id,
@@ -187,37 +199,44 @@ def plan_split(controller, note_id: str) -> Dict[str, Any]:
                 "line_end": b,
                 "chars": end - start,
                 "content_sha256": _sha(piece),
-                "heading_path": paths[a],
-                "fits_pack": fits,
+                "heading_lines": heading_lines[a],
+                "fits_pack": _fits(controller, parent, piece, child_id),
             })
-        if not all_fit:
-            bad = next(ch for ch in children if not ch["fits_pack"])
-            first_failure = {"index": bad["index"], "chars": bad["chars"], "line_start": bad["line_start"],
-                             "line_end": bad["line_end"], "target_chars": target}
-        if all_fit:
+        bad = next((ch for ch in children if not ch["fits_pack"]), None)
+        if bad is None:
             rebuilt = "".join(body[c["char_start"]:c["char_end"]] for c in children)
-            manifest.update(
-                status="PLANNED",
-                target_chars=target,
-                children=children,
-                coverage={"concatenation_sha256": _sha(rebuilt), "equals_parent": rebuilt == body},
-            )
             if rebuilt != body:  # defensive: never report a plan that does not tile the parent
                 manifest.update(status="COVERAGE_FAILED", children=[])
+                return manifest
+            manifest.update(status="PLANNED", target_chars=target, children=children,
+                            coverage={"concatenation_sha256": _sha(rebuilt), "equals_parent": True})
+            return manifest
+        first_failure = {"index": bad["index"], "chars": bad["chars"], "line_start": bad["line_start"],
+                         "line_end": bad["line_end"], "target_chars": target}
+        if bad["line_end"] - bad["line_start"] == 0 or _single_content_line(lines, bad):
+            # the failing child is one line (plus blank lines): no smaller target can help
+            content_line = _longest_line(lines, bad["line_start"] - 1, bad["line_end"])
+            manifest.update(
+                status="UNSPLITTABLE",
+                reason="one line does not fit the context pack even on its own; splitting would cut it",
+                blocking_line={"line_number": content_line + 1,
+                               "chars": lines[content_line][1] - lines[content_line][0]},
+                first_failing_child=first_failure,
+            )
             return manifest
         target //= 2
-    if ranges is None:
-        longest = max(range(len(lines)), key=lambda i: lines[i][1] - lines[i][0])
-        manifest.update(
-            status="UNSPLITTABLE",
-            reason="a single line is longer than the smallest child target; splitting would cut it",
-            blocking_line={"line_number": longest + 1, "chars": lines[longest][1] - lines[longest][0]},
-            first_failing_child=first_failure,
-        )
-    else:
-        manifest.update(
-            status="DOES_NOT_FIT",
-            reason="children of whole lines were computed but at least one does not pass the context pack",
-            first_failing_child=first_failure,
-        )
+    manifest.update(
+        status="DOES_NOT_FIT",
+        reason="children of whole lines were computed but at least one does not pass the context pack whole",
+        first_failing_child=first_failure,
+    )
     return manifest
+
+
+def _single_content_line(lines, child: Dict[str, Any]) -> bool:
+    a, b = child["line_start"] - 1, child["line_end"]
+    return sum(1 for i in range(a, b) if lines[i][2].strip()) <= 1
+
+
+def _longest_line(lines, a: int, b: int) -> int:
+    return max(range(a, b), key=lambda i: lines[i][1] - lines[i][0])

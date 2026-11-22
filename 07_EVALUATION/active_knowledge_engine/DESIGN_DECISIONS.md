@@ -195,6 +195,17 @@ The owner said "agents receive nothing unverified". Today's read contract (VAULT
 - Failure states: `UNSPLITTABLE` (a single line longer than the smallest target) and `DOES_NOT_FIT` (the first failing child is named). Both fail closed.
 - The manifest holds offsets and hashes, never content. It is written to `08_OBSERVABILITY/active_knowledge_engine/split_plans/` (git-ignored).
 
+Review round 1 (`vault-reviewer`) returned CHANGES_REQUIRED. All findings were reproduced and then fixed test-first (schema `ake.split_plan/2`):
+- **"Fits" now means served whole.** A child the pack shortens does not count.
+- **Children are checked in their target state:** lifecycle ACTIVE, the parent's own provenance, and `cognitive_read`'s ACTIVE rule. No provenance is fabricated; a parent without provenance gives `NEEDS_PROVENANCE`.
+- **Only `\n` is a line boundary.** U+2028, U+0085 and form feed are no longer cut points.
+- **A long line that fits on its own becomes its own child.** `UNSPLITTABLE` now means that one line does not fit even alone.
+- **No heading text in the manifest:** headings are recorded as line numbers.
+- **A blank-only body is refused.**
+- **Tests:** the always-true assertion is gone.
+
+The three real results were re-checked under the stricter definition and are unchanged.
+
 | Note | Result |
 |---|---|
 | `02_PRODUCT/projects/Continuity_Handoff.md` (21,576 chars) | **PLANNED**: 4 children of 5,173-5,696 chars, coverage proven |

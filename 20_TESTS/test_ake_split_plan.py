@@ -86,7 +86,6 @@ def test_plan_covers_the_parent_exactly_and_every_child_fits(vault):
         piece = parent[ch["char_start"]:ch["char_end"]]
         assert ch["content_sha256"] == _sha(piece)
         assert ch["fits_pack"] is True
-        assert not piece.startswith(chr(10)) or ch["index"] == 0 or True  # slices are whole lines
     # every child starts at a line boundary (never cuts a line)
     for ch in children[1:]:
         assert parent[ch["char_start"] - 1] == chr(10)
@@ -102,20 +101,22 @@ def test_children_actually_fit_the_real_pack(vault):
     parent_note = c.storage.get(nid)
     plan = plan_split(c, nid)
     for ch in plan["children"]:
-        child = dict(parent_note)
-        child["id"] = ch["child_id_proposed"]
-        child["content"] = parent_note["content"][ch["char_start"]:ch["char_end"]]
+        piece = parent_note["content"][ch["char_start"]:ch["char_end"]]
+        child = dict(parent_note, id=ch["child_id_proposed"], content=piece, lifecycle="ACTIVE")
+        # cognitive_read's rule for an ACTIVE note: allow_unverified=True (controller.py)
         pack = c.pack_builder.build(request_id="t", agent_id=Principal.AI_AGENT.value, budget={},
                                     results=[child], disclosure_level="full", allow_unverified=True)
-        assert pack.get("results"), ch["index"]
+        assert pack.get("results") and pack["results"][0].get("content") == piece, ch["index"]
 
 
 def test_heading_path_is_recorded(vault):
     nid = str(uuid.uuid4())
     _write(vault, "big.md", nid, _sections())
     plan = plan_split(_controller(vault), nid)
-    assert plan["children"][0]["heading_path"][:1] == ["Handoff"]
-    assert any(h.startswith("Section") for ch in plan["children"] for h in ch["heading_path"])
+    # line numbers of the headings in effect, never the heading text (no content in the manifest)
+    assert plan["children"][0]["heading_lines"][:1] == [1]
+    assert all(isinstance(n, int) for ch in plan["children"] for n in ch["heading_lines"])
+    assert "Section" not in json.dumps(plan)
 
 
 def test_a_line_longer_than_the_budget_fails_closed(vault):
@@ -185,3 +186,67 @@ def test_a_child_that_does_not_fit_for_another_reason_is_reported_as_such(vault,
     assert plan["status"] == "DOES_NOT_FIT"
     assert "blocking_line" not in plan
     assert plan["first_failing_child"]["index"] == 0
+
+
+# --- review round 1 ------------------------------------------------------------------------------
+
+def test_a_child_served_shortened_does_not_count_as_fitting(vault):
+    """The pack shortens long unprotected text and still returns it: that is not a fit."""
+    nid = str(uuid.uuid4())
+    body = chr(10).join("plain text line without normative words number %d" % i for i in range(30)) + chr(10)
+    body = body + ("x" * 5900) + chr(10)
+    _write(vault, "plain.md", nid, body)
+    c = _controller(vault)
+    plan = plan_split(c, nid)
+    parent = c.storage.get(nid)
+    from memory_controller.authorizer import Principal
+    for ch in plan["children"]:
+        piece = parent["content"][ch["char_start"]:ch["char_end"]]
+        child = dict(parent, id="x", content=piece, lifecycle="ACTIVE")
+        pack = c.pack_builder.build(request_id="t", agent_id=Principal.AI_AGENT.value, budget={},
+                                    results=[child], disclosure_level="full", allow_unverified=True)
+        served = (pack.get("results") or [{}])[0].get("content")
+        assert ch["fits_pack"] == (served == piece)
+
+
+def test_parent_without_provenance_is_not_planned_as_fitting(vault):
+    """No provenance is fabricated: the egress contract would drop every child."""
+    nid = "moc-test-0002"
+    lines = ["---", f"id: {nid}", "type: moc", "lifecycle: ACTIVE", "category: navigation", "tags: [moc]",
+             "---", _sections()]
+    (vault / "01_ARCHITECTURE" / "knowledge" / "moc.md").write_text(chr(10).join(lines), encoding="utf-8")
+    plan = plan_split(_controller(vault), nid)
+    assert plan["status"] == "NEEDS_PROVENANCE" and plan["children"] == []
+
+
+def test_only_newline_is_a_line_boundary(vault):
+    """U+2028, U+0085 and form feed are inside a line, never a cut point."""
+    nid = str(uuid.uuid4())
+    odd = "Rule: the agent MUST keep" + chr(0x2028) + "this" + chr(0x0C) + "intact" + chr(0x85) + "always."
+    body = _sections() + chr(10).join([odd] * 200) + chr(10)
+    _write(vault, "odd.md", nid, body)
+    c = _controller(vault)
+    parent = c.storage.get(nid)["content"]
+    plan = plan_split(c, nid)
+    assert plan["status"] == "PLANNED"
+    for ch in plan["children"][1:]:
+        assert parent[ch["char_start"] - 1] == chr(10)
+
+
+def test_a_long_line_that_fits_alone_becomes_its_own_child(vault):
+    nid = str(uuid.uuid4())
+    long_line = "plain " * 1200  # about 7,200 chars, unprotected, no newline inside
+    body = "# T" + chr(10) + "intro" + chr(10) + long_line + chr(10) + "outro" + chr(10)
+    _write(vault, "long.md", nid, body)
+    plan = plan_split(_controller(vault), nid)
+    assert plan["status"] in {"PLANNED", "UNSPLITTABLE"}
+    if plan["status"] == "UNSPLITTABLE":  # only when that line itself does not pass the pack
+        assert plan["blocking_line"]["line_number"] == 3
+        assert "does not fit" in plan["reason"]
+
+
+def test_a_blank_only_body_is_refused(vault):
+    nid = str(uuid.uuid4())
+    _write(vault, "blank.md", nid, chr(10) * 50)
+    with pytest.raises(ValueError):
+        plan_split(_controller(vault), nid)
