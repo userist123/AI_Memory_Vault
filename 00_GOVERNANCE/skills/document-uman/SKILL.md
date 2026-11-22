@@ -23,6 +23,7 @@ Files in this skill folder:
 - `docx_complex.py`, `xlsx_ro.py`, `pdf_ro.py` - long reports, workbooks, PDF dossiers (section 7b).
 - `cifre_ro.py` - rounding (Excel-compatible), exact allocation, numbers in words, DOOM "de",
   plausible document numbers, prose-vs-model reconciliation. Use it for every number in a document.
+- `vba.md`, `vba_ro.py`, `vba_templates/` - VBA macros the owner re-runs himself in Word/Excel (section 9).
 
 1. Purpose, reader, what the reader must do after reading. One sentence. If missing, infer the safe
    default and note it in the report to the owner (never ask - owner rule).
@@ -299,3 +300,11 @@ Path of the file, what was assumed, which placeholders remain, checker result (P
 - Merged PDFs: Creator = the application of the main part only (pdf_ro.uneste does it).
 - Review sequence that worked: one data model -> generated text/tables/Excel -> assertion pass ->
   render + look -> blind review by a fresh reviewer -> fix -> delta review. Keep it.
+
+## 9. VBA macros
+
+When the owner must re-run a job himself in Office (monthly reports, batch formatting, find/replace across
+a folder, mail merge to one PDF per record, consolidation, arrears calculations), deliver a .xlsm/.docm
+instead of a one-off file. Read `vba.md` first: security rules (no Shell, network, deletion, registry,
+auto-run), the entry-Sub/worker-Function pattern, 8 tested templates in `vba_templates/`, build and
+test with `vba_ro.py` (static check must PASS; AccessVBOM is set only during the build and restored).
