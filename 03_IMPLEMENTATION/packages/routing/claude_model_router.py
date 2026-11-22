@@ -128,6 +128,26 @@ class ClaudeModelPolicy:
         if not self.models:
             raise ModelRoutingPolicyError("policy defines no models")
 
+        # Historical model IDs remain priced for transcript reports, but are not routable.
+        self.historical_models: dict[str, tuple[str, ModelPrice]] = {}
+        for model_id, entry in raw.get("historical_models", {}).items():
+            try:
+                p = entry["usd_per_mtok"]
+                alias = str(entry["alias"]).strip()
+                if not model_id or not alias or model_id in {m.model_id for m in self.models.values()}:
+                    raise ValueError("historical model ID and alias must be non-empty and IDs must be unique")
+                self.historical_models[model_id] = (
+                    alias,
+                    ModelPrice(
+                        input=float(p["input"]), output=float(p["output"]),
+                        cache_read=float(p["cache_read"]),
+                        cache_write_5m=float(p["cache_write_5m"]),
+                        cache_write_1h=float(p["cache_write_1h"]),
+                    ),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ModelRoutingPolicyError(f"historical model '{model_id}' is malformed: {exc}") from exc
+
         self.task_classes: dict[str, TaskClass] = {}
         for name, entry in raw.get("task_classes", {}).items():
             model = entry.get("model")
@@ -317,6 +337,10 @@ def route(
         raise ValueError("role must be None, 'implementer' or 'reviewer'")
     if requested_model is not None and requested_model not in policy.models:
         raise ModelRoutingPolicyError(f"requested model '{requested_model}' is not in the policy")
+    if requested_model == "fable" and policy.rules.get("fable_main_session_allowed") is False:
+        raise ModelRoutingPolicyError(
+            "Fable is reserved for the read-only fable-consultant subagent; main-session routing stays on Opus"
+        )
 
     applied: list[str] = []
     detected, risk_hits = detect_risk(policy, goal)
@@ -372,7 +396,7 @@ def route(
             effort = "high"
             applied.append(f"risk_effort:{risk}->high")
 
-    # Fable is a main-session choice, never a subagent model.
+    # Generic routing never assigns Fable; the explicit consultant exception lives in the Agent hook.
     if for_subagent and policy.rules.get("fable_never_for_subagents") and model == "fable":
         applied.append("fable_never_for_subagents->opus")
         model = "opus"
@@ -409,7 +433,7 @@ def route(
     if for_subagent and escalate_to == "fable":
         escalate_to = None  # the main session, not a subagent, would take that step
     if escalate_to == "fable" and task_class != "frontier":
-        escalate_to = None  # owner rule: Opus is the ceiling; Fable only for frontier sessions
+        escalate_to = None  # generic routing never escalates to the read-only Fable consultant
 
     est = estimate_cost(policy, model, input_tokens, output_tokens)
     on_fable = estimate_cost(policy, "fable", input_tokens, output_tokens)

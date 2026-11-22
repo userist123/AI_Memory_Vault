@@ -135,10 +135,17 @@ HOOKS = ["hook_agent_model.py", "hook_prompt_route.py", "hook_enforce_route.py",
 
 @pytest.mark.parametrize("hook", HOOKS)
 def test_rt09_malformed_payloads_never_crash_or_grant_an_escalation(home, hook):
+    agent_fail_closed = {"", "not json", "[]", "null", "42",
+                         '{"tool_name": "Agent", "tool_input": "x"}',
+                         '{"tool_name": "Agent", "hook_event_name": "PostToolUse", "tool_response": "garbage", "session_id": "s"}'}
     for payload in MALFORMED:
         code, out, err = rt.run_hook(hook, payload, home)
-        assert code == 0, (hook, payload, err)
         assert "Traceback" not in err, (hook, payload, err)
+        if hook == "hook_agent_model.py" and payload in agent_fail_closed:
+            assert code == 2, (hook, payload, err)
+            assert out.strip() == "", (hook, payload, out)
+        else:
+            assert code == 0, (hook, payload, err)
         if out.strip():
             o = rt.hook_output(out)
             assert (o.get("updatedInput") or {}).get("model") in (None, "haiku", "sonnet", "opus"), (hook, payload, o)

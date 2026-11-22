@@ -18,12 +18,13 @@
 What it does (idempotent, prints every path it touched):
   1. copies this skill directory to ~/.claude/skills/cost-router/ and the canonical router
      module + policy into its lib/ so it works outside this repository;
-  2. copies the three subagents (Explore, vault-worker, vault-reviewer) to ~/.claude/agents/; a file
-     of that name is replaced only when it is still the copy an earlier install wrote (owner edits are
-     kept; --force overwrites them too);
-  3. merges six hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
-     route line per non-trivial prompt; stores the route per session), PreToolUse on Agent|Task (sets each
-     subagent's model from the route of its brief, whatever the subagent type), PreToolUse on
+  2. copies the four subagents (Explore, vault-worker, vault-reviewer, fable-consultant) to
+     ~/.claude/agents/; a file of that name is replaced only when it is still the copy an earlier
+     install wrote (owner edits are kept; --force overwrites them too);
+  3. merges seven hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
+     route line per non-trivial prompt; stores the route per session), PreToolUse on Agent|Task
+     (sets each subagent's model from the route of its brief, with the exact read-only Fable
+     consultant exception), PreToolUse on
      Edit|Write|NotebookEdit|Bash|Read|Grep|Glob (hook_enforce_route.py: makes the route binding),
      PreToolUse on SendMessage (hook_resume_guard.py: a subagent is resumed at most once),
      SessionStart repo map (a ~1k-token map of the
@@ -138,9 +139,17 @@ def auto_refresh_opted_in(home: Path) -> bool:
 
 def hook_entry(skill_dir: Path, script: str = "hook_prompt_route.py", matcher=None) -> dict:
     target = (skill_dir / script).as_posix()
-    cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-           f'"$py" "{target}"; exit 0; fi; done; exit 0')
-    entry = {"hooks": [{"type": "command", "command": cmd, "timeout": HOOK_TIMEOUT.get(script, 10)}]}
+    if script == "hook_agent_model.py":
+        cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
+               f'"$py" "{target}"; exit $?; fi; done; '
+               'echo "cost-router: Python is required for Agent routing; blocking the spawn" >&2; exit 2')
+    else:
+        cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
+               f'"$py" "{target}"; exit 0; fi; done; exit 0')
+    handler = {"type": "command", "command": cmd, "timeout": HOOK_TIMEOUT.get(script, 10)}
+    if script == "hook_agent_model.py":
+        handler["onFailure"] = "block"
+    entry = {"hooks": [handler]}
     return {"matcher": matcher, **entry} if matcher else entry
 
 
@@ -500,7 +509,7 @@ def uninstall(home: Path) -> list[str]:
     if skill_dir.exists():
         shutil.rmtree(skill_dir)
         touched.append(f"removed {skill_dir}")
-    for name in ("Explore.md", "vault-worker.md", "vault-reviewer.md"):
+    for name in ("Explore.md", "vault-worker.md", "vault-reviewer.md", "fable-consultant.md"):
         p = home / ".claude" / "agents" / name
         if p.exists() and _sha(p) in {_sha(AGENTS_SRC / name), written.get(name)}:
             p.unlink()

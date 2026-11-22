@@ -27,7 +27,7 @@ POLICY = ClaudeModelPolicy.from_file(DEFAULT_POLICY_PATH)
 def test_policy_file_is_the_one_in_04_config():
     assert DEFAULT_POLICY_PATH == ROOT / "04_CONFIG" / "claude_model_routing.json"
     assert set(POLICY.models) == {"fable", "opus", "sonnet", "haiku"}
-    assert POLICY.escalation_order == ("haiku", "sonnet", "opus", "fable")
+    assert POLICY.escalation_order == ("haiku", "sonnet", "opus")
 
 
 def test_tier_ranks_follow_price():
@@ -103,30 +103,33 @@ def test_risk_floor_only_raises():
     assert raised.model == "opus"
     assert any(r.startswith("risk_floor:high") for r in raised.applied_rules)
     top = route(POLICY, "orchestrate the whole repository migration", risk="critical")
-    assert top.model == "fable", "a floor never lowers a tier"
+    assert top.model == "opus", "critical risk stays on the Opus main session"
 
 
-def test_fable_is_never_a_subagent_model():
+def test_fable_is_not_a_main_session_or_generic_subagent_route():
     main = route(POLICY, "orchestrate an end-to-end long-horizon migration")
-    assert main.model == "fable"
+    assert main.model == "opus"
+    assert main.escalate_to is None
     sub = route(POLICY, "orchestrate an end-to-end long-horizon migration", for_subagent=True)
     assert sub.model == "opus"
     assert sub.escalate_to is None
+    with pytest.raises(ModelRoutingPolicyError, match="reserved for the read-only fable-consultant"):
+        route(POLICY, "orchestrate an end-to-end long-horizon migration", requested_model="fable")
 
 
 def test_opus_is_the_escalation_ceiling_outside_frontier():
     d = route(POLICY, "diagnose the root cause of the flaky graph expansion")
     assert d.task_class == "design" and d.model == "opus"
-    assert d.escalate_to is None, "only frontier sessions may escalate to Fable"
+    assert d.escalate_to is None, "Fable is not a generic escalation tier"
     raised = route(POLICY, "find which files import X", risk="high")
     assert raised.model == "opus" and raised.escalate_to is None
 
 
-def test_frontier_may_escalate_to_fable_only_in_the_main_session():
+def test_frontier_stays_on_opus_and_has_no_automatic_fable_escalation():
     goal = "orchestrate an end-to-end long-horizon migration"
-    main = route(POLICY, goal, requested_model="opus")
-    assert main.task_class == "frontier" and main.model == "opus" and main.escalate_to == "fable"
-    sub = route(POLICY, goal, requested_model="opus", for_subagent=True)
+    main = route(POLICY, goal)
+    assert main.task_class == "frontier" and main.model == "opus" and main.escalate_to is None
+    sub = route(POLICY, goal, for_subagent=True)
     assert sub.model == "opus" and sub.escalate_to is None
 
 
@@ -191,7 +194,7 @@ def test_cost_math_matches_rate_card():
     c = estimate_cost(POLICY, "haiku", cache_read_tokens=1_000_000)
     assert c.usd == pytest.approx(0.01)
     c = estimate_cost(POLICY, "fable", cache_write_tokens=1_000_000, cache_ttl="1h")
-    assert c.usd == pytest.approx(20.0)
+    assert c.usd == pytest.approx(16.0)
     with pytest.raises(ValueError):
         estimate_cost(POLICY, "opus", input_tokens=-1)
 
@@ -199,8 +202,8 @@ def test_cost_math_matches_rate_card():
 def test_route_reports_savings_against_fable():
     d = route(POLICY, "find which files import X", input_tokens=100_000, output_tokens=10_000)
     assert d.model == "haiku"
-    assert d.cost_on_fable_usd == pytest.approx(1.5)
-    assert d.savings_vs_fable_usd == pytest.approx(1.5 - d.estimated_cost_usd)
+    assert d.cost_on_fable_usd == pytest.approx(1.2)
+    assert d.savings_vs_fable_usd == pytest.approx(1.2 - d.estimated_cost_usd)
 
 
 # -- subagent files agree with the policy -----------------------------------------
@@ -267,7 +270,7 @@ def test_usage_report_dedupes_by_request_id_and_prices(tmp_path):
     h = agg["claude-haiku-5-5"]
     assert h.cache_write_5m_tokens == 100, "legacy field used when cache_creation is absent"
     rep = priced_report(POLICY, agg)
-    fable_row = next(r for r in rep["models"] if r["alias"] == "fable")
+    fable_row = next(r for r in rep["models"] if r["alias"] == "fable_5_1")
     expected = (2 * 10 + 995 * 50 + 44177 * 0.25 + 52653 * 20) / 1e6
     assert fable_row["usd"] == pytest.approx(expected, abs=1e-4)
     assert fable_row["same_tokens_on"]["opus"] < fable_row["usd"]
@@ -297,3 +300,17 @@ def test_cli_report_on_fixture(tmp_path, capsys):
     rep = json.loads(capsys.readouterr().out)
     assert rep["transcripts"] == 1 and rep["models"][0]["alias"] == "sonnet"
     assert cli_main(["report", "--project-dir", str(tmp_path / "nope"), "--projects-dir", str(tmp_path / "projects")]) == 1
+
+
+def test_usage_report_preserves_historical_fable_51_rates_and_current_fable_52_rates():
+    usage = aggregate([
+        {"session": "s1", "request_id": "r51", "model": "claude-fable-5-1",
+         "usage": {"input_tokens": 1_000_000, "output_tokens": 1_000_000}},
+        {"session": "s1", "request_id": "r52", "model": "claude-fable-5-2",
+         "usage": {"input_tokens": 1_000_000, "output_tokens": 1_000_000}},
+    ])
+    rows = {row["model_id"]: row for row in priced_report(POLICY, usage)["models"]}
+    assert rows["claude-fable-5-1"]["alias"] == "fable_5_1"
+    assert rows["claude-fable-5-1"]["usd"] == pytest.approx(60.0)
+    assert rows["claude-fable-5-2"]["alias"] == "fable"
+    assert rows["claude-fable-5-2"]["usd"] == pytest.approx(48.0)

@@ -47,7 +47,7 @@ entrepreneur does:
 | implement | spec is clear and tests/lint are the failure signal | subagent on sonnet (`vault-worker` fits) | run cheap first; escalate only failures |
 | review | verify a DONE claim, review a diff, security check | subagent on opus (`vault-reviewer` fits) | edge cases; independent context |
 | design | architecture, root cause unknown, multi-file plan | you, at `high`/`xhigh` effort | a wrong plan costs more than tokens |
-| frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Fable only if the owner chose it | the one place 2.5x Opus pays |
+| frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Opus at xhigh; consult Fable selectively | Opus owns the plan; Fable supplies only a bounded second opinion |
 | unclear | keywords don't match | you, session default | say so; never guess cheaper |
 
 Risk `high`/`critical` (production, credentials, secrets, deletes, auth, trust boundaries, git
@@ -56,18 +56,29 @@ history): design, root cause and verification never below Opus, and always an in
 Romanian). Owner rule 2026-10-16: the *implementer* of risky code stays on Sonnet (high effort)
 because that Opus review is mandatory afterwards; the floor binds the reviewer, not the worker
 (policy `rules.implementer_risk_floor`). Critical risk and live operations (production, deploy,
-delete, rotate, leaks) keep Opus: a review after the fact cannot undo them. Fable is never a subagent or verifier model. Escalation order on a failed check: local → haiku → sonnet → opus → fable,
-one notch, only after the check actually failed.
+delete, rotate, leaks) keep Opus: a review after the fact cannot undo them. Fable 5.2 is allowed only as the exact read-only `fable-consultant` agent; it is never an implementer, verifier, approver or final decision-maker. Escalation order on a failed check: local → haiku → sonnet → opus, one notch, only after the check actually failed.
 
 Optional precise answer: `python3 "<this dir>/lib/route.py" "<task>"` prints class, model, effort,
 subagent and estimated cost. Do not run it for trivial prompts.
 
-**You are the dispatcher.** For every task, decide first whether it needs the session's model at
-all. If not, hand it on: the subagent *type* is free (`Explore`, `general-purpose`, `vault-worker`,
-any other); what the policy fixes is the *model*. A `PreToolUse` hook on `Agent` sets each spawn's
-`model` from the route of its brief (cheaper than the route is raised, more than one tier above is
-capped, risk forces Opus, Fable never). Pass `model` yourself only to escalate one notch after a
-failed check. Keep in the main session only design, root cause, risky decisions and the final check.
+**You are the dispatcher.** Opus remains the main Advisor and owns every decision. For every task,
+decide first whether it needs the main session's model. Delegate bounded exploration to Haiku and
+spec'd implementation to Sonnet; keep design, root cause, risky decisions, integration and final
+verification on Opus. A PreToolUse hook routes every spawn from its brief. Fable is permitted only
+through the exact `fable-consultant` agent, invoked explicitly by Opus for a difficult or high-impact
+architecture decision, and only after confirming Claude Code is version 2.1.321 or later and
+the account exposes Fable 5.2. If either prerequisite is missing, do not invoke it; continue on Opus.
+The Agent hook resolves the selected agent by its frontmatter `name` (not its filename) and fails
+closed unless the exact consultant definition is pinned to `claude-fable-5-2`, exposes exactly
+Read/Grep/Glob, denies execution/delegation/write/MCP/web tools, uses high effort and plan mode,
+and has no extra frontmatter capability fields. Missing, ambiguous, unreadable, malformed or modified
+definitions block the spawn; unexpected hook errors and malformed hook payloads exit 2. With no
+explicit model override, the exact model ID in frontmatter is preserved; explicit non-Fable overrides
+are respected. Provider-prefixed Fable IDs are detected, while `inherit` on any other subagent is
+forced to Opus. A user-scope hook shadows the project hook only when the actual blocking
+`PreToolUse`/`Agent|Task` registration is present and its installed files are current. The consultant's
+recommendation is not verification or approval. Pass a model yourself only to escalate one notch
+after a failed check.
 Do it yourself when the work is a one-minute edit or answer: a subagent starts empty and re-reads.
 
 **Local tier (owner's PC only, free).** For text in, short text out (summarize, extract, classify,
@@ -148,8 +159,9 @@ context, 78% of it inside long-lived subagents. Therefore:
 
 ## 4A. Enforcement (the route is binding, not advisory)
 
-- **Escalation ceiling**: Opus is the top of the ladder; a route escalates to Fable only for the
-  `frontier` class in the main session. The route line says "stay on Opus" otherwise.
+- **Escalation ceiling**: Opus is the top of the execution and verification ladder. The `frontier`
+  class remains on Opus at xhigh effort. Fable 5.2 is not a route tier; it is a bounded, read-only
+  second-opinion consultant available only through `fable-consultant` (requiring an `opus` session).
 - **Route state**: the prompt hook stores the route per session in
   `~/.claude/cache/cost-router/route-<session_id>.json`. A short follow-up (`continua`, `ok`, under
   4 words, a slash command) keeps it; only a new non-trivial prompt replaces it. `delegated` and
@@ -198,9 +210,11 @@ context, 78% of it inside long-lived subagents. Therefore:
   Teammates, other sessions and unknown names are left alone when the session's subagents directory exists;
   when the transcript cannot be resolved the resume is counted by the named agent id (no fail-open). The counter
   is a read-modify-write under a lock file (`route-<sid>.resumes.lock`), so concurrent hooks lose no increment.
-- **Overrides**: `#direct` in the prompt, even a short one such as `#direct do it` (owner: the
-  main session does it itself), or
-  `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
+- **Overrides**: `#direct` in the prompt and `COST_ROUTER_ENFORCE=0` bypass the Vault
+  router-first gate only. They do not disable the Fable model guard. The Agent hook blocks when its
+  policy cannot be validated for a Fable-sensitive spawn, when the registered user-scope copy is
+  stale, or when the hook cannot execute (the Agent handler uses `onFailure: block`). Other
+  legacy hooks retain their existing fail-open behavior.
 - **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) makes every hook return at once: exit 0, no stdout, no
   state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
   CLAUDE.md, project MCP and skills and differ only in the hook layer). `hook_agent_usage.py --report` still works.
