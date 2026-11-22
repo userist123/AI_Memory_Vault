@@ -461,18 +461,37 @@ def pinned_vault_roots() -> list:
         cfg = Path.home() / ".claude" / "skills" / "cost-router" / CONFIG_NAME
         data = json.loads(cfg.read_text(encoding="utf-8"))
         roots = data.get("vault_roots") if isinstance(data, dict) else None
-        return [normalize_root(r) for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
+        # the STORED string is the reference (written at install as the normcased realpath): it is never re-resolved
+        # here, or a pinned directory swapped for a junction would resolve to the attacker's tree and match it
+        return [os.path.normcase(r) for r in roots if isinstance(r, str) and os.path.isabs(r)] if isinstance(roots, list) else []
     except Exception:
         return []
+
+
+def _is_link(path: Path) -> bool:
+    """A symlink or (Windows) junction / reparse point. Stdlib only; an unreadable path counts as a link (fail closed)."""
+    try:
+        if path.is_symlink():
+            return True
+        is_junction = getattr(path, "is_junction", None)
+        if is_junction is not None:
+            return bool(is_junction())
+        if os.name == "nt":  # Python < 3.12: the reparse-point attribute
+            return bool(os.lstat(path).st_file_attributes & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT
+        return False
+    except (OSError, AttributeError):
+        return True
 
 
 def pinned_vault_root(data: Optional[dict] = None) -> Optional[Path]:
     """The real path of the project when it IS a pinned vault root and still has the router entry point; else None."""
     try:
         root = project_dir(data)
-        real = normalize_root(root)
+        real = normalize_root(root)  # the project's realpath, compared with the stored string
         if real not in pinned_vault_roots():
             return None
+        if _is_link(Path(real)) or normalize_root(real) != real:
+            return None  # the pinned path is (or sits behind) a link now: it is not the directory that was pinned
         if not Path(os.path.realpath(str(root)), *ROUTE_CLI_REL).is_file():
             return None
         return Path(os.path.realpath(str(root)))

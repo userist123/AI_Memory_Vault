@@ -145,11 +145,11 @@ def hook_entry(skill_dir: Path, script: str = "hook_prompt_route.py", matcher=No
     target = (skill_dir / script).as_posix()
     if script == "hook_agent_model.py":
         cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-               f'"$py" "{target}"; exit $?; fi; done; '
+               f'"$py" -I "{target}"; exit $?; fi; done; '
                'echo "cost-router: Python is required for Agent routing; blocking the spawn" >&2; exit 2')
     else:
         cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-               f'"$py" "{target}"; exit 0; fi; done; exit 0')
+               f'"$py" -I "{target}"; exit 0; fi; done; exit 0')
     handler = {"type": "command", "command": cmd, "timeout": HOOK_TIMEOUT.get(script, 10)}
     if script == "hook_agent_model.py":
         handler["onFailure"] = "block"

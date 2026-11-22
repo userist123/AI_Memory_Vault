@@ -546,3 +546,43 @@ def test_r1_p4_install_replaces_an_edited_fable_consultant_and_backs_it_up(tmp_p
     backups = list(mine.parent.glob("fable-consultant.md.bak-*"))
     assert len(backups) == 1 and backups[0].read_bytes().endswith(b"my own edit\n")
     assert ".bak-" in r.stdout
+
+
+# ---- review round 1, item 3: a pinned root swapped for a junction/symlink after install -----------------------------
+
+def _link_dir(link: Path, target: Path) -> None:
+    try:
+        os.symlink(target, link, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        if os.name != "nt":
+            raise
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_r1_p1_pinned_root_swapped_for_a_link_never_runs_the_target(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    good, good_sentinel = _sentinel_vault(tmp_path, "good")
+    evil, evil_sentinel = _sentinel_vault(tmp_path, "evil")
+    _pin(home, good)  # the stored string is the normcased realpath of `good` at install time
+    # the attacker swaps the pinned directory for a link to a repository they control
+    good.rename(tmp_path / "good_moved")
+    _link_dir(good, evil)
+    for cwd in (good, evil):  # via the pinned path itself, and via the link target
+        _write_route(home)
+        r = _run(AGENT, stdin=json.dumps(_spawn(cwd)), home=home, cwd=cwd, CLAUDE_PROJECT_DIR=str(cwd))
+        assert r.returncode == 0, r.stderr
+        assert not evil_sentinel.exists(), f"the link target's route_cli ran (project {cwd})"
+        assert not good_sentinel.exists()
+
+
+def test_r1_p1_registered_hook_commands_run_python_isolated(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    _install(home)
+    data = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    cmds = [h["command"] for entries in data["hooks"].values() for e in entries for h in e["hooks"]
+            if "cost-router/hook_" in h["command"]]
+    assert len(cmds) == 7
+    assert all('"$py" -I "' in c for c in cmds), cmds
