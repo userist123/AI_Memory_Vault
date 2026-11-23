@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import contextlib
 import dataclasses
+import datetime
 import hashlib
 import json
 import os
@@ -199,7 +200,19 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
 
     @app.get(f"{API}/projects")
     def list_projects(includeArchived: bool = False) -> list[dict[str, Any]]:  # noqa: N803
-        return studio.list_projects(OWNER, includeArchived)
+        rows = studio.list_projects(OWNER, includeArchived)
+        for p in rows:  # project picker: when the current preview site was switched in (None before the first build)
+            p["lastBuildAt"] = _last_build_at(str(p.get("id", "")))
+        return rows
+
+    def _last_build_at(pid: str) -> str | None:
+        if not re.fullmatch(r"prj_[0-9a-f]{16}", pid):
+            return None
+        try:
+            mtime = (build_service.preview_base(settings, pid) / "current").stat().st_mtime
+        except OSError:
+            return None
+        return datetime.datetime.fromtimestamp(mtime, tz=datetime.UTC).isoformat()
 
     @app.get(f"{API}/projects/{{pid}}/files")
     def list_files(pid: str) -> list[dict[str, Any]]:

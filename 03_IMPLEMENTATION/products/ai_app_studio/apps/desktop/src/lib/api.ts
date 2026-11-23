@@ -208,7 +208,12 @@ const RUN_RE = /^run_[0-9a-f]{16}$/;
 export interface ProjectRef {
   id: string;
   name: string;
+  /** ISO time the current preview site was switched in; null = never built (absent in older servers/tests) */
+  lastBuildAt?: string | null;
 }
+
+// the backend's datetime.isoformat() in UTC; anything else is dropped (never shown)
+const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$/;
 
 export async function listProjects(s: Session): Promise<ProjectRef[]> {
   const body = await request(s, "/projects");
@@ -217,9 +222,44 @@ export async function listProjects(s: Session): Promise<ProjectRef[]> {
     if (!p || typeof p !== "object") continue;
     const r = p as Record<string, unknown>;
     if (typeof r.id !== "string" || !PROJECT_RE.test(r.id)) continue;
-    out.push({ id: r.id, name: inspect(r.name, 64).text });
+    const ref: ProjectRef = { id: r.id, name: inspect(r.name, 64).text };
+    if ("lastBuildAt" in r)
+      ref.lastBuildAt = typeof r.lastBuildAt === "string" && ISO_RE.test(r.lastBuildAt) && !Number.isNaN(Date.parse(r.lastBuildAt)) ? r.lastBuildAt : null;
+    out.push(ref);
   }
   return out;
+}
+
+export type DeleteOutcome = { kind: "approval"; approvalId: string } | { kind: "done" } | { kind: "error"; message: string };
+
+/** DELETE /projects/<id>, owner, two steps like export: without ``approvalId`` the server records an approval request
+ * and answers 428 {approvalId}; the owner approves it and the call is repeated with the id. Fail closed on any odd reply. */
+export async function deleteProject(s: Session, projectId: string, approvalId?: string): Promise<DeleteOutcome> {
+  if (!PROJECT_RE.test(projectId) || (approvalId !== undefined && !APR_RE.test(approvalId)))
+    return { kind: "error", message: "invalid id" };
+  const res = await fetch(`${s.apiBase}/api/v1/projects/${projectId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${s.token}`, "Content-Type": "application/json" },
+    ...(approvalId ? { body: JSON.stringify({ approvalId }) } : {}),
+    credentials: "omit",
+    redirect: "error",
+    referrerPolicy: "no-referrer",
+  });
+  const text = (await res.text()).slice(0, MAX_ERROR_BODY);
+  let body: Record<string, unknown> = {};
+  try {
+    const j = text ? (JSON.parse(text) as unknown) : {};
+    if (j && typeof j === "object") body = j as Record<string, unknown>;
+  } catch {
+    return { kind: "error", message: `HTTP ${res.status}` };
+  }
+  if (res.status === 428) {
+    const d = (body.details && typeof body.details === "object" ? body.details : {}) as Record<string, unknown>;
+    if (!approvalId && typeof d.approvalId === "string" && APR_RE.test(d.approvalId)) return { kind: "approval", approvalId: d.approvalId };
+    return { kind: "error", message: "malformed approval request" };
+  }
+  if (res.ok) return { kind: "done" };
+  return { kind: "error", message: clean(body.message, SHORT_CAP).trim() || `HTTP ${res.status}` };
 }
 
 export const TEMPLATES = ["blank", "tabs", "list-detail"] as const;

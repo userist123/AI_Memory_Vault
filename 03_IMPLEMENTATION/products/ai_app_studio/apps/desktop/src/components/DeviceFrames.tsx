@@ -76,8 +76,7 @@ export function DeviceFrame(props: {
           </div>
         ) : (
           <div className="frame-empty" data-testid="frame-empty" role="status">
-            <strong>Nicio aplicație construită încă</strong>
-            <span>Scrie ce aplicație vrei în caseta din stânga și apasă Start run. Aprobă planul, iar aplicația apare aici.</span>
+            <strong>Nicio aplicație construită încă — scrie în chat ce vrei și apasă Start</strong>
           </div>
         )}
         <TapLayer taps={props.taps} scale={scale} now={props.now} />

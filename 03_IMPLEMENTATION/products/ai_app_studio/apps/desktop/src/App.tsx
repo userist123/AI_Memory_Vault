@@ -6,6 +6,7 @@ import {
   type Template,
   exportProject,
   createProject,
+  deleteProject,
   errorText,
   projectTitle,
   decideApproval,
@@ -21,6 +22,7 @@ import {
   stopRun,
 } from "./lib/api";
 import { DEMO_PROJECT, runDemo } from "./lib/demo";
+import { previewLabel } from "./lib/events";
 import { LiveClient } from "./lib/live";
 import { loadSession, previewOrigin, type Session } from "./lib/session";
 import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from "./lib/store";
@@ -31,10 +33,12 @@ import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
 import { ExportControls } from "./components/ExportControls";
+import { ProjectPicker } from "./components/ProjectPicker";
 import { RunControls } from "./components/RunControls";
 import { elapsed, Timeline } from "./components/Timeline";
 
 const FOLLOW_PAUSE_MS = 10_000;
+const PROJECT_ID_RE = /^prj_[0-9a-f]{16}$/;
 type RightTab = DeviceKind | "mirror";
 
 function useNow(ms = 500): number {
@@ -92,6 +96,8 @@ export function App() {
   const [mirrorStream, setMirrorStream] = useState<ArrayBuffer | null>(null);
   const [demoRun, setDemoRun] = useState(0);
   const [projects, setProjects] = useState<ProjectRef[]>([]);
+  // the project open in the studio (header picker); "" = none yet -> the newest one
+  const [selectedProject, setSelectedProject] = useState("");
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
   const buildRef = useRef<HTMLDivElement>(null);
@@ -172,6 +178,59 @@ export function App() {
     };
   }, [session]);
 
+  // ---- the open project (header picker) ----
+  const running = state.runStatus === "running";
+  // the header always names the project whose events the timeline shows (a live run, or the run replayed on open);
+  // a switch resets the store, so its projectId is "" until that project's own events arrive
+  useEffect(() => {
+    if (PROJECT_ID_RE.test(state.projectId)) setSelectedProject(state.projectId);
+  }, [state.projectId]);
+  // nothing chosen (or the chosen one is gone): the newest project
+  useEffect(() => {
+    if (selectedProject && projects.some((p) => p.id === selectedProject)) return;
+    if (selectedProject && projects.length === 0) return; // list not loaded yet
+    setSelectedProject(projects[0]?.id ?? "");
+  }, [projects, selectedProject]);
+  // a finished run may have published a build: refresh the "last build" times
+  useEffect(() => {
+    if (!session || (state.runStatus !== "finished" && state.runStatus !== "failed")) return;
+    let live = true;
+    listProjects(session)
+      .then((p) => live && setProjects(p))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [session, state.runStatus]);
+
+  /** Switch the studio to another project: timeline, diff and frames start from that project's state. */
+  const openProject = (id: string) => {
+    if (!id || id === selectedProject || running) return;
+    store.dispatch({ type: "reset" });
+    setActiveFile(null);
+    setSelectedProject(id);
+  };
+  const onCreateProject = async (name: string, template: Template) => {
+    if (!session) throw new Error("no backend session");
+    const id = await createProject(session, name, template);
+    setProjects(await listProjects(session));
+    if (!running) store.dispatch({ type: "reset" });
+    setActiveFile(null);
+    setSelectedProject(id);
+  };
+  const onProjectDeleted = (id: string) => {
+    if (!session) return;
+    if (state.projectId === id || selectedProject === id) {
+      store.dispatch({ type: "reset" });
+      setActiveFile(null);
+      setSelectedProject("");
+    }
+    void listProjects(session)
+      .then(setProjects)
+      .catch(() => setRunError("Projects could not be loaded."));
+  };
+  const selectedRef = projects.find((p) => p.id === selectedProject);
+
   // ---- follow the AI ----
   const followActive = follow && now >= pausedUntil;
   const focus = state.focus;
@@ -195,9 +254,13 @@ export function App() {
   const previewSrc = (d: DeviceKind): string | null => {
     // no build published in this run yet (previewNonce counts preview.revision/captured): show the empty-state text
     // instead of the preview server's bare 404 page
-    if (demo || !session || !state.previewProjectId || state.previewNonce === 0) return null;
+    if (demo || !session) return null;
     void d;
-    return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}-${state.previewNonce}`;
+    if (state.previewProjectId && state.previewNonce > 0)
+      return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}-${state.previewNonce}`;
+    // nothing built in this run: the open project's last build, if it has one
+    const label = selectedRef?.lastBuildAt && !(state.projectId && state.projectId !== selectedRef.id) ? previewLabel(selectedRef.id) : "";
+    return label && selectedRef?.lastBuildAt ? `${previewOrigin(label, session.previewPort)}/?b=${Date.parse(selectedRef.lastBuildAt)}` : null;
   };
 
   const onDecide = (id: string, d: "approve" | "deny") => {
@@ -244,6 +307,7 @@ export function App() {
       const pid = projectId || (await createProject(session, projectTitle(prompt), template));
       await startRun(session, pid, prompt);
       if (!projectId) setProjects(await listProjects(session));
+      setSelectedProject(pid);
     })()
       .catch((e: unknown) => setRunError(`The run could not be started: ${errorText(e)}`))
       .finally(() => setRunBusy(false));
@@ -265,6 +329,19 @@ export function App() {
     <div className="app" onPointerDownCapture={ownerInput} onKeyDownCapture={ownerInput}>
       <header className="topbar">
         <span className="brand">AI App Studio</span>
+        {!demo && session ? (
+          <ProjectPicker
+            projects={projects}
+            selected={selectedProject}
+            disabled={running}
+            onSelect={openProject}
+            onCreate={onCreateProject}
+            requestDelete={(pid, apr) => deleteProject(session, pid, apr)}
+            approve={(id) => decideApproval(session, id, "approve")}
+            deny={(id) => decideApproval(session, id, "deny")}
+            onDeleted={onProjectDeleted}
+          />
+        ) : null}
         <span className="run-title">{state.runTitle || (demo ? "Demo run" : "No active run")}</span>
         <span className={`status ${state.runStatus}`} data-testid="run-status">
           <span className="led" aria-hidden="true" />
@@ -318,7 +395,8 @@ export function App() {
           {sessionError ? <p className="banner">{sessionError}</p> : null}
           {!demo && session ? (
             <RunControls
-              projects={projects}
+              key={selectedProject || "none"}
+              projects={selectedRef ? [selectedRef, ...projects.filter((p) => p.id !== selectedRef.id)] : projects}
               running={state.runStatus === "running"}
               busy={runBusy}
               error={runError}
