@@ -175,11 +175,11 @@ public static class InvestigationReportText
         string kind = KindWord(d.Kind);
         string level = m.Rule is { Level.Length: > 0 } ? m.Rule.Level : "";
         string what = $"Potrivire de regulă {kind}: {d.Title} (regula {d.RuleId})";
-        if (m.Count > 1) what += $" — apare de {m.Count} ori pe același element";
+        if (m.Count > 1) what += $" — apare de {RoText.Count(m.Count, "dată", "ori")} pe același element";
         var lines = new List<string> { "Ce s-a întâmplat: " + what };
         string when = d.TimeUtc is { } t ? RoText.LocalWithUtc(t, zone) : "oră necunoscută";
         string ts = row is null ? LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.From(row).TimeSource;
-        lines.Add($"Când: {when} · ora din: {ts}");
+        lines.Add($"Când: {when} · sursa orei: {ts}");
         var where = new List<string>();
         if (row is { Host.Length: > 0 }) where.Add("stația " + row.Host);
         if (item is { OriginalName.Length: > 0 }) where.Add("fișierul " + item.OriginalName);
@@ -188,7 +188,7 @@ public static class InvestigationReportText
         lines.Add("Dovada:");
         string quote = row is null ? "" : LogAnalyzer.Dfir.Integrity.EvidenceQuote.From(row).Quote;
         lines.Add(quote.Length > 0 ? $"  {d.EvidenceId} · {d.Locator} · Citat: „{quote}”" : $"  {d.EvidenceId} · {d.Locator} · Valoare potrivită: „{LogAnalyzer.Dfir.Integrity.EvidenceQuote.Truncate(d.Match, 300)}”");
-        lines.Add("Cum verifici tu:");
+        lines.Add("Cum verificați:");
         var ev = new EvidenceRef(d.EvidenceId, d.Locator, d.Title, d.EvidenceSha256, quote, row is null ? "Necunoscut" : ts, "");
         var how = steps(ev).Take(2).ToList();
         int n = 0;
@@ -198,7 +198,7 @@ public static class InvestigationReportText
         lines.Add("Ce NU dovedește:");
         lines.Add("  • " + RuleNotProven);
         if (m.Rule is { FalsePositives.Length: > 0 }) lines.Add("  • Rezultate fals pozitive cunoscute de regulă: " + m.Rule.FalsePositives);
-        lines.Add("Siguranță: " + (level.Length > 0 ? $"nivelul regulii: {level}; " : d.Kind is LogAnalyzer.Dfir.Detection.DetectionKind.Ioc ? "indicator dintr-o listă IOC; " : "") + $"încredere {ConfidenceWord(d.Confidence)}.");
+        lines.Add("Grad de încredere: " + (level.Length > 0 ? $"nivelul regulii: {level}; " : d.Kind is LogAnalyzer.Dfir.Detection.DetectionKind.Ioc ? "indicator dintr-o listă IOC; " : "") + $"încredere {ConfidenceWord(d.Confidence)}.");
         return new MistakeBlock(d.RuleId + "|" + d.EvidenceId + "|" + d.Locator, lines);
     }
 
@@ -211,7 +211,7 @@ public static class InvestigationReportText
         string when = f.FirstSeenUtc is { } a ? RoText.LocalWithUtc(a, zone) : "oră necunoscută";
         if (f.FirstSeenUtc is { } a2 && f.LastSeenUtc is { } b && b != a2) when += " – " + RoText.LocalWithUtc(b, zone);
         string ts = first is null ? LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource : first.TimeSource.Length > 0 ? first.TimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource;
-        lines.Add($"Când: {when} · ora din: {ts}");
+        lines.Add($"Când: {when} · sursa orei: {ts}");
         var where = new List<string>();
         if (f.Host.Length > 0) where.Add("stația " + f.Host);
         if (f.User.Length > 0) where.Add("contul " + f.User);
@@ -224,7 +224,7 @@ public static class InvestigationReportText
         foreach (var e in f.SupportingEvidence.Take(3))
             lines.Add($"  {e.EvidenceId} · {e.Locator} · Citat: " + (e.Quote.Length > 0 ? $"„{e.Quote}”" : QuoteMissing));
         if (f.SupportingEvidence.Count == 0) lines.Add("  nicio dovadă atașată");
-        lines.Add("Cum verifici tu:");
+        lines.Add("Cum verificați:");
         var how = first is null ? [] : steps(first).Take(3).ToList();
         if (how.Count == 0) lines.Add("  1. Cereți unui specialist să verifice constatarea în elementul de probă original.");
         for (int i = 0; i < how.Count; i++) lines.Add($"  {i + 1}. {how[i].ToLine()}");
@@ -233,16 +233,16 @@ public static class InvestigationReportText
             .Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.Ordinal).Take(3).ToList();
         if (not.Count == 0) lines.Add("  " + NoAlternatives);
         foreach (var x in not) lines.Add("  • " + x);
-        lines.Add($"Siguranță: încredere {ConfidenceWord(f.Confidence)}; verificarea automată: {StateLabels.Romanian(f.Verification.State)}" +
+        lines.Add($"Grad de încredere: încredere {ConfidenceWord(f.Confidence)}; verificarea automată: {StateLabels.Romanian(f.Verification.State)}" +
                   (f.Verification.State == StandardState.NotAssessed ? " (nu s-a pronunțat)" : "") + ".");
-        lines.Add("Ce faci: " + OwnerActions.For(f));
+        lines.Add("Ce faceți: " + OwnerActions.For(f));
         return new MistakeBlock(f.FindingId, lines);
     }
 
-    // ---- "Rezumat pentru proprietar" and the "Cum verifici tu" checklist (planner #14 E1) ----
+    // ---- "Rezumat pentru proprietar" and the "Cum verificați" checklist (planner #14 E1) ----
 
     public const string OwnerSummaryHeading = "Rezumat pentru proprietar";
-    public const string ChecklistHeading = "Listă de verificare (Cum verifici tu)";
+    public const string ChecklistHeading = "Listă de verificare (Cum verificați)";
     public const int OwnerSummaryCap = 15;
     public const string ChecklistBox = "☐";
     public const string OwnerSummaryRule = "Toate greșelile de gravitate medie sau mai mare, câte o linie, cu ce faceți; lista cu pașii de verificare este în ultima anexă a raportului.";
@@ -255,11 +255,43 @@ public static class InvestigationReportText
     private static string ShortTitle(FindingGroup g) =>
         RoText.StripVolumes(g.Lead.Title) + (g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "");
 
-    /// <summary>"gravitate · titlu → Ce faci: propoziție", at most <see cref="OwnerSummaryCap"/> lines and then how many more the "Greșeli găsite" section holds.</summary>
+    public const string SettingsBlockHeading = "Setări de corectat";
+    public const string TracesBlockHeading = "Urme de investigat";
+
+    /// <summary>One block of the owner's summary: its heading with the total number of groups of that kind, and the lines shown (within the overall cap).</summary>
+    public sealed record OwnerSummaryBlock(string Heading, int Total, IReadOnlyList<string> Lines)
+    {
+        public string HeadingWithCount => $"{Heading} ({Total})";
+    }
+
+    /// <summary>The owner's summary split in two (G5): "Setări de corectat" (configuration findings, <see cref="SemanticType.Configuration"/>) and "Urme de investigat"
+    /// (everything else), each in the order of <see cref="GroupFindings"/> (severity, then first time seen). The first <see cref="OwnerSummaryCap"/> groups overall are
+    /// shown; <c>More</c> is the "… și încă N" line when there are more. An empty block is left out.</summary>
+    public static (List<OwnerSummaryBlock> Blocks, string? More) OwnerSummary(IReadOnlyList<FindingGroup> groups)
+    {
+        static bool IsSetting(FindingGroup g) => g.Lead.SemanticType == SemanticType.Configuration;
+        var shown = groups.Take(OwnerSummaryCap).ToList();
+        var blocks = new List<OwnerSummaryBlock>();
+        foreach (var (heading, setting) in new[] { (SettingsBlockHeading, true), (TracesBlockHeading, false) })
+        {
+            int total = groups.Count(g => IsSetting(g) == setting);
+            if (total == 0) continue;
+            blocks.Add(new OwnerSummaryBlock(heading, total, shown.Where(g => IsSetting(g) == setting).Select(OwnerSummaryLine).ToList()));
+        }
+        string? more = groups.Count > OwnerSummaryCap ? $"… și încă {groups.Count - OwnerSummaryCap} în secțiunea {MistakesHeading}" : null;
+        return (blocks, more);
+    }
+
+    /// <summary>"gravitate · titlu → Ce faceți: propoziție".</summary>
+    public static string OwnerSummaryLine(FindingGroup g) => $"{SeverityWord(g.Lead.Severity)} · {ShortTitle(g)} → Ce faceți: {OwnerActions.For(g.Lead)}";
+
+    /// <summary>The summary flattened, block headings included: at most <see cref="OwnerSummaryCap"/> finding lines and then how many more the "Greșeli găsite" section holds.</summary>
     public static List<string> OwnerSummaryLines(IReadOnlyList<FindingGroup> groups)
     {
-        var l = groups.Take(OwnerSummaryCap).Select(g => $"{SeverityWord(g.Lead.Severity)} · {ShortTitle(g)} → Ce faci: {OwnerActions.For(g.Lead)}").ToList();
-        if (groups.Count > OwnerSummaryCap) l.Add($"… și încă {groups.Count - OwnerSummaryCap} în secțiunea {MistakesHeading}");
+        var (blocks, more) = OwnerSummary(groups);
+        var l = new List<string>();
+        foreach (var b in blocks) { l.Add(b.HeadingWithCount); l.AddRange(b.Lines); }
+        if (more is not null) l.Add(more);
         return l;
     }
 
@@ -273,10 +305,10 @@ public static class InvestigationReportText
             var lines = new List<string> { $"{ChecklistBox} {SeverityWord(g.Lead.Severity)} · {ShortTitle(g)}" };
             lines.Add("  Unde: " + (refs.Count > 0 ? $"{refs[0].EvidenceId} · {RoText.CleanPathsInText(refs[0].Locator)}" + (refs.Count > 1 ? $" (și încă {RoText.Count(refs.Count - 1, "loc", "locuri")} în probe)" : "") : "nespecificat în date"));
             var how = refs.Take(5).SelectMany(e => steps(e)).Select(s => s.ToLine()).Distinct(StringComparer.Ordinal).ToList();
-            lines.Add("  Cum verifici tu:");
+            lines.Add("  Cum verificați:");
             if (how.Count == 0) lines.Add("  1. Cereți unui specialist să verifice constatarea în elementul de probă original.");
             for (int i = 0; i < how.Count; i++) lines.Add($"  {i + 1}. {how[i]}");
-            lines.Add("  Ce faci: " + OwnerActions.For(g.Lead));
+            lines.Add("  Ce faceți: " + OwnerActions.For(g.Lead));
             lines.Add("  Verificat de: ______________________  Data: ____________");
             entries.Add(lines);
         }

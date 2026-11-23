@@ -46,7 +46,7 @@ public sealed class OwnerSummaryTests : IDisposable
 
     private static string Annex(string text)
     {
-        int a = text.IndexOf(". Listă de verificare (Cum verifici tu)\n", StringComparison.Ordinal);
+        int a = text.IndexOf(". Listă de verificare (Cum verificați)\n", StringComparison.Ordinal);
         Assert.True(a >= 0, "annex missing");
         return text[a..];
     }
@@ -63,10 +63,10 @@ public sealed class OwnerSummaryTests : IDisposable
     {
         var text = Print(ThreeMedium());
         var box = Box(text);
-        Assert.Contains("Medie · UAC nu cere confirmare → Ce faci: Setați din nou confirmarea pentru administratori", box);
-        Assert.Contains("Medie · Excluderi Defender → Ce faci: Verificați fiecare excludere din listă și ștergeți-le pe cele pe care nu le recunoașteți.", box);
-        Assert.Contains("Medie · Auditul autentificarilor lipseste → Ce faci: Porniți auditarea pentru autentificări", box);
-        Assert.Equal(3, Regex.Matches(box, "→ Ce faci:").Count);
+        Assert.Contains("Medie · UAC nu cere confirmare → Ce faceți: Readuceți la nivelul implicit setarea Control cont utilizator", box);
+        Assert.Contains("Medie · Excluderi Defender → Ce faceți: Notați (sau fotografiați) lista de excluderi, apoi ștergeți-le pe cele pe care nu le recunoașteți.", box);
+        Assert.Contains("Medie · Auditul autentificarilor lipseste → Ce faceți: Porniți auditarea pentru autentificări", box);
+        Assert.Equal(3, Regex.Matches(box, "→ Ce faceți:").Count);
         Assert.True(text.IndexOf("Rezumat pentru proprietar\n", StringComparison.Ordinal) < text.IndexOf(". Greșeli găsite\n", StringComparison.Ordinal));
         Assert.DoesNotContain("neconform", text, StringComparison.OrdinalIgnoreCase);
     }
@@ -76,7 +76,7 @@ public sealed class OwnerSummaryTests : IDisposable
     {
         var fs = Enumerable.Range(1, 18).Select(i => F($"F-{i:0000}", "CFG-SMB1", i == 18 ? Severity.High : Severity.Medium, "Problema " + i, i)).ToList();
         var box = Box(Print(fs));
-        Assert.Equal(15, Regex.Matches(box, "→ Ce faci:").Count);
+        Assert.Equal(15, Regex.Matches(box, "→ Ce faceți:").Count);
         Assert.Contains("… și încă 3 în secțiunea Greșeli găsite", box);
         Assert.True(box.IndexOf("Problema 18", StringComparison.Ordinal) < box.IndexOf("Problema 1 ", StringComparison.Ordinal));
     }
@@ -86,7 +86,7 @@ public sealed class OwnerSummaryTests : IDisposable
     {
         var text = Print([F("F-0001", "CFG-SMB1", Severity.High, "Problema grava unica", 1), .. ThreeMedium()]);
         Assert.Equal(1, Regex.Count(text[..text.IndexOf(". Greșeli găsite\n", StringComparison.Ordinal)], "Problema grava unica"));
-        Assert.Contains("Ridicată · Problema grava unica → Ce faci:", Box(text));
+        Assert.Contains("Ridicată · Problema grava unica → Ce faceți:", Box(text));
     }
 
     [Fact]
@@ -102,10 +102,10 @@ public sealed class OwnerSummaryTests : IDisposable
     {
         var text = Print([F("F-0001", "CFG-UAC-NOPROMPT", Severity.Medium, "UAC", 1, "Pasul propriu al constatării.", "Al doilea pas.")]);
         var box = Box(text);
-        Assert.Contains("→ Ce faci: Pasul propriu al constatării.", box);
-        Assert.DoesNotContain("Setați din nou confirmarea", box);
+        Assert.Contains("→ Ce faceți: Pasul propriu al constatării.", box);
+        Assert.DoesNotContain("Readuceți la nivelul implicit", box);
         Assert.DoesNotContain("Al doilea pas.", box);
-        Assert.Contains("Ce faci: Pasul propriu al constatării.", Annex(text));
+        Assert.Contains("Ce faceți: Pasul propriu al constatării.", Annex(text));
     }
 
     [Fact]
@@ -115,10 +115,56 @@ public sealed class OwnerSummaryTests : IDisposable
         Assert.Equal(3, Regex.Matches(annex, "(?m)^☐ ").Count);
         Assert.Contains("☐ Medie · UAC nu cere confirmare", annex);
         Assert.Contains("  Unde: E-0001 · EventRecordID=4001", annex);
-        Assert.Equal(3, Regex.Matches(annex, "(?m)^  Cum verifici tu:").Count);
+        Assert.Equal(3, Regex.Matches(annex, "(?m)^  Cum verificați:").Count);
         Assert.Matches(@"(?m)^  1\. ", annex);
         Assert.True(annex.IndexOf("☐ Medie · UAC", StringComparison.Ordinal) < annex.IndexOf("☐ Medie · Excluderi", StringComparison.Ordinal));
         Assert.Contains("Verificat de:", annex);
+    }
+
+    private static Finding Cfg(string id, string rule, Severity sev, string title, int minute)
+    {
+        var f = F(id, rule, sev, title, minute);
+        f.SemanticType = SemanticType.Configuration;
+        return f;
+    }
+
+    [Fact]
+    public void G5_the_box_splits_settings_to_correct_from_traces_to_investigate_each_by_severity_with_its_count()
+    {
+        var box = Box(Print(
+        [
+            F("F-0001", "DEF-DETECTION", Severity.Medium, "Antivirusul a gasit un fisier", 1),
+            Cfg("F-0002", "CFG-SMB1", Severity.Medium, "SMB1 pornit", 2),
+            F("F-0003", "DEF-TAMPER", Severity.High, "Protectia Defender oprita", 3),
+            Cfg("F-0004", "CFG-UAC-OFF", Severity.High, "UAC oprit", 4),
+            Cfg("F-0005", "CFG-RDP-NLA", Severity.Medium, "RDP fara NLA", 5),
+        ]));
+        int settings = box.IndexOf("Setări de corectat (3)\n", StringComparison.Ordinal);
+        int traces = box.IndexOf("Urme de investigat (2)\n", StringComparison.Ordinal);
+        Assert.True(settings >= 0, "settings block missing");
+        Assert.True(traces > settings, "traces block missing or before the settings block");
+        var s = box[settings..traces];
+        var t = box[traces..];
+        Assert.Equal(3, Regex.Matches(s, "→ Ce faceți:").Count);
+        Assert.Equal(2, Regex.Matches(t, "→ Ce faceți:").Count);
+        Assert.Contains("Ridicată · UAC oprit", s);
+        Assert.Contains("Medie · Antivirusul a gasit un fisier", t);
+        Assert.DoesNotContain("Defender", s);
+        Assert.DoesNotContain("SMB1", t);
+        Assert.True(s.IndexOf("UAC oprit", StringComparison.Ordinal) < s.IndexOf("SMB1 pornit", StringComparison.Ordinal));
+        Assert.True(t.IndexOf("Protectia Defender oprita", StringComparison.Ordinal) < t.IndexOf("Antivirusul a gasit", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void G5_the_fifteen_line_cap_is_overall_across_both_blocks_and_the_counts_are_totals()
+    {
+        var fs = Enumerable.Range(1, 10).Select(i => Cfg($"F-{i:0000}", "CFG-SMB1", Severity.High, "Setare " + i, i))
+            .Concat(Enumerable.Range(11, 10).Select(i => F($"F-{i:0000}", "DEF-DETECTION", Severity.Medium, "Urma " + i, i))).ToList();
+        var box = Box(Print(fs));
+        Assert.Equal(15, Regex.Matches(box, "→ Ce faceți:").Count);
+        Assert.Contains("Setări de corectat (10)\n", box);
+        Assert.Contains("Urme de investigat (10)\n", box);
+        Assert.Contains("… și încă 5 în secțiunea Greșeli găsite", box);
     }
 
     [Fact]
@@ -126,7 +172,7 @@ public sealed class OwnerSummaryTests : IDisposable
     {
         var none = Print([F("F-0001", "CFG-SMB1", Severity.Info, "Informativ", 1)]);
         Assert.DoesNotContain("Rezumat pentru proprietar", none);
-        Assert.DoesNotContain("Listă de verificare (Cum verifici tu)", none);
+        Assert.DoesNotContain("Listă de verificare (Cum verificați)", none);
     }
 
     [Fact]

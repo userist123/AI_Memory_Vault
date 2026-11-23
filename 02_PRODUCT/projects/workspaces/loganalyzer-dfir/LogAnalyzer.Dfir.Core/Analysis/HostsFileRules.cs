@@ -1,6 +1,7 @@
 using LogAnalyzer.Dfir.Model;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Network;
+using LogAnalyzer.Dfir.Language;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
@@ -85,17 +86,17 @@ public static class HostsFileRules
                 found.Add((redirect ? 0 : 1, () => new Finding
                 {
                     FindingId = nextId(), RuleId = "HOSTS-SECURITY-DOMAIN",
-                    Title = redirect ? $"Fișierul hosts mapează un nume de actualizare sau securitate la o altă adresă: {shown}" : $"Fișierul hosts blochează un nume de actualizare sau securitate: {shown}",
+                    Title = redirect ? $"Fișierul hosts asociază un nume de server de actualizări sau de securitate cu o altă adresă: {shown}" : $"Fișierul hosts blochează un nume de server de actualizări sau de securitate: {shown}",
                     Severity = redirect ? Severity.High : Severity.Medium, Category = "Defense Evasion",
                     Classification = Classification.Direct, Confidence = e.Confidence, MitreTechniqueId = "T1565.001",
                     Host = e.Host,
                     PlainWhat = redirect ? $"fișierul hosts trimite {shown} la adresa {ipText}" : $"fișierul hosts trimite {shown} la {ipText}, adică numele nu se mai rezolvă către serverul real",
                     Description = $"Ce s-a întâmplat: în fișierul hosts, rândul {line}, este scris „{Visible(raw)}”. Numele {Visible(shown)} aparține domeniului {sec[0].Domain}, folosit de actualizările Windows, de Microsoft sau de un producător de antivirus. " +
-                                  (redirect ? $"Rândul îl mapează la {ipText}, o adresă care nu este de loopback. " : $"Rândul îl mapează la {ipText}, deci rezolvarea numelui este blocată. ") +
+                                  (redirect ? $"Rândul îl asociază cu {ipText}, o adresă care nu este adresa locală a calculatorului (loopback). " : $"Rândul îl asociază cu {ipText}, deci rezolvarea numelui este blocată. ") +
                                   "De ce contează: mutarea sau blocarea acestor nume împiedică actualizările și verificările de securitate; dar unele programe de confidențialitate sau de administrare scriu astfel de rânduri. Ce verificați: cine a adăugat rândul și când (fișierul nu are ore; ora ultimei modificări se vede în proprietățile fișierului).",
                     ClassificationReason = "Rândul este în copia fișierului hosts din caz (Direct). Faptul că numele a fost într-adevăr rezolvat așa pe stație nu este dovedit (cache DNS, proxy, DNS peste HTTPS); intenția nu este dovedită.",
                     SupportingEvidence = [new EvidenceRef(e.EvidenceId, e.Locator, rd, e.SourceSha256)],
-                    AlternativeExplanations = ["Program de confidențialitate sau de blocare a telemetriei care scrie în hosts.", "Administrator care a mapat un nume la un server intern sau de test."],
+                    AlternativeExplanations = ["Program de confidențialitate sau de blocare a telemetriei care scrie în hosts.", "Administrator care a asociat un nume la un server intern sau de test."],
                     RecommendedNextSteps = ["Verificați cine a adăugat rândul și dacă este aprobat, apoi comparați cu fișierul hosts de pe stație."],
                 }));
             }
@@ -106,18 +107,18 @@ public static class HostsFileRules
                 found.Add((benign is null ? 2 : 3, () => new Finding
                 {
                     FindingId = nextId(), RuleId = "HOSTS-REDIRECT",
-                    Title = $"Fișierul hosts mapează un nume la o adresă de rețea: {shown}",
+                    Title = $"Fișierul hosts asociază un nume cu o adresă de rețea: {shown}",
                     Severity = benign is null ? Severity.Low : Severity.Info, Category = "Defense Evasion",
                     Classification = benign is null ? Classification.Direct : Classification.BenignKnown, Confidence = e.Confidence, MitreTechniqueId = "T1565.001",
                     Host = e.Host,
-                    PlainWhat = $"fișierul hosts mapează {shown} la adresa {ipText}",
-                    Description = $"Ce s-a întâmplat: în fișierul hosts, rândul {line}, este scris „{Visible(raw)}”. Rândul mapează {Visible(shown)} la {ipText}, o adresă care nu este de loopback. " +
-                                  "De ce contează: o mapare manuală poate muta un serviciu către alt server; este și o practică obișnuită pentru servere interne, VPN sau unelte pentru containere. Ce verificați: dacă maparea este cunoscută și aprobată (fișierul nu are ore).",
+                    PlainWhat = $"fișierul hosts asociază {shown} cu adresa {ipText}",
+                    Description = $"Ce s-a întâmplat: în fișierul hosts, rândul {line}, este scris „{Visible(raw)}”. Rândul asociază {Visible(shown)} cu {ipText}, o adresă care nu este adresa locală a calculatorului (loopback). " +
+                                  "De ce contează: o asociere manuală poate muta un serviciu către alt server; este și o practică obișnuită pentru servere interne, VPN sau unelte pentru containere. Ce verificați: dacă asocierea este cunoscută și aprobată (fișierul nu are ore).",
                     ClassificationReason = benign is null ? "Rândul este în copia fișierului hosts din caz (Direct); nu este dovedit că numele a fost rezolvat așa și nici scopul rândului."
                         : $"{char.ToUpperInvariant(benign.Reason[0]) + benign.Reason[1..]} (nume sau bloc din lista de intrări cunoscute); rândul este în copia fișierului hosts din caz.",
                     SupportingEvidence = [new EvidenceRef(e.EvidenceId, e.Locator, rd, e.SourceSha256)],
                     AlternativeExplanations = ["Server intern, VPN sau unealtă pentru containere/virtualizare care scrie în hosts."],
-                    RecommendedNextSteps = ["Verificați dacă maparea este cunoscută și aprobată."],
+                    RecommendedNextSteps = ["Verificați dacă asocierea este cunoscută și aprobată."],
                 }));
             }
         }
@@ -125,7 +126,7 @@ public static class HostsFileRules
         if (found.Count > MaxFindings)
             ordered.Add(new Finding
             {
-                FindingId = nextId(), RuleId = "HOSTS-REDIRECT", Title = $"Alte {found.Count - MaxFindings} intrări hosts nu au fost listate individual",
+                FindingId = nextId(), RuleId = "HOSTS-REDIRECT", Title = found.Count - MaxFindings == 1 ? "O altă intrare hosts nu a fost listată individual" : $"Alte {RoText.Count(found.Count - MaxFindings, "intrare", "intrări")} hosts nu au fost listate individual",
                 Severity = Severity.Low, Category = "Defense Evasion", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1565.001",
                 PlainWhat = $"Mai multe intrări din fișierul hosts ({found.Count - MaxFindings}, peste cele {MaxFindings} afișate) nu au fost listate individual; ele se găsesc în cronologie",
                 Description = $"Raportul listează primele {MaxFindings} de intrări, cele pentru domenii de securitate întâi; restul sunt în cronologie (evenimente HostsFile).",

@@ -37,14 +37,14 @@ public sealed class OwnerActionsTests
             Assert.NotEqual(OwnerActions.Fallback, s);
         }
         Assert.Null(OwnerActions.ForRule("UNKNOWN-RULE-X"));
-        Assert.Equal("Verificați constatarea cu pașii „Cum verifici tu” și decideți dacă a fost o acțiune autorizată.", OwnerActions.Fallback);
+        Assert.Equal("Verificați constatarea cu pașii „Cum verificați” și decideți dacă a fost o acțiune autorizată.", OwnerActions.Fallback);
         Assert.Equal(OwnerActions.Fallback, OwnerActions.For(Fin("UNKNOWN-RULE-X")));
     }
 
     [Fact]
     public void Exact_ids_beat_prefixes_and_a_prefix_covers_an_unlisted_id_and_sentences_are_sentences_without_verdict_words()
     {
-        Assert.StartsWith("Setați din nou confirmarea pentru administratori", OwnerActions.ForRule("CFG-UAC-NOPROMPT"));
+        Assert.StartsWith("Readuceți la nivelul implicit setarea Control cont utilizator", OwnerActions.ForRule("CFG-UAC-NOPROMPT"));
         Assert.Contains("auditpol /set", OwnerActions.ForRule("CFG-AUDIT-NEW-SUBCATEGORY"));
         Assert.NotNull(OwnerActions.ForRule("CRED-NEW"));
         foreach (var s in Emitted.Select(i => OwnerActions.ForRule(i)!).Append(OwnerActions.Fallback))
