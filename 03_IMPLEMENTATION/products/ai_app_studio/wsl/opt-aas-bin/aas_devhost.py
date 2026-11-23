@@ -660,6 +660,7 @@ class Host:
         self.rec = None
         self.rec_lock = threading.Lock()
         self.video_on = False
+        self.key_t = 0.0  # last video_keyframe restart (monotonic)
         self.video_seq = 0
         self.install = None
         self.stopping = False
@@ -882,6 +883,26 @@ class Host:
             with self.rec_lock:
                 self.rec = None
 
+    def _video_keyframe(self):
+        """S9b: a fresh key frame for the hub after a discontinuity. screenrecord has no IDR request and the emulator
+        console has none either, so the running screenrecord is ended; _video_loop starts the next one at once and a
+        new screenrecord stream begins with SPS/PPS + IDR. At most one restart per KEYFRAME_MIN_S."""
+        with self.rec_lock:
+            if not self.video_on:
+                return {"ok": True, "msg": "video-off"}
+            now = time.monotonic()
+            if now - self.key_t < KEYFRAME_MIN_S:
+                return {"ok": True, "msg": "throttled"}
+            self.key_t = now
+            p = self.rec
+        if p is not None and p.poll() is None:
+            p.terminate()
+            try:
+                p.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                p.kill()
+        return {"ok": True, "msg": "restarted"}
+
     def _video_stop(self):
         with self.rec_lock:
             self.video_on = False
@@ -955,6 +976,8 @@ class Host:
                 raise ValueError("bad size")
             self._video_start(req["size"])
             return {"ok": True}
+        if op == "video_keyframe":
+            return self._video_keyframe()
         if op == "video_stop":
             self._video_stop()
             return {"ok": True, "dropped": self.out.dropped}
@@ -1040,10 +1063,12 @@ class Host:
         return {"ok": rc == 0} if rc == 0 else {"ok": False, "err": txt[-200:]}
 
 
+KEYFRAME_MIN_S = 2.0  # video_keyframe: at most one screenrecord restart per 2 s (the hub asks at most 1/s)
+
 FIELDS = {
     "tap": {"x", "y"}, "swipe": {"x1", "y1", "x2", "y2", "ms"}, "text": {"t"}, "launch": {"pkg"},
     "uninstall": {"pkg"},
-    "screenshot": set(), "video_start": {"size"}, "video_stop": set(), "shutdown": set(),
+    "screenshot": set(), "video_start": {"size"}, "video_stop": set(), "video_keyframe": set(), "shutdown": set(),
     "install": {"sha256", "size"}, "chunk": {"b64"},
 }
 

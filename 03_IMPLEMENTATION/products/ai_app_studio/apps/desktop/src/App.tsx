@@ -3,6 +3,8 @@ import {
   type ApprovalRecord,
   type PlanRecord,
   type ProjectRef,
+  type Template,
+  exportProject,
   createProject,
   decideApproval,
   decidePlan,
@@ -23,6 +25,7 @@ import { CaptureThumb } from "./components/Captures";
 import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
+import { ExportControls } from "./components/ExportControls";
 import { RunControls } from "./components/RunControls";
 import { elapsed, Timeline } from "./components/Timeline";
 
@@ -215,12 +218,12 @@ export function App() {
       .catch(() => setRunError("The plan gate setting could not be changed."));
   };
 
-  const onStartRun = (projectId: string, prompt: string) => {
+  const onStartRun = (projectId: string, prompt: string, template?: Template) => {
     if (!session || runBusy) return;
     setRunBusy(true);
     setRunError("");
     void (async () => {
-      const pid = projectId || (await createProject(session, prompt.slice(0, 40).trim() || "Studio project"));
+      const pid = projectId || (await createProject(session, prompt.slice(0, 40).trim() || "Studio project", template));
       await startRun(session, pid, prompt);
       if (!projectId) setProjects(await listProjects(session));
     })()
@@ -305,6 +308,14 @@ export function App() {
               onStop={onStopRun}
               planGate={planGateOn}
               onPlanGate={onPlanGate}
+              renderExport={(pid) => (
+                <ExportControls
+                  key={pid}
+                  projectId={pid}
+                  run={(p, t, apr) => exportProject(session, p, t, apr)}
+                  approve={(id) => decideApproval(session, id, "approve")}
+                />
+              )}
             />
           ) : null}
           <Timeline

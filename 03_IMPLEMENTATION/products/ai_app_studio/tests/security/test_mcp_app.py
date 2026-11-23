@@ -52,6 +52,8 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
     "device_tap": ({"x": {"type": "integer", "minimum": 0, "maximum": 10000},
                     "y": {"type": "integer", "minimum": 0, "maximum": 10000}}, ["x", "y"]),
     "device_screenshot": ({}, []),
+    # S9b: export (owner approval bound to the artifact sha256; no approval field in the input)
+    "app_export": ({"projectId": PID, "target": {"enum": ["web", "android"]}}, ["projectId", "target"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 

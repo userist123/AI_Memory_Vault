@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import appfiles, project_kind
+from . import app_templates, appfiles, project_kind
 from .errors import ValidationFailed
 from .project_kind import Publication
 from .workspace import Workspace
@@ -37,6 +37,7 @@ _ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width
 """
 
 BLANK_FILES = {"src/main.tsx": _MAIN_TSX, "src/App.tsx": _APP_TSX, "public/icon.svg": _ICON_SVG}
+TEMPLATE_FILES: dict[str, dict[str, str]] = {"blank": BLANK_FILES, **app_templates.TEMPLATES}  # S9b: tabs, list-detail
 
 
 class AppKind:
@@ -44,12 +45,12 @@ class AppKind:
     max_files = appfiles.MAX_FILES
     max_total_bytes = appfiles.MAX_TOTAL_BYTES
     max_file_bytes = appfiles.MAX_FILE_BYTES
-    templates = frozenset({"blank"})
+    templates = frozenset(TEMPLATE_FILES)
 
     def initial_settings(self, template: str) -> dict[str, Any]:
         if template not in self.templates:
             raise ValidationFailed(f"unknown template {template!r}", available=sorted(self.templates))
-        return {"files": {p: {"content": c, "language": appfiles.language_of(p)} for p, c in BLANK_FILES.items()}}
+        return {"files": {p: {"content": c, "language": appfiles.language_of(p)} for p, c in TEMPLATE_FILES[template].items()}}
 
     def validate(self, path: str, content: str | None = None) -> dict[str, Any]:
         appfiles.validate_path(path)

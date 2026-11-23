@@ -17,9 +17,9 @@
       "upstream_path": "core/studio_core/policy.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "ff1da74cecf162f6b3e8e724e4630e8de704c3f555ebc1d7a8d94be4769665ea",
-      "local_sha256": "966397949dbf80deed46dd809b51af21562d943be854ccae0a05d51ac0a5fc42",
+      "local_sha256": "4f561c7bb2dfd0f37c15ce1a4fde9a87d1102ec5b91720c3441326ef455666d8",
       "patched": true,
-      "patch_reason": "S9 (B12): two AAS operations added to the table, both ALLOW for the owner and for agents: app.build (offline Docker build; plan gate and 5 GiB disk gate apply) and device.control (studio emulator; owner device setting and disk/preflight gates apply), so builds and device actions run through Studio.operation (policy + audit) instead of the default-deny for unknown operations; no other change."
+      "patch_reason": "S9 (B12): two AAS operations added to the table, both ALLOW for the owner and for agents: app.build (offline Docker build; plan gate and 5 GiB disk gate apply) and device.control (studio emulator; owner device setting and disk/preflight gates apply), so builds and device actions run through Studio.operation (policy + audit) instead of the default-deny for unknown operations; S9b: app.export = APPROVAL for the owner and for agents (the approval is bound to the artifact sha256); no other change."
     },
     {
       "path": "core/studio_core/audit.py",
@@ -358,6 +358,10 @@
     {
       "path": "core/studio_core/app_kind.py",
       "reason": "AAS-owned 'app' ProjectKind and the blank template"
+    },
+    {
+      "path": "core/studio_core/app_templates.py",
+      "reason": "AAS-owned app templates (S9b): tabs and list-detail"
     },
     {
       "path": "core/studio_core/activity.py",

@@ -86,6 +86,7 @@ REQUESTS: dict[str, dict[str, Any]] = {
     "screenshot": {},
     "video_start": {"size": _check_size},
     "video_stop": {},
+    "video_keyframe": {},  # S9b: restart screenrecord -> SPS/PPS + IDR (throttled in the device host)
     "install": {"sha256": _check_sha, "size": _check_apk_size},
     "chunk": {"b64": _b64},
     "shutdown": {},

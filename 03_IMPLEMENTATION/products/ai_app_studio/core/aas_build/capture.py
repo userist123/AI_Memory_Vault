@@ -20,7 +20,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import threading
 from collections.abc import Callable
 from pathlib import Path
@@ -30,7 +29,7 @@ from urllib.parse import urlsplit
 from studio_core import activity
 from studio_core.errors import Unavailable, ValidationFailed
 
-from . import service
+from . import runner, service, sight
 
 FRAMES: dict[str, tuple[int, int]] = {"phone": (390, 844), "tablet": (834, 1112), "desktop": (1440, 900)}
 BROWSER_ARGS = ("--proxy-server=http://127.0.0.1:9", "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
@@ -62,12 +61,8 @@ def _kill_active() -> None:
     """Kill the running capture's Playwright driver and its Chromium children (best effort; the worker then fails fast)."""
     proc = _ACTIVE.get("proc")
     pid = getattr(proc, "pid", None)
-    if pid and os.name == "nt":
-        tk = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
-        try:
-            subprocess.run([tk, "/PID", str(int(pid)), "/T", "/F"], capture_output=True, timeout=20, check=False)  # noqa: S603
-        except (OSError, subprocess.SubprocessError):
-            pass
+    if pid:
+        runner.kill_tree(int(pid))  # P1c: runner.py is the only module of the package that starts a process
     if proc is not None:
         try:
             proc.kill()
@@ -148,11 +143,20 @@ def _same_origin(url: str, origin: str) -> bool:
     return (a.scheme, a.hostname, a.port) == (b.scheme, b.hostname, b.port)
 
 
-def _shoot(url: str, frames: list[str]) -> dict[str, bytes]:
+MAX_CONSOLE_RAW = 200  # raw entries kept per capture before sanitising (sight.console_lines caps again)
+
+
+def _shoot(url: str, frames: list[str]) -> tuple[dict[str, bytes], list[str]]:
+    """PNG per frame + the page's console errors and uncaught exceptions (S9b: raw text, sanitised by the caller)."""
     from playwright.sync_api import sync_playwright
 
     origin = url.rstrip("/")
     shots: dict[str, bytes] = {}
+    console: list[str] = []
+
+    def note(prefix: str, text: Any) -> None:
+        if len(console) < MAX_CONSOLE_RAW:
+            console.append(f"{prefix}: {str(text)[:2000]}")
     with sync_playwright() as pw:
         _ACTIVE["proc"] = getattr(getattr(getattr(getattr(pw, "_impl_obj", None), "_connection", None), "_transport", None),
                                   "_proc", None)
@@ -168,6 +172,9 @@ def _shoot(url: str, frames: list[str]) -> dict[str, bytes]:
                               if _same_origin(route.request.url, origin) or route.request.url.startswith(("data:", "blob:"))
                               else route.abort("blockedbyclient"))
                     page = ctx.new_page()
+                    page.on("console", lambda m, fr=frame: note(f"[{fr}] console.{m.type}", m.text)
+                            if m.type in ("error", "assert") else None)
+                    page.on("pageerror", lambda exc, fr=frame: note(f"[{fr}] uncaught", exc))
                     page.goto(url, wait_until="load", timeout=NAV_TIMEOUT_MS)
                     page.wait_for_timeout(SETTLE_MS)
                     shots[frame] = page.screenshot(full_page=False, type="png")
@@ -176,13 +183,15 @@ def _shoot(url: str, frames: list[str]) -> dict[str, bytes]:
         finally:
             browser.close()
             _ACTIVE.pop("proc", None)
-    return shots
+    return shots, console
 
 
 def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, run_id: str | None = None,
             url: str | None = None, shoot: Callable[[str, list[str]], dict[str, bytes]] = _shoot,
             kill: Callable[[], None] | None = None, timeout: float = CAPTURE_TIMEOUT_S, join_timeout: float = KILL_JOIN_S,
             free_bytes: Callable[[], int] | None = None) -> dict[str, Any]:
+    """Capture ``frames``; returns {revision, url, captures: [{frame, sha256, width, height, bytes}], console: [...]}.
+    ``shoot`` returns the PNGs per frame, or (PNGs, raw console lines)."""
     if not isinstance(project_id, str) or not _PID.match(project_id):
         raise ValidationFailed("invalid project id")
     frames = list(frames or FRAMES)
@@ -203,7 +212,11 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
 
         def work() -> None:
             try:
-                box["shots"] = shoot(url, frames)
+                got = shoot(url, frames)
+                if isinstance(got, tuple):
+                    box["shots"], box["console"] = got[0], list(got[1] or [])
+                else:
+                    box["shots"] = got
             except BaseException as e:  # noqa: BLE001 - reported below
                 box["error"] = e
             finally:
@@ -253,7 +266,8 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
             stored.append((sha, len(png)))
             out.append({"frame": frame, "sha256": sha, "width": w, "height": h, "bytes": len(png)})
         _register_and_prune(studio.settings, project_id, stored)
-        return {"revision": revision, "url": url, "captures": out}
+        return {"revision": revision, "url": url, "captures": out,
+                "console": sight.console_lines(box.get("console"))}
     finally:
         if not handed_off:
             _CAP_LOCK.release()

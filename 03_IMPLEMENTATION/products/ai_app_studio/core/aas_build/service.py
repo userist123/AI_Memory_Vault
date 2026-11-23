@@ -31,7 +31,7 @@ from . import runner
 PRODUCT = Path(__file__).resolve().parents[2]
 KIT = PRODUCT / "kit"
 KIT_FILES = ("package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "index.html", "tsconfig.json",
-             "capacitor.config.ts", "vite.config.ts")
+             "capacitor.config.ts", "vite.config.ts", "aas-env.d.ts")
 KEEP_SITES = 2
 LOG_LINES = 40
 _ID16 = re.compile(r"^[0-9a-f]{16}$")

@@ -188,3 +188,8 @@ pre, code { font-family: var(--mono); }
 .capture figcaption { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
 .frame-capture { padding: 6px 12px; border-top: 1px solid var(--line); }
 .frame-capture .capture img { height: 140px; }
+
+/* S9b export buttons + owner confirmation */
+.export-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+.export-confirm { flex-basis: 100%; border: 1px solid currentColor; border-radius: 6px; padding: 0.5rem; }
+.export-controls .ok { color: #15803d; flex-basis: 100%; overflow-wrap: anywhere; }

@@ -17,7 +17,7 @@ chunk is dropped first and the chunk after the hole is marked ``gap``, N7) -> ``
 - Pipe messages are an 8-byte big-endian chunk seq + h264 bytes. The sender skips a seq when the host's seq jumped or
   the launcher marked a drop; any seq other than last + 1 is a discontinuity (review M1): the hub drops until the next
   IDR and sends ``KEY_REQUEST`` back on the pipe (throttled), the sender asks the session for a fresh key frame when it
-  can (``video_keyframe``; the current device host has no such op, so the next IDR is awaited).
+  can (``video_keyframe``: since S9b the device host restarts screenrecord, throttled to one per 2 s).
 - Caps: a chunk is at most MAX_CHUNK bytes (a bigger one drops the sender), a token bucket of ``max_bps`` /
   ``burst`` bytes per project (excess chunks are dropped and the stream is marked discontinuous), a NAL unit is at
   most MAX_NAL bytes (else the splitter resets), at most ``max_subscribers`` sockets per project, each with a live queue

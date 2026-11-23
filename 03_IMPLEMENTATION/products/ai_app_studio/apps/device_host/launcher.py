@@ -485,6 +485,10 @@ class DeviceSession:
     def video_stop(self) -> dict[str, Any]:
         return self.request("video_stop", timeout=30)
 
+    def video_keyframe(self) -> dict[str, Any]:
+        """S9b: ask the device host for a fresh key frame (screenrecord restart); used by the hub on discontinuity."""
+        return self.request("video_keyframe", timeout=10)
+
     def screenshot(self) -> bytes:
         rid, rep = self._request("screenshot", 40)
         png = self._take_shot(rid)

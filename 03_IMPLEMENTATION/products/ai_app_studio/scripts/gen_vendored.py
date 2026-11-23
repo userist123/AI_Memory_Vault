@@ -35,7 +35,8 @@ FILES: list[tuple[str, str, str]] = [
      "S9 (B12): two AAS operations added to the table, both ALLOW for the owner and for agents: app.build (offline "
      "Docker build; plan gate and 5 GiB disk gate apply) and device.control (studio emulator; owner device setting and "
      "disk/preflight gates apply), so builds and device actions run through Studio.operation (policy + audit) "
-     "instead of the default-deny for unknown operations; no other change."),
+     "instead of the default-deny for unknown operations; S9b: app.export = APPROVAL for the owner and for agents "
+     "(the approval is bound to the artifact sha256); no other change."),
     ("core/studio_core/audit.py", "core/studio_core/audit.py",
      "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then "
      "activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live "
@@ -130,6 +131,7 @@ LOCAL_FILES: list[tuple[str, str]] = [
     ("core/studio_core/project_kind.py", "AAS-owned ProjectKind seam: Protocol, registry, NullKind"),
     ("core/studio_core/appfiles.py", "AAS-owned positive write allow-list (src/** and public/**)"),
     ("core/studio_core/app_kind.py", "AAS-owned 'app' ProjectKind and the blank template"),
+    ("core/studio_core/app_templates.py", "AAS-owned app templates (S9b): tabs and list-detail"),
     ("core/studio_core/activity.py", "AAS-owned activity recorder: kinds enum, field allow-list, sanitiser, redaction"),
     ("core/studio_core/aas_models.py", "AAS-owned ORM tables activity_events and app_settings"),
     ("core/studio_core/alembic/versions/0003_app_kind_activity_settings.py",

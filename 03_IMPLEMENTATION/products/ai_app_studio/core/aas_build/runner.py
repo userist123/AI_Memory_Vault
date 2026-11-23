@@ -28,6 +28,10 @@ LOG_CAP_BYTES = 1024 * 1024
 FSIZE_ULIMIT = 64 * 1024 * 1024  # per-file write cap inside the container (RLIMIT_FSIZE)
 ALLOWED_EXT = frozenset({"html", "js", "css", "map", "json", "png", "jpg", "jpeg", "webp", "svg", "ico", "woff2", "txt"})
 CONTROL_NAMES = frozenset({".claude", ".mcp.json", "claude.md", "agents.md"})
+TSC_EXIT = 5  # aas-build-web: `tsc --noEmit` (baked kit) found type errors; vite did not run
+TSC_EXCERPT_LINES = 15
+TSC_EXCERPT_CHARS = 1000  # = the build.error message cap in service.py
+_TSC_LINE = re.compile(r"^[^\s].{0,300}\(\d+,\d+\): error TS\d+: .*$")
 
 _BUILD_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{7,39}$")
 _IMAGE_RE = re.compile(r"^(?:[a-z0-9][a-z0-9._/-]{0,60}@sha256:[0-9a-f]{64}|sha256:[0-9a-f]{64})$")
@@ -109,6 +113,18 @@ def docker_container_exists(docker: str, name: str) -> bool:
 
 def _docker_kill(docker: str, name: str) -> None:
     subprocess.run([docker, "kill", name], capture_output=True, timeout=60, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
+
+
+def kill_tree(pid: int) -> None:
+    """Kill a process and its children (Windows taskkill /T /F; used by capture.py for the Playwright driver)."""
+    if os.name != "nt" or not isinstance(pid, int) or pid <= 0:
+        return
+    tk = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
+    try:
+        subprocess.run([tk, "/PID", str(pid), "/T", "/F"], capture_output=True, timeout=20, check=False, shell=False,  # noqa: S603
+                       stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        pass
 
 
 def resolve_image(docker: str, tag: str = "aas-web-build:dev") -> str:
@@ -214,6 +230,25 @@ def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: in
                        over_files.is_set())
 
 
+def typecheck_excerpt(tail: str) -> str:
+    """``type check failed (N errors)`` + at most TSC_EXCERPT_LINES ``file(l,c): error TSnnnn`` lines, capped."""
+    errs = [ln.strip() for ln in tail.splitlines() if _TSC_LINE.match(ln.strip())]
+    head = f"type check failed ({len(errs)} error{'s' if len(errs) != 1 else ''}, tsc --noEmit):"
+    body: list[str] = []
+    size = len(head)
+    for ln in errs[:TSC_EXCERPT_LINES]:
+        ln = ln[:300]
+        if size + len(ln) + 1 > TSC_EXCERPT_CHARS:
+            break
+        body.append(ln)
+        size += len(ln) + 1
+    if len(body) < len(errs):
+        body.append(f"... {len(errs) - len(body)} more")
+    if not errs:
+        body.append(tail.strip()[-600:])
+    return "\n".join([head, *body])
+
+
 def run_web_build(*, docker: str, build_id: str, ctx: Path, out: Path, image: str, dest: Path,
                   container_exists: Callable[[str], bool] | None = None, limits: BuildLimits | None = None,
                   timeout: int = BUILD_TIMEOUT_S, poll: float = 0.2) -> BuildResult:
@@ -230,6 +265,8 @@ def run_web_build(*, docker: str, build_id: str, ctx: Path, out: Path, image: st
             raise BuildError(f"output has more than {limits.max_files} files during the build; container killed")
         if o.timed_out:
             raise BuildError(f"build timed out after {timeout}s")
+        if o.returncode == TSC_EXIT:
+            raise BuildError(typecheck_excerpt(o.tail))
         if o.returncode != 0:
             raise BuildError(f"build container exit code {o.returncode}: {o.tail[-600:]}")
         exists = container_exists or (lambda n: docker_container_exists(docker, n))

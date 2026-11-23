@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { ProjectRef } from "../lib/api";
+import { useEffect, useState, type ReactNode } from "react";
+import { TEMPLATES, type ProjectRef, type Template } from "../lib/api";
 
 const NEW = "__new__";
 
@@ -12,16 +12,20 @@ export function RunControls(props: {
   running: boolean;
   busy: boolean;
   error: string;
-  onStart: (projectId: string, prompt: string) => void;
+  /** a new project (projectId "") with a template other than blank gets the template as third argument */
+  onStart: (projectId: string, prompt: string, template?: Template) => void;
   onStop: () => void;
   /** owner setting (P5f): plan approval required before writes/builds; default ON */
   planGate?: boolean;
   onPlanGate?: (enabled: boolean) => void;
+  /** S9b: owner export buttons for the chosen (existing) project */
+  renderExport?: (projectId: string) => ReactNode;
 }) {
   const { projects, running, busy } = props;
   const [prompt, setPrompt] = useState("");
   // "" = not chosen yet (defaults to the newest project), NEW = the owner picked "New project"
   const [project, setProject] = useState("");
+  const [template, setTemplate] = useState<Template>("blank");
   useEffect(() => {
     if (project && project !== NEW && !projects.some((p) => p.id === project)) setProject("");
     else if (!project && projects[0]) setProject(projects[0].id);
@@ -47,13 +51,33 @@ export function RunControls(props: {
           ))}
           <option value={NEW}>New project</option>
         </select>
-        <button className="btn primary" data-testid="run-start" disabled={!canStart} onClick={() => props.onStart(chosen, prompt.trim())}>
+        {chosen === "" ? (
+          <select
+            data-testid="run-template"
+            aria-label="Template for the new project"
+            value={template}
+            onChange={(e) => setTemplate((TEMPLATES as readonly string[]).includes(e.target.value) ? (e.target.value as Template) : "blank")}
+          >
+            {TEMPLATES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <button className="btn primary" data-testid="run-start" disabled={!canStart} onClick={() =>
+            chosen === "" && template !== "blank"
+              ? props.onStart(chosen, prompt.trim(), template)
+              : props.onStart(chosen, prompt.trim())
+          }
+        >
           Start run
         </button>
         <button className="btn" data-testid="run-stop" disabled={!running || busy} onClick={props.onStop}>
           Stop
         </button>
       </div>
+      {chosen && props.renderExport ? props.renderExport(chosen) : null}
       {props.onPlanGate ? (
         <label className="plan-gate" data-testid="plan-gate-toggle" title="Owner setting: writes, deletes and builds wait for your approval of the AI's plan">
           <input

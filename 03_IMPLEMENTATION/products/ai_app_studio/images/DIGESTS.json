@@ -13,5 +13,6 @@
     "commandlinetools-linux-16111833_latest.zip (pinned, not used: --licenses refused)": "0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8",
     "image_id_local_2026-11-23": "sha256:1418afea9cf40edb3055047061b80d426b2b42fa4f256aa4b8d544abedad2005",
     "_must_do_s9": "S9 (2026-11-23): Gradle pin bumped 8.14.3 -> 8.14.8 (GHSA-j5m7-59rp-24f5, GHSA-xwqc-3h47-hg64, GHSA-mvvg-497x-hmj8 fixed in 8.14.6; GHSA-3cfg/gqrr/pcp8 in 8.14.7; GHSA-99wf/7f7r/4mf6/35pj in 8.14.8; gradle/gradle repository advisories). The image was NOT rebuilt (C: below 10 GB): image_id_local_2026-11-23 still runs Gradle 8.14.3. Rebuild, re-run the verification-metadata check and record the new image id before release."
-  }
+  },
+  "_must_do_s9b_web_build": "S9b (2026-11-23): images/web-build/aas-build-web now runs `tsc --noEmit` (baked kit TypeScript 7.0.2) before vite and exits 5 on type errors. The local aas-web-build:dev image was NOT rebuilt (C: below 10 GB), so its baked script still skips the type check. Verified with the new script bind-mounted over the old image: blank/tabs/list-detail build, a planted type error exits 5. Rebuild the image (only the last COPY layer changes) before release."
 }

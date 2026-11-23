@@ -160,8 +160,12 @@ export async function listProjects(s: Session): Promise<ProjectRef[]> {
   return out;
 }
 
-export async function createProject(s: Session, name: string): Promise<string> {
-  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify({ name: name.slice(0, 64) }) });
+export const TEMPLATES = ["blank", "tabs", "list-detail"] as const;
+export type Template = (typeof TEMPLATES)[number];
+
+export async function createProject(s: Session, name: string, template: Template = "blank"): Promise<string> {
+  const t: Template = TEMPLATES.includes(template) ? template : "blank";
+  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify({ name: name.slice(0, 64), template: t }) });
   const id = body && typeof body === "object" ? (body as { id?: unknown }).id : undefined;
   if (typeof id !== "string" || !PROJECT_RE.test(id)) throw new Error("bad project id");
   return id;
@@ -208,4 +212,58 @@ export async function fetchCapture(s: Session, sha256: string): Promise<Blob> {
   const hex = Array.from(digest, (x) => x.toString(16).padStart(2, "0")).join("");
   if (hex !== sha256) throw new Error("capture sha256 does not match its id");
   return new Blob([buf], { type: "image/png" });
+}
+
+// ---------------------------------------------------------------- export (S9b, owner, two steps)
+const APR_RE = /^apr_[0-9a-f]{16}$/;
+
+export type ExportOutcome =
+  | { kind: "approval"; approvalId: string; sha256: string }
+  | { kind: "done"; path: string; sha256: string }
+  | { kind: "blocked"; findings: string[] }
+  | { kind: "error"; message: string };
+
+/** POST /projects/<id>/export. 428 = the owner must approve this exact artifact (sha256) first; 422 export_blocked =
+ * the final secret scan found key patterns (names only, never values). Every field is validated (fail closed). */
+export async function exportProject(
+  s: Session,
+  projectId: string,
+  target: "web" | "android",
+  approvalId?: string,
+): Promise<ExportOutcome> {
+  if (!PROJECT_RE.test(projectId) || (approvalId !== undefined && !APR_RE.test(approvalId)))
+    return { kind: "error", message: "invalid id" };
+  const res = await fetch(`${s.apiBase}/api/v1/projects/${projectId}/export`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${s.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(approvalId ? { target, approvalId } : { target }),
+    credentials: "omit",
+    redirect: "error",
+    referrerPolicy: "no-referrer",
+  });
+  const text = await res.text();
+  if (text.length > MAX_BODY) return { kind: "error", message: "response too large" };
+  let body: Record<string, unknown> = {};
+  try {
+    const j = text ? (JSON.parse(text) as unknown) : {};
+    if (j && typeof j === "object") body = j as Record<string, unknown>;
+  } catch {
+    return { kind: "error", message: `HTTP ${res.status}` };
+  }
+  const d = (body.details && typeof body.details === "object" ? body.details : {}) as Record<string, unknown>;
+  if (res.status === 428) {
+    if (typeof d.approvalId === "string" && APR_RE.test(d.approvalId) && typeof d.sha256 === "string" && SHA256_RE.test(d.sha256))
+      return { kind: "approval", approvalId: d.approvalId, sha256: d.sha256 };
+    return { kind: "error", message: "malformed approval request" };
+  }
+  if (res.status === 422 && body.error === "export_blocked") {
+    const findings = (Array.isArray(d.findings) ? d.findings.slice(0, 20) : []).map((f) => {
+      const r = (f && typeof f === "object" ? f : {}) as Record<string, unknown>;
+      return `${inspect(r.pattern, 40).text} in ${inspect(r.file, 200).text}`;
+    });
+    return { kind: "blocked", findings };
+  }
+  if (res.ok && typeof body.path === "string" && typeof body.sha256 === "string" && SHA256_RE.test(body.sha256))
+    return { kind: "done", path: inspect(body.path, 400).text, sha256: body.sha256 };
+  return { kind: "error", message: inspect(body.message ?? `HTTP ${res.status}`, 200).text };
 }

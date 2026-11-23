@@ -22,7 +22,7 @@ import socket
 import sys
 from pathlib import Path
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Literal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
 
@@ -31,6 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt  # noqa: E402
 from aas_build import capture  # noqa: E402
+from aas_build import export as export_mod  # noqa: E402
 from aas_build import service as build_service  # noqa: E402
 from aas_build.preview_server import PreviewServer  # noqa: E402
 from aas_device import service as dsvc  # noqa: E402
@@ -95,6 +96,15 @@ class ProjectDelete(Strict):
 
 class Retention(Strict):
     days: StrictInt = Field(ge=1, le=activity.RETENTION_MAX_DAYS)
+
+
+class ExportReq(Strict):
+    target: Literal["web", "android"]
+    approvalId: str | None = Field(default=None, pattern=r"^apr_[0-9a-f]{16}$")  # noqa: N815
+
+
+class ExportFolder(Strict):
+    path: str = Field(min_length=3, max_length=260)
 
 
 RETENTION_SWEEP_SECONDS = 6 * 3600
@@ -213,6 +223,14 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
         capture.forget_project(settings, pid)  # index + the PNGs no other project references
         return res
 
+    @app.post(f"{API}/projects/{{pid}}/export")
+    def export_project(pid: str, b: ExportReq) -> dict[str, Any]:
+        """S9b, owner: two steps like delete. Without ``approvalId`` -> 428 {approvalId, sha256}; the owner approves
+        (POST /approvals/<id>/decide) and repeats with the id. A secret found in the artifact -> 422 export_blocked."""
+        if not re.fullmatch(r"prj_[0-9a-f]{16}", pid):
+            raise ValidationFailed("invalid project id")
+        return export_mod.export(studio, OWNER, pid, b.target, approval_id=b.approvalId)
+
     @app.put(f"{API}/projects/{{pid}}/file")
     def write_file(pid: str, b: FileWrite) -> dict[str, Any]:
         return studio.write_file(OWNER, pid, b.baseRevision, b.path, b.content)
@@ -258,6 +276,14 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     @app.put(f"{API}/settings/device")
     def set_device(b: ExternalMcp) -> dict[str, Any]:  # same shape: {"enabled": <strict bool>}
         return dsvc.set_enabled(studio, OWNER, b.enabled)
+
+    @app.get(f"{API}/settings/export-folder")
+    def get_export_folder() -> dict[str, Any]:
+        return {"path": str(export_mod.export_root(studio))}
+
+    @app.put(f"{API}/settings/export-folder")
+    def set_export_folder(b: ExportFolder) -> dict[str, Any]:  # S9b: owner only, audited, not inside the data root
+        return export_mod.set_export_root(studio, OWNER, b.path)
 
     @app.get(f"{API}/settings/retention")
     def get_retention() -> dict[str, Any]:

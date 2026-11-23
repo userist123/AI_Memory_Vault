@@ -17,4 +17,10 @@ mkdir node_modules
 for e in /opt/aas/kit/node_modules/* /opt/aas/kit/node_modules/.[!.]*; do
   if [ -e "$e" ] || [ -L "$e" ]; then ln -s "$e" "node_modules/$(basename "$e")"; fi
 done
+# S9b: type check with the baked kit's TypeScript first; type errors fail the build (exit 5, capped log for the agent).
+if ! node /opt/aas/kit/node_modules/typescript/bin/tsc --noEmit -p tsconfig.json --pretty false > /tmp/tsc.log 2>&1; then
+  head -n 40 /tmp/tsc.log | head -c 1800 >&2  # the runner keeps the last 2000 bytes of stderr
+  echo "aas-build-web: type check failed" >&2
+  exit 5
+fi
 exec node /opt/aas/kit/node_modules/vite/bin/vite.js build --outDir /out/dist --emptyOutDir
