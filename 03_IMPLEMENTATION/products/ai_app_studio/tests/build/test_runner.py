@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import runner
 from aas_build.runner import BuildError, BuildLimits
 
@@ -16,7 +17,7 @@ NOEXIST = {"container_exists": lambda n: False, "container_name": "aas-b-x"}
 
 
 def _argv(**kw):  # type: ignore[no-untyped-def]
-    args = dict(docker="C:/Program Files/Docker/docker.exe", build_id="b0123456789abcdef", ctx=Path("D:/x/ctx"), out=Path("D:/x/out"), image=IMAGE)
+    args = dict(docker=abs_win_path("Program Files", "Docker", "docker.exe"), build_id="b0123456789abcdef", ctx=Path(abs_win_path("x", "ctx")), out=Path(abs_win_path("x", "out")), image=IMAGE)
     args.update(kw)
     return runner.build_web_argv(**args)
 
@@ -69,7 +70,7 @@ def test_argv_requires_absolute_docker_and_dirs() -> None:
     with pytest.raises(BuildError):
         _argv(ctx=Path("rel/ctx"))
     with pytest.raises(BuildError):
-        _argv(out=Path("D:/x/o,ut"))  # a comma would let a -v/--mount option smuggle extra fields
+        _argv(out=Path(abs_win_path("x", "o,ut")))  # a comma would let a -v/--mount option smuggle extra fields
 
 
 class FakePopen:
@@ -114,7 +115,7 @@ def fake_popen(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
 
 
 def _build(tmp_path: Path, out: Path, **kw):  # type: ignore[no-untyped-def]
-    return runner.run_web_build(docker="C:/d/docker.exe", build_id="b0123456789abcdef", ctx=tmp_path, out=out, image=IMAGE,
+    return runner.run_web_build(docker=abs_win_path("d", "docker.exe"), build_id="b0123456789abcdef", ctx=tmp_path, out=out, image=IMAGE,
                                 dest=tmp_path / "site", container_exists=lambda n: False, **kw)
 
 
@@ -185,14 +186,14 @@ class _R:
 ])
 def test_container_exists_answers(monkeypatch: pytest.MonkeyPatch, code: int, err: bytes, expected: bool) -> None:
     monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _R(code, err))
-    assert runner.docker_container_exists("C:/d/docker.exe", "aas-b-b0123456789abcdef") is expected
+    assert runner.docker_container_exists(abs_win_path("d", "docker.exe"), "aas-b-b0123456789abcdef") is expected
 
 
 @pytest.mark.parametrize("err", [b"", b"error during connect: daemon is not running", b"permission denied", b"context deadline exceeded"])
 def test_container_exists_daemon_errors_fail_closed(monkeypatch: pytest.MonkeyPatch, err: bytes) -> None:
     monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _R(1, err))
     with pytest.raises(BuildError, match="failing closed"):
-        runner.docker_container_exists("C:/d/docker.exe", "aas-b-b0123456789abcdef")
+        runner.docker_container_exists(abs_win_path("d", "docker.exe"), "aas-b-b0123456789abcdef")
 
 
 

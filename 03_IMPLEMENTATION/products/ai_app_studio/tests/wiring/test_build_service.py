@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import service
 from aas_build.preview_server import PreviewServer
 from aas_build.runner import BuildError, BuildResult
@@ -17,7 +18,7 @@ from studio_core.errors import Unavailable
 from .conftest import OWNER
 
 IMAGE = "sha256:" + "a" * 64
-DOCKER = "C:/fake/docker.exe"
+DOCKER = abs_win_path("fake", "docker.exe")
 SEEN: dict[str, Any] = {}
 
 

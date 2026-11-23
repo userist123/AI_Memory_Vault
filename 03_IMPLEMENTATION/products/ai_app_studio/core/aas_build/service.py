@@ -448,7 +448,7 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
         raise Unavailable("builds are disabled: less than 5 GiB free on the desktop build drive")
     if not os.environ.get("AAS_DESKTOP_ROOT") and _desktop_drive_free(root) < DESKTOP_MIN_FREE_DEFAULT_ROOT:
         raise Unavailable("desktop builds need 10 GB free for the default desktop root (<data>/desktop): set "
-                          "AAS_DESKTOP_ROOT to an owner-only folder on another drive (e.g. D:\\aas-desktop; create it "
+                          "AAS_DESKTOP_ROOT to an owner-only folder on another drive (for example an aas-desktop folder; create it "
                           "with `python -m aas_build.desktop secure`)")
     held = ExitStack()
     held.enter_context(build_lock(studio.settings, project_id))

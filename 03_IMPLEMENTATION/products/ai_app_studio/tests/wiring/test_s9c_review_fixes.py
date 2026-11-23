@@ -13,6 +13,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import desktop, export, runner, service
 from aas_build.runner import BuildError
 from studio_core import activity
@@ -201,7 +202,7 @@ AUTH_USERS = "S-1-5-11"
 
 def test_acl_check_refuses_a_parent_others_can_modify(tmp_path: Path) -> None:
     r"""S9c review 2 F1: MODIFY (incl. DELETE) on a parent lets another account rename the root away and plant its own
-    (e.g. D:\w grants Authenticated Users modify, so D:\w\_aas_desktop is refused)."""
+    (a shared dir under the drive root that grants Authenticated Users modify makes a root below it refused)."""
     root = tmp_path / "w" / "_aas_desktop"
     root.mkdir(parents=True)
     owner_only = [(ME, FULL, 0), (SYSTEM, FULL, 0), (ADMINS, FULL, 0)]
@@ -214,7 +215,7 @@ def test_acl_check_refuses_a_parent_others_can_modify(tmp_path: Path) -> None:
 
 
 def test_acl_check_accepts_an_owner_only_root_under_the_drive_root(tmp_path: Path) -> None:
-    r"""D:\aas-desktop: the only checked dir is the root itself (the drive root is excluded)."""
+    r"""<drive root>\aas-desktop: the only checked dir is the root itself (the drive root is excluded)."""
     anchor = Path(tmp_path.anchor)
     root = anchor / "aas-desktop"
     seen: list[Path] = []
@@ -302,10 +303,10 @@ def test_a_build_dir_outside_the_root_is_refused(tmp_path: Path) -> None:
 
 
 def test_leak_scan_finds_host_paths_in_ascii_and_utf16(tmp_path: Path) -> None:
-    pre = [tmp_path / "vendor", tmp_path / "b", Path("C:/Users/SomeName")]
+    pre = [tmp_path / "vendor", tmp_path / "b", Path(abs_win_path("Users", "SomeName"))]
     clean = b"MZ" + b"/vendor/tauri-2.12.7/src/lib.rs /src/build.rs ~/x"
     assert desktop.host_path_leaks(clean, pre) == []
-    dirty = b"MZ" + str(pre[0] / "a.rs").encode() + b"\0" + "C:\\Users\\SomeName\\x".encode("utf-16le")
+    dirty = b"MZ" + str(pre[0] / "a.rs").encode() + b"\0" + abs_win_path("Users", "SomeName", "x", sep="\\").encode("utf-16le")
     assert len(desktop.host_path_leaks(dirty, pre)) == 2
 
 

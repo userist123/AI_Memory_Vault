@@ -71,7 +71,7 @@ def set_enabled(studio: Any, actor: Actor, enabled: bool) -> dict[str, Any]:
 
 
 def _free_bytes() -> int:
-    roots = {os.environ.get("SystemRoot", r"C:\Windows")[:3]}
+    roots = {(os.environ.get("SystemRoot") or os.environ.get("SystemDrive", "") + os.sep)[:3]}
     lad = os.environ.get("LOCALAPPDATA")
     if lad and len(lad) > 2 and lad[1] == ":":
         roots.add(lad[:3])

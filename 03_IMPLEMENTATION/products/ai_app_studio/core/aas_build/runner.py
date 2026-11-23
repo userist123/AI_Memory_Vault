@@ -115,11 +115,16 @@ def _docker_kill(docker: str, name: str) -> None:
     subprocess.run([docker, "kill", name], capture_output=True, timeout=60, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
 
 
+def _system_root() -> str:
+    """The Windows directory from the environment (SystemRoot, else SystemDrive + Windows); no drive literal (D2)."""
+    return os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or os.path.join(os.environ.get("SystemDrive", "") + os.sep, "Windows")
+
+
 def kill_tree(pid: int) -> None:
     """Kill a process and its children (Windows taskkill /T /F; used by capture.py for the Playwright driver)."""
     if os.name != "nt" or not isinstance(pid, int) or pid <= 0:
         return
-    tk = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
+    tk = os.path.join(_system_root(), "System32", "taskkill.exe")
     try:
         subprocess.run([tk, "/PID", str(pid), "/T", "/F"], capture_output=True, timeout=20, check=False, shell=False,  # noqa: S603
                        stdin=subprocess.DEVNULL)
@@ -138,7 +143,7 @@ def icacls_owner_only(path: Path, sid: str, *, reset_children: bool) -> None:
     p = Path(path)
     if not p.is_absolute() or not p.is_dir() or not isinstance(sid, str) or not _SID_RE.fullmatch(sid):
         raise BuildError("icacls: absolute directory and a valid SID required")
-    exe = os.path.join(os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows", "System32", "icacls.exe")
+    exe = os.path.join(_system_root(), "System32", "icacls.exe")
     argvs = [[exe, str(p), "/reset"],  # drop explicit aces (the dir itself only), then no inheritance + 3 grants
              [exe, str(p), "/inheritance:r", "/grant:r", f"*{sid}:(OI)(CI)F", "*S-1-5-18:(OI)(CI)F", "*S-1-5-32-544:(OI)(CI)F"]]
     if reset_children:
@@ -616,7 +621,7 @@ def desktop_env(*, cargo: str, cargo_home: Path, target_dir: Path, tmp: Path) ->
     """Minimal env: OS/MSVC lookup variables, the toolchain bin + System32 on PATH, studio-owned CARGO_HOME/target/tmp,
     offline flags and a dead proxy for any build-script fetch. No token, RUSTFLAGS, RUSTC_WRAPPER or profile path."""
     bin_dir = str(Path(cargo).parent)
-    sysroot = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows"
+    sysroot = _system_root()
     env = {k: v for k, v in os.environ.items() if k in _DESKTOP_ENV_KEEP}
     env.update({
         "PATH": os.pathsep.join([bin_dir, os.path.join(sysroot, "System32"), sysroot]),

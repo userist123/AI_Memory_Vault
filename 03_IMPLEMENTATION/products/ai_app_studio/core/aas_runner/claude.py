@@ -116,7 +116,7 @@ def _kill_tree(p: subprocess.Popen[bytes]) -> None:
     if p.poll() is not None:
         return
     if os.name == "nt":
-        tk = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
+        tk = os.path.join((os.environ.get("SystemRoot") or os.path.join(os.environ.get("SystemDrive", "") + os.sep, "Windows")), "System32", "taskkill.exe")
         try:
             subprocess.run([tk, "/PID", str(p.pid), "/T", "/F"], capture_output=True, timeout=20,  # noqa: S603
                            stdin=subprocess.DEVNULL, check=False)

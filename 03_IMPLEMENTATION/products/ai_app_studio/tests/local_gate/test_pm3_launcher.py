@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 import pytest
+from tests.winpaths import system_root
 
 from apps.device_host import launcher, protocol
 from tests.local_gate.conftest import PRODUCT, live
@@ -305,6 +306,6 @@ def test_backend_scan_positive_control(tmp_path: Path) -> None:
     try:
         with pytest.raises(AssertionError):
             test_backend_and_tools_never_reference_wsl_or_install_ps1()
-        assert _ps1_wsl_sites(r"& C:\Windows\System32\wsl.exe -u root") == [1]
+        assert _ps1_wsl_sites(f"& {system_root()}" + r"\System32\wsl.exe -u root") == [1]
     finally:
         globals()["PRODUCT"] = saved

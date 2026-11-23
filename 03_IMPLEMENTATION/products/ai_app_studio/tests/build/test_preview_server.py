@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from tests.winpaths import system_drive
 from aas_build.preview_server import PreviewServer
 
 from .conftest import make_link
@@ -113,7 +114,7 @@ def test_no_directory_listing(server: PreviewServer) -> None:
 def test_dotfiles_and_traversal_refused(server: PreviewServer, sites: dict[str, Path]) -> None:
     (sites[PID_A].parent / "secret.txt").write_text("S", encoding="utf-8")
     for p in ("/.hidden", "/assets/../.hidden", "/../secret.txt", "/%2e%2e/secret.txt", "/..%5csecret.txt", "/assets\\..\\..\\secret.txt",
-              "/%00", "/assets/app.js%00.png", "/C:/Windows/win.ini", "//etc/passwd", "/assets/app.js::$DATA"):
+              "/%00", "/assets/app.js%00.png", f"/{system_drive()}/Windows/win.ini", "//etc/passwd", "/assets/app.js::$DATA"):
         st, _, body = req(server, p)
         assert st in (400, 403, 404) and body != b"S", p
 

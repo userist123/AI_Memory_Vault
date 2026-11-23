@@ -29,7 +29,7 @@ from typing import Any, Callable, Iterator
 
 from apps.device_host import protocol
 
-SYSTEM_ROOT = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows"
+SYSTEM_ROOT = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or os.path.join(os.environ.get("SystemDrive", "") + os.sep, "Windows")
 SYSTEM32 = os.path.join(SYSTEM_ROOT, "System32")
 WSL_EXE = os.path.join(SYSTEM32, "wsl.exe")
 DISTRO = "Ubuntu-S9AI-D"

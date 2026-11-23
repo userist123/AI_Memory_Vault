@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.winpaths import system_root
 
 PRODUCT = Path(__file__).resolve().parents[2]
 DESKTOP = PRODUCT / "apps" / "desktop"
@@ -115,7 +116,7 @@ def studio_stack(tmp_path_factory: pytest.TempPathFactory) -> Iterator[dict[str,
     finally:
         for p in reversed(procs):
             if p.poll() is None:
-                subprocess.run([os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe"),  # noqa: S603
+                subprocess.run([os.path.join(system_root(), "System32", "taskkill.exe"),  # noqa: S603
                                 "/PID", str(p.pid), "/T", "/F"], capture_output=True, timeout=30)
 
 

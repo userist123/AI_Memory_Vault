@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import runner
 
 IMG = "sha256:" + "a" * 64
 SIGNER = "c" * 64
-DOCKER = str(Path("C:/docker.exe"))
+DOCKER = str(Path(abs_win_path("docker.exe")))
 
 
 class FakeGenkey:

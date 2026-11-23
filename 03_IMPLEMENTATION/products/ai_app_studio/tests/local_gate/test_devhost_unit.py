@@ -517,7 +517,7 @@ def test_console_wrong_token_disables(tmp_path: Path) -> None:
 
 
 def test_console_banner_path_mismatch_refused(tmp_path: Path) -> None:
-    fake = _FakeConsole(banner_path="/home/owner/.emulator_console_auth_token")
+    fake = _FakeConsole(banner_path=str(tmp_path / "elsewhere" / ".emulator_console_auth_token"))
     c = _console(tmp_path, fake)
     try:
         with pytest.raises(devhost.ConsoleUnavailable):

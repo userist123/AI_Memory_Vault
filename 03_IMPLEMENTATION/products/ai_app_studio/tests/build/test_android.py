@@ -14,6 +14,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import runner
 from aas_build.runner import BuildError
 
@@ -30,7 +31,7 @@ def _image_id() -> str | None:
 
 
 def _argv(tmp_path: Path, **kw: object) -> list[str]:
-    args: dict[str, object] = dict(docker=str(Path(DOCKER or "C:/docker.exe").resolve()), build_id="t" + "0" * 15,
+    args: dict[str, object] = dict(docker=str(Path(DOCKER or abs_win_path("docker.exe")).resolve()), build_id="t" + "0" * 15,
                                    dist=tmp_path / "dist", keystore=tmp_path / "keys" / "aas-debug.keystore",
                                    out=tmp_path / "out", image=IMG, app_id="dev.aiappstudio.p0123456789abcdef")
     args.update(kw)
@@ -129,7 +130,7 @@ def test_signer_mismatch_fails_the_build(tmp_path: Path, monkeypatch: pytest.Mon
         return runner._RunOutcome(0, "BUILD SUCCESSFUL\nAAS-SIGNER-SHA256=" + "b" * 64 + "\n")  # noqa: SLF001
 
     monkeypatch.setattr(runner, "_run_capped", fake_run)
-    kw = dict(docker=str(Path(DOCKER or "C:/docker.exe").resolve()), build_id="t" + "1" * 15, dist=tmp_path / "dist",
+    kw = dict(docker=str(Path(DOCKER or abs_win_path("docker.exe")).resolve()), build_id="t" + "1" * 15, dist=tmp_path / "dist",
               keystore=tmp_path / "keys" / "aas-debug.keystore", out=out, image=IMG,
               app_id="dev.aiappstudio.p0123456789abcdef", dest=tmp_path / "d.apk", container_exists=lambda n: False)
     with pytest.raises(BuildError, match="not signed by the studio keystore"):
@@ -142,7 +143,7 @@ def test_signer_mismatch_fails_the_build(tmp_path: Path, monkeypatch: pytest.Mon
 
 def test_ensure_keystore_refuses_owner_android_dir(tmp_path: Path) -> None:
     with pytest.raises(BuildError):
-        runner.ensure_keystore(docker="C:/docker.exe", image=IMG, keys_dir=tmp_path / ".android")
+        runner.ensure_keystore(docker=abs_win_path("docker.exe"), image=IMG, keys_dir=tmp_path / ".android")
 
 
 def test_ensure_keystore_never_replaces_an_unrecorded_keystore(tmp_path: Path) -> None:
@@ -150,7 +151,7 @@ def test_ensure_keystore_never_replaces_an_unrecorded_keystore(tmp_path: Path) -
     keys.mkdir()
     (keys / "aas-debug.keystore").write_bytes(b"x")
     with pytest.raises(BuildError):
-        runner.ensure_keystore(docker="C:/docker.exe", image=IMG, keys_dir=keys)
+        runner.ensure_keystore(docker=abs_win_path("docker.exe"), image=IMG, keys_dir=keys)
     assert (keys / "aas-debug.keystore").read_bytes() == b"x"
 
 

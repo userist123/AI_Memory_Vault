@@ -18,6 +18,7 @@ import uuid
 from pathlib import Path
 
 import pytest
+from tests.winpaths import system_root
 
 HERE = Path(__file__).resolve().parent
 PRODUCT = HERE.parents[1]
@@ -26,7 +27,7 @@ if str(PRODUCT) not in sys.path:
 
 LIVE = os.environ.get("AAS_LOCAL_GATE") == "1"
 DISTRO = "Ubuntu-S9AI-D"
-_WSL = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "wsl.exe")
+_WSL = os.path.join(system_root(), "System32", "wsl.exe")
 
 live = pytest.mark.skipif(not LIVE or sys.platform != "win32", reason="local gate: set AAS_LOCAL_GATE=1 on the owner PC")
 

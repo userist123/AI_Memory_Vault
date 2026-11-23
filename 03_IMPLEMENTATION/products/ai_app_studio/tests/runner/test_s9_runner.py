@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_runner import claude as rc
 from studio_core.errors import ConflictError, Unavailable
 
@@ -26,7 +27,7 @@ def scenario(tmp_path: Path, **kw: object) -> str:
 
 # ---------------------------------------------------------------- B7 static
 def test_argv_disables_session_persistence(tmp_path: Path) -> None:
-    argv = rc.build_argv(cli=["C:/x/claude.exe"], model="sonnet", mcp_config=tmp_path / "m.json",
+    argv = rc.build_argv(cli=[abs_win_path("x", "claude.exe")], model="sonnet", mcp_config=tmp_path / "m.json",
                          settings=tmp_path / "s.json", max_turns=2, max_budget_usd=0.1)
     assert "--no-session-persistence" in argv
     assert argv[argv.index("--setting-sources") + 1] == ""  # unchanged: no user/project/local settings
