@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { TEMPLATES, type ProjectRef, type Template } from "../lib/api";
+import { TEMPLATES, type ProjectRef, type RunnerProfile, type Template } from "../lib/api";
 
 const NEW = "__new__";
 
@@ -18,6 +18,9 @@ export function RunControls(props: {
   /** owner setting (P5f): plan approval required before writes/builds; default ON */
   planGate?: boolean;
   onPlanGate?: (enabled: boolean) => void;
+  /** owner setting (2026-11-23): "full" loads the owner's Claude setup into the builder; default "full" */
+  profile?: RunnerProfile;
+  onProfile?: (profile: RunnerProfile) => void;
   /** S9b: owner export buttons for the chosen (existing) project */
   renderExport?: (projectId: string) => ReactNode;
 }) {
@@ -87,6 +90,25 @@ export function RunControls(props: {
           />
           Require plan approval
         </label>
+      ) : null}
+      {props.onProfile ? (
+        <div className="runner-profile" data-testid="runner-profile">
+          <label title="Owner setting: which of your own Claude Code setup the AI builder loads">
+            <input
+              type="checkbox"
+              data-testid="runner-profile-toggle"
+              checked={props.profile !== "isolated"}
+              disabled={running}
+              onChange={(e) => props.onProfile?.(e.target.checked ? "full" : "isolated")}
+            />
+            Use my Claude setup
+          </label>
+          <p className="note" data-testid="runner-profile-note">
+            {props.profile !== "isolated"
+              ? "Full: loads your CLAUDE.md, memory, hooks, plugins, skills, agents and allowed MCP servers; no shell, web or file writes outside the studio."
+              : "Isolated: the builder sees only the studio tools, none of your Claude setup."}
+          </p>
+        </div>
       ) : null}
       {props.error ? (
         <p className="warn" role="alert" data-testid="run-error">

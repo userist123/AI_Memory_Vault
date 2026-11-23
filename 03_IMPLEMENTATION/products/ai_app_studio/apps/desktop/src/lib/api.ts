@@ -181,6 +181,26 @@ export async function setPlanGate(s: Session, enabled: boolean): Promise<boolean
   return !(body && typeof body === "object" && (body as { enabled?: unknown }).enabled === false);
 }
 
+/**
+ * Runner profile (owner decision 2026-11-23). "full" (server default) loads the owner's Claude setup into the builder;
+ * "isolated" loads none of it. Owner-only route. Display rule: anything but an explicit "isolated" is shown as "full"
+ * (the server default, and the one that loads more), so the toggle never under-states what a run loads.
+ */
+export type RunnerProfile = "full" | "isolated";
+
+function parseProfile(body: unknown): RunnerProfile {
+  return body && typeof body === "object" && (body as { profile?: unknown }).profile === "isolated" ? "isolated" : "full";
+}
+
+export async function getRunnerProfile(s: Session): Promise<RunnerProfile> {
+  return parseProfile(await request(s, "/settings/runner-profile"));
+}
+
+export async function setRunnerProfile(s: Session, profile: RunnerProfile): Promise<RunnerProfile> {
+  const body = await request(s, "/settings/runner-profile", { method: "PUT", body: JSON.stringify({ profile }) });
+  return parseProfile(body);
+}
+
 // ---------------------------------------------------------------- runs (owner actions from the prompt box)
 const PROJECT_RE = /^prj_[0-9a-f]{16}$/;
 const RUN_RE = /^run_[0-9a-f]{16}$/;

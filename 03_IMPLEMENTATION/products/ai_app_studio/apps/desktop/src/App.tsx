@@ -11,6 +11,9 @@ import {
   decideApproval,
   decidePlan,
   getPlanGate,
+  getRunnerProfile,
+  setRunnerProfile,
+  type RunnerProfile,
   setPlanGate,
   fetchApprovals,
   listProjects,
@@ -78,6 +81,7 @@ export function App() {
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [planGateOn, setPlanGateOn] = useState(true);
+  const [runnerProfile, setRunnerProfileState] = useState<RunnerProfile>("full");
   const [approvalError, setApprovalError] = useState("");
   const [follow, setFollow] = useState(true);
   const [pausedUntil, setPausedUntil] = useState(0);
@@ -160,6 +164,9 @@ export function App() {
     getPlanGate(session)
       .then((on) => live && setPlanGateOn(on))
       .catch(() => live && setPlanGateOn(true)); // unknown -> shown as ON (the server default)
+    getRunnerProfile(session)
+      .then((p) => live && setRunnerProfileState(p))
+      .catch(() => live && setRunnerProfileState("full")); // unknown -> shown as full (the server default)
     return () => {
       live = false;
     };
@@ -218,6 +225,13 @@ export function App() {
     void setPlanGate(session, enabled)
       .then(setPlanGateOn)
       .catch(() => setRunError("The plan gate setting could not be changed."));
+  };
+
+  const onRunnerProfile = (p: RunnerProfile) => {
+    if (!session) return;
+    void setRunnerProfile(session, p)
+      .then(setRunnerProfileState)
+      .catch(() => setRunError("The runner profile could not be changed."));
   };
 
   const onStartRun = (projectId: string, prompt: string, template?: Template) => {
@@ -310,6 +324,8 @@ export function App() {
               onStop={onStopRun}
               planGate={planGateOn}
               onPlanGate={onPlanGate}
+              profile={runnerProfile}
+              onProfile={onRunnerProfile}
               renderExport={(pid) => (
                 <ExportControls
                   key={pid}

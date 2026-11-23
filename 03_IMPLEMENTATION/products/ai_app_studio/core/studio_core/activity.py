@@ -73,7 +73,8 @@ _HASH_RE = {_H64: re.compile(r"[0-9a-f]{64}"), _H40: re.compile(r"[0-9a-f]{40}")
 # kind -> field -> (type, cap)   (cap = max characters for text, max items for lists)
 PAYLOAD_FIELDS: dict[str, dict[str, tuple[str, int]]] = {
     # field names are the ones apps/desktop reads (title, budgetUsd, stepId, callId, target, line, path, ...)
-    "run.started": {"model": (_S, 80), "agent": (_S, 80), "title": (_S, 200), "budgetUsd": (_F, 0)},
+    "run.started": {"model": (_S, 80), "agent": (_S, 80), "title": (_S, 200), "budgetUsd": (_F, 0),
+                    "profile": (_S, 16)},
     "run.finished": {"status": (_S, 40), "turns": (_I, 0), "costUsd": (_F, 0), "durationMs": (_I, 0), "reason": (_S, 40)},
     "plan.proposed": {"planId": (_S, 40), "title": (_S, 200), "steps": (_L, 20)},
     "plan.decided": {"planId": (_S, 40), "decision": (_S, 16)},

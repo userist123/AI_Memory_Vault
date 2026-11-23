@@ -37,6 +37,7 @@ from aas_build.preview_server import PreviewServer  # noqa: E402
 from aas_device import service as dsvc  # noqa: E402
 from aas_device import video_relay  # noqa: E402
 from aas_runner import claude as runner_mod  # noqa: E402
+from aas_runner import profile as runner_profile  # noqa: E402
 from aas_runner.claude import Runner  # noqa: E402
 from studio_core import __version__, activity, plans  # noqa: E402
 from studio_core.app_kind import BLANK_FILES, register_app_kind  # noqa: E402,F401
@@ -89,6 +90,10 @@ class PlanDecision(Strict):
 
 class ExternalMcp(Strict):
     enabled: StrictBool  # JSON true/false only: "yes", 1, "on" are 422
+
+
+class RunnerProfile(Strict):
+    profile: Literal["full", "isolated"]  # exact strings only; anything else is 422
 
 
 class ProjectDelete(Strict):
@@ -326,6 +331,14 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             raise ValidationFailed("invalid run id")
         runner.stop(run_id)
         return {"runId": run_id, "status": "stopping"}
+
+    @app.get(f"{API}/settings/runner-profile")
+    def get_runner_profile() -> dict[str, Any]:
+        return {"profile": runner_profile.get_profile(studio)}
+
+    @app.put(f"{API}/settings/runner-profile")
+    def set_runner_profile(b: RunnerProfile) -> dict[str, Any]:  # owner decision 2026-11-23: default "full"
+        return runner_profile.set_profile(studio, OWNER, b.profile)  # owner only, audited; next run uses it
 
     @app.get(f"{API}/settings/external-mcp")
     def get_external_mcp() -> dict[str, Any]:

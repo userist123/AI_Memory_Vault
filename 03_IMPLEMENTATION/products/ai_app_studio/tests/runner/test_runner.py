@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from aas_runner import claude as rc
+from aas_runner import profile as prof
 from studio_core import activity, plans, run_grants
 
 from .conftest import OWNER
@@ -68,7 +69,8 @@ def test_cwd_is_a_fresh_empty_run_dir_outside_workspaces_and_env_is_minimal(
     assert keys <= {"SYSTEMROOT", "WINDIR", "PATH", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "HOME",
                     "SYSTEMDRIVE", "PATHEXT", "COMSPEC", "PYTHONIOENCODING", "PYTHONUTF8", "CLAUDE_CODE_ENTRYPOINT",
                     "PYTHONHASHSEED", "DISABLE_AUTOUPDATER",  # S9 B7: the runner turns the CLI auto-updater off
-                    "CLAUDE_CODE_DISABLE_AUTO_MEMORY"}  # B1: and the CLI auto-memory
+                    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",  # B1: isolated profile: the CLI auto-memory off
+                    "ENABLE_CLAUDEAI_MCP_SERVERS"}  # full profile (default): claude.ai connectors off
     assert Path(rec["env"]["TEMP"]).resolve().parent == (studio.settings.data_dir / "runner" / "tmp").resolve()
 
 
@@ -116,6 +118,7 @@ def test_stop_cancels_the_process_and_finishes_the_run(studio, fake_cli, tmp_pat
 
 def test_init_violation_aborts_the_run_and_kills_the_process(studio, fake_cli, tmp_path: Path) -> None:
     pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    prof.set_profile(studio, OWNER, "isolated")  # an extra MCP server is a violation in the isolated profile only
     r = rc.Runner(studio, cli=fake_cli)
     run = r.start(pid, scenario(tmp_path, sleep=60, init={"mcp_servers": [
         {"name": "ai-app-studio", "status": "connected"}, {"name": "canary", "status": "connected"}]}))

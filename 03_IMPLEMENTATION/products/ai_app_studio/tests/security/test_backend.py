@@ -183,3 +183,21 @@ def test_external_mcp_enabled_is_strict_bool(client: TestClient, value: object) 
     assert r.status_code == 422, r.text
     assert client.get("/api/v1/settings/external-mcp", headers=AUTH).json() == {"enabled": False}
     assert client.put("/api/v1/settings/external-mcp", json={"enabled": True}, headers=AUTH).status_code == 200
+
+
+def test_runner_profile_is_an_owner_only_route_defaulting_to_full(client: TestClient) -> None:
+    """Owner decision 2026-11-23: default "full"; only the authenticated owner switches it."""
+    assert client.get("/api/v1/settings/runner-profile").status_code == 401
+    assert client.get("/api/v1/settings/runner-profile", headers=AUTH).json() == {"profile": "full"}
+    assert client.put("/api/v1/settings/runner-profile", json={"profile": "isolated"}).status_code == 401
+    r = client.put("/api/v1/settings/runner-profile", json={"profile": "isolated"}, headers=AUTH)
+    assert r.status_code == 200 and r.json() == {"profile": "isolated"}
+    assert client.get("/api/v1/settings/runner-profile", headers=AUTH).json() == {"profile": "isolated"}
+
+
+@pytest.mark.parametrize("body", [{"profile": "FULL"}, {"profile": "open"}, {"profile": 1}, {"profile": None},
+                                  {"profile": True}, {}, {"profile": "full", "extra": 1}])
+def test_runner_profile_value_is_validated(client: TestClient, body: object) -> None:
+    r = client.put("/api/v1/settings/runner-profile", json=body, headers=AUTH)
+    assert r.status_code == 422, r.text
+    assert client.get("/api/v1/settings/runner-profile", headers=AUTH).json() == {"profile": "full"}

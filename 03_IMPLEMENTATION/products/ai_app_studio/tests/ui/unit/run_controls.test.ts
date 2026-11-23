@@ -1,7 +1,7 @@
 // S6 review item 5: prompt box + Start run (owner action -> POST /api/v1/runs) and Stop (POST /runs/<id>/stop).
 import { afterEach, cleanup, createElement, describe, expect, fireEvent, it, render, vi } from "../../../apps/desktop/testkit/unit";
 import { RunControls } from "../../../apps/desktop/src/components/RunControls";
-import { startRun, stopRun } from "../../../apps/desktop/src/lib/api";
+import { getRunnerProfile, setRunnerProfile, startRun, stopRun } from "../../../apps/desktop/src/lib/api";
 
 const SESSION = { apiBase: "http://127.0.0.1:47875", wsUrl: "ws://127.0.0.1:47875/api/v1/events", token: "t".repeat(40), previewPort: 47880 };
 
@@ -99,5 +99,37 @@ describe("api: runs", () => {
     expect((f.mock.calls[0] as [string])[0]).toBe("http://127.0.0.1:47875/api/v1/runs/run_0123456789abcdef/stop");
     await stopRun(SESSION, "run_../x");
     expect(f).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("runner profile (owner decision 2026-11-23)", () => {
+  it("is shown as full by default with a note of what it loads, and the owner can switch to isolated", () => {
+    const onProfile = vi.fn();
+    const { getByTestId } = controls({ profile: "full", onProfile });
+    const box = getByTestId("runner-profile-toggle") as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    expect(getByTestId("runner-profile-note").textContent).toMatch(/memory, hooks, plugins, skills/);
+    fireEvent.click(box);
+    expect(onProfile).toHaveBeenCalledWith("isolated");
+  });
+
+  it("isolated is unchecked, explains itself, and cannot change while a run is going", () => {
+    const onProfile = vi.fn();
+    const { getByTestId } = controls({ profile: "isolated", onProfile, running: true });
+    const box = getByTestId("runner-profile-toggle") as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    expect(box.disabled).toBe(true);
+    expect(getByTestId("runner-profile-note").textContent).toMatch(/only the studio tools/);
+  });
+
+  it("the api sends the exact profile string and shows anything but an explicit isolated as full", async () => {
+    const f = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ profile: "isolated" }), { status: 200 }));
+    expect(await setRunnerProfile(SESSION, "isolated")).toBe("isolated");
+    const [url, init] = f.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("http://127.0.0.1:47875/api/v1/settings/runner-profile");
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(String(init.body))).toEqual({ profile: "isolated" });
+    f.mockResolvedValue(new Response(JSON.stringify({ profile: "weird" }), { status: 200 }));
+    expect(await getRunnerProfile(SESSION)).toBe("full");
   });
 });

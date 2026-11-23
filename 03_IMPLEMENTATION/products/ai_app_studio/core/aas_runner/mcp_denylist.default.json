@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "_comment": "Full runner profile: user MCP servers/tools denied to the builder. Names are the CLI tool prefixes (server name with every character outside A-Z a-z 0-9 _ - replaced by _). Globs with * are allowed. The baseline in profile.py is always added. Owner copy: <data>/config/runner_mcp_denylist.json.",
+  "servers": [
+    "claude_ai_*",
+    "plugin_*",
+    "desktop-commander",
+    "plugin_desktop-commander_desktop-commander",
+    "claude_ai_Remote_Desktop_Commander",
+    "chrome-devtools",
+    "chrome-user",
+    "playwright",
+    "fetch",
+    "agent-bridge",
+    "ai-website-studio",
+    "clips-kitty"
+  ],
+  "tools": [],
+  "substrings": ["exec", "shell", "command", "process", "write_file", "move_file", "delete", "kill", "terminal",
+                 "spawn", "upload", "publish", "deploy", "send_", "fetch", "navigate", "http", "download", "computer_"]
+}
