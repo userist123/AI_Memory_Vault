@@ -10,6 +10,7 @@ approval flow of the export itself is unchanged (the PNGs are extras, never exec
 from __future__ import annotations
 
 import hashlib
+import json
 import io
 import os
 import re
@@ -120,6 +121,7 @@ def generate(studio: Any, project_id: str, *, caption: str | None = None,
     cap = capture.capture(studio, project_id, ["phone", "tablet"], **({"shoot": shoot} if shoot else {}))
     folder = store.shots_dir(project_id)
     folder.mkdir(parents=True, exist_ok=True)
+    caption_used = caption if caption is not None else cfg.caption
     out: list[dict[str, Any]] = []
     for c in cap["captures"]:
         path = capture.capture_file(studio.settings, c["sha256"])
@@ -132,7 +134,38 @@ def generate(studio: Any, project_id: str, *, caption: str | None = None,
         os.replace(tmp, target)
         out.append({"frame": c["frame"], "file": target.name, "width": SIZES[c["frame"]][0],
                     "height": SIZES[c["frame"]][1], "bytes": len(png)})
+    _write_meta(folder, cap["revision"], caption_used)
     return {"revision": cap["revision"], "screenshots": out}
+
+
+_META = ".generated.json"  # not store-*.png: never exported, never fingerprinted
+
+
+def _write_meta(folder: Path, revision: int, caption: str) -> None:
+    tmp = folder / f".generated.{os.getpid()}.partial"
+    tmp.write_text(json.dumps({"revision": revision, "caption": caption}), encoding="utf-8")
+    os.replace(tmp, folder / _META)
+
+
+def ensure_current(studio: Any, project_id: str, *, shoot: Callable[..., dict[str, Any]] | None = None) -> bool:
+    """wow2 #8: when the brand kit enables store screenshots, make sure the stored ones match the app's current revision
+    and caption (capturing the preview if not). True when new images were generated. Called by the owner export BEFORE
+    the approval is requested, so the images are part of the approved artifact; an unchanged app is never re-shot, so
+    the approved hash stays valid on the confirming call."""
+    store = brand.BrandStore(studio.settings.data_dir)
+    cfg = store.config(project_id)
+    if not cfg.store_screenshots:
+        return False
+    folder = store.shots_dir(project_id)
+    try:
+        meta = json.loads((folder / _META).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        meta = {}
+    if (fingerprint(studio.settings, project_id) and meta.get("revision") == studio.get_revision(project_id)
+            and meta.get("caption") == cfg.caption):
+        return False
+    generate(studio, project_id, shoot=shoot)
+    return True
 
 
 def _store_files(src: Path) -> list[Path]:

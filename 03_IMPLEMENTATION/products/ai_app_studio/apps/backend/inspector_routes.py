@@ -58,6 +58,11 @@ SPACING_SCALE = app_templates.SPACING_STEPS
 COLOR_PREFIXES = tuple(app_templates.COLOR_UTILITIES)
 SPACING_PREFIXES = tuple(app_templates.SPACING_UTILITIES)
 FAMILIES: dict[str, list[str]] = app_templates.utility_classes()
+# wow2 #6: the preview shows kit components (ui-btn--danger, ui-toast--success ...); their tone/variant is a prop,
+# parsed from the kit's own component sources (studio_core.app_templates.component_modifiers).
+COMPONENT_MODIFIERS = app_templates.component_modifiers()
+COMPONENT_CLASSES: list[str] = app_templates.component_classes()
+_MOD_OF: dict[str, tuple[str, str]] = {f"{pre}--{v}": (pre, v) for pre, spec in COMPONENT_MODIFIERS.items() for v in spec["values"]}
 # class -> utility prefix (prefixes have no dash; token names may: surface-2, on-primary-soft)
 _FAMILY_OF: dict[str, str] = {c: c.split("-", 1)[0] for fam in FAMILIES.values() for c in fam}
 
@@ -329,6 +334,8 @@ def plan_class_swap(files: dict[str, str], d: Descriptor, old: str, new: str) ->
     """(path, new content) for replacing the class token ``old`` of the element with ``new`` (same allowed family)."""
     if old not in d.classes:
         raise ValidationFailed("the class is not on the selected element")
+    if old in _MOD_OF or new in _MOD_OF:
+        return _plan_modifier_swap(files, d, old, new)
     fam_old, fam_new = _FAMILY_OF.get(old), _FAMILY_OF.get(new)
     if fam_old is None or fam_new is None or fam_old != fam_new or old == new:
         raise ValidationFailed("only a colour token or spacing class from the allowed list can be swapped, "
@@ -353,6 +360,50 @@ def plan_class_swap(files: dict[str, str], d: Descriptor, old: str, new: str) ->
     path, start, end, _ = hits[0]
     content = files[path]
     return path, content[:start] + tok.sub(new, content[start:end]) + content[end:]
+
+
+def _plan_modifier_swap(files: dict[str, str], d: Descriptor, old: str, new: str) -> tuple[str, str]:
+    """Swap a kit component's tone/variant (``ui-btn--secondary`` -> ``ui-btn--danger``) by editing the prop of the JSX
+    element that renders it (never the kit component itself). Only values of the same component are allowed."""
+    if old not in _MOD_OF or new not in _MOD_OF or old == new or _MOD_OF[old][0] != _MOD_OF[new][0]:
+        raise ValidationFailed("only a tone or variant of the same kit component can be swapped")
+    prefix, old_v = _MOD_OF[old]
+    new_v = _MOD_OF[new][1]
+    spec = COMPONENT_MODIFIERS[prefix]
+    comp, prop, default = spec["component"], spec["prop"], spec["default"]
+    open_tag = re.compile(r"<" + comp + r"(?=[\s/>])((?:[^<>{}]|\{[^{}]*\})*)>")
+    lit = re.compile(r"(?<![\w-])" + prop + r"=(?:\"([^\"\n]*)\"|'([^'\n]*)')")
+    words = " ".join(d.text.split())
+    hits: list[tuple[str, int, int, str, bool]] = []  # path, attr start, attr end, kind, has literal
+    for path, content in _sources(files):
+        if path.startswith("src/ui/"):
+            continue  # the kit's own components are not an edit target
+        for m in open_tag.finditer(content):
+            attrs = m.group(1)
+            found = lit.search(attrs)
+            if found is None and re.search(r"(?<![\w-])" + prop + r"\s*=", attrs):
+                continue  # computed (variant={x}): not written literally
+            cur = (found.group(1) if found.group(1) is not None else found.group(2)) if found else default
+            if cur != old_v:
+                continue
+            if words and not attrs.rstrip().endswith("/"):  # tie-break by the visible text that follows the tag
+                after = re.match(r"([^<{]*)", content[m.end():])
+                if after and after.group(1).strip() and " ".join(after.group(1).split()) != words:
+                    continue
+            base = m.start(1)
+            if found:
+                hits.append((path, base + found.start(), base + found.end(), "set", True))
+            else:
+                hits.append((path, m.start(1), m.start(1), "add", False))
+    if not hits:
+        raise NotFound("this component's tone is not written literally in src/: use the chat")
+    if len(hits) > 1:
+        raise AmbiguousEdit(f"this component appears {len(hits)} times in src/: use the chat to say which one",
+                            matches=len(hits))
+    path, a, b, kind, _ = hits[0]
+    content = files[path]
+    repl = f' {prop}="{new_v}"' if kind == "add" else f'{prop}="{new_v}"'
+    return path, content[:a] + repl + content[b:]
 
 
 def crop_box(r: Rect, width: int, height: int) -> tuple[int, int, int, int]:
@@ -388,7 +439,7 @@ def _pid(pid: str) -> str:
 
 
 def _project_files(studio: Any, owner: Actor, pid: str) -> dict[str, str]:
-    files = studio.get_project(owner, pid, with_components=False)["settings"].get("files", {})
+    files = studio.peek_project(owner, pid)["settings"].get("files", {})
     return {p: f["content"] for p, f in files.items() if isinstance(f, dict) and isinstance(f.get("content"), str)}
 
 
@@ -396,7 +447,13 @@ def register(app: FastAPI, studio: Any, owner: Actor, runner: Any) -> None:
     @app.get(f"{API}/projects/{{pid}}/inspector")
     def inspector_options(pid: str) -> dict[str, Any]:
         _pid(pid)
-        return {"revision": studio.get_revision(pid), "families": FAMILIES}
+        return {"revision": studio.get_revision(pid), "families": {**FAMILIES, "component": COMPONENT_CLASSES}}
+
+    @app.get(f"{API}/projects/{{pid}}/capabilities")
+    def preview_capabilities(pid: str) -> dict[str, bool]:
+        """wow2 #4/#5: may the preview state / theme switchers work for this project's source?"""
+        _pid(pid)
+        return app_templates.preview_capabilities(_project_files(studio, owner, pid))
 
     @app.post(f"{API}/projects/{{pid}}/inspector/edit")
     def inspector_edit(pid: str, b: EditReq) -> dict[str, Any]:
@@ -430,7 +487,7 @@ def register(app: FastAPI, studio: Any, owner: Actor, runner: Any) -> None:
         from PIL import Image
 
         _pid(pid)
-        studio.get_project(owner, pid, with_components=False)  # NotFound
+        studio.peek_project(owner, pid)  # NotFound
         shot = capture.capture(studio, pid, [b.device])["captures"][0]
         src = capture.capture_file(studio.settings, shot["sha256"])
         if src is None:

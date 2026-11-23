@@ -30,7 +30,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from studio_core import activity
-from studio_core.errors import Unavailable, ValidationFailed
+from studio_core.errors import ConflictError, Unavailable, ValidationFailed
 
 from . import runner, service, sight
 
@@ -47,7 +47,16 @@ NAV_TIMEOUT_MS = 20_000
 SETTLE_MS = 400
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 _PID = re.compile(r"^prj_[0-9a-f]{16}$")
+
+
+class CaptureBusy(ConflictError):
+    """Another capture still holds the browser after the wait (HTTP 409, message shown to the owner)."""
+
+    code = "capture_busy"
+
+
 _CAP_LOCK = threading.Lock()
+LOCK_WAIT_S = 60.0  # wow check #3: a capture asked for while another runs (auto-polish right after opening) waits this long
 _STATE = threading.Lock()  # worker end vs. the abandon decision (who releases _CAP_LOCK)
 _INDEX_LOCK = threading.Lock()
 _ACTIVE: dict[str, Any] = {}  # the Playwright driver process of the running _shoot
@@ -209,7 +218,8 @@ def _shoot(url: str, frames: list[str], probe: Probe | None = None) -> Any:
 def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, run_id: str | None = None,
             url: str | None = None, shoot: Callable[[str, list[str]], dict[str, bytes]] = _shoot,
             kill: Callable[[], None] | None = None, timeout: float = CAPTURE_TIMEOUT_S, join_timeout: float = KILL_JOIN_S,
-            free_bytes: Callable[[], int] | None = None, probe: Probe | None = None) -> dict[str, Any]:
+            free_bytes: Callable[[], int] | None = None, probe: Probe | None = None,
+            lock_wait: float | None = None) -> dict[str, Any]:
     """Capture ``frames``; returns {revision, url, captures: [{frame, sha256, width, height, bytes}], console: [...]}.
     ``shoot`` returns the PNGs per frame, or (PNGs, raw console lines). With ``probe`` it is called as
     ``shoot(url, frames, probe)`` and returns (PNGs, console, {frame: probe result}); the result gains ``probe``."""
@@ -225,8 +235,8 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
     free = free_bytes() if free_bytes else _free_bytes(captures_dir(studio.settings))
     if free < MIN_FREE_BYTES:
         raise Unavailable(f"preview capture is disabled: less than 5 GiB free on the data drive ({free // 2**20} MiB)")
-    if not _CAP_LOCK.acquire(blocking=False):
-        raise Unavailable("a capture is already running")
+    if not _CAP_LOCK.acquire(timeout=max(0.0, LOCK_WAIT_S if lock_wait is None else lock_wait)):
+        raise CaptureBusy("Captura e ocupată, reîncearcă")
     handed_off = False
     try:
         box: dict[str, Any] = {}

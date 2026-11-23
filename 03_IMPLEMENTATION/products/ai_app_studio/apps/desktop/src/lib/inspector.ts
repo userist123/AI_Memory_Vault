@@ -45,6 +45,8 @@ export interface InspectorSelection {
 export interface Families {
   color: string[];
   spacing: string[];
+  /** kit component tone/variant classes (ui-btn--danger ...), swapped by editing the component prop */
+  component?: string[];
 }
 export interface InspectorOptions {
   revision: number;
@@ -181,7 +183,7 @@ export async function fetchInspectorOptions(s: Session, projectId: string): Prom
   const b = plainObject(await call(s, `/projects/${projectId}/inspector`)) ?? {};
   const f = plainObject(b.families) ?? {};
   const revision = typeof b.revision === "number" && Number.isInteger(b.revision) && b.revision >= 0 ? b.revision : 0;
-  return { revision, families: { color: classList(f.color), spacing: classList(f.spacing) } };
+  return { revision, families: { color: classList(f.color), spacing: classList(f.spacing), component: classList(f.component) } };
 }
 
 export type EditOp = { op: "text"; to: string } | { op: "class"; from: string; to: string };
@@ -242,4 +244,18 @@ export async function inspectorCapture(
   );
   const sha = b?.sha256;
   return typeof sha === "string" && /^[0-9a-f]{64}$/.test(sha) ? sha : null;
+}
+
+export interface PreviewCapabilities {
+  /** the project's screens import src/aas-states.ts (the state switcher can work) */
+  states: boolean;
+  /** the project has src/ui/theme.ts (the W1 design system) */
+  theme: boolean;
+}
+
+/** GET /projects/<id>/capabilities: what the preview switchers can do for this project's source. */
+export async function fetchCapabilities(s: Session, projectId: string): Promise<PreviewCapabilities> {
+  if (!PROJECT_RE.test(projectId)) throw new Error("bad project id");
+  const b = plainObject(await call(s, `/projects/${projectId}/capabilities`)) ?? {};
+  return { states: b.states === true, theme: b.theme === true };
 }

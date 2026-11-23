@@ -37,7 +37,7 @@ def router(studio: Any, runner: Any) -> APIRouter:
     @r.get(f"{API}/projects/{{pid}}/chat")
     def chat_history(pid: str) -> dict[str, Any]:
         _check(pid)
-        studio.get_project(chat_mod.CHAT_ACTOR, pid, with_components=False)  # NotFound
+        studio.peek_project(chat_mod.CHAT_ACTOR, pid)  # NotFound
         live = runner.live_project()
         resumable = runner_profile.get_profile(studio) == "full" and chat_mod.get_session(studio, pid) is not None
         return {"projectId": pid, "turns": chat_mod.history(studio, pid), "running": live == pid,

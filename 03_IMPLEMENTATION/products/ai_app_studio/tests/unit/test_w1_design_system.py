@@ -249,3 +249,37 @@ def test_theme_ts_whitelists_query_values() -> None:
     assert re.search(r"PRESETS[^\n]*\.includes", src)  # unknown preset ids from the URL are ignored
     for pid in PRESET_IDS:
         assert f'"{pid}"' in src
+
+
+# ---------------------------------------------------------------- wow2 #4: every template screen drives the state switcher
+def test_every_template_uses_the_state_hook_for_all_four_states() -> None:
+    for name in app_templates.TEMPLATE_NAMES:
+        app = app_templates._app_files(name)["src/App.tsx"]  # noqa: SLF001
+        assert 'from "./aas-states"' in app and "useAasState()" in app, name
+        assert "Skeleton" in app and 'tone="error"' in app and "EmptyState" in app, name  # loading / error / empty views
+        for state in ('"loading"', '"error"', '"empty"'):
+            assert state in app, (name, state)
+
+
+def test_design_rules_tell_the_agent_to_wire_the_state_hook() -> None:
+    rule = dict(app_templates.DESIGN_RULES)["states"]
+    assert "useAasState" in rule and "./aas-states" in rule
+    assert "useAasState" in (KIT / "DESIGN.md").read_text(encoding="utf-8")
+    assert "useAasState" in claude.SYSTEM_PROMPT
+
+
+# ---------------------------------------------------------------- wow2 #4/#5: capability detection (one helper)
+def test_preview_capabilities_detection() -> None:
+    full = app_templates.files_for("tabs")
+    assert app_templates.preview_capabilities(full) == {"states": True, "theme": True}
+    legacy = {"src/App.tsx": "export default () => null;\n", "src/index.css": ":root{}\n"}
+    assert app_templates.preview_capabilities(legacy) == {"states": False, "theme": False}
+    # the hook file exists but no screen imports it (the owner check: the switcher did nothing)
+    unused = {"src/aas-states.ts": "export function useAasState() { return null; }\n", "src/App.tsx": "export default () => null;\n"}
+    assert app_templates.preview_capabilities(unused)["states"] is False
+    used = {**unused, "src/App.tsx": 'import { useAasState } from "./aas-states";\nexport default () => useAasState();\n'}
+    assert app_templates.preview_capabilities(used)["states"] is True
+    # an import that only appears in a comment or another file name does not count
+    fake = {**unused, "src/App.tsx": '// import { useAasState } from "./aas-states"\nexport default () => null;\n'}
+    assert app_templates.preview_capabilities(fake)["states"] is False
+    assert app_templates.preview_capabilities({"src/ui/theme.ts": "x"})["theme"] is True

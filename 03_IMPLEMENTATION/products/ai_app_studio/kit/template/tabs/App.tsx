@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Button, Card, Dialog, EmptyState, Input, List, ListItem, Sheet, TabBar, Toast, panelId, tabId, type TabItem } from "./ui";
+import { useAasState, type AasState } from "./aas-states";
+import { Button, Card, Dialog, EmptyState, Input, List, ListItem, Sheet, Skeleton, TabBar, Toast, panelId, tabId, type TabItem } from "./ui";
 
 const TABS: TabItem[] = [
   { id: "home", label: "Home", icon: "\u2302" },
@@ -9,7 +10,30 @@ const TABS: TabItem[] = [
 
 const PLACES = ["Botanical garden", "City library", "Riverside park", "Old town square", "Science museum"];
 
-function Home(props: { onDone: () => void }) {
+/** Loading and error views shared by the screens (the studio forces them through ?aas-state=); null = show the screen. */
+function stateView(forced: AasState | null, what: string, retry: () => void) {
+  if (forced === "loading") {
+    return (
+      <div aria-busy="true" aria-label="Loading">
+        <Skeleton lines={4} />
+      </div>
+    );
+  }
+  if (forced === "error") {
+    return (
+      <EmptyState tone="error" icon={"!"} title={`Could not load ${what}`} description="Check your connection and try again."
+        action={<Button onClick={retry}>Try again</Button>} />
+    );
+  }
+  return null;
+}
+
+function Home(props: { onDone: () => void; forced: AasState | null }) {
+  const other = stateView(props.forced, "your home screen", props.onDone);
+  if (other) return other;
+  if (props.forced === "empty") {
+    return <EmptyState icon={"\u2302"} title="Nothing here yet" description="Your home screen will fill up as you use the app." />;
+  }
   return (
     <>
       <h1>Welcome</h1>
@@ -24,9 +48,11 @@ function Home(props: { onDone: () => void }) {
   );
 }
 
-function Search() {
+function Search(props: { forced: AasState | null }) {
   const [q, setQ] = useState("");
-  const hits = PLACES.filter((p) => p.toLowerCase().includes(q.trim().toLowerCase()));
+  const hits = props.forced === "empty" ? [] : PLACES.filter((p) => p.toLowerCase().includes(q.trim().toLowerCase()));
+  const other = stateView(props.forced, "places", () => setQ(""));
+  if (other) return other;
   return (
     <>
       <h1>Search</h1>
@@ -45,12 +71,17 @@ function Search() {
   );
 }
 
-function Profile(props: { onSaved: () => void }) {
+function Profile(props: { onSaved: () => void; forced: AasState | null }) {
   const [sheet, setSheet] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [name, setName] = useState("Alex");
   const closeSheet = useCallback(() => setSheet(false), []);
   const closeConfirm = useCallback(() => setConfirm(false), []);
+  const other = stateView(props.forced, "your profile", props.onSaved);
+  if (other) return other;
+  if (props.forced === "empty") {
+    return <EmptyState icon={"\u263a"} title="No profile yet" description="Add your details to see them here." />;
+  }
   return (
     <>
       <h1>Profile</h1>
@@ -83,12 +114,13 @@ export default function App() {
   const [active, setActive] = useState("home");
   const [toast, setToast] = useState("");
   const hide = useCallback(() => setToast(""), []);
+  const forced = useAasState(); // preview state switch (?aas-state=), null in normal use
   return (
     <div className="shell">
       <main className="panel" role="tabpanel" id={panelId(active)} aria-labelledby={tabId(active)} tabIndex={0}>
-        {active === "home" ? <Home onDone={() => setToast("Nice, marked as done")} /> : null}
-        {active === "search" ? <Search /> : null}
-        {active === "profile" ? <Profile onSaved={() => setToast("Name saved")} /> : null}
+        {active === "home" ? <Home forced={forced} onDone={() => setToast("Nice, marked as done")} /> : null}
+        {active === "search" ? <Search forced={forced} /> : null}
+        {active === "profile" ? <Profile forced={forced} onSaved={() => setToast("Name saved")} /> : null}
       </main>
       <TabBar tabs={TABS} active={active} onChange={setActive} />
       <Toast open={toast !== ""} tone="success" message={toast} onDismiss={hide} />

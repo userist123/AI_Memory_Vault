@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 KIT_TEMPLATE = Path(__file__).resolve().parents[2] / "kit" / "template"
 _SRC = KIT_TEMPLATE / "src"
@@ -46,7 +47,9 @@ DESIGN_RULES: tuple[tuple[str, str], ...] = (
                    "pages with var(--safe-top), var(--safe-bottom), var(--safe-left) and var(--safe-right)."),
     ("states", "States: every screen that loads or lists data has a loading state (Skeleton), an empty state "
                "(EmptyState) and an error state (EmptyState tone=\"error\" with a retry action); actions give feedback "
-               "within 200 ms (pressed and hover micro-interactions, Toast), and motion respects prefers-reduced-motion."),
+               "within 200 ms (pressed and hover micro-interactions, Toast), and motion respects prefers-reduced-motion. "
+               "Wire the states to the studio preview switch: import { useAasState } from \"./aas-states\" and let its "
+               "value (loading, empty, error or populated; null in normal use) override the screen's real state."),
 )
 
 TEMPLATE_NAMES = ("blank", "tabs", "list-detail")
@@ -72,6 +75,49 @@ SPACING_UTILITIES = {"p": ("padding",), "px": ("padding-inline",), "py": ("paddi
                      "pt": ("padding-top",), "pb": ("padding-bottom",), "pl": ("padding-left",),
                      "pr": ("padding-right",), "m": ("margin",), "mx": ("margin-inline",), "my": ("margin-block",),
                      "mt": ("margin-top",), "mb": ("margin-bottom",), "gap": ("gap",)}
+
+
+# Kit components whose look is one string-union prop: (component, css class prefix, prop, source file, regex of the union).
+# The values and the default are PARSED from the component source in src/ui, so the catalogue stays the only copy
+# (wow2 #6: the preview shows ui-btn--danger etc., never the token utilities, so the inspector swaps these).
+_MODIFIER_SPECS: tuple[tuple[str, str, str, str, str], ...] = (
+    ("Button", "ui-btn", "variant", "Button.tsx", r"type\s+ButtonVariant\s*=\s*([^;]+);"),
+    ("Toast", "ui-toast", "tone", "Toast.tsx", r"\btone\?:\s*([^;]+);"),
+)
+
+
+def component_modifiers() -> dict[str, dict[str, Any]]:
+    """{css prefix: {component, prop, default, values}} for the kit components with a tone/variant prop."""
+    out: dict[str, dict[str, Any]] = {}
+    for comp, prefix, prop, fname, union_re in _MODIFIER_SPECS:
+        src = _read(_UI / fname)
+        m = re.search(union_re, src)
+        d = re.search(rf"\b{prop}\s*=\s*\"([a-z]+)\"", src)
+        if m is None or d is None:
+            raise RuntimeError(f"kit component {comp}: cannot read its {prop} values")
+        values = re.findall(r'"([a-z]+)"', m.group(1))
+        if d.group(1) not in values:
+            raise RuntimeError(f"kit component {comp}: default {prop} is not one of its values")
+        out[prefix] = {"component": comp, "prop": prop, "default": d.group(1), "values": values}
+    return out
+
+
+def component_classes() -> list[str]:
+    """Every allowed ``ui-<comp>--<value>`` class (the inspector's `component` family)."""
+    return [f"{prefix}--{v}" for prefix, spec in component_modifiers().items() for v in spec["values"]]
+
+
+_STATES_IMPORT = re.compile(r'''^[ \t]*import[^;\n]*\bfrom[ \t]*["'][^"']*aas-states["']''', re.M)
+
+
+def preview_capabilities(files: dict[str, str]) -> dict[str, bool]:
+    """What the studio preview switchers can do for a project (wow2 #4/#5), from its source files:
+    ``states``: src/aas-states.ts exists AND another source imports it (else ?aas-state= changes nothing);
+    ``theme``: src/ui/theme.ts exists (apps from before the W1 design system have none)."""
+    states = "src/aas-states.ts" in files and any(
+        _STATES_IMPORT.search(c) for p, c in files.items()
+        if p != "src/aas-states.ts" and p.startswith("src/") and isinstance(c, str))
+    return {"states": bool(states), "theme": "src/ui/theme.ts" in files}
 
 
 def utility_classes() -> dict[str, list[str]]:

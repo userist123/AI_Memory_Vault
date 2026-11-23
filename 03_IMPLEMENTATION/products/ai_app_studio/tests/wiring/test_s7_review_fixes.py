@@ -107,7 +107,7 @@ def test_timeout_kills_the_browser_and_joins_the_worker_before_the_lock_is_relea
     assert _shot(studio, pid, "after")  # the lock was released: the next capture runs
 
 
-def test_a_worker_that_survives_the_kill_keeps_the_lock(studio) -> None:  # type: ignore[no-untyped-def]
+def test_a_worker_that_survives_the_kill_keeps_the_lock(studio, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     pid = _built(studio)
     stop = threading.Event()
 
@@ -118,14 +118,15 @@ def test_a_worker_that_survives_the_kill_keeps_the_lock(studio) -> None:  # type
     with pytest.raises(Unavailable, match="timed out"):
         capture.capture(studio, pid, ["phone"], shoot=shoot, kill=lambda: None, timeout=0.2, join_timeout=0.2,
                         free_bytes=lambda: 50 * GIB)
-    with pytest.raises(Unavailable, match="already running"):  # no second browser while the first is still alive
+    monkeypatch.setattr(capture, "LOCK_WAIT_S", 0.1)  # wow2 #3: a second capture waits for the lock, then answers 409
+    with pytest.raises(capture.CaptureBusy, match="ocupată"):  # no second browser while the first is still alive
         _shot(studio, pid, "second")
     stop.set()
     for _ in range(100):  # the worker releases the lock itself when it finally ends
         try:
             _shot(studio, pid, "third")
             break
-        except Unavailable:
+        except (Unavailable, capture.CaptureBusy):
             time.sleep(0.05)
     else:
         pytest.fail("the capture lock was never released")

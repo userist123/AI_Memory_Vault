@@ -27,6 +27,8 @@ class BrandReq(BaseModel):
     caption: Annotated[str, Field(max_length=60)] = ""
     versionMajor: Annotated[int, Field(ge=0, le=999)] = 1  # noqa: N815
     versionMinor: Annotated[int, Field(ge=0, le=999)] = 0  # noqa: N815
+    storeScreenshots: bool = False  # noqa: N815
+    appName: Annotated[str, Field(max_length=30)] = ""  # noqa: N815
 
 
 def _pid(pid: str) -> str:
@@ -39,7 +41,7 @@ def register(app: FastAPI, studio: Any, owner: Actor) -> None:
     store = brand.BrandStore(studio.settings.data_dir)
 
     def view(pid: str) -> dict[str, Any]:
-        proj = studio.get_project(owner, pid, with_components=False)
+        proj = studio.peek_project(owner, pid)
         cfg = service._brand_config(studio, pid, store)  # noqa: SLF001 - saved kit, else tokens, else defaults
         code = store.next_version_code(pid)
         glyphs = [{"name": n, "svg": (brand.GLYPH_DIR / f"{n}.svg").read_text(encoding="utf-8")} for n in brand.glyph_names()]
@@ -48,7 +50,7 @@ def register(app: FastAPI, studio: Any, owner: Actor) -> None:
         except brand.BrandError:
             preview = ""
         return {"kit": cfg.to_json(), "colours": dict(zip(("background", "foreground"), cfg.colours(), strict=True)),
-                "appLabel": brand.app_label(str(proj.get("name", ""))), "nextVersionCode": code,
+                "appLabel": brand.app_label(str(proj.get("name", "")), cfg.app_name), "nextVersionCode": code,
                 "nextVersionName": brand.semver(cfg, code), "glyphs": glyphs, "previewPng": preview}
 
     @app.get(f"{API}/projects/{{pid}}/brand")
@@ -58,11 +60,11 @@ def register(app: FastAPI, studio: Any, owner: Actor) -> None:
     @app.put(f"{API}/projects/{{pid}}/brand")
     def brand_put(pid: str, b: BrandReq) -> dict[str, Any]:
         _pid(pid)
-        studio.get_project(owner, pid, with_components=False)
+        studio.peek_project(owner, pid)
         try:
             store.save_config(pid, brand.BrandConfig(glyph=b.glyph, background=b.background, foreground=b.foreground,
                                                      caption=b.caption, version_major=b.versionMajor,
-                                                     version_minor=b.versionMinor))
+                                                     version_minor=b.versionMinor, store_screenshots=b.storeScreenshots, app_name=b.appName.strip()))
         except brand.BrandError as e:
             raise ValidationFailed(str(e)) from e
         return view(pid)

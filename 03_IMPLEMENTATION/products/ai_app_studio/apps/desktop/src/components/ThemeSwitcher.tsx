@@ -39,17 +39,23 @@ export function themedSrc(src: string | null, theme: PreviewTheme, side?: "light
   return u.toString();
 }
 
-export function ThemeSwitcher(props: { value: PreviewTheme; onChange: (t: PreviewTheme) => void }) {
+export const THEME_UNSUPPORTED_HINT = "Aplicația nu folosește încă sistemul de design — cere în chat: «treci pe sistemul de design»";
+
+/** ``supported`` false (a project from before the W1 design system has no src/ui/theme.ts): disabled with a hint. */
+export function ThemeSwitcher(props: { value: PreviewTheme; onChange: (t: PreviewTheme) => void; supported?: boolean }) {
   const { value, onChange } = props;
+  const supported = props.supported !== false;
   return (
-    <div className="theme-switcher" role="group" aria-label="Temă previzualizare" data-testid="theme-switcher">
+    <div className="theme-switcher" role="group" aria-label="Temă previzualizare" data-testid="theme-switcher"
+      aria-disabled={!supported || undefined} title={supported ? undefined : THEME_UNSUPPORTED_HINT}>
       {MODES.map((m) => (
         <button
           key={m.id}
           type="button"
           className={`btn small${value.mode === m.id ? " on" : ""}`}
           aria-pressed={value.mode === m.id}
-          title={m.title}
+          title={supported ? m.title : THEME_UNSUPPORTED_HINT}
+          disabled={!supported}
           data-testid={`theme-${m.id}`}
           onClick={() => onChange({ ...value, mode: m.id })}
         >
@@ -59,6 +65,7 @@ export function ThemeSwitcher(props: { value: PreviewTheme; onChange: (t: Previe
       <select
         aria-label="Stil previzualizare"
         data-testid="theme-preset"
+        disabled={!supported}
         value={value.preset}
         onChange={(e) => onChange({ ...value, preset: isPreset(e.target.value) ? e.target.value : "project" })}
       >
@@ -69,6 +76,11 @@ export function ThemeSwitcher(props: { value: PreviewTheme; onChange: (t: Previe
           </option>
         ))}
       </select>
+      {supported ? null : (
+        <small className="muted" data-testid="theme-hint">
+          {THEME_UNSUPPORTED_HINT}
+        </small>
+      )}
     </div>
   );
 }

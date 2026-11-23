@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Dialog, EmptyState, Input, List, ListItem, Sheet, Toast } from "./ui";
+import { useAasState } from "./aas-states";
+import { Button, Dialog, EmptyState, Input, List, ListItem, Sheet, Skeleton, Toast } from "./ui";
 
 type Item = { id: string; title: string; summary: string; body: string };
 
@@ -18,6 +19,9 @@ export default function App() {
   const [confirm, setConfirm] = useState(false);
   const [toast, setToast] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
+  // preview state switch: the studio forces loading / empty / error / populated through ?aas-state= (null in normal use)
+  const forced = useAasState();
+  const view = forced ?? (items.length ? "populated" : "empty");
   const item = items.find((i) => i.id === selected) ?? null;
 
   useEffect(() => {
@@ -58,7 +62,14 @@ export default function App() {
             Add
           </Button>
         </div>
-        {items.length ? (
+        {view === "loading" ? (
+          <div aria-busy="true" aria-label="Loading">
+            <Skeleton lines={4} />
+          </div>
+        ) : view === "error" ? (
+          <EmptyState tone="error" icon={"!"} title="Could not load items" description="Check your connection and try again."
+            action={<Button onClick={() => setToast("Trying again")}>Try again</Button>} />
+        ) : view === "populated" ? (
           <List aria-label="All items">
             {items.map((i) => (
               <ListItem key={i.id} title={i.title} subtitle={i.summary} leading={i.title[0]} chevron

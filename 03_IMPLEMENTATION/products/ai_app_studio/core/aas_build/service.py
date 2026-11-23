@@ -411,7 +411,7 @@ def _brand_config(studio: Any, project_id: str, store: brand.BrandStore) -> bran
     if (store.dir(project_id) / "brand.json").is_file():
         return store.config(project_id)
     try:
-        css = studio.read_file(Actor("system", "brand", "system"), project_id, "src/index.css").get("content", "")
+        css = studio.read_file(Actor("system", "brand", "system"), project_id, "src/index.css", quiet=True).get("content", "")
     except Exception:  # noqa: BLE001 - no token file: the default palette
         css = ""
     pal = brand.palette_from_css(str(css))

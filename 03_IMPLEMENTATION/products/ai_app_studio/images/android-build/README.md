@@ -45,3 +45,10 @@ Measured 2026-11-23: offline build of the blank kit app ~30 s, APK ~4.1 MB.
   (the licence text is only in Google's repository2-3.xml) and is recorded as unverified.
 - `template/gradle/verification-metadata.xml` is committed and the build runs `--dependency-verification strict`;
   to change dependencies regenerate it with `gradle --write-verification-metadata sha256`, review the diff, commit.
+
+## Known cosmetic: launchable activity name
+
+The Android `namespace` (and so the `MainActivity` class package) of the shell stays `dev.aiappstudio.p0000000000000000`
+while the `applicationId` is the per-project `dev.aiappstudio.p<16 hex>`. Renaming the Java package per build would need a
+rewrite of the pre-warmed offline Gradle image, so it is left as is: only `aapt dump badging` shows it
+(`launchable-activity`); the launcher label, icon and package id the owner sees are the project ones.

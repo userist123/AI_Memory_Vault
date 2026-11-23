@@ -405,3 +405,53 @@ def test_masks_are_measured_in_an_isolated_world() -> None:
     finally:
         srv.shutdown()
     assert masks["desktop"] == [[10, 20, 100, 30]], masks
+
+
+# ---------------------------------------------------------------- wow2 #7: absolute floor / region size beat the percentage
+def _desktop(draw: list[Any] | None = None) -> bytes:
+    return png((1280, 800), draw)
+
+
+def test_small_title_change_on_desktop_is_flagged_despite_the_percentage() -> None:
+    a = _desktop()
+    b = _desktop([((300, 100, 330, 109), (20, 20, 20))])  # a 31x10 title-sized change: ~0.03 % of 1280x800
+    d = baselines.diff_images(a, b)
+    assert d["changedPct"] < baselines.DEFAULT_THRESHOLD_PCT  # the percentage alone misses it (the live finding)
+    assert baselines.is_changed(d, baselines.DEFAULT_THRESHOLD_PCT) is True
+    assert d["changedPixels"] > baselines.ABS_FLOOR_PIXELS or d["region"][0] >= 24
+
+
+def test_absolute_pixel_floor() -> None:
+    a = _desktop()
+    # 12 separate 4x4 dots far apart: 192 px in total, no region of 24x10, 0.019 %
+    dots = [((20 + 100 * i, 20 + 50 * (i % 3), 23 + 100 * i, 23 + 50 * (i % 3)), (200, 0, 0)) for i in range(12)]
+    d = baselines.diff_images(a, _desktop(dots))
+    assert d["changedPixels"] > baselines.ABS_FLOOR_PIXELS and d["changedPct"] < baselines.DEFAULT_THRESHOLD_PCT
+    assert baselines.is_changed(d, baselines.DEFAULT_THRESHOLD_PCT) is True
+
+
+def test_sparse_change_in_one_region_is_flagged_by_region_size() -> None:
+    a = _desktop()
+    # 2x2 squares 8 px apart over a 26x10 area: well under the floor (under the floor) but one visible region >= 24x10
+    sq = [((200 + 8 * i, 300 + 8 * j, 201 + 8 * i, 301 + 8 * j), (0, 0, 0)) for i in range(4) for j in range(2)]
+    d = baselines.diff_images(a, _desktop(sq))
+    assert d["changedPixels"] <= baselines.ABS_FLOOR_PIXELS
+    assert d["region"][0] >= 24 and d["region"][1] >= 10
+    assert baselines.is_changed(d, baselines.DEFAULT_THRESHOLD_PCT) is True
+
+
+def test_tiny_scattered_noise_is_still_same() -> None:
+    a = _desktop()
+    one = _desktop([((50, 50, 52, 52), (0, 0, 0)), ((600, 400, 602, 402), (0, 0, 0)), ((1000, 700, 1002, 702), (0, 0, 0))])
+    d = baselines.diff_images(a, one)
+    assert 0 < d["changedPixels"] <= baselines.ABS_FLOOR_PIXELS and d["region"][0] < 24
+    assert baselines.is_changed(d, baselines.DEFAULT_THRESHOLD_PCT) is False
+    same = baselines.diff_images(a, a)
+    assert baselines.is_changed(same, baselines.DEFAULT_THRESHOLD_PCT) is False and same["region"] == [0, 0]
+
+
+def test_a_threshold_the_owner_raised_keeps_the_percentage_only_rule() -> None:
+    a = _desktop()
+    d = baselines.diff_images(a, _desktop([((300, 100, 330, 109), (20, 20, 20))]))
+    assert baselines.is_changed(d, 5.0) is False and baselines.is_changed(d, baselines.DEFAULT_THRESHOLD_PCT) is True
+    assert baselines.is_changed(d, 0.01) is True

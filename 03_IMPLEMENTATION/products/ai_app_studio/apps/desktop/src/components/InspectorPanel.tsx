@@ -15,6 +15,12 @@ const BOX = { display: "flex", flexDirection: "column", gap: 6 } as const;
 
 function family(cls: string, opts: InspectorOptions | null): string[] {
   if (!opts) return [];
+  // kit component modifiers: ui-btn--danger swaps with the other ui-btn--* values only
+  const comp = opts.families.component ?? [];
+  if (comp.includes(cls)) {
+    const base = cls.slice(0, cls.indexOf("--"));
+    return comp.filter((c) => c.slice(0, c.indexOf("--")) === base);
+  }
   // utility prefixes (text, bg, p, gap, ...) have no dash; token names may (surface-2, on-primary-soft)
   const prefix = cls.slice(0, cls.indexOf("-"));
   for (const list of [opts.families.color, opts.families.spacing]) {

@@ -435,7 +435,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             await ws.close(code=4422)
             return
         try:
-            await asyncio.to_thread(studio.get_project, OWNER, projectId, with_components=False)
+            await asyncio.to_thread(studio.peek_project, OWNER, projectId)
         except StudioError:
             await ws.close(code=4404)
             return

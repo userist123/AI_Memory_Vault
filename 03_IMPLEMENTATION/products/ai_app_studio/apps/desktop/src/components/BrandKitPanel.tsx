@@ -104,6 +104,14 @@ export function BrandKitPanel(props: { projectId: string; api: BrandApi }) {
         <input data-testid="brand-fg" type="text" value={kit.foreground ?? ""} maxLength={7} onChange={(e) => set({ foreground: e.target.value || null })} />
       </label>{" "}
       <label>
+        App name (empty = project title){" "}
+        <input data-testid="brand-appname" type="text" value={kit.appName} maxLength={30} onChange={(e) => set({ appName: e.target.value })} />
+      </label>{" "}
+      <label>
+        <input data-testid="brand-storeshots" type="checkbox" checked={kit.storeScreenshots} onChange={(e) => set({ storeScreenshots: e.target.checked })} />{" "}
+        Store screenshots on export
+      </label>{" "}
+      <label>
         Store caption{" "}
         <input data-testid="brand-caption" type="text" value={kit.caption} maxLength={60} onChange={(e) => set({ caption: e.target.value })} />
       </label>{" "}

@@ -307,3 +307,24 @@ describe("kit aas-inspector", () => {
     expect(d.path).toBe("main>h1:nth-of-type(2)");
   });
 });
+
+describe("InspectorPanel kit component modifiers (wow2 #6)", () => {
+  it("offers the other values of the same component only and sends a class op", async () => {
+    const comp = ["ui-btn--primary", "ui-btn--secondary", "ui-btn--ghost", "ui-btn--danger", "ui-toast--neutral", "ui-toast--danger"];
+    const loadOptions = vi.fn(async () => ({ ...OPTS, families: { ...OPTS.families, component: comp } }));
+    const preview = vi.fn(async () => ({ path: "src/App.tsx", line: 5, planToken: TOKEN }));
+    const el = { ...SEL.element, tag: "button", classes: ["ui-btn", "ui-btn--secondary"] };
+    let r!: ReturnType<typeof render>;
+    await act(async () => {
+      r = render(createElement(InspectorPanel, { selection: { ...SEL, element: el }, loadOptions, preview, edit: vi.fn(), capture: vi.fn(), onAttach: vi.fn(), onClose: vi.fn() }));
+    });
+    const sel = r.getByTestId("inspector-swap-ui-btn--secondary") as HTMLSelectElement;
+    expect(Array.from(sel.options).map((o) => o.value)).toEqual(["ui-btn--primary", "ui-btn--secondary", "ui-btn--ghost", "ui-btn--danger"]);
+    expect(() => r.getByTestId("inspector-swap-ui-btn")).toThrow(); // the base class is not swappable
+    fireEvent.change(sel, { target: { value: "ui-btn--danger" } });
+    await act(async () => {
+      fireEvent.click(r.getByTestId("inspector-apply-ui-btn--secondary"));
+    });
+    expect(preview).toHaveBeenCalledWith(PID, 7, expect.anything(), { op: "class", from: "ui-btn--secondary", to: "ui-btn--danger" });
+  });
+});

@@ -58,3 +58,21 @@ describe("BrandKitPanel", () => {
     expect((r.getByTestId("brand-save") as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe("wow2 brand kit fields", () => {
+  it("parses appName and storeScreenshots (strictly) and the panel saves them", async () => {
+    const v = parseBrand({ ...good, kit: { ...good.kit, appName: "Notite", storeScreenshots: true } })!;
+    expect(v.kit.appName).toBe("Notite");
+    expect(v.kit.storeScreenshots).toBe(true);
+    expect(parseBrand({ ...good, kit: { ...good.kit, storeScreenshots: "yes" } })!.kit.storeScreenshots).toBe(false);
+    expect(parseBrand(good)!.kit.appName).toBe("");
+    const save = vi.fn(async (_p: string, kit: unknown) => ({ ...v, kit: kit as typeof v.kit }));
+    const api: BrandApi = { load: async () => v, save };
+    const { findByTestId, getByTestId } = render(createElement(BrandKitPanel, { projectId: "prj_0123456789abcdef", api }));
+    fireEvent.change(await findByTestId("brand-appname"), { target: { value: "Altceva" } });
+    fireEvent.click(getByTestId("brand-storeshots"));
+    fireEvent.click(getByTestId("brand-save"));
+    await vi.waitFor(() => expect(save).toHaveBeenCalled());
+    expect(save.mock.calls[0]![1]).toMatchObject({ appName: "Altceva", storeScreenshots: false });
+  });
+});

@@ -12,7 +12,7 @@ both copies identical). They are style rules only: they never change what the ag
 4. Dark mode: tonal, not inverted; it comes from the same tokens (data-theme="dark" on html), so never hard-code light-only colours.
 5. Touch: every interactive element is at least 44x44 px (var(--touch)) and keeps a visible :focus-visible ring.
 6. Safe areas: the studio kit page already sets viewport-fit=cover; pad fixed headers, tab bars, sheets and full-screen pages with var(--safe-top), var(--safe-bottom), var(--safe-left) and var(--safe-right).
-7. States: every screen that loads or lists data has a loading state (Skeleton), an empty state (EmptyState) and an error state (EmptyState tone="error" with a retry action); actions give feedback within 200 ms (pressed and hover micro-interactions, Toast), and motion respects prefers-reduced-motion.
+7. States: every screen that loads or lists data has a loading state (Skeleton), an empty state (EmptyState) and an error state (EmptyState tone="error" with a retry action); actions give feedback within 200 ms (pressed and hover micro-interactions, Toast), and motion respects prefers-reduced-motion. Wire the states to the studio preview switch: import { useAasState } from "./aas-states" and let its value (loading, empty, error or populated; null in normal use) override the screen's real state.
 
 ## Tokens (`src/ui/globals.css`)
 

@@ -86,6 +86,8 @@ class BrandConfig:
     caption: str = ""
     version_major: int = 1
     version_minor: int = 0
+    app_name: str = ""  # wow2 #9: launcher label; empty = the project title cut at a word boundary
+    store_screenshots: bool = False  # wow2 #8: the owner export captures + frames store screenshots from the preview
 
     def colours(self) -> tuple[str, str]:
         bg = check_hex(self.background)
@@ -95,14 +97,16 @@ class BrandConfig:
 
     def to_json(self) -> dict[str, object]:
         return {"glyph": self.glyph, "background": self.background, "foreground": self.foreground,
-                "caption": self.caption, "versionMajor": self.version_major, "versionMinor": self.version_minor}
+                "caption": self.caption, "versionMajor": self.version_major, "versionMinor": self.version_minor,
+                "storeScreenshots": self.store_screenshots, "appName": self.app_name}
 
     @classmethod
     def from_json(cls, d: dict[str, object]) -> BrandConfig:
         return cls(glyph=str(d.get("glyph", "star")), background=str(d.get("background", DEFAULT_BACKGROUND)),
                    foreground=(str(d["foreground"]) if d.get("foreground") else None), caption=str(d.get("caption", "")),
                    version_major=int(d.get("versionMajor", 1)),  # type: ignore[call-overload]
-                   version_minor=int(d.get("versionMinor", 0)))  # type: ignore[call-overload]
+                   version_minor=int(d.get("versionMinor", 0)),  # type: ignore[call-overload]
+                   store_screenshots=d.get("storeScreenshots") is True, app_name=str(d.get("appName") or ""))
 
 
 def palette_from_css(css: str) -> dict[str, str]:
@@ -436,10 +440,17 @@ def master_svg(cfg: BrandConfig) -> str:
 _XML_BAD = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f‪-‮⁦-⁩]")
 
 
-def app_label(name: str) -> str:
-    """Launcher label from the project name: printable text, no markup, at most 30 characters."""
-    s = _XML_BAD.sub("", str(name or "")).strip()
-    s = re.sub(r"\s+", " ", s)[:30].strip()
+def app_label(name: str, app_name: str = "") -> str:
+    """Launcher label: the brand kit's app name when set, else the project title; printable text, no markup, at most 30
+    characters (the title is cut at a word boundary when it can be)."""
+    s = re.sub(r"\s+", " ", _XML_BAD.sub("", str(app_name or ""))).strip()
+    if s:
+        return s[:30].strip()
+    s = re.sub(r"\s+", " ", _XML_BAD.sub("", str(name or ""))).strip()
+    if len(s) > 30:
+        cut = s[:31].rfind(" ")  # a space at index <= 30 keeps the word before it whole within 30 characters
+        s = s[:cut] if cut > 0 else s[:30]
+        s = s.strip()
     return s or "App"
 
 
@@ -524,7 +535,7 @@ def write_res(cfg: BrandConfig, project_name: str, app_id: str, out: Path) -> li
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(adaptive_xml(), encoding="utf-8")
     (res / "values").mkdir(parents=True, exist_ok=True)
-    (res / "values" / "strings.xml").write_text(strings_xml(app_label(project_name), app_id), encoding="utf-8")
+    (res / "values" / "strings.xml").write_text(strings_xml(app_label(project_name, cfg.app_name), app_id), encoding="utf-8")
     (res / "values" / "styles.xml").write_text(styles_xml(), encoding="utf-8")
     (res / "values" / "ic_launcher_background.xml").write_text(colours_xml(bg), encoding="utf-8")
     return sorted(p.relative_to(out).as_posix() for p in res.rglob("*") if p.is_file())
@@ -612,6 +623,8 @@ def validate(cfg: BrandConfig) -> BrandConfig:
         raise BrandError("foreground and background need a contrast ratio of at least 3:1")
     if len(cfg.caption) > 60 or _XML_BAD.search(cfg.caption):
         raise BrandError("caption must be printable text of at most 60 characters")
+    if len(cfg.app_name) > 30 or _XML_BAD.search(cfg.app_name):
+        raise BrandError("app name must be printable text of at most 30 characters")
     if not (0 <= cfg.version_major <= 999 and 0 <= cfg.version_minor <= 999):
         raise BrandError("version parts must be 0..999")
     return cfg
@@ -746,7 +759,7 @@ def preview_sheet(cfg: BrandConfig, project_name: str = "App") -> bytes:
     splash.alpha_composite(ic)
     y2 = pad * 2 + cell
     sheet.alpha_composite(splash, (pad, y2))
-    dr.text((pad + cell + pad, y2 + 8), f"{app_label(project_name)}  -  {cfg.glyph}  -  {cfg.colours()[0]} / {cfg.colours()[1]}", fill=(30, 30, 30, 255))
+    dr.text((pad + cell + pad, y2 + 8), f"{app_label(project_name, cfg.app_name)}  -  {cfg.glyph}  -  {cfg.colours()[0]} / {cfg.colours()[1]}", fill=(30, 30, 30, 255))
     dr.text((pad + cell + pad, y2 + 36), "circle / squircle / themed (monochrome) / legacy square / legacy round / safe zone (red 66dp, green 72dp)", fill=(90, 90, 90, 255))
     dr.text((pad + cell + pad, y2 + 64), "splash (core-splashscreen, left)", fill=(90, 90, 90, 255))
     import io

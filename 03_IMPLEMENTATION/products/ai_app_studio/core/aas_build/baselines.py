@@ -11,7 +11,8 @@
 - ``check`` (MCP ``baseline_status``, owner route ``POST .../baselines/check``) shoots the same keys again and compares
   each with its baseline: both images get a 1 px Gaussian blur (anti-aliasing / sub-pixel noise), the per-pixel max
   channel difference above PIXEL_TOLERANCE counts as changed; changed % = changed / unmasked pixels. A screen is
-  ``changed`` above the project's threshold (default 0.1 %). A diff PNG (faded baseline, changed pixels red, masks
+  ``changed`` above the project's threshold (default 0.1 %), or when more than ABS_FLOOR_PIXELS pixels changed, or when one
+  changed region is >= 24x10 px (wow2 #7: a small title change on a big desktop frame stays under the percentage). A diff PNG (faded baseline, changed pixels red, masks
   outlined blue, change box magenta) is stored next to the baselines. A changed route the caller did not declare as
   intended is a warning: the agent should revert or fix it.
 - Acceptance checklist (owner-editable, data under the studio data root, never in the app sources):
@@ -49,6 +50,12 @@ MAX_PIXELS = 4096 * 4096
 PIXEL_TOLERANCE = 24          # 0..255, per channel after the blur
 BLUR_RADIUS = 1
 DEFAULT_THRESHOLD_PCT = 0.1   # % of the unmasked pixels
+# wow2 #7: the percentage alone missed a visible title change on desktop (1280x800: 0.1 % is ~1000 px), so a screen is
+# also changed when the changed-pixel COUNT passes an absolute floor or one visible change region is big enough.
+ABS_FLOOR_PIXELS = 150
+REGION_MIN_W, REGION_MIN_H = 24, 10
+REGION_GAP = 6                # changed pixels closer than this belong to one region (glyph strokes of one word)
+REGION_SCAN_MAX = 5000        # above this many changed pixels the floor already decides; no region search needed
 MIN_THRESHOLD_PCT, MAX_THRESHOLD_PCT = 0.01, 20.0
 MAX_FLOWS, MAX_STATEMENTS, MAX_STATEMENT_CHARS, MAX_TITLE_CHARS = 20, 30, 300, 120
 FLOW_STATUSES = ("pass", "fail", "skip")
@@ -106,9 +113,59 @@ def mask_pct(masks: Any, width: int, height: int) -> float:
     return round(100.0 * layer.histogram()[255] / (width * height), 2)
 
 
+def largest_region(changed: Any, box: tuple[int, int, int, int] | None, n: int) -> list[int]:
+    """[w, h] of the biggest group of changed pixels (pixels within REGION_GAP of each other join). Only searched for a
+    small count of changed pixels (REGION_SCAN_MAX); more than that is already decided by the pixel floor."""
+    if not box or n <= 0 or n > REGION_SCAN_MAX:
+        return [0, 0]
+    x0, y0, x1, y1 = box
+    data = changed.crop(box).tobytes()
+    bw = x1 - x0
+    pts = [(x0 + i % bw, y0 + i // bw) for i, v in enumerate(data) if v]
+    parent = list(range(len(pts)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    cells: dict[tuple[int, int], list[int]] = {}
+    for i, (x, y) in enumerate(pts):
+        cx, cy = x // REGION_GAP, y // REGION_GAP
+        for gx in (cx - 1, cx, cx + 1):
+            for gy in (cy - 1, cy, cy + 1):
+                for j in cells.get((gx, gy), ()):
+                    if abs(pts[j][0] - x) <= REGION_GAP and abs(pts[j][1] - y) <= REGION_GAP:
+                        parent[find(i)] = find(j)
+        cells.setdefault((cx, cy), []).append(i)
+    ext: dict[int, list[int]] = {}
+    for i, (x, y) in enumerate(pts):
+        e = ext.setdefault(find(i), [x, y, x, y])
+        e[0], e[1], e[2], e[3] = min(e[0], x), min(e[1], y), max(e[2], x), max(e[3], y)
+    best = [0, 0]
+    for e in ext.values():
+        w, h = e[2] - e[0] + 1, e[3] - e[1] + 1
+        if w * h > best[0] * best[1]:
+            best = [w, h]
+    return best
+
+
+def is_changed(d: dict[str, Any], threshold_pct: float) -> bool:
+    """A screen differs when the share of changed pixels passes the owner's threshold, OR (while the threshold is the
+    default or stricter) the count passes the absolute floor, OR one changed region is at least REGION_MIN_W x
+    REGION_MIN_H. An owner who raised the threshold on purpose keeps the percentage-only rule he asked for."""
+    if d["changedPct"] > threshold_pct or d["sizeChanged"]:
+        return True
+    if threshold_pct > DEFAULT_THRESHOLD_PCT:
+        return False
+    rw, rh = d.get("region") or [0, 0]
+    return bool(d["changedPixels"] > ABS_FLOOR_PIXELS or (rw >= REGION_MIN_W and rh >= REGION_MIN_H))
+
+
 def diff_images(base_png: bytes, cur_png: bytes, masks: list[Rect] | None = None,
                 *, tolerance: int = PIXEL_TOLERANCE) -> dict[str, Any]:
-    """{changedPct, changedPixels, comparedPixels, bbox [x,y,w,h]|None, sizeChanged, diffPng}."""
+    """{changedPct, changedPixels, comparedPixels, bbox [x,y,w,h]|None, region [w,h], sizeChanged, diffPng}."""
     from PIL import Image, ImageChops, ImageDraw, ImageFilter
     a, b = _open(base_png), _open(cur_png)
     size_changed = a.size != b.size
@@ -144,7 +201,7 @@ def diff_images(base_png: bytes, cur_png: bytes, masks: list[Rect] | None = None
     out.save(buf, "PNG", optimize=True)
     return {"changedPct": round(100.0 * n / compared, 4), "changedPixels": n, "comparedPixels": compared,
             "bbox": [box[0], box[1], box[2] - box[0], box[3] - box[1]] if box else None,
-            "sizeChanged": size_changed, "diffPng": buf.getvalue()}
+            "region": largest_region(changed, box, n), "sizeChanged": size_changed, "diffPng": buf.getvalue()}
 
 
 # ---------------------------------------------------------------- storage
@@ -460,10 +517,10 @@ def check(studio: Any, project_id: str, *, intended_routes: list[str] | None = N
                     allm = clean_masks(b.get("masks"), *capture.FRAMES[frame])
                     mpct = mask_pct(allm, *capture.FRAMES[frame])
                     d = diff_images(bp.read_bytes(), png, allm)
-                    row.update(changedPct=d["changedPct"], bbox=d["bbox"], sizeChanged=d["sizeChanged"],
+                    row.update(changedPct=d["changedPct"], changedPixels=d["changedPixels"], bbox=d["bbox"],
+                               region=d["region"], sizeChanged=d["sizeChanged"],
                                maskedRegions=len(allm), maskedPct=mpct,
-                               status="changed" if d["changedPct"] > st["thresholdPct"] or d["sizeChanged"]
-                               or mpct > MAX_MASK_PCT else "same")
+                               status="changed" if is_changed(d, st["thresholdPct"]) or mpct > MAX_MASK_PCT else "same")
                     if d["changedPixels"]:
                         row["diffSha256"] = _store_png(studio.settings, pid, d["diffPng"], free_bytes)
                 results.append(row)
@@ -552,4 +609,4 @@ def set_checklist(studio: Any, actor: Any, project_id: str, data: Any) -> dict[s
 
 def require_project(studio: Any, actor: Any, project_id: str) -> None:
     """NotFound unless the project exists (and the actor may read it)."""
-    studio.get_project(actor, _check_pid(project_id), with_components=False)
+    studio.peek_project(actor, _check_pid(project_id))

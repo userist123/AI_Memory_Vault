@@ -413,6 +413,19 @@ class Studio:
         return self.operation(actor, "project.inspect", "project.read", {"projectId": project_id}, _do,
                               project_id=project_id)
 
+    def peek_project(self, actor: Actor, project_id: str, *, with_components: bool = False) -> dict[str, Any]:
+        """Same view as ``get_project`` for owner READ endpoints, but silent: policy is still enforced, yet no audit row
+        and no run-less ``project.inspect`` activity event (those made the desktop selection ping-pong, wow check B2)."""
+        self.policy.enforce(actor, "project.read")
+        with self.session() as s:
+            p = s.get(Project, project_id)
+            if p is None:
+                raise NotFound("project not found", projectId=project_id)
+            d = project_to_dict(p)
+            if with_components:
+                d["components"] = self._snapshot(s, p)["components"]
+            return d
+
     def get_revision(self, project_id: str) -> int:
         with self.session() as s:
             rev = s.execute(select(Project.revision).where(Project.id == project_id)).scalar_one_or_none()
@@ -521,8 +534,10 @@ class Studio:
         files = self.get_project(actor, project_id, with_components=False)["settings"].get("files", {})
         return [{"path": k, "language": v["language"], "bytes": len(v["content"].encode("utf-8"))} for k, v in sorted(files.items())]
 
-    def read_file(self, actor: Actor, project_id: str, path: str) -> dict[str, Any]:
-        files = self.get_project(actor, project_id, with_components=False)["settings"].get("files", {})
+    def read_file(self, actor: Actor, project_id: str, path: str, *, quiet: bool = False) -> dict[str, Any]:
+        """``quiet``: owner read endpoints that must not leave a run-less ``project.inspect`` event (see peek_project)."""
+        proj = self.peek_project(actor, project_id) if quiet else self.get_project(actor, project_id, with_components=False)
+        files = proj["settings"].get("files", {})
         f = files.get(path)
         if f is None:
             raise NotFound("file not found", path=path)

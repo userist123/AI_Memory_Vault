@@ -275,7 +275,8 @@ function applyEvent(s0: State, e: ActivityEvent): State {
     };
   }
   if (e.runId) s.runId = e.runId;
-  if (e.projectId) s.projectId = e.projectId;
+  // only events of a live run move the selection: run-less activity (read-path audit rows) must never ping-pong it
+  if (e.runId && e.projectId) s.projectId = e.projectId;
   const ts = e.ts;
   const focus = (panel: Panel, file: string | null = null, device: DeviceKind | null = null) => {
     s.focus = { panel, file, device, seq: e.seq };

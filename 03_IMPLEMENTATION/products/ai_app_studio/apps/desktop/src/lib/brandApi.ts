@@ -25,6 +25,10 @@ export interface BrandKit {
   caption: string;
   versionMajor: number;
   versionMinor: number;
+  /** launcher label; empty = the project title (cut at a word boundary, <= 30 characters) */
+  appName: string;
+  /** the owner export also generates the framed store screenshots from the preview */
+  storeScreenshots: boolean;
 }
 
 export interface BrandView {
@@ -83,6 +87,8 @@ export function parseBrand(body: Record<string, unknown>): BrandView | null {
       caption: inspect(k.caption, 60).text,
       versionMajor: num(k.versionMajor, 0, 999, 1),
       versionMinor: num(k.versionMinor, 0, 999, 0),
+      appName: inspect(k.appName, 30).text,
+      storeScreenshots: k.storeScreenshots === true,
     },
     colours: { background: c.background, foreground: c.foreground },
     appLabel: inspect(body.appLabel, 60).text,
@@ -130,6 +136,8 @@ export function brandApi(s: Session): BrandApi {
           caption: kit.caption,
           versionMajor: kit.versionMajor,
           versionMinor: kit.versionMinor,
+          appName: kit.appName,
+          storeScreenshots: kit.storeScreenshots,
         }),
       }),
   };

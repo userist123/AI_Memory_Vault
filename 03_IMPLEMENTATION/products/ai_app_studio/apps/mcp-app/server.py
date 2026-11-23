@@ -364,11 +364,12 @@ def brand_kit(projectId: ProjectId,  # noqa: N803
             foreground=foreground if foreground is not None else cfg.foreground,
             caption=caption if caption is not None else cfg.caption,
             version_major=versionMajor if versionMajor is not None else cfg.version_major,
-            version_minor=versionMinor if versionMinor is not None else cfg.version_minor)
+            version_minor=versionMinor if versionMinor is not None else cfg.version_minor,
+            store_screenshots=cfg.store_screenshots or bool(storeScreenshots), app_name=cfg.app_name)  # keep the owner's export switch
         store.save_config(projectId, cfg)  # validates glyph / colours / contrast
         saved = True
     res: dict[str, Any] = {"saved": saved, "kit": cfg.to_json(), "colours": dict(zip(("background", "foreground"), cfg.colours(), strict=True)),
-                           "glyphs": brand.glyph_names(), "appLabel": brand.app_label(str(proj.get("name", ""))),
+                           "glyphs": brand.glyph_names(), "appLabel": brand.app_label(str(proj.get("name", "")), cfg.app_name),
                            "nextVersionCode": store.next_version_code(projectId),
                            "nextVersionName": brand.semver(cfg, store.next_version_code(projectId))}
     if storeScreenshots:

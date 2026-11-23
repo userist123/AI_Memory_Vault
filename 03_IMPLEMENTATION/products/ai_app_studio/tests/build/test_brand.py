@@ -231,3 +231,35 @@ def test_template_pins_splashscreen_and_takes_version_from_properties() -> None:
     assert "/brand" in script and "--dependency-verification strict" in script and "--offline" in script
     css = (ANDROID / "template" / "aas-safe-area.css").read_text(encoding="utf-8")
     assert "safe-area-inset-top" in css
+
+
+# ---------------------------------------------------------------- wow2 #9: launcher label
+@pytest.mark.parametrize(("title", "want"), [
+    ("Lista de cumparaturi pentru acasa si birou", "Lista de cumparaturi pentru"),  # cut at a word boundary, <= 30
+    ("Notes", "Notes"),
+    ("Aplicatie pentru gestionarea notitelor zilnice", "Aplicatie pentru gestionarea"),
+    ("Exactly thirty characters long ab", "Exactly thirty characters long"),  # the boundary lands exactly on 30
+    ("Supercalifragilisticexpialidocious_and_more", "Supercalifragilisticexpialidocio"[:30]),  # one long word: hard cut
+])
+def test_app_label_truncates_the_title_at_a_word_boundary(title: str, want: str) -> None:
+    got = brand.app_label(title)
+    assert got == want and len(got) <= 30
+
+
+def test_brand_app_name_wins_over_the_title() -> None:
+    assert brand.app_label("A very long project title that is long", "Notite") == "Notite"
+    assert brand.app_label("Title", "  ") == "Title"  # blank app name = not set
+    assert brand.app_label("Title", "x" * 80) == "x" * 30
+    cfg = BrandConfig(app_name="Notite")
+    assert cfg.to_json()["appName"] == "Notite" and BrandConfig.from_json(cfg.to_json()).app_name == "Notite"
+    assert BrandConfig.from_json({"glyph": "star"}).app_name == ""
+
+
+def test_the_label_reaches_strings_xml(tmp_path: Path) -> None:
+    brand.write_brand_dir(BrandConfig(app_name="Notite"), "Some long project title that goes on", "dev.aiappstudio.p" + "0" * 16, 1, tmp_path)
+    assert 'name="app_name">Notite<' in (tmp_path / "res/values/strings.xml").read_text(encoding="utf-8")
+    brand.write_brand_dir(BrandConfig(), "Lista de cumparaturi pentru acasa si birou", "dev.aiappstudio.p" + "0" * 16, 1, tmp_path)
+    assert 'name="app_name">Lista de cumparaturi pentru<' in (tmp_path / "res/values/strings.xml").read_text(encoding="utf-8")
+    bad = BrandConfig(app_name="a\x07b")
+    with pytest.raises(brand.BrandError):
+        brand.validate(bad)

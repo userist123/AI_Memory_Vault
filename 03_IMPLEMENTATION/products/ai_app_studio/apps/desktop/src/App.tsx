@@ -48,7 +48,9 @@ import { fetchChat, sendChat } from "./lib/chatApi";
 import { InspectorOverlay } from "./components/InspectorOverlay";
 import { InspectorPanel } from "./components/InspectorPanel";
 import {
+  fetchCapabilities,
   fetchInspectorOptions,
+  type PreviewCapabilities,
   inspectorCapture,
   inspectorEdit,
   inspectorPreview,
@@ -62,6 +64,7 @@ import type { PresetId } from "./components/PresetPicker";
 import { QaBadge } from "./components/QaBadge";
 import { AutoPolishButton } from "./components/AutoPolishButton";
 import { fetchQa, polishStatus, runQa, startPolish, type QaResult } from "./lib/qaApi";
+import { panelKey } from "./lib/panelKey";
 
 const FOLLOW_PAUSE_MS = 10_000;
 const PROJECT_ID_RE = /^prj_[0-9a-f]{16}$/;
@@ -119,6 +122,8 @@ export function App() {
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>(DEFAULT_PREVIEW_THEME);
   const [rightTab, setRightTab] = useState<RightTab>("phone");
   const [previewState, setPreviewState] = useState<PreviewState | null>(null);
+  // what the preview switchers can do for the selected project's source (null = unknown: do not disable anything)
+  const [caps, setCaps] = useState<PreviewCapabilities | null>(null);
   const [buildOpen, setBuildOpen] = useState(false);
   const [buildFocused, setBuildFocused] = useState(false);
   const [mirrorStream, setMirrorStream] = useState<ArrayBuffer | null>(null);
@@ -377,6 +382,19 @@ export function App() {
     return sendChat(session, pid, message);
   }, [session]);
 
+  useEffect(() => {
+    if (!session || demo || !PROJECT_ID_RE.test(selectedProject)) {
+      setCaps(null);
+      return;
+    }
+    let live = true;
+    fetchCapabilities(session, selectedProject).then((c) => live && setCaps(c), () => live && setCaps(null));
+    return () => {
+      live = false;
+    };
+  }, [session, demo, selectedProject, state.previewNonce]);
+  const statesOk = caps === null || caps.states;
+  const themeOk = caps === null || caps.theme;
   const inspectorOptions = useCallback((pid: string) => {
     if (!session) return Promise.reject(new Error("no session"));
     return fetchInspectorOptions(session, pid);
@@ -477,7 +495,7 @@ export function App() {
           {sessionError ? <p className="banner">{sessionError}</p> : null}
           {!demo && session ? (
             <RunControls
-              key={selectedProject || "none"}
+              key={panelKey("rc", selectedProject)}
               draft={drafts.current.get(selectedProject) ?? ""}
               onDraft={(text) => drafts.current.set(selectedProject, text)}
               projects={selectedRef ? [selectedRef, ...projects.filter((p) => p.id !== selectedRef.id)] : projects}
@@ -534,7 +552,7 @@ export function App() {
               onClose={() => setInspected(null)}
             />
           ) : null}
-          {!demo && changes && PROJECT_ID_RE.test(selectedProject) ? <ChangesPanel key={selectedProject} projectId={selectedProject} api={changes} runStatus={state.runStatus} /> : null}
+          {!demo && changes && PROJECT_ID_RE.test(selectedProject) ? <ChangesPanel key={panelKey("changes", selectedProject)} projectId={selectedProject} api={changes} runStatus={state.runStatus} /> : null}
           {state.runStatus === "failed" && state.endReason ? (
             <p className="warn banner" role="alert" data-testid="run-end-reason">
               {state.endReason}
@@ -574,9 +592,9 @@ export function App() {
           <button className={`tab${rightTab === "mirror" ? " active" : ""}`} onClick={() => setRightTab("mirror")}>
             Emulator
           </button>
-          <StateSwitcher value={previewState} onChange={setPreviewState} />
+          <StateSwitcher value={statesOk ? previewState : null} onChange={setPreviewState} supported={statesOk} />
           <span className="spacer" />
-          <ThemeSwitcher value={previewTheme} onChange={setPreviewTheme} />
+          <ThemeSwitcher value={themeOk ? previewTheme : DEFAULT_PREVIEW_THEME} onChange={setPreviewTheme} supported={themeOk} />
           {!demo && session ? <QaBadge projectId={selectedProject} nonce={state.previewNonce} onResult={setQaGates} api={{ load: (p) => fetchQa(session, p), run: (p, a) => runQa(session, p, a) }} /> : null}
           {!demo && session ? <AutoPolishButton projectId={selectedProject} disabled={state.runStatus === "running" || runBusy} api={{ start: (p) => startPolish(session, p), status: (p) => polishStatus(session, p) }} /> : null}
           <span className="tag" data-testid="revision">
@@ -586,10 +604,10 @@ export function App() {
         {(Object.keys(DEVICES) as DeviceKind[]).map((d) =>
           rightTab === d ? (
             <ThemedPreview
-              theme={previewTheme}
+              theme={themeOk ? previewTheme : DEFAULT_PREVIEW_THEME}
               key={d}
               device={d}
-              src={withPreviewState(previewSrc(d), previewState)}
+              src={withPreviewState(previewSrc(d), statesOk ? previewState : null)}
               demoRevision={demo && state.revision > 0 ? state.revision : null}
               taps={state.taps.filter((t) => t.target === d)}
               now={now}

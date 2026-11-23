@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import os
 import re
 import stat
@@ -40,6 +41,7 @@ from studio_core.services import request_hash
 
 from . import service
 
+log = logging.getLogger(__name__)
 OPERATION = "app.export"
 TARGETS = ("web", "android", "desktop")
 FOLDER_KEY = "export_folder"
@@ -206,6 +208,9 @@ def recorded_build(studio: Any, project_id: str, target: str) -> tuple[str, dict
     return None
 
 
+STORE_SHOOT: Any = None  # tests inject a browser stand-in; None = the real capture
+
+
 def prepare(studio: Any, project_id: str, target: str) -> Artifact:
     if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
@@ -272,6 +277,10 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
     if target == "android":
         try:
             from . import store_shots
+            try:  # wow2 #8: brand kit says store screenshots: shoot the preview now, before approval (never blocks)
+                store_shots.ensure_current(studio, project_id, shoot=STORE_SHOOT)
+            except Exception as e:  # noqa: BLE001 - screenshots are optional; the APK export goes on without them
+                log.warning("store screenshots were not generated for %s: %s", project_id, type(e).__name__)
             shots_fp = store_shots.fingerprint(studio.settings, project_id)
         except (OSError, ValueError):
             shots_fp = {}
