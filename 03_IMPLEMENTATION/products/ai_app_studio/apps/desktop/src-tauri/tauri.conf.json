@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:17875 ws://127.0.0.1:17875; frame-src http://*.localhost:17880; worker-src 'self'; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "csp": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:17875 ws://127.0.0.1:17875; frame-src http://*.localhost:17880; worker-src 'self'; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
       "dangerousDisableAssetCspModification": false,
       "capabilities": ["default"]
     }

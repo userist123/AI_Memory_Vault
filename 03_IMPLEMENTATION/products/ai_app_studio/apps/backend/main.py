@@ -32,6 +32,7 @@ from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field, StrictBool  # noqa: E402
 from aas_build import capture  # noqa: E402
 from aas_device import service as dsvc  # noqa: E402
+from aas_device import video_relay  # noqa: E402
 from aas_runner.claude import Runner  # noqa: E402
 from studio_core import __version__, activity, plans  # noqa: E402
 from studio_core.app_kind import BLANK_FILES, register_app_kind  # noqa: E402,F401
@@ -109,19 +110,22 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     activity.register_secret(token)
     register_app_kind()
     studio = Studio(settings, kind="app")
+    video_hub = video_relay.VideoHub()  # S8: live emulator mirror, fed by the run's MCP child over a keyed pipe
     runner = Runner(studio, cli=runner_cli or [shutil.which("claude") or "claude"], extra_env=runner_extra_env,
-                    purge_stale=False)  # main() purges once the API port is bound (S7 review L2)
+                    purge_stale=False, video_hub=video_hub)  # main() purges once the API port is bound (S7 review L2)
 
     @contextlib.asynccontextmanager
     async def lifespan(a: FastAPI) -> AsyncIterator[None]:
         yield
         # backend shutdown: every run is stopped (grant revoked -> its device stops -> process tree killed)
         await asyncio.to_thread(a.state.runner.stop_all)
+        await asyncio.to_thread(video_hub.close)
 
     app = FastAPI(title="AI App Studio API", version=__version__, docs_url=None, redoc_url=None,
                   openapi_url=f"{API}/openapi.json", lifespan=lifespan)
     app.state.studio = studio
     app.state.runner = runner
+    app.state.video_hub = video_hub
 
     @app.exception_handler(StudioError)
     async def _studio_error(_r: Request, e: StudioError) -> JSONResponse:
@@ -264,6 +268,51 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
         finally:
             unsub()
             watcher.cancel()
+
+    # ---------------------------------------------------------------- WebSocket: live emulator mirror (S8)
+    @app.websocket(f"{API}/device/video")
+    async def device_video(ws: WebSocket, projectId: str = "") -> None:  # noqa: N803
+        # same boundary (token, Host, Origin) and subprotocol rules as /events; binary frames of whole NAL units
+        offered = [p.strip() for p in ws.headers.get("sec-websocket-protocol", "").split(",")]
+        if WS_SUBPROTOCOL not in offered:
+            await ws.close(code=4400)
+            return
+        if not re.fullmatch(r"prj_[0-9a-f]{16}", projectId):
+            await ws.close(code=4422)
+            return
+        try:
+            await asyncio.to_thread(studio.get_project, OWNER, projectId, with_components=False)
+        except StudioError:
+            await ws.close(code=4404)
+            return
+        loop = asyncio.get_running_loop()
+        wake = asyncio.Event()
+        try:
+            sub = video_hub.subscribe(projectId, wake=lambda: loop.call_soon_threadsafe(wake.set))
+        except video_relay.Busy:
+            await ws.close(code=4429)
+            return
+        try:
+            await ws.accept(subprotocol=WS_SUBPROTOCOL)
+
+            async def watch_disconnect() -> None:
+                while (await ws.receive())["type"] != "websocket.disconnect":
+                    pass
+
+            watcher = asyncio.create_task(watch_disconnect())
+            try:
+                while not watcher.done():
+                    for frame in sub.take():
+                        await ws.send_bytes(frame)
+                    wake.clear()
+                    with contextlib.suppress(TimeoutError):
+                        await asyncio.wait_for(wake.wait(), 1.0)
+            finally:
+                watcher.cancel()
+        except RuntimeError:  # socket closed under us
+            pass
+        finally:
+            sub.close()
 
     # middleware order: CORS inside the boundary, boundary outermost
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False,

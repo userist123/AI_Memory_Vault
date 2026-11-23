@@ -178,3 +178,13 @@ pre, code { font-family: var(--mono); }
 .timeline .warn { margin: 0 0 8px; padding: 6px 10px; border-left: 3px solid var(--accent); background: #3a2f1a; color: var(--accent); font-size: 12px; }
 .tools .sha { font: 11px/18px var(--mono); color: var(--muted, #8a8f98); white-space: nowrap; }
 .warn { color: #ffb4a8; font-size: 0.9em; margin: 6px 0; }
+
+/* S8: preview capture thumbnails (timeline strip + next to the device frame) */
+.captures { padding: 8px 12px; border-top: 1px solid var(--line); }
+.capture-row { display: flex; gap: 8px; overflow-x: auto; padding-top: 6px; }
+.capture { margin: 0; display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
+.capture img { display: block; height: 96px; width: auto; border: 1px solid var(--line); border-radius: 4px; background: #000; }
+.capture-empty { height: 96px; min-width: 60px; display: grid; place-items: center; color: var(--muted); font-size: 11px; border: 1px dashed var(--line); border-radius: 4px; padding: 0 6px; }
+.capture figcaption { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.frame-capture { padding: 6px 12px; border-top: 1px solid var(--line); }
+.frame-capture .capture img { height: 140px; }

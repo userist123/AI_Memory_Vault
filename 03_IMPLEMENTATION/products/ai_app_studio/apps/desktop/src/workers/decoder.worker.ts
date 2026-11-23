@@ -5,18 +5,21 @@
  * Lifecycle (error -> stop timer and drop decoder, frame size cap) lives in lib/mirror.ts.
  */
 import { accessUnits, codecFromSps, splitNals } from "../lib/annexb";
-import { createMirrorPlayer, type CanvasLike, type DecoderLike, type FrameLike } from "../lib/mirror";
+import { createLiveFeeder, createMirrorPlayer, type CanvasLike, type DecoderLike, type FrameLike, type PlayerEnv } from "../lib/mirror";
 
 type InMsg =
   | { type: "init"; canvas: OffscreenCanvas }
   | { type: "stream"; data: ArrayBuffer; fps: number; loop: boolean }
+  | { type: "live" }
+  | { type: "chunk"; data: ArrayBuffer }
+  | { type: "reset" }
   | { type: "stop" };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let canvas: OffscreenCanvas | null = null;
 const MAX_STREAM = 8 * 1024 * 1024;
 
-const player = createMirrorPlayer({
+const env: PlayerEnv = {
   createDecoder: (output, error) =>
     new VideoDecoder({
       output: (f) => output(f as unknown as FrameLike),
@@ -25,6 +28,17 @@ const player = createMirrorPlayer({
   makeChunk: (type, timestamp, data) => new EncodedVideoChunk({ type, timestamp, data }),
   getCanvas: () => canvas as unknown as CanvasLike | null,
   status: (text, state, frames) => ctx.postMessage({ type: "status", text, state, frames }),
+};
+const player = createMirrorPlayer(env);
+// S8: live stream from /api/v1/device/video (whole NAL units, cut anywhere by the WS framing)
+const MAX_CHUNK = 64 * 1024;
+const feeder = createLiveFeeder({
+  ...env,
+  supported: async (codec) => {
+    if (typeof VideoDecoder === "undefined") return false;
+    const r = await VideoDecoder.isConfigSupported({ codec, optimizeForLatency: true }).catch(() => null);
+    return Boolean(r?.supported);
+  },
 });
 
 async function play(data: ArrayBuffer, fps: number, loop: boolean) {
@@ -48,8 +62,17 @@ ctx.onmessage = (m: MessageEvent<InMsg>) => {
     player.report("waiting for stream", "idle");
   } else if (msg.type === "stream") {
     void play(msg.data, msg.fps, msg.loop);
+  } else if (msg.type === "live") {
+    player.stop();
+    feeder.stop();
+    player.report("waiting for live video", "idle");
+  } else if (msg.type === "chunk") {
+    if (msg.data instanceof ArrayBuffer && msg.data.byteLength <= MAX_CHUNK) feeder.push(new Uint8Array(msg.data));
+  } else if (msg.type === "reset") {
+    feeder.reset();
   } else if (msg.type === "stop") {
     player.stop();
+    feeder.stop();
     player.report("stopped", "idle");
   }
 };

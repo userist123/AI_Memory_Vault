@@ -600,6 +600,15 @@ def log(msg):
         pass
 
 
+def emulator_argv(emu_bin, avd, port):
+    """-no-nested-warnings (emulator 31.3.9 -help: "Disable the warning dialog when emulator is running in nested
+    virtualization") replaces the "Emulator Running in Nested Virtualization" modal; no settings file is written."""
+    return [emu_bin, "-avd", avd, "-port", str(port), "-gpu", "host", "-no-audio",
+            "-no-boot-anim", "-accel", "on", "-wipe-data", "-no-snapshot-save", "-no-snapshot-load",
+            "-no-nested-warnings",
+            "-network-user-mode-options", "restrict=on", "-wifi-user-mode-options", "restrict=on"]
+
+
 class Host:
     def __init__(self, avd):
         self.avd = avd
@@ -648,9 +657,7 @@ class Host:
         self._clear_locks()
         subprocess.run([self.adb_bin, "-P", "5641", "start-server"], stdin=subprocess.DEVNULL,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30, check=True)
-        argv = [self.emu_bin, "-avd", self.avd, "-port", str(self.port), "-gpu", "host", "-no-audio",
-                "-no-boot-anim", "-accel", "on", "-wipe-data", "-no-snapshot-save", "-no-snapshot-load",
-                "-network-user-mode-options", "restrict=on", "-wifi-user-mode-options", "restrict=on"]
+        argv = emulator_argv(self.emu_bin, self.avd, self.port)
         logf = open(os.path.join(self.state, "run", "emulator-%s.log" % self.avd), "wb")
         self.emu = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=logf, stderr=subprocess.STDOUT)
         logf.close()

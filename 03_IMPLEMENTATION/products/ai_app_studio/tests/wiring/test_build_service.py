@@ -59,20 +59,22 @@ def test_ctx_has_the_studio_kit_plus_only_the_project_src_and_public(studio) -> 
     assert not Path(SEEN["ctx"]).exists() and not Path(SEEN["out"]).exists()  # temp dirs removed
 
 
-def test_events_in_order_and_preview_captured_carries_revision_and_digest(studio) -> None:  # type: ignore[no-untyped-def]
+def test_events_in_order_and_preview_revision_carries_the_revision(studio) -> None:  # type: ignore[no-untyped-def]
+    # S8: a web build announces preview.revision {revision} (the frames reload); preview.captured is reserved for real
+    # PNG captures (preview_capture), whose sha256 the UI fetches as a thumbnail. The dist digest is in build.finished.
     pid = new_project(studio)
     r = service.build_web(studio, pid, run_build=make_fake("v1"), docker=DOCKER, image=IMAGE)
     assert r["ok"] is True and r["url"].startswith(f"http://p-{pid[4:]}.localhost:")
     ev = [e for e in activity.list_events(studio, limit=500) if e["projectId"] == pid and e["kind"].startswith(("build", "preview"))]
     ks = [e["kind"] for e in ev]
-    assert ks[0] == "build.started" and ks[-1] == "preview.captured" and "build.finished" in ks and "build.log" in ks
+    assert ks[0] == "build.started" and ks[-1] == "preview.revision" and "build.finished" in ks and "build.log" in ks
+    assert "preview.captured" not in ks
     log = next(e for e in ev if e["kind"] == "build.log")
     assert "line" in log["payload"] and "vite v8" in log["payload"]["line"]
-    cap = ev[-1]["payload"]
-    assert cap["frame"] == "phone" and cap["sha256"] == hashlib.sha256(b"v1").hexdigest()
-    assert cap["revision"] == studio.get_revision(pid)
+    assert ev[-1]["payload"] == {"revision": studio.get_revision(pid)}
     fin = next(e for e in ev if e["kind"] == "build.finished")
     assert fin["payload"]["status"] == "ok"
+    assert fin["payload"]["artifactSha256"] == hashlib.sha256(b"v1").hexdigest()
 
 
 def test_failed_build_emits_error_and_failed_finish_and_keeps_the_last_good_site(studio) -> None:  # type: ignore[no-untyped-def]
@@ -88,7 +90,7 @@ def test_failed_build_emits_error_and_failed_finish_and_keeps_the_last_good_site
     assert err and "boom" in err[-1]["payload"]["message"]
     assert [e for e in evs if e["kind"] == "build.finished"][-1]["payload"]["status"] == "failed"
     assert service.site_root_for(studio.settings)(pid[4:]) == good  # preview still serves the last good build
-    assert not any(e["kind"] == "preview.captured" for e in evs[-3:])
+    assert not any(e["kind"] in ("preview.captured", "preview.revision") for e in evs[-3:])
 
 
 def test_one_build_at_a_time(studio) -> None:  # type: ignore[no-untyped-def]

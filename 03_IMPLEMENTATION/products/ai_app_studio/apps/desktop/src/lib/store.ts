@@ -23,6 +23,14 @@ export interface ToolRow {
   /** tool.result `sha256` (DESIGN 5.2: body kept only as size+sha256), lowercase 64-hex or "" */
   sha256: string;
 }
+/** S8: a preview.captured image (fetched by sha256 over the authenticated REST route, shown as a blob: URL). */
+export interface Capture {
+  seq: number;
+  sha256: string;
+  frame: DeviceKind;
+  revision: number;
+}
+
 export interface Step {
   id: string;
   title: string;
@@ -81,6 +89,8 @@ export interface State {
   previewProjectId: string;
   /** bumped by every preview.captured / preview.revision: the iframes reload on it (a file.diff already raises revision) */
   previewNonce: number;
+  /** most recent preview.captured images, oldest first (LIMITS.captures) */
+  captures: Capture[];
   taps: Tap[];
   cost: { inputTokens: number; outputTokens: number; costUsd: number; budgetUsd: number | null };
   gaps: Gap[];
@@ -111,6 +121,7 @@ export const initialState: State = {
   revision: 0,
   previewProjectId: "",
   previewNonce: 0,
+  captures: [],
   taps: [],
   cost: { inputTokens: 0, outputTokens: 0, costUsd: 0, budgetUsd: null },
   gaps: [],
@@ -124,7 +135,7 @@ export const initialState: State = {
   connection: "offline",
 };
 
-export const LIMITS = { steps: 400, toolsPerStep: 200, buildLines: 2000, files: 100, taps: 8, gaps: 50, diff: 16000 };
+export const LIMITS = { steps: 400, toolsPerStep: 200, buildLines: 2000, files: 100, taps: 8, gaps: 50, diff: 16000, captures: 24 };
 
 export type Action =
   | { type: "event"; event: ActivityEvent }
@@ -383,6 +394,14 @@ function applyEvent(s0: State, e: ActivityEvent): State {
       {
         const label = previewLabel(e.projectId);
         if (label) s.previewProjectId = label;
+      }
+      if (e.kind === "preview.captured") {
+        const sha = sha256Of(e.payload.sha256);
+        const frame = asDevice(P.short(e, "frame"));
+        if (sha && frame) {
+          const c: Capture = { seq: e.seq, sha256: sha, frame, revision: rev ?? s.revision };
+          s.captures = s.captures.concat(c).slice(-LIMITS.captures);
+        }
       }
       focus("device", null, asDevice(P.short(e, "frame")) ?? "phone");
       break;

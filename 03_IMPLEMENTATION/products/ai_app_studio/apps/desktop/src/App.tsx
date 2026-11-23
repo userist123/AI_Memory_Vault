@@ -19,6 +19,8 @@ import { loadSession, previewOrigin, type Session } from "./lib/session";
 import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from "./lib/store";
 import { ApprovalRegion } from "./components/ApprovalRegion";
 import { DeviceFrame } from "./components/DeviceFrames";
+import { CaptureThumb } from "./components/Captures";
+import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
 import { RunControls } from "./components/RunControls";
@@ -84,6 +86,14 @@ export function App() {
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
   const buildRef = useRef<HTMLDivElement>(null);
+
+  // ---- S8: capture thumbnails (authenticated fetch -> blob: URLs) and the live emulator mirror ----
+  const captureLoader = useMemo(() => (session ? createCaptureLoader(session) : null), [session]);
+  useEffect(() => () => captureLoader?.dispose(), [captureLoader]);
+  const mirrorLive = useMemo(
+    () => (!demo && session && /^prj_[0-9a-f]{16}$/.test(state.projectId) ? { session, projectId: state.projectId } : null),
+    [demo, session, state.projectId],
+  );
 
   // ---- session + live stream (or demo) ----
   useEffect(() => {
@@ -304,6 +314,7 @@ export function App() {
             setBuildOpen={setBuildOpen}
             buildFocused={buildFocused && followActive}
             onOpenFile={(p) => setActiveFile(p)}
+            captureLoad={captureLoader?.load ?? null}
           />
         </div>
         <ApprovalRegion
@@ -347,8 +358,22 @@ export function App() {
             />
           ) : null,
         )}
+        {(Object.keys(DEVICES) as DeviceKind[]).map((d) => {
+          if (rightTab !== d) return null;
+          const last = [...state.captures].reverse().find((c) => c.frame === d);
+          return last ? (
+            <aside key={`cap-${d}`} className="frame-capture" aria-label={`Last ${d} capture`}>
+              <CaptureThumb capture={last} load={captureLoader?.load ?? null} testid="frame-capture" />
+            </aside>
+          ) : null;
+        })}
         <div className={rightTab === "mirror" ? "mirror-wrap" : "mirror-wrap hidden"}>
-          <EmulatorMirror stream={mirrorStream} taps={state.taps.filter((t) => t.target === "mirror")} now={now} />
+          <EmulatorMirror
+            stream={mirrorLive ? null : mirrorStream}
+            live={mirrorLive}
+            taps={state.taps.filter((t) => t.target === "mirror")}
+            now={now}
+          />
         </div>
         {demo ? <p className="muted foot">Demo project p-{DEMO_PROJECT}: replayed fixture, no backend.</p> : null}
       </section>

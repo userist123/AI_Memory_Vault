@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import type { Session } from "../lib/session";
 import type { Tap } from "../lib/store";
+import { VideoClient } from "../lib/video";
 import { TapLayer } from "./DeviceFrames";
 
 /**
@@ -7,7 +9,13 @@ import { TapLayer } from "./DeviceFrames";
  * H.264 Annex-B -> WebCodecs VideoDecoder in a Worker -> OffscreenCanvas. `stream` is bytes from
  * /api/v1/device/video or, in demo mode, the bundled fixture.
  */
-export function EmulatorMirror(props: { stream: ArrayBuffer | null; taps: Tap[]; now: number }) {
+export function EmulatorMirror(props: {
+  stream: ArrayBuffer | null;
+  /** S8: live h264 of the project's studio emulator over the authenticated binary WS (null in demo mode) */
+  live?: { session: Session; projectId: string } | null;
+  taps: Tap[];
+  now: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const [status, setStatus] = useState({ text: "no stream", state: "idle" });
@@ -41,6 +49,25 @@ export function EmulatorMirror(props: { stream: ArrayBuffer | null; taps: Tap[];
     w.postMessage({ type: "stream", data: copy, fps: 10, loop: true }, [copy]);
   }, [props.stream]);
 
+  const liveSession = props.live?.session ?? null;
+  const liveProject = props.live?.projectId ?? "";
+  useEffect(() => {
+    const w = workerRef.current;
+    if (!w || !liveSession || !liveProject) return;
+    w.postMessage({ type: "live" });
+    const client = new VideoClient(
+      liveSession,
+      liveProject,
+      (chunk) => w.postMessage({ type: "chunk", data: chunk }, [chunk]),
+      () => w.postMessage({ type: "reset" }),
+    );
+    client.start();
+    return () => {
+      client.stop();
+      w.postMessage({ type: "stop" });
+    };
+  }, [liveSession, liveProject]);
+
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
@@ -52,7 +79,7 @@ export function EmulatorMirror(props: { stream: ArrayBuffer | null; taps: Tap[];
   }, []);
 
   return (
-    <div className="mirror" data-testid="mirror">
+    <div className="mirror" data-testid="mirror" data-source={liveProject ? "live" : props.stream ? "fixture" : "none"}>
       <div className="mirror-screen">
         <canvas ref={canvasRef} width={180} height={320} data-testid="mirror-canvas" />
         {/* device.tap coordinates are in device pixels of a 1080-wide screen */}

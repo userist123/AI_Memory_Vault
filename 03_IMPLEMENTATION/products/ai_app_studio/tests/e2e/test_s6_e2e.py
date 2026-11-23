@@ -171,7 +171,7 @@ def test_end_to_end_fake_cli_to_preview_and_ui(studio_stack: dict[str, Any], tmp
         events = call("GET", f"/api/v1/activity?limit=1000&projectId={pid}")
         kinds = [e["kind"] for e in events]
         for k in ("run.started", "agent.text", "step.started", "tool.call", "tool.result", "plan.proposed", "file.diff",
-                  "build.started", "build.log", "build.finished", "preview.captured", "cost.update", "run.finished"):
+                  "build.started", "build.log", "build.finished", "preview.revision", "cost.update", "run.finished"):
             assert k in kinds, (k, sorted(set(kinds)))
         assert "hidden reasoning" not in json.dumps(events)
         fin = next(e for e in events if e["kind"] == "run.finished" and e["runId"] == run1)["payload"]

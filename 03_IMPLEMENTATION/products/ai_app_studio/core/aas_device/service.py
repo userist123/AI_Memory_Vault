@@ -33,6 +33,8 @@ from studio_core.errors import PolicyDenied, Unavailable, ValidationFailed
 from studio_core.ids import utcnow
 from studio_core.policy import Actor
 
+from . import video_relay
+
 SETTING_KEY = "device_enabled"
 MIN_FREE_BYTES = 8 * 1024 ** 3
 COORD_MAX = 10_000
@@ -86,6 +88,7 @@ class DeviceService:
             session_factory = session_factory or launcher.DeviceSession
         self._preflight, self._factory = preflight, session_factory
         self.session: Any = None
+        self._video: Any = None
 
     def _setting_and_disk(self) -> None:
         if not is_enabled(self.studio):
@@ -118,6 +121,9 @@ class DeviceService:
         sess.start()
         self.session = sess
         self._rec("device.state", state="running", avd=f"aas-{form}")
+        # S8: the run's mirror pipe (env from the runner); without it there is no in-studio mirror
+        sender = video_relay.VideoSender.from_env(sess)
+        self._video = sender.start() if sender is not None else None
         return {"state": "running", "form": form}
 
     def _need(self) -> Any:
@@ -255,6 +261,9 @@ class DeviceService:
     def stop(self) -> dict[str, Any]:
         with self._lock:
             s, self.session = self.session, None
+            v, self._video = self._video, None
+        if v is not None:
+            v.stop()
         if s is not None:
             try:
                 s.shutdown()

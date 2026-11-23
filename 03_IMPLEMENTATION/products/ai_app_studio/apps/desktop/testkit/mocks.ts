@@ -72,6 +72,12 @@ export class MockBackend {
   apiHits: string[] = [];
   /** what the WS handshake echoes: the contract value, or a broken server (token echoed / nothing) */
   wsEcho: "aas.v1" | "token" | "none" = "aas.v1";
+  /** S8: GET /api/v1/captures/<sha256> bodies, and the binary stream sent on WS /api/v1/device/video */
+  captures = new Map<string, Buffer>();
+  captureGets: string[] = [];
+  videoStream: Buffer | null = null;
+  videoUpgrades: string[] = [];
+  videoSockets = new Set<WebSocket>();
   private api!: Server;
   private preview!: Server;
   private canary!: Server;
@@ -90,7 +96,7 @@ export class MockBackend {
         .map((s) => s.trim());
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
       const ok =
-        url.pathname === "/api/v1/events" &&
+        (url.pathname === "/api/v1/events" || url.pathname === "/api/v1/device/video") &&
         req.headers.host === `127.0.0.1:${PORTS.api}` &&
         req.headers.origin === UI_ORIGIN &&
         offered.includes("aas.v1") &&
@@ -98,6 +104,11 @@ export class MockBackend {
       if (!ok) {
         this.rejectedUpgrades++;
         socket.destroy();
+        return;
+      }
+      if (url.pathname === "/api/v1/device/video") {
+        this.videoUpgrades.push(url.search);
+        this.wss.handleUpgrade(req, socket, head, (ws) => this.onVideo(ws));
         return;
       }
       // contract (DESIGN 5.4): afterSeq is a query parameter of the upgrade URL, as in the backend's events(ws, afterSeq)
@@ -117,6 +128,7 @@ export class MockBackend {
 
   async stop(): Promise<void> {
     for (const s of this.sockets) s.terminate();
+    for (const s of this.videoSockets) s.terminate();
     this.wss.close();
     await Promise.all(
       [this.api, this.preview, this.canary].map(
@@ -152,6 +164,15 @@ export class MockBackend {
   /** Send a raw string to every socket without recording it (forged/invalid frames). */
   pushRaw(raw: string): void {
     for (const s of this.sockets) s.send(raw);
+  }
+
+  /** S8: whole stream in <= 64 KiB binary frames, as the backend hub sends it (SPS + PPS + IDR first). */
+  private onVideo(ws: WebSocket): void {
+    this.videoSockets.add(ws);
+    ws.on("close", () => this.videoSockets.delete(ws));
+    const s = this.videoStream;
+    if (!s) return;
+    for (let i = 0; i < s.length; i += 64 * 1024) ws.send(s.subarray(i, i + 64 * 1024), { binary: true });
   }
 
   private onSocket(ws: WebSocket, after: number): void {
@@ -215,6 +236,19 @@ export class MockBackend {
           if (body && typeof body === "object") this.planGate = (body as { enabled?: unknown }).enabled !== false;
           reply();
         });
+      return;
+    }
+    const cap = /^\/api\/v1\/captures\/([0-9a-f]{64})$/.exec(req.url ?? "");
+    if (req.method === "GET" && cap) {
+      this.captureGets.push(cap[1]!);
+      const body = this.captures.get(cap[1]!);
+      if (!body) {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "image/png", "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store" });
+      res.end(body);
       return;
     }
     if (req.method === "GET" && req.url === "/api/v1/projects") {

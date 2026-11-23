@@ -112,7 +112,7 @@ test("CSP from tauri.conf.json is served and also blocks the innerHTML control",
   expect(csp).toContain("script-src 'self'");
   expect(csp).toContain(`connect-src ipc: http://ipc.localhost http://127.0.0.1:${PORTS.api} ws://127.0.0.1:${PORTS.api};`);
   expect(csp).toContain(`frame-src http://*.localhost:${PORTS.preview};`);
-  expect(csp).toContain("img-src 'self' data: blob:;");
+  expect(csp).toContain("img-src 'self' blob:;"); // S8: capture thumbnails are blob: URLs; no data: images
   const violations: string[] = [];
   await page.exposeFunction("__violation", (d: string) => violations.push(d));
   await page.evaluate((html) => {

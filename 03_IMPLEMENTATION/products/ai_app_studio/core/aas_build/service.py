@@ -131,9 +131,10 @@ def build_web(studio: Any, project_id: str, *, run_id: str | None = None,
         os.replace(tmp_ptr, base / "current")  # atomic pointer switch: the preview reloads from the new site
         _prune(base, name)
         dur = int((time.monotonic() - t0) * 1000)
-        _rec(studio, "build.finished", project_id, run_id, status="ok", revision=revision, durationMs=dur)
-        _rec(studio, "preview.captured", project_id, run_id, revision=revision, frame="phone",
-             sha256=res.dist_sha256)
+        _rec(studio, "build.finished", project_id, run_id, status="ok", revision=revision, durationMs=dur,
+             artifactSha256=res.dist_sha256)
+        # S8: the reload signal is preview.revision; preview.captured is only for real PNG captures (thumbnails)
+        _rec(studio, "preview.revision", project_id, run_id, revision=revision)
         return {"ok": True, "revision": revision, "files": len(res.files), "distSha256": res.dist_sha256,
                 "durationMs": dur, "url": f"http://p-{project_id[4:]}.localhost:{studio.settings.preview_port}/"}
     finally:

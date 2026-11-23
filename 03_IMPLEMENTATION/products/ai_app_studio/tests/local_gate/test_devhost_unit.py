@@ -906,3 +906,16 @@ def test_rotation_watch_updates_and_disables(tmp_path: Path, monkeypatch: pytest
     assert h._rotation_tick() is True and h.console.rotation == 1
     h.adb = lambda *a, **k: (0, "garbage")
     assert h._rotation_tick() is False and h.console is None  # unknown rotation: adb path from now on
+
+
+# ---------- S8: "Nested Virtualization" modal ----------
+
+def test_emulator_argv_disables_the_nested_virtualization_dialog() -> None:
+    """emulator 31.3.9 `-help`: "-no-nested-warnings  Disable the warning dialog when emulator is running in nested
+    virtualization." A command-line flag: nothing is written to any HOME (the owner's emulator settings untouched)."""
+    argv = devhost.emulator_argv("/x/emulator", "aas-phone", 5654)
+    assert argv[:5] == ["/x/emulator", "-avd", "aas-phone", "-port", "5654"]
+    assert "-no-nested-warnings" in argv
+    for kept in ("-wipe-data", "-no-snapshot-save", "-no-snapshot-load"):
+        assert kept in argv
+    assert argv.count("restrict=on") == 2  # network isolation options unchanged

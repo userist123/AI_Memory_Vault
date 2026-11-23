@@ -179,3 +179,33 @@ export async function stopRun(s: Session, runId: string): Promise<void> {
   if (!RUN_RE.test(runId)) return;
   await request(s, `/runs/${runId}/stop`, { method: "POST", body: "{}" });
 }
+
+// ---------------------------------------------------------------- capture thumbnails (S8)
+export const CAPTURE_MAX_BYTES = 8 * 1024 * 1024; // the server refuses bigger captures (capture.MAX_PNG_BYTES)
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/**
+ * GET /api/v1/captures/<sha256> with the bearer token. The id is checked before any request; the body must be a PNG
+ * (content type and magic), at most CAPTURE_MAX_BYTES, and hash to the id (content-addressed). The caller turns the
+ * Blob into a blob: URL (the studio CSP allows img-src 'self' blob: only, never the API origin).
+ */
+export async function fetchCapture(s: Session, sha256: string): Promise<Blob> {
+  if (!SHA256_RE.test(sha256)) throw new Error("invalid capture id");
+  const res = await fetch(`${s.apiBase}/api/v1/captures/${sha256}`, {
+    headers: { Authorization: `Bearer ${s.token}` },
+    credentials: "omit",
+    redirect: "error",
+    referrerPolicy: "no-referrer",
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if ((res.headers.get("Content-Type") ?? "").split(";")[0]!.trim() !== "image/png") throw new Error("not a PNG");
+  const declared = Number(res.headers.get("Content-Length") ?? "0");
+  if (declared > CAPTURE_MAX_BYTES) throw new Error("capture too large");
+  const buf = new Uint8Array(await res.arrayBuffer());
+  if (buf.length > CAPTURE_MAX_BYTES) throw new Error("capture too large");
+  if (buf.length < 8 || PNG_MAGIC.some((b, i) => buf[i] !== b)) throw new Error("not a PNG");
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", buf));
+  const hex = Array.from(digest, (x) => x.toString(16).padStart(2, "0")).join("");
+  if (hex !== sha256) throw new Error("capture sha256 does not match its id");
+  return new Blob([buf], { type: "image/png" });
+}

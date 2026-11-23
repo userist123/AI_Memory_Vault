@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { BuildLine, State, Step } from "../lib/store";
+import { CaptureStrip, type CaptureLoad } from "./Captures";
 
 export function elapsed(from: number | null, to: number | null, now: number): string {
   if (from === null) return "";
@@ -124,6 +125,8 @@ export function Timeline(props: {
   setBuildOpen: (v: boolean) => void;
   buildFocused: boolean;
   onOpenFile: (path: string) => void;
+  /** S8: capture thumbnails (null in demo mode / without a session: text placeholders) */
+  captureLoad?: CaptureLoad | null;
 }) {
   const { state, now } = props;
   const running = state.runStatus === "running";
@@ -148,6 +151,7 @@ export function Timeline(props: {
           />
         ))}
       </ol>
+      <CaptureStrip captures={state.captures} load={props.captureLoad ?? null} />
       {state.agentText ? (
         <div className="agent-text" data-testid="agent-text">
           <span className="eyebrow">Agent says</span>

@@ -124,12 +124,14 @@ class Runner:
     def __init__(self, studio: Any, *, cli: list[str], model: str = "sonnet", max_turns: int = 40,
                  max_budget_usd: float = 2.0, extra_env: Mapping[str, str] | None = None,
                  max_seconds: int = MAX_RUN_SECONDS, plan_timeout: float = PLAN_TIMEOUT_SECONDS,
-                 device_grace: float = DEVICE_GRACE_SECONDS, purge_stale: bool = True) -> None:
+                 device_grace: float = DEVICE_GRACE_SECONDS, purge_stale: bool = True,
+                 video_hub: Any = None) -> None:
         self.studio, self.cli, self.model = studio, list(cli), model
         self.max_turns, self.max_budget_usd, self.extra_env = max_turns, max_budget_usd, dict(extra_env or {})
         self.max_seconds = max_seconds
         self.plan_timeout = float(plan_timeout)
         self.device_grace = float(device_grace)
+        self.video_hub = video_hub  # S8: per-run mirror pipe (aas_device.video_relay.VideoHub) or None
         self.root = studio.settings.data_dir / "runner"
         self._runs: dict[str, _Run] = {}
         self._lock = threading.Lock()
@@ -177,6 +179,11 @@ class Runner:
                      "AAS_PLAN_WAIT_SECONDS": str(int(self.plan_timeout + 30))}
         if os.environ.get("SYSTEMROOT"):
             env_child["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
+        if self.video_hub is not None:  # pipe name + per-run key: MCP child only, never the CLI's env
+            try:
+                env_child.update(self.video_hub.open_run(run_id, project_id))
+            except OSError:
+                pass  # no mirror for this run; the visible emulator window is unaffected
         pw = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "")
         if pw and os.path.isabs(pw) and os.path.isdir(pw):  # preview_capture's Chromium (a path, not a secret)
             env_child["PLAYWRIGHT_BROWSERS_PATH"] = pw
@@ -385,6 +392,11 @@ class Runner:
             pass
 
     def _cleanup(self, run_id: str, mcp_cfg: Path, run_dir: Path, tmp_dir: Path) -> None:
+        if self.video_hub is not None:
+            try:
+                self.video_hub.close_run(run_id)
+            except Exception:  # noqa: BLE001 - never blocks the grant revocation below
+                pass
         try:
             run_grants.revoke(self.studio, run_id)
         finally:
