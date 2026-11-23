@@ -36,7 +36,11 @@ public sealed class OsLifecycleAndUpdatesTests
         Assert.Equal(43, near.DaysToEnd);
 
         Assert.Equal(LifecycleState.Current, WindowsLifecycle.Evaluate(26100, "Professional", Utc(2026, 1, 10)).State);
-        Assert.Equal(LifecycleState.UnknownBuild, WindowsLifecycle.Evaluate(26300, "Professional", Utc(2026, 11, 21)).State);
+        var h26 = WindowsLifecycle.Evaluate(26300, "Professional", Utc(2026, 11, 23));
+        Assert.Equal(LifecycleState.Current, h26.State);
+        Assert.Equal(new DateOnly(2028, 10, 10), h26.EndOfServicing);
+        Assert.Equal(new DateOnly(2029, 10, 9), WindowsLifecycle.Evaluate(26300, "Enterprise", Utc(2026, 11, 23)).EndOfServicing);
+        Assert.Equal(LifecycleState.UnknownBuild, WindowsLifecycle.Evaluate(26900, "Professional", Utc(2026, 11, 21)).State);
         Assert.Equal(LifecycleState.UnknownEdition, WindowsLifecycle.Evaluate(19045, "EnterpriseS", Utc(2026, 11, 21)).State);
     }
 
@@ -104,7 +108,7 @@ public sealed class OsLifecycleAndUpdatesTests
     [Fact]
     public void Unknown_build_gives_no_finding_but_an_informational_gap_and_an_unknown_edition_too()
     {
-        var res = Eval(Soft("26300", "Professional", Utc(2026, 11, 21)));
+        var res = Eval(Soft("26900", "Professional", Utc(2026, 11, 21)));
         Assert.Empty(res.Findings);
         var gap = Assert.Single(res.Gaps);
         Assert.Contains("compilare necunoscută în tabel (posibil Insider/Canary)", gap.Reason);

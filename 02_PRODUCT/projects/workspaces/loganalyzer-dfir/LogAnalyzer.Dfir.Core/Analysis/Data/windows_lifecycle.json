@@ -1,5 +1,5 @@
 {
-  "tableDate": "2026-11-21",
+  "tableDate": "2026-11-23",
   "source": "Datele sunt trecute de mână din paginile publice Microsoft Lifecycle (Windows 10 Home and Pro, Windows 10 Enterprise and Education, Windows 11 Home and Pro, Windows 11 Enterprise and Education), după cunoștințele de la data tabelului; Microsoft poate modifica datele, iar tabelul nu se actualizează singur. Perioadele ESU (actualizări extinse de securitate) nu sunt incluse.",
   "nearDays": 60,
   "families": {
@@ -16,6 +16,7 @@
     { "build": 22621, "name": "Windows 11 22H2", "homePro": "2024-10-08", "enterpriseEducation": "2025-10-14" },
     { "build": 22631, "name": "Windows 11 23H2", "homePro": "2025-11-11", "enterpriseEducation": "2026-11-10" },
     { "build": 26100, "name": "Windows 11 24H2", "homePro": "2026-10-13", "enterpriseEducation": "2027-10-12" },
-    { "build": 26200, "name": "Windows 11 25H2", "homePro": "2027-10-12", "enterpriseEducation": "2028-10-10" }
+    { "build": 26200, "name": "Windows 11 25H2", "homePro": "2027-10-12", "enterpriseEducation": "2028-10-10" },
+    { "build": 26300, "name": "Windows 11 26H2", "homePro": "2028-10-10", "enterpriseEducation": "2029-10-09" }
   ]
 }

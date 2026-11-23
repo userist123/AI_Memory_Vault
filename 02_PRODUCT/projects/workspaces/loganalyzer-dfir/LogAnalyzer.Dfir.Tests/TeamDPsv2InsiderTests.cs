@@ -65,7 +65,7 @@ public sealed class TeamDPsv2InsiderTests
     public void Psv2_engine_leftover_alone_is_not_a_finding_regression()
     {
         // PowerShell\1\PowerShellEngine PowerShellVersion = 2.0 stays after the engine is removed: it must never produce the finding
-        var res = Eval(Soft("26300", r => r.Sub(@"Microsoft\PowerShell\1\PowerShellEngine").Value("PowerShellVersion", RegfBuilder.String, "2.0")));
+        var res = Eval(Soft("26900", r => r.Sub(@"Microsoft\PowerShell\1\PowerShellEngine").Value("PowerShellVersion", RegfBuilder.String, "2.0")));
         Assert.DoesNotContain(res.Findings, x => x.RuleId == "CFG-PSV2");
     }
 
@@ -83,7 +83,7 @@ public sealed class TeamDPsv2InsiderTests
     [Fact]
     public void Insider_key_gives_an_info_finding_instead_of_the_unknown_build_gap()
     {
-        var res = Eval(Soft("26300", r =>
+        var res = Eval(Soft("26900", r =>
         {
             var k = r.Sub(@"Microsoft\WindowsSelfHost\Applicability");
             k.Value("BranchName", RegfBuilder.String, "CanaryChannel");
@@ -102,7 +102,7 @@ public sealed class TeamDPsv2InsiderTests
     [Fact]
     public void Without_the_insider_key_the_unknown_build_gap_stays()
     {
-        var res = Eval(Soft("26300"));
+        var res = Eval(Soft("26900"));
         Assert.DoesNotContain(res.Findings, x => x.RuleId == "CFG-OS-INSIDER");
         Assert.Contains(res.Gaps, g => g.Reason.Contains("compilare necunoscută în tabel (posibil Insider/Canary)"));
     }
