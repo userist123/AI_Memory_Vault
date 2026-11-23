@@ -9,8 +9,9 @@
     "temurin-21.0.13.1+2-linux-x64.tar.gz": "bb8a93f9ae6e7a693b2b721e85dbeff26ae1a77447985a8d7afcdd9c7cf6222e",
     "platform-36_r02.zip": "37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29631d2e",
     "build-tools_r36_linux.zip": "5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b",
-    "gradle-8.14.3-bin.zip": "bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531",
+    "gradle-8.14.8-bin.zip": "94da89692fc3ca6d2d0ce6bb48548762ea0f1897ba444286f5c7f3759c7af651",
     "commandlinetools-linux-16111833_latest.zip (pinned, not used: --licenses refused)": "0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8",
-    "image_id_local_2026-11-23": "sha256:1418afea9cf40edb3055047061b80d426b2b42fa4f256aa4b8d544abedad2005"
+    "image_id_local_2026-11-23": "sha256:1418afea9cf40edb3055047061b80d426b2b42fa4f256aa4b8d544abedad2005",
+    "_must_do_s9": "S9 (2026-11-23): Gradle pin bumped 8.14.3 -> 8.14.8 (GHSA-j5m7-59rp-24f5, GHSA-xwqc-3h47-hg64, GHSA-mvvg-497x-hmj8 fixed in 8.14.6; GHSA-3cfg/gqrr/pcp8 in 8.14.7; GHSA-99wf/7f7r/4mf6/35pj in 8.14.8; gradle/gradle repository advisories). The image was NOT rebuilt (C: below 10 GB): image_id_local_2026-11-23 still runs Gradle 8.14.3. Rebuild, re-run the verification-metadata check and record the new image id before release."
   }
 }

@@ -24,9 +24,7 @@ class Settings:
         "tauri://localhost",
         "http://tauri.localhost",
         "https://tauri.localhost",
-        "http://localhost:1420",
-        "http://127.0.0.1:1420",
-    )
+    )  # AAS S9 (B11): no vite dev origin here; dev UIs are added only through AAS_DEV_ORIGINS (run_studio.ps1 -Dev)
     agent_id: str = "claude-code"
     capture_timeout_ms: int = 15000
     visual_loop_max_iterations: int = 5

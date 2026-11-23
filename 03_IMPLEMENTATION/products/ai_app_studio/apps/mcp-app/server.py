@@ -255,8 +255,8 @@ def app_build(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  
     """Build the app offline in Docker. web: refresh the preview. android: debug APK of the current web build, signed
     with the studio key; when the studio emulator is running (owner setting on) it is installed and launched."""
     if target == "web":
-        return build_service.build_web(studio(), projectId, run_id=CALL.run_id)
-    res = build_service.build_android(studio(), projectId, run_id=CALL.run_id)
+        return build_service.build_web(studio(), projectId, run_id=CALL.run_id, actor=actor())
+    res = build_service.build_android(studio(), projectId, run_id=CALL.run_id, actor=actor())
     if _DEVICE is not None and _DEVICE.session is not None:
         try:  # gates (owner setting, free disk) are re-checked inside install
             res["device"] = _DEVICE.install(projectId, launch=True)
@@ -305,7 +305,8 @@ def device() -> Any:
         from aas_device.service import DeviceService
         # stops itself when the run ends (grant revoked), when the owner switches devices off, on low disk, and at
         # process exit (atexit, registered by the service)
-        _DEVICE = DeviceService(studio(), alive=_session_alive, run_id=os.environ.get("AAS_RUN_ID") or None)
+        _DEVICE = DeviceService(studio(), alive=_session_alive, run_id=os.environ.get("AAS_RUN_ID") or None,
+                                actor=actor)  # B12: start/tap/screenshot/install audited with the calling agent
     return _DEVICE
 
 

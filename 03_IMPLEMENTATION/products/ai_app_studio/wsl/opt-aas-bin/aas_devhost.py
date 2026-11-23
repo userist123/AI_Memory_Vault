@@ -33,6 +33,43 @@ PKG_RE = re.compile(r"^dev\.aiappstudio\.p[0-9a-f]{16}$")
 TEXT_RE = re.compile(r"^[ -~]{0,200}$")
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 IDLE_S = 15 * 60  # no request for this long -> stop the session (DESIGN 2.2)
+# S9: "-gpu host" hands guest GL streams to the host renderer (gfxstream / virglrenderer -> WSL /dev/dxg -> the Windows
+# GPU driver); the software renderer keeps them in the emulator process. Chosen after the live check in docs/slices/S9.md.
+GPU_MODE = "swiftshader_indirect"
+USER_NET_OPTS = "restrict=on,ipv6=off"  # both NICs: no host (10.0.2.2), no DNS (10.0.2.3), no egress, no IPv6
+ADB_REFUSED = frozenset({"reverse", "forward"})  # adb reverse bypasses slirp through a QEMU pipe; forward is not needed
+
+
+class ConsoleTokenError(Exception):
+    """The emulator console auth token is missing, empty or malformed: an empty file DISABLES console auth."""
+
+
+def ensure_console_token(path):
+    """Create the studio console token (random, 0600, never through a link) when it is missing; refuse to go on
+    when the file exists but is empty, not a regular file or not token-shaped (fail closed)."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    try:
+        fd = os.open(path, flags, 0o600)
+    except FileExistsError:
+        fd = None
+    except OSError as e:
+        raise ConsoleTokenError("cannot create the console token: %s" % type(e).__name__) from None
+    if fd is not None:
+        try:
+            os.write(fd, base64.urlsafe_b64encode(os.urandom(18)))
+        finally:
+            os.close(fd)
+    try:
+        st = os.lstat(path)
+    except OSError:
+        raise ConsoleTokenError("console token missing") from None
+    if not stat.S_ISREG(st.st_mode) or st.st_size == 0 or st.st_size > 256:
+        raise ConsoleTokenError("console token file is empty or not a regular file")
+    with open(path, "rb") as f:
+        tok = f.read(257).decode("ascii", "replace").strip()
+    if len(tok) < 16 or not Console.TOKEN_RE.fullmatch(tok):
+        raise ConsoleTokenError("console token is malformed")
+    return True
 MANIFEST_MAX = 4 * 1024 * 1024
 
 
@@ -603,10 +640,10 @@ def log(msg):
 def emulator_argv(emu_bin, avd, port):
     """-no-nested-warnings (emulator 31.3.9 -help: "Disable the warning dialog when emulator is running in nested
     virtualization") replaces the "Emulator Running in Nested Virtualization" modal; no settings file is written."""
-    return [emu_bin, "-avd", avd, "-port", str(port), "-gpu", "host", "-no-audio",
-            "-no-boot-anim", "-accel", "on", "-wipe-data", "-no-snapshot-save", "-no-snapshot-load",
-            "-no-nested-warnings",
-            "-network-user-mode-options", "restrict=on", "-wifi-user-mode-options", "restrict=on"]
+    return [emu_bin, "-avd", avd, "-port", str(port), "-gpu", GPU_MODE, "-no-audio",
+            "-no-boot-anim", "-accel", "on", "-wipe-data", "-no-snapshot", "-no-snapshot-save", "-no-snapshot-load",
+            "-no-nested-warnings", "-grpc-use-jwt",
+            "-network-user-mode-options", USER_NET_OPTS, "-wifi-user-mode-options", USER_NET_OPTS]
 
 
 class Host:
@@ -634,6 +671,8 @@ class Host:
 
     # ---------- adb helpers (argv lists, never a host shell) ----------
     def adb(self, *args, timeout=30, data=False):
+        if any(a in ADB_REFUSED for a in args[:3]):
+            raise ValueError("adb reverse/forward is never used by the device host")
         argv = [self.adb_bin, "-P", "5641", "-s", self.serial, *args]
         r = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            timeout=timeout)
@@ -654,6 +693,12 @@ class Host:
                 os.unlink(p)
 
     def start(self):
+        try:  # S9: before anything runs; the emulator reads $HOME/.emulator_console_auth_token (studio fake HOME)
+            ensure_console_token(os.path.join(os.environ.get("HOME", ""), ".emulator_console_auth_token"))
+        except ConsoleTokenError as e:
+            log(str(e))
+            self.out.control({"ch": "e", "kind": "exit", "code": 32, "reason": "console-token"})
+            return False
         self._clear_locks()
         subprocess.run([self.adb_bin, "-P", "5641", "start-server"], stdin=subprocess.DEVNULL,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30, check=True)

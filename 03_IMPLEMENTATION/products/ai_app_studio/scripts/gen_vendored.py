@@ -31,7 +31,11 @@ _TEMPLATE_REASON = "uses website templates/components/theme (not vendored)"
 # (local path, upstream path, patch_reason) -- an empty reason means byte-identical to upstream
 FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/__init__.py", "core/studio_core/__init__.py", ""),
-    ("core/studio_core/policy.py", "core/studio_core/policy.py", ""),
+    ("core/studio_core/policy.py", "core/studio_core/policy.py",
+     "S9 (B12): two AAS operations added to the table, both ALLOW for the owner and for agents: app.build (offline "
+     "Docker build; plan gate and 5 GiB disk gate apply) and device.control (studio emulator; owner device setting and "
+     "disk/preflight gates apply), so builds and device actions run through Studio.operation (policy + audit) "
+     "instead of the default-deny for unknown operations; no other change."),
     ("core/studio_core/audit.py", "core/studio_core/audit.py",
      "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then "
      "activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live "
@@ -61,7 +65,8 @@ FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/config.py", "core/studio_core/config.py",
      "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, "
      "AAS_DATABASE_URL); AWS_* is ignored; data root %LOCALAPPDATA%/AIAppStudio; api_port 17875, new preview_port "
-     "17880."),
+     "17880. S9 (B11): the vite dev origins localhost:1420 / 127.0.0.1:1420 are removed from allowed_origins (dev "
+     "UIs only via AAS_DEV_ORIGINS with run_studio.ps1 -Dev)."),
     ("core/studio_core/migrations.py", "core/studio_core/migrations.py", ""),
     ("core/studio_core/gitrepo.py", "core/studio_core/gitrepo.py", ""),
     ("core/studio_core/alembic/env.py", "core/studio_core/alembic/env.py", ""),

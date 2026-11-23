@@ -28,12 +28,13 @@ from pathlib import Path
 from typing import Any
 
 from studio_core import activity, plans, run_grants
+from studio_core.errors import ConflictError, Unavailable
 from studio_core.ids import new_id
 from studio_core.policy import Actor
 
 from .streamjson import CATALOGUE_TOOLS, SERVER, TOOL_PREFIX, InitViolation, StreamMapper, check_init
 
-__all__ = ["CATALOGUE_TOOLS", "SETTINGS_JSON", "Runner", "build_argv", "runner_env"]
+__all__ = ["CATALOGUE_TOOLS", "SETTINGS_JSON", "RunInProgress", "Runner", "build_argv", "resolve_cli", "runner_env"]
 
 DENIED_BUILTINS = ("Bash", "Edit", "Write", "MultiEdit", "NotebookEdit", "Read", "Glob", "Grep", "LS", "WebFetch",
                    "WebSearch", "Task", "Agent")
@@ -60,11 +61,28 @@ SYSTEM_ACTOR = Actor("system", "runner", "system")
 SERVER_PY = Path(__file__).resolve().parents[2] / "apps" / "mcp-app" / "server.py"
 
 
+class RunInProgress(ConflictError):
+    """B6: one live run at a time (one emulator, one build lock, one owner watching)."""
+
+    code = "run_in_progress"
+
+
+def resolve_cli(path: str | None = None) -> list[str] | None:
+    """B7: the installed ``claude`` as an absolute path, resolved ONCE when the backend starts (a later PATH change or
+    a ``claude`` dropped into the run's cwd cannot substitute another binary). None when it is not installed."""
+    found = shutil.which("claude", path=path)
+    if not found:
+        return None
+    full = os.path.abspath(found)
+    return [full] if os.path.isfile(full) else None
+
+
 def build_argv(*, cli: list[str], model: str, mcp_config: Path, settings: Path, max_turns: int,
                max_budget_usd: float) -> list[str]:
     return [
         *cli, "-p", "--input-format", "text", "--output-format", "stream-json", "--verbose",
         "--include-partial-messages", "--model", model,
+        "--no-session-persistence",  # B7: no transcript of the run under the owner's ~/.claude/projects
         "--mcp-config", str(mcp_config), "--strict-mcp-config",
         "--tools", "",
         "--allowedTools", ",".join(TOOL_PREFIX + t for t in CATALOGUE_TOOLS),
@@ -86,6 +104,7 @@ def runner_env(tmp_dir: Path, base: Mapping[str, str] | None = None,
             raise ValueError(f"environment variable {k} may not be passed to the runner")
         env[k] = v
     env["TEMP"] = env["TMP"] = str(tmp_dir)
+    env["DISABLE_AUTOUPDATER"] = "1"  # B7: the runner never updates the owner's CLI binary mid-run
     return env
 
 
@@ -135,6 +154,8 @@ class Runner:
         self.root = studio.settings.data_dir / "runner"
         self._runs: dict[str, _Run] = {}
         self._lock = threading.Lock()
+        self._active: str | None = None  # B6: the one run that is starting or alive
+        self._active_project: str | None = None
         if purge_stale:  # the backend passes False and calls purge_stale() itself once its API port is bound
             self.purge_stale()
 
@@ -162,8 +183,32 @@ class Runner:
 
     # ------------------------------------------------------------------ public API
     def start(self, project_id: str, prompt: str) -> str:
+        if not self.cli or not os.path.isabs(self.cli[0]):
+            raise Unavailable("the Claude Code CLI was not found when the studio started (install it, then restart)")
         project = self.studio.get_project(SYSTEM_ACTOR, project_id, with_components=False)  # NotFound / invalid id
         run_id = new_id("run")
+        with self._lock:
+            if self._active is not None:
+                raise RunInProgress("another run is in progress: stop it or wait for it to finish",
+                                    runId=self._active)
+            self._active, self._active_project = run_id, project_id
+        try:
+            return self._start(run_id, project_id, project, prompt)
+        except BaseException:
+            self._release(run_id)
+            raise
+
+    def _release(self, run_id: str) -> None:
+        with self._lock:
+            if self._active == run_id:
+                self._active = self._active_project = None
+
+    def live_project(self) -> str | None:
+        """Project of the run that is starting or alive (B4: such a project cannot be deleted)."""
+        with self._lock:
+            return self._active_project
+
+    def _start(self, run_id: str, project_id: str, project: dict[str, Any], prompt: str) -> str:
         run = _Run(run_id, project_id)
         run_dir = self.root / "runs" / run_id
         tmp_dir = self.root / "tmp" / run_id
@@ -381,7 +426,10 @@ class Runner:
             except Exception:  # noqa: BLE001
                 pass
             self._record(run, [("run.finished", fin)])
-            self._cleanup(run.id, mcp_cfg, run_dir, tmp_dir)
+            try:
+                self._cleanup(run.id, mcp_cfg, run_dir, tmp_dir)
+            finally:
+                self._release(run.id)
 
     @staticmethod
     def _drain(stream: Any) -> None:

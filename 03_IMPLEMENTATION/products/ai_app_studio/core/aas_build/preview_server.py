@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import re
+import socket
 import stat
 import threading
 from collections.abc import Callable, Iterable
@@ -79,10 +80,16 @@ class _BoundedServer(ThreadingHTTPServer):
     """ThreadingHTTPServer with a cap on concurrent connections; extra connections are closed immediately."""
 
     daemon_threads = True
+    allow_reuse_address = False  # S9: SO_REUSEADDR on Windows lets a second socket share (hijack) the port
 
     def __init__(self, addr, handler, max_connections: int) -> None:  # type: ignore[no-untyped-def]
         super().__init__(addr, handler)
         self._slots = threading.BoundedSemaphore(max_connections)
+
+    def server_bind(self) -> None:
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
     def process_request(self, request, client_address) -> None:  # type: ignore[no-untyped-def]
         if not self._slots.acquire(blocking=False):

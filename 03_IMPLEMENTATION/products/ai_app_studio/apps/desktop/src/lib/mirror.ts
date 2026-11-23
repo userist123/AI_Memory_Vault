@@ -2,8 +2,11 @@
  * Emulator mirror playback core (runs inside the decoder worker; dependency-injected so it is unit-testable).
  * Lifecycle rules: a decoder error or an oversize frame stops the timer and drops the decoder; frames above
  * MAX_DIM x MAX_DIM never resize the canvas.
+ * S9 (B9): every decoder is configured with DECODER_CONFIG_BASE (prefer-software); the live feeder passes only NAL
+ * types 1/5/7/8, refuses a stream whose SPS is outside the bounds (annexb.parseSps), drops access units above
+ * MAX_AU_BYTES and decodes nothing before it has seen SPS + PPS and then an IDR.
  */
-import type { AccessUnit } from "./annexb";
+import { DECODER_CONFIG_BASE, MAX_AU_BYTES, NAL_ALLOW, parseSps, type AccessUnit } from "./annexb";
 
 export const MAX_DIM = 4096;
 
@@ -20,7 +23,7 @@ export interface FrameLike {
 }
 export interface DecoderLike {
   state: string;
-  configure(cfg: { codec: string; optimizeForLatency: boolean }): void;
+  configure(cfg: { codec: string; optimizeForLatency: boolean; hardwareAcceleration?: "prefer-software" }): void;
   decode(chunk: unknown): void;
   close(): void;
 }
@@ -85,7 +88,7 @@ export function createMirrorPlayer(env: PlayerEnv) {
     const d = env.createDecoder(onFrame, (e) => {
       if (decoder === d) fail(`decoder error: ${e.message}`);
     });
-    d.configure({ codec, optimizeForLatency: true });
+    d.configure({ codec, ...DECODER_CONFIG_BASE });
     return d;
   }
 
@@ -154,6 +157,11 @@ function findStart(buf: Uint8Array, from: number): number {
  * string comes from the SPS; nothing is decoded before the support check passed and a key frame arrived. A full
  * decoder queue drops delta frames until the next key frame (video is dropped first, the UI never stalls).
  */
+interface LiveAu extends AccessUnit {
+  /** a key frame emitted after SPS + PPS were seen (only such a frame may start the decoding) */
+  ready: boolean;
+}
+
 export function createLiveFeeder(env: LiveEnv) {
   let buf: Uint8Array = new Uint8Array(0);
   let synced = false;
@@ -167,7 +175,10 @@ export function createLiveFeeder(env: LiveEnv) {
   let cur: Uint8Array[] = [];
   let curVcl = false;
   let curKey = false;
-  let pending: AccessUnit[] = [];
+  let pending: LiveAu[] = [];
+  let curBytes = 0;
+  let haveSps = false; // since the last reset: a bounded SPS ...
+  let havePps = false; // ... and a PPS were seen; only then can an IDR start the decoding
   const report = (text: string, state: MirrorState) => env.status(text, state, frames);
 
   function closeDecoder() {
@@ -203,9 +214,9 @@ export function createLiveFeeder(env: LiveEnv) {
     if (frames % 25 === 1) report(`live (${frames} frames)`, "decoding");
   }
 
-  function decode(au: AccessUnit) {
+  function decode(au: LiveAu) {
     if (!decoder) return;
-    if (au.key) needKey = false;
+    if (au.key && au.ready) needKey = false;
     else if (needKey) return;
     if ((decoder.decodeQueueSize ?? 0) > LIVE_MAX_QUEUE) {
       needKey = true;
@@ -235,7 +246,7 @@ export function createLiveFeeder(env: LiveEnv) {
     const d = env.createDecoder(onFrame, (e) => {
       if (decoder === d) decoderFailed(e.message);
     }) as LiveDecoderLike;
-    d.configure({ codec, optimizeForLatency: true });
+    d.configure({ codec, ...DECODER_CONFIG_BASE });
     decoder = d;
     needKey = true;
     report(`live ${codec}`, "decoding");
@@ -266,7 +277,10 @@ export function createLiveFeeder(env: LiveEnv) {
   }
 
   function emitAu() {
-    if (cur.length && curVcl) {
+    if (cur.length && curVcl && curBytes > MAX_AU_BYTES) {
+      needKey = true; // oversize access unit: dropped, the decoder waits for the next key frame
+      pending = [];
+    } else if (cur.length && curVcl) {
       const size = cur.reduce((n, x) => n + 4 + x.length, 0);
       const data = new Uint8Array(size);
       let o = 0;
@@ -275,7 +289,7 @@ export function createLiveFeeder(env: LiveEnv) {
         data.set(n, o + 4);
         o += 4 + n.length;
       }
-      const au = { data, key: curKey };
+      const au: LiveAu = { data, key: curKey, ready: curKey && haveSps && havePps };
       if (decoder) decode(au);
       else if (!dead && (probing || codec === "")) {
         if (au.key) pending = [au];
@@ -285,6 +299,7 @@ export function createLiveFeeder(env: LiveEnv) {
     cur = [];
     curVcl = false;
     curKey = false;
+    curBytes = 0;
   }
 
   function onNal(n: Uint8Array) {
@@ -292,11 +307,24 @@ export function createLiveFeeder(env: LiveEnv) {
     const vcl = t === 1 || t === 5;
     const firstSlice = vcl && ((n[1] ?? 0) & 0x80) !== 0;
     if (curVcl && ((vcl && firstSlice) || t === 7 || t === 8 || t === 9 || t === 6)) emitAu();
+    if (((n[0] ?? 0) & 0x80) !== 0 || !NAL_ALLOW.has(t)) return; // S9: types 1/5/7/8 only (AUD/SEI/... dropped)
     if (t === 7) {
+      const info = parseSps(n);
+      if (!info?.ok) {
+        dead = true; // a stream outside the bounds is never configured (reset by stop / a new mirror session)
+        pending = [];
+        closeDecoder();
+        report(info ? `stream outside the decoder bounds (profile ${info.profile}, ${info.width}x${info.height})`
+          : "malformed SPS", "unsupported");
+        return;
+      }
+      haveSps = true;
       const c = codecFromSpsNal(n);
       if (c) onCodec(c);
     }
-    cur.push(n);
+    if (t === 8 && haveSps) havePps = true;
+    if (curBytes <= MAX_AU_BYTES) cur.push(n); // past the cap the unit is only counted, emitAu drops it
+    curBytes += 4 + n.length;
     if (vcl) curVcl = true;
     if (t === 5) curKey = true;
   }
@@ -351,8 +379,10 @@ export function createLiveFeeder(env: LiveEnv) {
     cur = [];
     curVcl = false;
     curKey = false;
+    curBytes = 0;
     pending = [];
     needKey = true;
+    haveSps = havePps = false;
   }
 
   function stop() {

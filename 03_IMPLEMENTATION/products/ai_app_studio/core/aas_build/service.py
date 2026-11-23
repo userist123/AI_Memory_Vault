@@ -6,6 +6,8 @@ files + the project's ``src/`` and ``public/`` only, never mounted from the proj
 ``current`` switched -> the preview server (``p-<id16>.localhost``) serves the new site on the next request. A failed
 build leaves the previous site in place. Events: build.started, build.log (tail lines), build.error, build.finished,
 preview.captured. One build at a time (the machine has 2 cpus / 2 GB reserved for it).
+S9 (B4/B12): no build starts with less than 5 GiB free on the data or system drive, and every build (web and android)
+runs inside ``Studio.operation`` (policy ``app.build``, tool_executions + audit row with actor, project and target).
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from typing import Any
 from studio_core import activity
 from studio_core.config import Settings
 from studio_core.errors import StudioError, Unavailable
+from studio_core.policy import Actor
 
 from . import runner
 
@@ -34,6 +37,34 @@ LOG_LINES = 40
 _ID16 = re.compile(r"^[0-9a-f]{16}$")
 _SITE = re.compile(r"^site-[0-9]{10,16}$")
 _LOCK = threading.Lock()
+MIN_FREE_BYTES = 5 * 1024 ** 3  # B4: a build (Docker layers, node_modules copy, Gradle) never starts below this
+BUILD_ACTOR = Actor("system", "build", "system")  # only when a caller passes no actor; still policy-checked + audited
+
+
+def _free_bytes(settings: Settings) -> int:
+    """Free bytes on the drive of the data root and on the system drive (Docker's virtual disk lives there)."""
+    roots: set[str] = set()
+    p = Path(settings.data_dir)
+    while not p.exists() and p.parent != p:
+        p = p.parent
+    roots.add(str(p))
+    sysroot = os.environ.get("SystemRoot", "")
+    if len(sysroot) > 2 and sysroot[1] == ":":
+        roots.add(sysroot[:3])
+    return min(shutil.disk_usage(r).free for r in roots)
+
+
+def _disk_gate(settings: Settings, free_bytes: Callable[[], int] | None) -> None:
+    free = free_bytes() if free_bytes else _free_bytes(settings)
+    if free < MIN_FREE_BYTES:
+        raise Unavailable(f"builds are disabled: less than 5 GiB free on the data or system drive ({free // 2**20} MiB)")
+
+
+def _audited(studio: Any, actor: Actor | None, project_id: str, target: str, fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """B12: every build goes through Studio.operation (policy ``app.build`` + tool_executions + audit row)."""
+    pid = project_id if isinstance(project_id, str) and re.match(r"^prj_[0-9a-f]{16}$", project_id) else None
+    return studio.operation(actor or BUILD_ACTOR, "app.build", "app.build", {"projectId": str(project_id)[:40],
+                            "target": target}, lambda _ctx: fn(), project_id=pid)
 
 
 class BuildFailed(StudioError):
@@ -93,9 +124,17 @@ def _prune(base: Path, keep: str) -> None:
 
 def build_web(studio: Any, project_id: str, *, run_id: str | None = None,
               run_build: Callable[..., runner.BuildResult] = runner.run_web_build,
-              docker: str | None = None, image: str | None = None) -> dict[str, Any]:
+              docker: str | None = None, image: str | None = None, actor: Actor | None = None,
+              free_bytes: Callable[[], int] | None = None) -> dict[str, Any]:
+    return _audited(studio, actor, project_id, "web", lambda: _build_web(
+        studio, project_id, run_id=run_id, run_build=run_build, docker=docker, image=image, free_bytes=free_bytes))
+
+
+def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.BuildResult],
+               docker: str | None, image: str | None, free_bytes: Callable[[], int] | None) -> dict[str, Any]:
     if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
+    _disk_gate(studio.settings, free_bytes)
     if not _LOCK.acquire(blocking=False):
         raise Unavailable("a build is already running")
     t0 = time.monotonic()
@@ -156,12 +195,22 @@ def keys_dir(settings: Settings) -> Path:
 def build_android(studio: Any, project_id: str, *, run_id: str | None = None,
                   run_build: Callable[..., runner.AndroidResult] = runner.run_android_build,
                   ensure_keys: Callable[..., tuple[Path, str]] = runner.ensure_keystore,
-                  docker: str | None = None, image: str | None = None) -> dict[str, Any]:
+                  docker: str | None = None, image: str | None = None, actor: Actor | None = None,
+                  free_bytes: Callable[[], int] | None = None) -> dict[str, Any]:
     """Current web build of the project (the preview site) -> offline Docker Gradle build -> signed debug APK at
     ``apk_path``. Events: build.started {target android}, build.log, build.error, build.finished {target, status,
     artifactSha256, sizeBytes} with the APK sha256 also in the typed artifact column."""
+    return _audited(studio, actor, project_id, "android", lambda: _build_android(
+        studio, project_id, run_id=run_id, run_build=run_build, ensure_keys=ensure_keys, docker=docker, image=image,
+        free_bytes=free_bytes))
+
+
+def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.AndroidResult],
+                   ensure_keys: Callable[..., tuple[Path, str]], docker: str | None, image: str | None,
+                   free_bytes: Callable[[], int] | None) -> dict[str, Any]:
     if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
+    _disk_gate(studio.settings, free_bytes)
     if not _LOCK.acquire(blocking=False):
         raise Unavailable("a build is already running")
     t0 = time.monotonic()

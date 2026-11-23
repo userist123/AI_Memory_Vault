@@ -404,3 +404,65 @@ def find_gaps(events: Iterable[dict[str, Any]]) -> list[dict[str, int]]:
             gaps.append({"after": last["seq"], "before": e["seq"]})
         last = e
     return gaps
+
+
+# ---------------------------------------------------------------- S9 (B4): retention
+RETENTION_KEY = "activity_retention_days"
+RETENTION_DEFAULT_DAYS = 30
+RETENTION_MAX_DAYS = 3650
+
+
+def retention_days(studio: Any) -> int:
+    from .aas_models import AppSetting
+    with studio.session() as s:
+        row = s.get(AppSetting, RETENTION_KEY)
+        try:
+            v = int(row.value) if row is not None else RETENTION_DEFAULT_DAYS
+        except ValueError:
+            v = RETENTION_DEFAULT_DAYS
+    return v if 1 <= v <= RETENTION_MAX_DAYS else RETENTION_DEFAULT_DAYS
+
+
+def set_retention_days(studio: Any, actor: Any, days: int) -> dict[str, Any]:
+    """Owner only (audited). 1..3650 days; the next sweep applies it."""
+    from . import audit
+    from .aas_models import AppSetting
+    from .errors import PolicyDenied
+    from .ids import utcnow
+    if not getattr(actor, "is_owner", False):
+        raise PolicyDenied("only the authenticated human owner can change the activity retention")
+    if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= RETENTION_MAX_DAYS:
+        raise ValueError(f"retention must be 1..{RETENTION_MAX_DAYS} days")
+    with studio.audit_session() as s:
+        row = s.get(AppSetting, RETENTION_KEY)
+        if row is None:
+            row = AppSetting(key=RETENTION_KEY, value=str(RETENTION_DEFAULT_DAYS))
+            s.add(row)
+        row.value = str(days)
+        row.updated_at = utcnow()
+        audit.record(s, actor, "settings.retention", "ok", data={"days": days})
+    return {"days": days}
+
+
+def prune(studio: Any, *, now: Any = None) -> int:
+    """Delete events older than the retention period. The newest row is always kept, so SQLite never hands out a seq
+    that a client has already seen (the table has no AUTOINCREMENT). Returns the number of rows deleted."""
+    import datetime as _dt
+
+    from sqlalchemy import delete, func
+    from .migrations import interprocess_lock
+    cutoff = (now or _dt.datetime.now(_dt.UTC)) - _dt.timedelta(days=retention_days(studio))
+    with _WRITE_LOCK, interprocess_lock(studio.settings.data_dir / "activity.lock"):
+        with studio.session() as s:
+            newest = s.execute(select(func.max(ActivityEvent.seq))).scalar_one_or_none()
+            if newest is None:
+                return 0
+            res = s.execute(delete(ActivityEvent).where(ActivityEvent.ts < cutoff, ActivityEvent.seq < newest))
+            return int(res.rowcount or 0)
+
+
+def pruned_through(studio: Any) -> int:
+    """prev_seq of the oldest retained row: everything up to it was removed on purpose (not a gap)."""
+    with studio.session() as s:
+        first = s.execute(select(ActivityEvent.prev_seq).order_by(ActivityEvent.seq).limit(1)).scalar_one_or_none()
+    return int(first or 0)

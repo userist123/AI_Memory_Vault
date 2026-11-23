@@ -19,7 +19,7 @@
         "height": 900,
         "minWidth": 1100,
         "minHeight": 680,
-        "additionalBrowserArgs": "--proxy-server=http://127.0.0.1:9 --force-webrtc-ip-handling-policy=disable_non_proxied_udp"
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --proxy-server=http://127.0.0.1:9 --force-webrtc-ip-handling-policy=disable_non_proxied_udp"
       }
     ],
     "security": {

@@ -1,6 +1,6 @@
 // S8: live emulator mirror (binary WS -> streaming Annex-B feeder -> WebCodecs) and capture thumbnails (REST by id).
 import { afterEach, cleanup, createElement, describe, expect, it, render, vi } from "../../../apps/desktop/testkit/unit";
-import { accessUnits, splitNals } from "../../../apps/desktop/src/lib/annexb";
+import { accessUnits, sanitizeNals, splitNals } from "../../../apps/desktop/src/lib/annexb";
 import { createLiveFeeder, LIVE_MAX_QUEUE, type DecoderLike } from "../../../apps/desktop/src/lib/mirror";
 import { VideoClient, videoUrl, VIDEO_MAX_FRAME } from "../../../apps/desktop/src/lib/video";
 import { CAPTURE_MAX_BYTES, fetchCapture } from "../../../apps/desktop/src/lib/api";
@@ -65,7 +65,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 describe("live mirror feeder", () => {
   it("decodes the fixture stream fed in arbitrary chunks, key frame first, codec from the SPS", async () => {
     const stream = fixture();
-    const expected = accessUnits(splitNals(stream));
+    const expected = accessUnits(sanitizeNals(splitNals(stream))!); // S9: only NAL types 1/5/7/8 reach the decoder
     const { f, decoders, statuses, canvas } = feederSetup();
     let i = 0;
     let n = 1;

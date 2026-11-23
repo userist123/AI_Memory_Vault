@@ -4,7 +4,7 @@
  * fixture). Output: frames drawn on a transferred OffscreenCanvas. Nothing from the stream reaches the DOM.
  * Lifecycle (error -> stop timer and drop decoder, frame size cap) lives in lib/mirror.ts.
  */
-import { accessUnits, codecFromSps, splitNals } from "../lib/annexb";
+import { DECODER_CONFIG_BASE, accessUnits, codecFromSps, sanitizeNals, splitNals } from "../lib/annexb";
 import { createLiveFeeder, createMirrorPlayer, type CanvasLike, type DecoderLike, type FrameLike, type PlayerEnv } from "../lib/mirror";
 
 type InMsg =
@@ -36,7 +36,7 @@ const feeder = createLiveFeeder({
   ...env,
   supported: async (codec) => {
     if (typeof VideoDecoder === "undefined") return false;
-    const r = await VideoDecoder.isConfigSupported({ codec, optimizeForLatency: true }).catch(() => null);
+    const r = await VideoDecoder.isConfigSupported({ codec, ...DECODER_CONFIG_BASE }).catch(() => null);
     return Boolean(r?.supported);
   },
   // decoder error: the page's VideoClient reconnects (bounded backoff) and the server primes SPS/PPS + GOP
@@ -47,10 +47,11 @@ async function play(data: ArrayBuffer, fps: number, loop: boolean) {
   player.stop();
   if (data.byteLength > MAX_STREAM) return player.report("stream too large", "error");
   if (typeof VideoDecoder === "undefined") return player.report("WebCodecs VideoDecoder unavailable", "unsupported");
-  const nals = splitNals(new Uint8Array(data));
+  const nals = sanitizeNals(splitNals(new Uint8Array(data))); // S9: types 1/5/7/8, bounded SPS
+  if (!nals) return player.report("stream outside the decoder bounds", "unsupported");
   const codec = codecFromSps(nals);
   if (!codec) return player.report("no SPS in stream", "error");
-  const support = await VideoDecoder.isConfigSupported({ codec, optimizeForLatency: true }).catch(() => null);
+  const support = await VideoDecoder.isConfigSupported({ codec, ...DECODER_CONFIG_BASE }).catch(() => null);
   if (!support?.supported) return player.report(`codec ${codec} not supported here`, "unsupported");
   const aus = accessUnits(nals);
   if (!aus.length) return player.report("no frames in stream", "error");

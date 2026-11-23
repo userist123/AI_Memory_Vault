@@ -14,7 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "check_vendored.py"
-TARGET = "core/studio_core/policy.py"
+TARGET = "core/studio_core/workspace.py"  # an unpatched vendored file (policy.py is patched since S9 B12)
 
 
 def run(root: Path) -> subprocess.CompletedProcess[str]:

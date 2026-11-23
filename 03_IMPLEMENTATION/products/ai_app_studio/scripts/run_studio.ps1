@@ -5,7 +5,8 @@
 .DESCRIPTION
   1. generates the owner token (256 bit, OS CSPRNG) in memory only;
   2. starts the backend (python -m apps.backend --token-stdin) and hands it the token on STDIN;
-  3. starts the preview server (python -m aas_build, 127.0.0.1:<PreviewPort>, one origin per project);
+  3. the backend also runs the preview server (127.0.0.1:<PreviewPort>, one origin per project; S9 B3: the same
+     process as the API, as in the packaged app - there is no second preview process any more);
   4. starts the UI and hands the SAME token over on stdin as well - never argv, environment, file or URL:
        -Ui tauri   the Tauri debug build (apps/desktop/src-tauri, attach mode AAS_ATTACH_BACKEND=1; it loads the
                    vite dev server on 127.0.0.1:1421, which this script starts too);
@@ -101,8 +102,7 @@ try {
   $beArgs = '-X utf8 -m apps.backend --token-stdin'
   if ($RunnerCli) { $beArgs += ' --runner-cli-json "' + ($RunnerCli -replace '"', '\"') + '"' }
   $backend = Start-Child $Python $beArgs $Product $common $true
-  # 3. preview server
-  $preview = Start-Child $Python '-X utf8 -m aas_build' (Join-Path $Product 'core') $common $false
+  # 3. preview server: hosted by the backend itself (S9 B3)
   $env:PYTHONPATH = $null
 
   # wait for /health

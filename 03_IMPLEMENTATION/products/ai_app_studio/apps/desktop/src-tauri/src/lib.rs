@@ -9,7 +9,14 @@
 //!     (capability `default`; preview frames are remote `*.localhost:17880` origins and get no IPC),
 //!  4. make sure the backend dies with the app (explicit kill on exit plus a Windows job object with
 //!     KILL_ON_JOB_CLOSE, which also covers a hard kill of the app).
-//! Installed-runtime mode of the AWS shell is not carried over yet (repo mode only, see docs/slices/S4.md).
+//!  5. S9 (B3): where the product lives is decided at RUN time, never at compile time. Installed mode (release
+//!     build, the bundle carries `runtime/runtime.zip` + `runtime.version`, AAS_REPO_ROOT unset): the runtime
+//!     (Python + dependencies + product sources) is extracted once per version with the OS `tar.exe` into
+//!     <app local data>\runtime\<version> and the backend runs from `<runtime>\app`. Repo mode (debug builds, or no
+//!     bundled runtime): AAS_REPO_ROOT, else the first ancestor of the running exe that holds
+//!     `apps/backend/__main__.py` + `core/aas_build`. The backend hosts the preview server itself (one process) and
+//!     logs to <data root>\logs\backend.log (capped, `--log-to-data-root`); output before Python takes over its
+//!     streams lands in <data root>\logs\backend-boot.log (truncated at every start).
 
 use std::io::Write;
 use std::net::{SocketAddr, TcpStream};
@@ -59,16 +66,136 @@ fn env_path(name: &str) -> Option<PathBuf> {
     std::env::var(name).ok().filter(|v| !v.trim().is_empty()).map(PathBuf::from)
 }
 
-/// Product root (03_IMPLEMENTATION/products/ai_app_studio): src-tauri -> desktop -> apps -> product.
-fn product_root() -> PathBuf {
-    if let Some(v) = env_path("AAS_REPO_ROOT") {
-        return v;
-    }
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+/// How to launch the backend: interpreter, product root (cwd + sys.path), extra environment.
+pub(crate) struct Launch {
+    python: PathBuf,
+    root: PathBuf,
+    env: Vec<(String, String)>,
+}
+
+/// Repo mode: the first ancestor of `start` (the running exe) that is the product root.
+pub(crate) fn find_product_root(start: &Path) -> Option<PathBuf> {
+    start
         .ancestors()
-        .nth(3)
+        .find(|d| {
+            d.join("apps").join("backend").join("__main__.py").is_file() && d.join("core").join("aas_build").is_dir()
+        })
         .map(Path::to_path_buf)
-        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+fn repo_launch() -> Result<Launch, String> {
+    let root = env_path("AAS_REPO_ROOT")
+        .or_else(|| std::env::current_exe().ok().and_then(|exe| find_product_root(&exe)))
+        .ok_or_else(|| "AI App Studio sources not found next to this program (set AAS_REPO_ROOT)".to_string())?;
+    Ok(Launch { python: python_exe(&root), root, env: Vec::new() })
+}
+
+pub(crate) fn is_version(v: &str) -> bool {
+    !v.is_empty()
+        && v.len() <= 64
+        && v.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-')
+        && !v.starts_with('.')
+        && !v.contains("..")
+}
+
+/// Extracts the bundled runtime once per version (ported from the AI Website Studio shell) and returns its directory.
+fn prepare_runtime(bundle: &Path, local: &Path) -> Result<PathBuf, String> {
+    let version = std::fs::read_to_string(bundle.join("runtime.version"))
+        .map_err(|e| format!("bundled runtime version unreadable: {e}"))?
+        .trim()
+        .to_ascii_lowercase();
+    if !is_version(&version) {
+        return Err("bundled runtime version is malformed".into());
+    }
+    let base = local.join("runtime");
+    let dir = base.join(&version);
+    if dir.join(".complete").is_file() {
+        return Ok(dir);
+    }
+    std::fs::create_dir_all(&base).map_err(|e| format!("cannot create {}: {e}", base.display()))?;
+    let partial = base.join(format!("{version}.partial-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&partial);
+    std::fs::create_dir_all(&partial).map_err(|e| format!("cannot create {}: {e}", partial.display()))?;
+    // the OS tar (bsdtar, Windows 10+) reads zip; absolute path so PATH cannot substitute another binary
+    let tar = env_path("SystemRoot")
+        .unwrap_or_else(|| PathBuf::from(r"C:\Windows"))
+        .join("System32")
+        .join("tar.exe");
+    let mut cmd = Command::new(tar);
+    cmd.arg("-x")
+        .arg("-f")
+        .arg(bundle.join("runtime.zip"))
+        .arg("-C")
+        .arg(&partial)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    hide_window(&mut cmd);
+    let status = cmd
+        .status()
+        .map_err(|e| format!("could not run tar to extract the runtime: {e}"))?;
+    let python = partial.join("python").join("python.exe");
+    let backend = partial.join("app").join("apps").join("backend").join("__main__.py");
+    if !status.success() || !python.is_file() || !backend.is_file() {
+        let _ = std::fs::remove_dir_all(&partial);
+        return Err(format!("extracting the runtime failed ({status})"));
+    }
+    std::fs::write(partial.join(".complete"), &version).map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_dir_all(&dir); // an earlier incomplete attempt
+    std::fs::rename(&partial, &dir).map_err(|e| format!("could not finalise the runtime: {e}"))?;
+    if let Ok(entries) = std::fs::read_dir(&base) {
+        for e in entries.flatten() {
+            let name = e.file_name().to_string_lossy().to_string();
+            let ours = is_version(&name) || name.split(".partial-").next().map(is_version).unwrap_or(false);
+            if ours && name != version {
+                let _ = std::fs::remove_dir_all(e.path());
+            }
+        }
+    }
+    Ok(dir)
+}
+
+fn installed_launch(bundle: &Path, local: &Path) -> Result<Launch, String> {
+    let rt = prepare_runtime(bundle, local)?;
+    let mut env = Vec::new();
+    let pw = rt.join("ms-playwright");
+    if pw.is_dir() {
+        env.push(("PLAYWRIGHT_BROWSERS_PATH".to_string(), pw.display().to_string()));
+    }
+    Ok(Launch { python: rt.join("python").join("python.exe"), root: rt.join("app"), env })
+}
+
+/// Installed mode when the bundle carries a runtime, this is a release build and AAS_REPO_ROOT is unset.
+pub(crate) fn choose_launch(resource_dir: Option<PathBuf>, local_dir: Option<PathBuf>) -> Result<Launch, String> {
+    let bundle = resource_dir.map(|r| r.join("runtime"));
+    let installed = !cfg!(debug_assertions)
+        && env_path("AAS_REPO_ROOT").is_none()
+        && bundle.as_ref().map(|b| b.join("runtime.zip").is_file()).unwrap_or(false);
+    if !installed {
+        return repo_launch();
+    }
+    let local = env_path("AAS_LOCAL_ROOT")
+        .or(local_dir)
+        .ok_or_else(|| "cannot determine the local application data folder".to_string())?;
+    installed_launch(&bundle.expect("checked above"), &local)
+}
+
+/// The studio data root as the backend computes it (studio_core/config.py): AAS_DATA_DIR or LOCALAPPDATA\AIAppStudio.
+pub(crate) fn data_root(aas_data_dir: Option<PathBuf>, local_app_data: Option<PathBuf>) -> Option<PathBuf> {
+    aas_data_dir.or_else(|| local_app_data.map(|l| l.join("AIAppStudio")))
+}
+
+/// stdout/stderr of the backend until Python moves them to its capped log: <data>/logs/backend-boot.log, truncated
+/// at every start (it never grows across sessions). Null when it cannot be opened.
+fn boot_log() -> (Stdio, Stdio) {
+    let opened = data_root(env_path("AAS_DATA_DIR"), env_path("LOCALAPPDATA")).and_then(|d| {
+        let logs = d.join("logs");
+        std::fs::create_dir_all(&logs).ok()?;
+        let f = std::fs::File::create(logs.join("backend-boot.log")).ok()?;
+        let g = f.try_clone().ok()?;
+        Some((Stdio::from(f), Stdio::from(g)))
+    });
+    opened.unwrap_or_else(|| (Stdio::null(), Stdio::null()))
 }
 
 fn python_exe(root: &Path) -> PathBuf {
@@ -137,6 +264,7 @@ pub(crate) fn backend_command(
         .arg(BACKEND_LAUNCHER)
         .arg(root)
         .arg("--token-stdin")
+        .arg("--log-to-data-root")
         .current_dir(root);
     for k in inherited {
         if scrubbed_var(&k) {
@@ -147,8 +275,8 @@ pub(crate) fn backend_command(
     cmd
 }
 
-fn spawn_backend(token: &str) -> Result<Child, String> {
-    let root = product_root();
+fn spawn_backend(token: &str, launch: &Launch) -> Result<Child, String> {
+    let root = &launch.root;
     // `apps.backend` is run as a package (relative imports) by the isolated launcher (`backend_command`)
     let script = root.join("apps").join("backend").join("__main__.py");
     if !script.exists() {
@@ -160,8 +288,12 @@ fn spawn_backend(token: &str) -> Result<Child, String> {
             api_port()
         ));
     }
-    let mut cmd = backend_command(&python_exe(&root), &root, std::env::vars_os().map(|(k, _)| k));
-    cmd.stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null());
+    let mut cmd = backend_command(&launch.python, root, std::env::vars_os().map(|(k, _)| k));
+    for (k, v) in &launch.env {
+        cmd.env(k, v);
+    }
+    let (out, err) = boot_log();
+    cmd.stdin(Stdio::piped()).stdout(out).stderr(err);
     hide_window(&mut cmd);
     let mut child = cmd.spawn().map_err(|e| format!("could not start the backend: {e}"))?;
     let mut stdin = child.stdin.take().ok_or_else(|| "backend stdin unavailable".to_string())?;
@@ -209,12 +341,12 @@ impl Backend {
         self.changed.notify_all();
     }
 
-    fn start(&self) {
+    fn start(&self, resource_dir: Option<PathBuf>, local_dir: Option<PathBuf>) {
         if std::env::var("AAS_ATTACH_BACKEND").map(|v| v == "1").unwrap_or(false) {
             return self.attach();
         }
         let token = generate_token();
-        let phase = match spawn_backend(&token) {
+        let phase = match choose_launch(resource_dir, local_dir).and_then(|launch| spawn_backend(&token, &launch)) {
             Ok(child) => {
                 #[cfg(windows)]
                 if let Some(j) = job::Job::new() {
@@ -285,9 +417,11 @@ pub fn run() {
     let backend = Arc::new(Backend::new());
     let app = tauri::Builder::default()
         .manage(backend.clone())
-        .setup(move |_app| {
+        .setup(move |app| {
             let b = backend.clone();
-            std::thread::spawn(move || b.start());
+            let resource_dir = app.path().resource_dir().ok();
+            let local_dir = app.path().app_local_data_dir().ok();
+            std::thread::spawn(move || b.start(resource_dir, local_dir));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![get_session])
@@ -374,6 +508,7 @@ mod tests {
         assert_eq!(args[4], BACKEND_LAUNCHER);
         assert_eq!(args[5], "R:/prod");
         assert_eq!(args[6], "--token-stdin");
+        assert_eq!(args[7], "--log-to-data-root");
         assert!(!args.iter().any(|a| *a == "-m"));
         let envs: Vec<(String, Option<String>)> = cmd
             .get_envs()
@@ -387,6 +522,38 @@ mod tests {
         }
         assert!(envs.iter().any(|(k, v)| k == "AAS_API_PORT" && v.is_some()));
         assert_eq!(cmd.get_current_dir(), Some(Path::new("R:/prod")));
+    }
+
+    #[test]
+    fn product_root_is_found_from_the_exe_location_at_runtime() {
+        let base = std::env::temp_dir().join(format!("aas-root-{}", std::process::id()));
+        let prod = base.join("prod");
+        std::fs::create_dir_all(prod.join("apps").join("backend")).unwrap();
+        std::fs::create_dir_all(prod.join("core").join("aas_build")).unwrap();
+        std::fs::write(prod.join("apps").join("backend").join("__main__.py"), "").unwrap();
+        let exe = prod.join("apps").join("desktop").join("src-tauri").join("target").join("debug").join("x.exe");
+        assert_eq!(find_product_root(&exe).as_deref(), Some(prod.as_path()));
+        assert_eq!(find_product_root(&base.join("elsewhere").join("x.exe")), None);
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn debug_build_without_a_runtime_bundle_uses_repo_mode() {
+        // the test binary lives under src-tauri/target: repo mode finds the real product root (or AAS_REPO_ROOT)
+        let l = choose_launch(Some(PathBuf::from("Z:/no/such/resources")), None).expect("repo launch");
+        assert!(l.root.join("apps").join("backend").join("__main__.py").is_file());
+        assert!(l.env.is_empty());
+    }
+
+    #[test]
+    fn runtime_versions_and_data_root() {
+        assert!(is_version("0.1.0") && is_version("0.1.0-rc1"));
+        for bad in ["", "..", "../x", "a/b", "a\\b", ".hidden", "x y"] {
+            assert!(!is_version(bad), "{bad}");
+        }
+        assert_eq!(data_root(Some(PathBuf::from("D:/d")), Some(PathBuf::from("C:/l"))), Some(PathBuf::from("D:/d")));
+        assert_eq!(data_root(None, Some(PathBuf::from("C:/l"))), Some(PathBuf::from("C:/l").join("AIAppStudio")));
+        assert_eq!(data_root(None, None), None);
     }
 
     #[test]

@@ -4,9 +4,9 @@
 # The image is built WITH network; every download is pinned by sha256 (ADD --checksum) and the base images by digest.
 # `docker run` of it is always --network none (core/aas_build/runner.py build_android_argv).
 # Facts checked against the kit's @capacitor/android 8.6.2 (the kit pins 8.6.2, not 8.5.2):
-#   compileSdk/targetSdk 36, minSdk 24, AGP 8.13.0, template wrapper Gradle 8.14.3.
+#   compileSdk/targetSdk 36, minSdk 24, AGP 8.13.0, template wrapper Gradle 8.14.8.
 # Pins (also in ../DIGESTS.json): Temurin 21.0.13.1+2 (Adoptium API checksum); Android zips: sha1 from Google's
-# repository2-3.xml matched, sha256 computed from the same bytes; Gradle 8.14.3-bin from services.gradle.org .sha256.
+# repository2-3.xml matched, sha256 computed from the same bytes; Gradle 8.14.8-bin from services.gradle.org .sha256.
 
 # ---- 1. fetch: pinned downloads, unpacked with busybox (the archives never reach the final image) -------------------
 FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS fetch
@@ -16,13 +16,13 @@ ADD --checksum=sha256:37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29
     https://dl.google.com/android/repository/platform-36_r02.zip /dl/platform.zip
 ADD --checksum=sha256:5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b \
     https://dl.google.com/android/repository/build-tools_r36_linux.zip /dl/build-tools.zip
-ADD --checksum=sha256:bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531 \
-    https://services.gradle.org/distributions/gradle-8.14.3-bin.zip /dl/gradle.zip
+ADD --checksum=sha256:94da89692fc3ca6d2d0ce6bb48548762ea0f1897ba444286f5c7f3759c7af651 \
+    https://services.gradle.org/distributions/gradle-8.14.8-bin.zip /dl/gradle.zip
 RUN set -eu; mkdir -p /opt/jdk /opt/android-sdk/platforms /opt/android-sdk/build-tools /x \
  && tar xzf /dl/jdk.tar.gz -C /opt/jdk --strip-components=1 \
  && unzip -q /dl/platform.zip -d /x/p && mv /x/p/android-36 /opt/android-sdk/platforms/android-36 \
  && unzip -q /dl/build-tools.zip -d /x/b && mv /x/b/android-16 /opt/android-sdk/build-tools/36.0.0 \
- && unzip -q /dl/gradle.zip -d /x/g && mv /x/g/gradle-8.14.3 /opt/gradle \
+ && unzip -q /dl/gradle.zip -d /x/g && mv /x/g/gradle-8.14.8 /opt/gradle \
  && chmod -R a+rX,go-w /opt \
  && chmod a+x /opt/android-sdk/build-tools/36.0.0/aapt /opt/android-sdk/build-tools/36.0.0/aapt2 \
       /opt/android-sdk/build-tools/36.0.0/aidl /opt/android-sdk/build-tools/36.0.0/zipalign \

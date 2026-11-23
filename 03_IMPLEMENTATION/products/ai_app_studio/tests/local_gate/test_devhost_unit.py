@@ -918,4 +918,4 @@ def test_emulator_argv_disables_the_nested_virtualization_dialog() -> None:
     assert "-no-nested-warnings" in argv
     for kept in ("-wipe-data", "-no-snapshot-save", "-no-snapshot-load"):
         assert kept in argv
-    assert argv.count("restrict=on") == 2  # network isolation options unchanged
+    assert argv.count(devhost.USER_NET_OPTS) == 2 and devhost.USER_NET_OPTS.startswith("restrict=on")  # both NICs (S9)

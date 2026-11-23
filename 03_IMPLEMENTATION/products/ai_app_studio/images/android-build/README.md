@@ -7,11 +7,11 @@ Build (network only here; context = `kit/`):
     docker build -f images/android-build/Dockerfile --build-context aas=images/android-build -t aas-android-build:dev kit
     docker builder prune -f
 
-Image: ~2.0 GB (Temurin 21, platform 36, build-tools 36.0.0, Gradle 8.14.3, studio template, read-only cache).
+Image: ~2.0 GB (Temurin 21, platform 36, build-tools 36.0.0, Gradle 8.14.8, studio template, read-only cache).
 
 ## Stages
 1. `fetch` - `ADD --checksum=sha256:...` for every download (see `../DIGESTS.json`): Temurin 21.0.13.1+2 tarball,
-   `platform-36_r02.zip`, `build-tools_r36_linux.zip` (sha1 matched Google's repository2-3.xml), Gradle 8.14.3-bin.
+   `platform-36_r02.zip`, `build-tools_r36_linux.zip` (sha1 matched Google's repository2-3.xml), Gradle 8.14.8-bin.
 2. `template` - `cap add android` for the kit's lockfile (`@capacitor/android` **8.6.2**: the kit pins 8.6.2, not 8.5.2;
    compileSdk 36 is asserted against `variables.gradle` and the library's `build.gradle`, AGP 8.13.0). Studio overlay
    (`template/`): root and app `build.gradle` (no google-services, no test deps, applicationId from `-PaasAppId` and

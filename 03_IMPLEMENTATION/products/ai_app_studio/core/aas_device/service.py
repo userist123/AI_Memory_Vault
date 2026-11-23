@@ -11,6 +11,10 @@ and only their digest and size are returned to the agent.
 While a session runs (S6 review): gates 1 and 2 are re-checked on every tap/screenshot/install and by a 1 s watcher;
 a failed re-check stops the device. The watcher also stops it when ``alive()`` turns false (the run's grant was
 revoked: run end, stop, backend shutdown), and ``close`` is registered with ``atexit`` for a normal process exit.
+
+S9 (B4/B12): screenshots are capped (one PNG <= MAX_SHOT_BYTES; the shots directory keeps at most MAX_SHOTS files and
+MAX_SHOT_BYTES_TOTAL bytes, oldest pruned first), and start/tap/screenshot/install run inside ``Studio.operation``
+(policy ``device.control``, tool_executions + audit row; refused calls are audited too).
 """
 from __future__ import annotations
 
@@ -36,6 +40,10 @@ from studio_core.policy import Actor
 from . import video_relay
 
 SETTING_KEY = "device_enabled"
+MAX_SHOT_BYTES = 8 * 1024 * 1024
+MAX_SHOTS = 200
+MAX_SHOT_BYTES_TOTAL = 200 * 1024 * 1024
+DEVICE_ACTOR = Actor("system", "device", "system")  # only when no actor is given; still policy-checked + audited
 MIN_FREE_BYTES = 8 * 1024 ** 3
 COORD_MAX = 10_000
 _PID = re.compile(r"^prj_[0-9a-f]{16}$")
@@ -70,12 +78,44 @@ def _free_bytes() -> int:
     return min(shutil.disk_usage(r).free for r in roots)
 
 
+_STAMP_LOCK = threading.Lock()
+_LAST_STAMP = [0]
+
+
+def _stamp(p: Path) -> None:
+    """Strictly increasing mtime per write (the prune order), even for writes within one clock tick."""
+    with _STAMP_LOCK:
+        ns = max(time.time_ns(), _LAST_STAMP[0] + 1000)
+        _LAST_STAMP[0] = ns
+    os.utime(p, ns=(ns, ns))
+
+
+def _prune_shots(d: Path, keep: str) -> None:
+    """Oldest first until the directory is within MAX_SHOTS files and MAX_SHOT_BYTES_TOTAL bytes (``keep`` stays)."""
+    shots: list[tuple[float, str, int]] = []
+    for p in d.glob("*.png"):
+        try:
+            st = p.lstat()
+        except OSError:
+            continue
+        shots.append((float(st.st_mtime_ns) if p.name != keep else float("inf"), p.name, st.st_size))
+    shots.sort()
+    total = sum(x[2] for x in shots)
+    while len(shots) > 1 and (len(shots) > MAX_SHOTS or total > MAX_SHOT_BYTES_TOTAL):
+        _t, name, size = shots.pop(0)
+        if name == keep:
+            break
+        (d / name).unlink(missing_ok=True)
+        total -= size
+
+
 class DeviceService:
     def __init__(self, studio: Any, *, preflight: Callable[[], dict[str, Any]] | None = None,
                  free_bytes: Callable[[], int] = _free_bytes,
                  session_factory: Callable[[str], Any] | None = None, alive: Callable[[], bool] | None = None,
-                 run_id: str | None = None) -> None:
+                 run_id: str | None = None, actor: Callable[[], Actor] | None = None) -> None:
         self.studio = studio
+        self._actor = actor or (lambda: DEVICE_ACTOR)
         self._free = free_bytes
         self._alive = alive or (lambda: True)
         self.run_id = run_id
@@ -110,7 +150,15 @@ class DeviceService:
         except Exception:  # noqa: BLE001
             activity._note_dropped(self.studio)  # noqa: SLF001
 
+    def _op(self, tool: str, params: dict[str, Any], fn: Callable[[], dict[str, Any]],
+            project_id: str | None = None) -> dict[str, Any]:
+        return self.studio.operation(self._actor(), tool, "device.control", params, lambda _ctx: fn(),
+                                     project_id=project_id)
+
     def start(self, form: str = "phone") -> dict[str, Any]:
+        return self._op("device.start", {"form": str(form)[:16]}, lambda: self._start(form))
+
+    def _start(self, form: str) -> dict[str, Any]:
         if form not in ("phone", "tablet"):
             raise ValidationFailed("form must be phone or tablet")
         self._gate()
@@ -180,24 +228,40 @@ class DeviceService:
         return v
 
     def tap(self, x: Any, y: Any) -> dict[str, Any]:
+        return self._op("device.tap", {"x": x, "y": y}, lambda: self._tap(x, y))
+
+    def _tap(self, x: Any, y: Any) -> dict[str, Any]:
         s = self._need()
         x, y = self._coord(x), self._coord(y)
         self._rec("device.input", action="tap", x=x, y=y)
         return s.tap(x, y)
 
     def screenshot(self) -> dict[str, Any]:
+        return self._op("device.screenshot", {}, self._screenshot)
+
+    def _screenshot(self) -> dict[str, Any]:
         s = self._need()
         png = s.screenshot()
+        if not isinstance(png, bytes | bytearray) or not 0 < len(png) <= MAX_SHOT_BYTES:
+            raise Unavailable(f"device screenshot refused: size outside 1..{MAX_SHOT_BYTES} bytes")
+        png = bytes(png)
         sha = hashlib.sha256(png).hexdigest()
         d = self.studio.settings.data_dir / "device" / "shots"
         d.mkdir(parents=True, exist_ok=True)
         (d / f"{sha}.png").write_bytes(png)
+        _stamp(d / f"{sha}.png")
+        _prune_shots(d, keep=f"{sha}.png")
         self._rec("device.log", text=f"screenshot {sha[:12]} {len(png)} bytes")
         return {"sha256": sha, "size": len(png)}
 
     def install(self, project_id: str, *, launch: bool = False) -> dict[str, Any]:
         """Install the project's debug APK (the device host accepts only dev.aiappstudio.p<16 hex>); with ``launch``
         the installed package must be exactly the project's package id and is then started."""
+        pid = project_id if isinstance(project_id, str) and _PID.match(project_id) else None
+        return self._op("device.install", {"projectId": str(project_id)[:40], "launch": bool(launch)},
+                        lambda: self._install(project_id, launch=launch), project_id=pid)
+
+    def _install(self, project_id: str, *, launch: bool) -> dict[str, Any]:
         s = self._need()
         if not isinstance(project_id, str) or not _PID.match(project_id):
             raise ValidationFailed("invalid project id")

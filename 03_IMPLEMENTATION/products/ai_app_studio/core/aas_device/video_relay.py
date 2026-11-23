@@ -4,8 +4,11 @@ Path: device host ``{"ch":"v","seq":n,"b64":...}`` -> DeviceSession.video_q in t
 chunk is dropped first and the chunk after the hole is marked ``gap``, N7) -> ``VideoSender`` -> per-run local pipe ->
 ``VideoHub`` in the backend -> owner WebSocket.
 
-- The pipe is a ``multiprocessing.connection`` Listener on a random name (``\\\\.\\pipe\\aas-video-<128-bit hex>`` on
-  Windows, a socket in a fresh private temp dir elsewhere) with a per-run 256-bit key: both sides prove the key
+- The pipe (S9, B8) is a native Windows named pipe on a random name (``\\\\.\\pipe\\aas-video-<128-bit hex>``) made by
+  ``NativePipeListener``: protected DACL with one ACE for the current logon SID, PIPE_REJECT_REMOTE_CLIENTS,
+  FILE_FLAG_FIRST_PIPE_INSTANCE (no second server on the name), accept with a timeout; each connection is a
+  ``multiprocessing.connection.PipeConnection``. Elsewhere a ``multiprocessing.connection`` socket in a fresh private
+  temp dir. Per run there is a 256-bit key: both sides prove the key
   (HMAC challenge) before one byte of video is accepted. The accept loop only accepts; each connection's handshake runs
   in its own short-lived thread and must finish within AUTH_TIMEOUT (at most MAX_PENDING_AUTH at once), so a client
   that connects and never answers cannot block the real sender (review L1). The key travels only in the MCP child's
@@ -60,6 +63,163 @@ KEY_REQUEST = b"K"  # hub -> sender on the same pipe: the stream is discontinuou
 KEY_REQUEST_MIN_S = 2.0
 AUTH_TIMEOUT = 2.0  # seconds for a connection to complete the HMAC handshake (L1)
 MAX_PENDING_AUTH = 4  # concurrent unauthenticated connections per run; more are closed at once
+PIPE_INSTANCES = MAX_PENDING_AUTH + 2  # one sender + pending handshakes + the instance waiting for the next client
+ACCEPT_POLL_S = 0.5
+
+
+# ---------------------------------------------------------------- S9 (B8): native Windows named pipe
+if sys.platform == "win32":
+    import ctypes
+    from ctypes import wintypes
+    from multiprocessing.connection import PipeConnection
+
+    import _winapi
+
+    _ADV = ctypes.WinDLL("advapi32", use_last_error=True)
+    _K32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    class _SA(ctypes.Structure):
+        _fields_ = [("nLength", wintypes.DWORD), ("lpSecurityDescriptor", ctypes.c_void_p),
+                    ("bInheritHandle", wintypes.BOOL)]
+
+    _ADV.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.HANDLE)]
+    _ADV.GetTokenInformation.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD,
+                                         ctypes.POINTER(wintypes.DWORD)]
+    _ADV.ConvertSidToStringSidW.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.LPWSTR)]
+    _ADV.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(wintypes.ULONG)]
+    _K32.GetCurrentProcess.restype = wintypes.HANDLE
+    _K32.LocalFree.argtypes = [ctypes.c_void_p]
+    _K32.CloseHandle.argtypes = [wintypes.HANDLE]
+    _K32.CreateNamedPipeW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD,
+                                      wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(_SA)]
+    _K32.CreateNamedPipeW.restype = wintypes.HANDLE
+
+    _TOKEN_QUERY = 0x0008
+    _TOKEN_LOGON_SID = 28  # TokenLogonSid: TOKEN_GROUPS holding the logon SID
+    _PIPE_ACCESS_DUPLEX = 0x3
+    _FILE_FLAG_FIRST_PIPE_INSTANCE = 0x00080000
+    _FILE_FLAG_OVERLAPPED = 0x40000000
+    _PIPE_TYPE_MESSAGE, _PIPE_READMODE_MESSAGE, _PIPE_REJECT_REMOTE_CLIENTS = 0x4, 0x2, 0x8
+    _INVALID_HANDLE = wintypes.HANDLE(-1).value
+    _ERROR_NO_DATA = 232
+    _WAIT_TIMEOUT = 0x102
+
+    def logon_sid() -> str:
+        """String SID of this process's logon session (S-1-5-5-X-Y): shared by the backend and its MCP child, not by
+        another account, a network logon or a service."""
+        tok = wintypes.HANDLE()
+        if not _ADV.OpenProcessToken(_K32.GetCurrentProcess(), _TOKEN_QUERY, ctypes.byref(tok)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            need = wintypes.DWORD(0)
+            _ADV.GetTokenInformation(tok, _TOKEN_LOGON_SID, None, 0, ctypes.byref(need))
+            if need.value == 0:
+                raise ctypes.WinError(ctypes.get_last_error())
+            buf = ctypes.create_string_buffer(need.value)
+            if not _ADV.GetTokenInformation(tok, _TOKEN_LOGON_SID, buf, need, ctypes.byref(need)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            if ctypes.c_uint32.from_buffer(buf).value < 1:
+                raise OSError("the process token has no logon SID")
+            # TOKEN_GROUPS { DWORD GroupCount; SID_AND_ATTRIBUTES Groups[]; }: Groups[0].Sid sits at pointer alignment
+            sid_ptr = ctypes.c_void_p.from_buffer(buf, ctypes.sizeof(ctypes.c_void_p)).value
+            out = wintypes.LPWSTR()
+            if not _ADV.ConvertSidToStringSidW(sid_ptr, ctypes.byref(out)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                sid = str(out.value or "")
+            finally:
+                _K32.LocalFree(out)
+        finally:
+            _K32.CloseHandle(tok)
+        if not sid.startswith("S-1-5-5-"):
+            raise OSError(f"unexpected logon SID {sid!r}")
+        return sid
+
+    class NativePipeListener:
+        """Server end of the run's pipe. ``accept(timeout)`` returns a PipeConnection, or None on timeout / for a
+        client that left before it was served. ``sddl`` and ``reject_remote`` exist for the tests' positive controls."""
+
+        def __init__(self, address: str, *, reject_remote: bool = True, sddl: str | None = None) -> None:
+            self.address = address
+            self._mode = _PIPE_TYPE_MESSAGE | _PIPE_READMODE_MESSAGE | (
+                _PIPE_REJECT_REMOTE_CLIENTS if reject_remote else 0)
+            sd = ctypes.c_void_p()
+            text = sddl or f"D:P(A;;GA;;;{logon_sid()})"
+            if not _ADV.ConvertStringSecurityDescriptorToSecurityDescriptorW(text, 1, ctypes.byref(sd), None):
+                raise ctypes.WinError(ctypes.get_last_error())
+            self._sd = sd
+            self._sa = _SA(ctypes.sizeof(_SA), sd, False)
+            self._lock = threading.Lock()
+            self._ov: Any = None
+            self._closed = False
+            try:
+                self.handle = self._new_handle(first=True)
+            except OSError:
+                _K32.LocalFree(sd)
+                raise
+
+        def _new_handle(self, first: bool = False) -> int:
+            flags = _PIPE_ACCESS_DUPLEX | _FILE_FLAG_OVERLAPPED | (_FILE_FLAG_FIRST_PIPE_INSTANCE if first else 0)
+            h = _K32.CreateNamedPipeW(self.address, flags, self._mode, PIPE_INSTANCES, 65536, 65536, 0,
+                                      ctypes.byref(self._sa))
+            if h in (None, _INVALID_HANDLE):
+                raise ctypes.WinError(ctypes.get_last_error())
+            return int(h)
+
+        def accept(self, timeout: float = ACCEPT_POLL_S) -> Any:
+            with self._lock:
+                if self._closed:
+                    raise OSError("listener closed")
+                if self._ov is None:
+                    try:
+                        self._ov = _winapi.ConnectNamedPipe(self.handle, overlapped=True)
+                    except OSError as e:
+                        if e.winerror != _ERROR_NO_DATA:
+                            raise
+                        self._recycle()  # the client connected and left already
+                        return None
+                ov = self._ov
+            res = _winapi.WaitForMultipleObjects([ov.event], False, max(1, int(timeout * 1000)))
+            if res == _WAIT_TIMEOUT:
+                return None
+            with self._lock:
+                if self._closed or self._ov is not ov:
+                    raise OSError("listener closed")
+                self._ov = None
+                _n, err = ov.GetOverlappedResult(True)
+                if err != 0:
+                    self._recycle()
+                    return None
+                conn = PipeConnection(self.handle)
+                self.handle = self._new_handle()
+                return conn
+
+        def _recycle(self) -> None:
+            try:
+                _winapi.CloseHandle(self.handle)
+            finally:
+                self.handle = self._new_handle()
+
+        def close(self) -> None:
+            with self._lock:
+                if self._closed:
+                    return
+                self._closed = True
+                ov, self._ov = self._ov, None
+                if ov is not None:
+                    try:
+                        ov.cancel()
+                        ov.GetOverlappedResult(True)
+                    except OSError:
+                        pass
+                try:
+                    _winapi.CloseHandle(self.handle)
+                except OSError:
+                    pass
+                if self._sd:
+                    _K32.LocalFree(self._sd)
+                    self._sd = ctypes.c_void_p()
 
 
 class Busy(Exception):
@@ -298,7 +458,8 @@ class VideoHub:
         else:
             tmpdir = tempfile.mkdtemp(prefix="aas-video-")  # 0700
             address, family = os.path.join(tmpdir, "s"), "AF_UNIX"
-        listener = Listener(address, family=family)  # no authkey: each connection's handshake runs with a timeout
+        # no authkey on the listener: each connection's handshake runs in its own thread with a timeout
+        listener: Any = NativePipeListener(address) if sys.platform == "win32" else Listener(address, family=family)
         rp = _RunPipe(run_id, project_id, address, key, listener, tmpdir)
         with self._lock:
             old = self._runs.pop(run_id, None)
@@ -318,6 +479,8 @@ class VideoHub:
                 if rp.closed:
                     return
                 time.sleep(0.2)
+                continue
+            if conn is None:  # native pipe: accept timed out (ACCEPT_POLL_S); look at rp.closed again
                 continue
             if rp.closed:
                 conn.close()
@@ -403,15 +566,7 @@ class VideoHub:
 
     def _close_pipe(self, rp: _RunPipe) -> None:
         rp.closed = True  # a sender's read loop sees this within 0.5 s, a pending handshake ends within AUTH_TIMEOUT
-        if sys.platform == "win32":  # PipeListener.accept blocks without a timeout: wake it with a client
-            def wake() -> None:
-                try:
-                    Client(rp.address, family="AF_PIPE").close()
-                except (OSError, EOFError, AuthenticationError):
-                    pass
-            t = threading.Thread(target=wake, name="aas-video-wake", daemon=True)
-            t.start()
-            t.join(timeout=2)
+        # (the native pipe's accept returns within ACCEPT_POLL_S: the old wake-up client is not needed any more)
         try:
             rp.listener.close()
         except OSError:
@@ -635,5 +790,5 @@ class VideoSender:
         self._thread.join(timeout=3)
 
 
-__all__ = ["VideoHub", "VideoSender", "Subscription", "Busy", "MAX_CHUNK", "MAX_FRAME", "MAX_NAL", "PRIME_MAX",
+__all__ = ["NativePipeListener", "logon_sid", "VideoHub", "VideoSender", "Subscription", "Busy", "MAX_CHUNK", "MAX_FRAME", "MAX_NAL", "PRIME_MAX",
            "ENV_PIPE", "ENV_KEY", "KEY_REQUEST", "AUTH_TIMEOUT"]

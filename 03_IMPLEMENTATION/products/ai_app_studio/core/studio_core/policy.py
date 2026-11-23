@@ -52,6 +52,8 @@ _TABLE: dict[str, tuple[Decision, Decision]] = {
     "visual.capture_desktop": (Decision.ALLOW, Decision.ALLOW),
     "browser.preview": (Decision.ALLOW, Decision.ALLOW),
     "qa.run": (Decision.ALLOW, Decision.ALLOW),
+    "app.build": (Decision.ALLOW, Decision.ALLOW),  # AAS: offline Docker build (plan gate + disk gate apply)
+    "device.control": (Decision.ALLOW, Decision.ALLOW),  # AAS: studio emulator (owner device setting + gates apply)
     "deps.install": (Decision.APPROVAL, Decision.APPROVAL),
     "ai.run": (Decision.ALLOW, Decision.APPROVAL),  # starting agents spends money: an agent needs the owner's approval
     "ai.vision": (Decision.ALLOW, Decision.ALLOW),  # single bounded vision request (budget-capped)

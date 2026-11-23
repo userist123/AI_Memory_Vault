@@ -91,9 +91,7 @@ def studio_stack(tmp_path_factory: pytest.TempPathFactory) -> Iterator[dict[str,
         assert be.stdin is not None
         be.stdin.write(TOKEN.encode() + b"\n")
         be.stdin.flush()
-        pv = subprocess.Popen([py, "-X", "utf8", "-m", "aas_build"], cwd=PRODUCT / "core", env=env,  # noqa: S603
-                              stdin=subprocess.PIPE)
-        procs.append(pv)
+        # S9 B3: the backend hosts the preview server (one process, as in the packaged app)
         wait_for(lambda: call("GET", "/api/v1/health", token=False)["status"] == "ok", "backend health")
         ui_env = {**env, "AAS_TEST_API_PORT": str(API), "AAS_TEST_PREVIEW_PORT": str(PREVIEW), "AAS_TEST_UI_PORT": str(UI)}
         subprocess.run([PNPM, "exec", "vite", "build"], cwd=DESKTOP, env=ui_env, check=True, capture_output=True, timeout=300)  # noqa: S603

@@ -249,7 +249,8 @@ def list_records(studio: Any) -> list[dict[str, Any]]:
             argv = p.get("argv")
             out.append({"id": a.id, "action": a.operation, "status": a.status,
                         "argv": [str(x) for x in argv][:50] if isinstance(argv, list) else [],
-                        "target": str(p.get("target", ""))[:500], "reason": str(p.get("reason", ""))[:1000],
+                        "target": str(p.get("target") or p.get("projectId") or "")[:500],
+                        "reason": str(p.get("reason", ""))[:1000],
                         "runId": str(p.get("runId", "")), "projectId": a.project_id,
                         "requestedBy": a.requested_by})
         return out

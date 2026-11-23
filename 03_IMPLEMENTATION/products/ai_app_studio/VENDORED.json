@@ -17,9 +17,9 @@
       "upstream_path": "core/studio_core/policy.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "ff1da74cecf162f6b3e8e724e4630e8de704c3f555ebc1d7a8d94be4769665ea",
-      "local_sha256": "ff1da74cecf162f6b3e8e724e4630e8de704c3f555ebc1d7a8d94be4769665ea",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "966397949dbf80deed46dd809b51af21562d943be854ccae0a05d51ac0a5fc42",
+      "patched": true,
+      "patch_reason": "S9 (B12): two AAS operations added to the table, both ALLOW for the owner and for agents: app.build (offline Docker build; plan gate and 5 GiB disk gate apply) and device.control (studio emulator; owner device setting and disk/preflight gates apply), so builds and device actions run through Studio.operation (policy + audit) instead of the default-deny for unknown operations; no other change."
     },
     {
       "path": "core/studio_core/audit.py",
@@ -80,9 +80,9 @@
       "upstream_path": "core/studio_core/config.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "232d9aa9cd028ac0787047bae0dcf97e5ad999c3457224dec0610ed770148cbe",
-      "local_sha256": "8b39293e9beb5c95ce1720bd11b1e87004b9a12858fea4da7f76b3c2d6cbdc3e",
+      "local_sha256": "45aefcac6349f393de41155e48129849f4f8acff0617b7b387469099593204b2",
       "patched": true,
-      "patch_reason": "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, AAS_DATABASE_URL); AWS_* is ignored; data root %LOCALAPPDATA%/AIAppStudio; api_port 17875, new preview_port 17880."
+      "patch_reason": "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, AAS_DATABASE_URL); AWS_* is ignored; data root %LOCALAPPDATA%/AIAppStudio; api_port 17875, new preview_port 17880. S9 (B11): the vite dev origins localhost:1420 / 127.0.0.1:1420 are removed from allowed_origins (dev UIs only via AAS_DEV_ORIGINS with run_studio.ps1 -Dev)."
     },
     {
       "path": "core/studio_core/migrations.py",
