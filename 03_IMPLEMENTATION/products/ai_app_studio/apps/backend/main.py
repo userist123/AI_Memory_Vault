@@ -31,7 +31,7 @@ from fastapi import FastAPI, Query, Request, WebSocket  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt  # noqa: E402
-from aas_build import capture  # noqa: E402
+from aas_build import baselines, capture  # noqa: E402
 from aas_build import export as export_mod  # noqa: E402
 from aas_build import service as build_service  # noqa: E402
 from aas_build.preview_server import PreviewServer  # noqa: E402
@@ -50,7 +50,7 @@ from studio_core.services import Studio  # noqa: E402
 from .security import MIN_TOKEN_CHARS, BoundaryMiddleware  # noqa: E402
 from .headers import install as install_api_hygiene  # noqa: E402
 from . import chat_routes  # noqa: E402
-from . import brand_routes, export_routes  # noqa: E402
+from . import baseline_routes, brand_routes, export_routes  # noqa: E402
 from . import qa_routes  # noqa: E402
 from . import inspector_routes  # noqa: E402
 
@@ -261,6 +261,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             res = studio.delete_project(OWNER, pid, approval_id=b.approvalId)
             shutil.rmtree(build_service.preview_base(settings, pid), ignore_errors=True)
             capture.forget_project(settings, pid)  # index + the PNGs no other project references
+            baselines.forget_project(settings, pid)  # W6: baselines, diffs, acceptance checklist
             return res
 
     @app.post(f"{API}/projects/{{pid}}/export")
@@ -352,6 +353,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
         return {"runId": run_id, "projectId": project_id, "running": run_id is not None}
 
     app.include_router(chat_routes.router(studio, runner))  # owner chat per project (chat_routes.py)
+    app.include_router(baseline_routes.router(studio, OWNER))  # W6: visual baselines + acceptance checklist
 
     @app.post(f"{API}/runs/{{run_id}}/stop")
     def stop_run(run_id: str) -> dict[str, Any]:

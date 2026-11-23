@@ -73,6 +73,11 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
                    "versionMajor": {"anyOf": [{"type": "integer", "minimum": 0, "maximum": 999}, {"type": "null"}]},
                    "versionMinor": {"anyOf": [{"type": "integer", "minimum": 0, "maximum": 999}, {"type": "null"}]},
                    "storeScreenshots": {"type": "boolean"}}, ["projectId"]),
+    # W6: visual regression check (compare only; approving baselines is an owner REST route)
+    "baseline_status": ({"projectId": PID,
+                         "intendedRoutes": {"anyOf": [{"type": "array", "maxItems": 8,
+                                                       "items": {"type": "string", "maxLength": 200}},
+                                                      {"type": "null"}]}}, ["projectId"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 
@@ -94,6 +99,14 @@ def body(result: Any) -> dict[str, Any]:
 
 def _prop_matches(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
     return all(actual.get(k) == v for k, v in expected.items())
+
+
+def test_runner_allow_list_matches_the_catalogue() -> None:
+    """The runner's --allowedTools / init check (streamjson.CATALOGUE_TOOLS) lists exactly the server's tools: a tool
+    missing there makes every agent run abort with InitViolation (integration of W2..W6)."""
+    from aas_runner.streamjson import CATALOGUE_TOOLS
+    assert len(CATALOGUE_TOOLS) == len(set(CATALOGUE_TOOLS))
+    assert set(CATALOGUE_TOOLS) == set(CATALOGUE)
 
 
 async def test_p5a_catalogue_and_input_schemas(tmp_path: Path) -> None:

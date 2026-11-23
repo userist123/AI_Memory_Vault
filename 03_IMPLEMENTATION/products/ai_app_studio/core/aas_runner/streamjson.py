@@ -22,6 +22,7 @@ CATALOGUE_TOOLS: tuple[str, ...] = (
     "activity_list",
     "plan_submit", "app_build", "brand_kit", "preview_capture", "device_start", "device_install", "device_tap",
     "device_screenshot", "app_export", "qa_run", "flow_test_write", "flow_test_run",
+    "baseline_status",
 )
 EXCERPT_CAP = 300
 TEXT_CAP = 4000
