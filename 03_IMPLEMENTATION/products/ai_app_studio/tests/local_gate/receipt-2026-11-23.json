@@ -1,7 +1,7 @@
 {
   "gate": "ai_app_studio local gate S5",
   "distro": "Ubuntu-S9AI-D",
-  "finished": "2026-11-23T00:52:57+00:00",
+  "finished": "2026-11-23T01:04:36+00:00",
   "runs": [
     {
       "finished": "2026-11-23T00:10:26+00:00",
@@ -87,6 +87,25 @@
         "PM3c",
         "PM3d"
       ]
+    },
+    {
+      "finished": "2026-11-23T01:02:55+00:00",
+      "exitstatus": 1,
+      "probes": [
+        "N7",
+        "PM3d"
+      ]
+    },
+    {
+      "finished": "2026-11-23T01:04:36+00:00",
+      "exitstatus": 0,
+      "probes": [
+        "N7",
+        "P10a",
+        "P10c",
+        "P9a",
+        "PM3d"
+      ]
     }
   ],
   "probes": {
@@ -108,39 +127,67 @@
       ]
     },
     "N7": {
-      "status": "fail",
+      "status": "pass",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "fail",
-          "at": "2026-11-23T00:51:34+00:00",
+          "status": "pass",
+          "at": "2026-11-23T01:04:10+00:00",
           "detail": {
-            "boot_s": 24.2,
+            "boot_s": 42.2,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 22086,
+              "ms": 38777,
               "size": [
                 1080,
                 2340
               ]
             },
-            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +112+154"
           }
         },
         {
           "test": "test_04_n7_tap_fast_while_video_consumer_stalled",
-          "status": "fail",
-          "at": "2026-11-23T00:51:45+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T01:04:20+00:00",
+          "detail": {
+            "tap_replies": 8,
+            "max_tap_reply_s": 0.0,
+            "tap_reply_s": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "tap_devhost_ms": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "max_swipe150ms_reply_s": 0.172,
+            "video_chunks_received": 71,
+            "video_dropped_host": 7,
+            "queue_len": 64,
+            "queue_max": 64
+          }
         },
         {
           "test": "test_05_n7_positive_control_blocking_queue_stalls",
-          "status": "fail",
-          "at": "2026-11-23T00:51:56+00:00",
+          "status": "pass",
+          "at": "2026-11-23T01:04:31+00:00",
           "detail": {
-            "tap_reply_s": 3.016,
+            "tap_reply_s": 3.0,
             "stalled": true
           }
         }
@@ -152,71 +199,42 @@
         {
           "test": "test_07_owner_state_unchanged",
           "status": "pass",
-          "at": "2026-11-23T00:51:59+00:00",
+          "at": "2026-11-23T01:04:34+00:00",
           "detail": {
             "owner_adb_before": "ADB5037=none",
             "owner_adb_after": "ADB5037=none",
             "tracked": 38,
             "changed": []
           }
-        },
-        {
-          "test": "test_studio_code_never_names_owner_state",
-          "status": "pass",
-          "at": "2026-11-23T00:52:27+00:00",
-          "detail": {
-            "roots": [
-              "core",
-              "wsl",
-              "kit",
-              "images",
-              "apps"
-            ],
-            "forbidden": [
-              "s9emu",
-              "debug.keystore",
-              "/.android",
-              "~/android",
-              "HOME/android",
-              "5037"
-            ],
-            "hits": []
-          }
-        },
-        {
-          "test": "test_scan_positive_control_flags_fixture",
-          "status": "pass",
-          "at": "2026-11-23T00:52:27+00:00",
-          "detail": null
         }
       ]
     },
     "P10c": {
-      "status": "fail",
+      "status": "pass",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "fail",
-          "at": "2026-11-23T00:51:34+00:00",
+          "status": "pass",
+          "at": "2026-11-23T01:04:10+00:00",
           "detail": {
-            "boot_s": 24.2,
+            "boot_s": 42.2,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 22086,
+              "ms": 38777,
               "size": [
                 1080,
                 2340
               ]
             },
-            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +112+154"
           }
         },
         {
           "test": "test_06_shutdown_leaves_nothing",
           "status": "pass",
-          "at": "2026-11-23T00:51:59+00:00",
+          "at": "2026-11-23T01:04:34+00:00",
           "detail": {
             "exit_code": 0,
             "leftover": "NONE\nNOPORTS"
@@ -225,7 +243,7 @@
         {
           "test": "test_07_owner_state_unchanged",
           "status": "pass",
-          "at": "2026-11-23T00:51:59+00:00",
+          "at": "2026-11-23T01:04:34+00:00",
           "detail": {
             "owner_adb_before": "ADB5037=none",
             "owner_adb_after": "ADB5037=none",
@@ -236,7 +254,7 @@
         {
           "test": "test_08_checker_positive_control_detects_touch",
           "status": "pass",
-          "at": "2026-11-23T00:52:00+00:00",
+          "at": "2026-11-23T01:04:36+00:00",
           "detail": {
             "detected": true
           }
@@ -244,72 +262,25 @@
       ]
     },
     "P9a": {
-      "status": "fail",
+      "status": "pass",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "fail",
-          "at": "2026-11-23T00:51:34+00:00",
+          "status": "pass",
+          "at": "2026-11-23T01:04:10+00:00",
           "detail": {
-            "boot_s": 24.2,
+            "boot_s": 42.2,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 22086,
+              "ms": 38777,
               "size": [
                 1080,
                 2340
               ]
             },
-            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
-          }
-        },
-        {
-          "test": "test_03_p9a_guest_cannot_reach_host",
-          "status": "pass",
-          "at": "2026-11-23T00:51:44+00:00",
-          "detail": {
-            "net_up_after_s": 10.4,
-            "guest_net": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000 inet 127.0.0.1/8 scope host lo valid_lft forever preferred_lft forever 15: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000 inet 10.0.2.15/8 brd 10.255.255.25",
-            "ports": [
-              53,
-              1080,
-              5037,
-              5600,
-              5601,
-              5641,
-              8080,
-              8123,
-              8554,
-              9001,
-              11434,
-              23204
-            ],
-            "reached": [],
-            "sample": {
-              "53": "P 53 rc=1 out=nc: connect: Connection refused",
-              "1080": "P 1080 rc=1 out=nc: connect: Connection refused",
-              "5037": "P 5037 rc=1 out=nc: connect: Connection refused",
-              "5600": "P 5600 rc=1 out=nc: connect: Connection refused",
-              "5601": "P 5601 rc=1 out=nc: connect: Connection refused",
-              "5641": "P 5641 rc=1 out=nc: connect: Connection refused",
-              "8080": "P 8080 rc=1 out=nc: connect: Connection refused",
-              "8123": "P 8123 rc=1 out=nc: connect: Connection refused",
-              "8554": "P 8554 rc=1 out=nc: connect: Connection refused",
-              "9001": "P 9001 rc=1 out=nc: connect: Connection refused",
-              "11434": "P 11434 rc=1 out=nc: connect: Connection refused",
-              "23204": "P 23204 rc=1 out=nc: connect: Connection refused"
-            }
-          }
-        },
-        {
-          "test": "test_09_p9a_positive_control_default_slirp_reaches_canary",
-          "status": "pass",
-          "at": "2026-11-23T00:52:25+00:00",
-          "detail": {
-            "canary_port": 23204,
-            "line": "P 23204 rc=0 out=HTTP/1.0 200 OKServer: SimpleHTTP/0.6 Python/3.12.3Date: Mon, 23 Nov 2026 00:52:24 GMTContent-type: text/html; cha"
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +112+154"
           }
         }
       ]
@@ -558,22 +529,16 @@
       ]
     },
     "PM3d": {
-      "status": "fail",
+      "status": "pass",
       "tests": [
         {
           "test": "test_06_shutdown_leaves_nothing",
           "status": "pass",
-          "at": "2026-11-23T00:51:59+00:00",
+          "at": "2026-11-23T01:04:34+00:00",
           "detail": {
             "exit_code": 0,
             "leftover": "NONE\nNOPORTS"
           }
-        },
-        {
-          "test": "test_kill_wsl_exe_mid_session_leaves_nothing",
-          "status": "fail",
-          "at": "2026-11-23T00:52:57+00:00",
-          "detail": null
         }
       ]
     }

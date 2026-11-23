@@ -12,6 +12,8 @@ import os
 import queue
 import re
 import signal
+import socket
+import stat
 import struct
 import subprocess
 import sys
@@ -170,6 +172,200 @@ class InputShell:
                     return (int(tail), "") if tail.isdigit() else (1, "bad marker")
 
 
+class ConsoleUnavailable(Exception):
+    """Console not usable (connect, banner or auth failed); no touch event was sent on this attempt."""
+
+
+class ConsoleError(Exception):
+    """The console answered KO or dropped the connection after a touch command was sent."""
+
+
+class Console:
+    """Touch injection through the emulator console (N7): `input tap` starts app_process in the guest and took up
+    to 3.6 s under screenrecord load; `event mouse` is handled by the emulator itself, outside the guest.
+
+    One persistent connection to 127.0.0.1:<console port> inside the private net namespace, authenticated with
+    the token the emulator wrote into the studio fake HOME. Only `event mouse <x> <y> 0 <0|1>` lines with
+    integers validated against the screen size are ever sent; the token is sent only when the banner asks for
+    it and names that same token file."""
+
+    MAX_LINE = 1024
+    MAX_LINES = 32
+    LINE_RE = re.compile(r"^event mouse (0|[1-9][0-9]{0,4}) (0|[1-9][0-9]{0,4}) 0 [01]$")
+    TOKEN_RE = re.compile(r"^[A-Za-z0-9+/=_-]{1,128}$")
+
+    def __init__(self, port, token_path, size, connect=socket.create_connection):
+        if not isinstance(size, list) or len(size) != 2:
+            raise ValueError("bad size")
+        self.w, self.h = _int(size[0], 1, 8192), _int(size[1], 1, 8192)
+        self.port = _int(port, 1, 65535)
+        self.token_path = token_path
+        self.connect = connect
+        self.sock = None
+        self.buf = b""
+        self.connects = 0
+        self.disabled = False
+        self.lock = threading.Lock()
+
+    # ---------- public ----------
+    def tap(self, x, y, timeout=5.0):
+        x, y = _int(x, 0, self.w - 1), _int(y, 0, self.h - 1)
+        self._gesture([(x, y, 1, 0.0), (x, y, 0, 0.0)], timeout)
+
+    def swipe(self, x1, y1, x2, y2, ms, timeout=10.0):
+        x1, x2 = _int(x1, 0, self.w - 1), _int(x2, 0, self.w - 1)
+        y1, y2 = _int(y1, 0, self.h - 1), _int(y2, 0, self.h - 1)
+        ms = _int(ms, 1, 5000)
+        steps = max(1, min(100, ms // 16))
+        pts = [(x1, y1, 1, 0.0)]
+        for k in range(1, steps + 1):
+            pts.append((x1 + (x2 - x1) * k // steps, y1 + (y2 - y1) * k // steps, 1, ms / 1000.0 * k / steps))
+        pts.append((x2, y2, 0, ms / 1000.0))
+        self._gesture(pts, timeout + ms / 1000.0)
+
+    def close(self):
+        with self.lock:
+            self._close()
+
+    # ---------- internals ----------
+    def _gesture(self, pts, timeout):
+        with self.lock:
+            if self.disabled:
+                raise ConsoleUnavailable("disabled")
+            t0 = time.monotonic()
+            deadline = t0 + timeout
+            fresh = self.sock is None
+            if fresh:
+                self._open(deadline)
+            for i, (x, y, b, at) in enumerate(pts):
+                wait = t0 + at - time.monotonic()
+                if wait > 0:
+                    time.sleep(wait)
+                line = "event mouse %d %d 0 %d" % (x, y, b)
+                try:
+                    self._cmd(line, deadline)
+                except (ConsoleError, OSError) as e:
+                    if isinstance(e, ConsoleError) and str(e).startswith("KO"):
+                        raise
+                    if i != 0 or fresh:
+                        self._close()
+                        raise ConsoleError("console connection lost") from None
+                    # stale persistent connection (the console went away between requests): reconnect once
+                    self._close()
+                    fresh = True
+                    self._open(deadline)
+                    self._cmd(line, deadline)
+
+    def _cmd(self, line, deadline):
+        try:
+            self._send(line)
+            self._until_ok(deadline)
+        except socket.timeout:
+            self._close()
+            raise subprocess.TimeoutExpired(["console", line], 0) from None
+        except ConsoleError as e:
+            if not str(e).startswith("KO"):
+                self._close()
+            raise
+
+    def _send(self, line, secret=False):
+        if not secret and not self.LINE_RE.match(line):
+            raise ValueError("bad console line")
+        if self.sock is None:
+            raise ConsoleError("not connected")
+        self.sock.sendall(line.encode("ascii") + b"\n")
+
+    def _readline(self, deadline):
+        while b"\n" not in self.buf:
+            if len(self.buf) > self.MAX_LINE:
+                raise ConsoleError("console line too long")
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise socket.timeout("console")
+            self.sock.settimeout(left)
+            data = self.sock.recv(4096)
+            if not data:
+                raise ConsoleError("console closed")
+            self.buf += data
+        line, self.buf = self.buf.split(b"\n", 1)
+        if len(line) > self.MAX_LINE:
+            raise ConsoleError("console line too long")
+        return line.rstrip(b"\r")
+
+    def _until_ok(self, deadline):
+        lines = []
+        while True:
+            line = self._readline(deadline)
+            if line == b"OK":
+                return lines
+            if line.startswith(b"KO"):
+                raise ConsoleError(line[:120].decode("ascii", "replace"))
+            lines.append(line)
+            if len(lines) > self.MAX_LINES:
+                raise ConsoleError("console reply too long")
+
+    def _read_token(self):
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
+        try:
+            fd = os.open(self.token_path, flags)
+        except OSError:
+            raise ConsoleUnavailable("no console token") from None
+        try:
+            st = os.fstat(fd)
+            if not stat.S_ISREG(st.st_mode) or st.st_size > 256:
+                raise ConsoleUnavailable("bad console token file")
+            data = os.read(fd, 257)
+        finally:
+            os.close(fd)
+        try:
+            tok = data.decode("ascii").strip()
+        except UnicodeDecodeError:
+            raise ConsoleUnavailable("bad console token") from None
+        if not self.TOKEN_RE.match(tok):
+            raise ConsoleUnavailable("bad console token")
+        return tok
+
+    def _open(self, deadline):
+        left = max(0.1, deadline - time.monotonic())
+        try:
+            self.sock = self.connect(("127.0.0.1", self.port), timeout=min(left, 5.0))
+        except OSError:
+            self.sock = None
+            raise ConsoleUnavailable("console connect failed") from None
+        self.buf = b""
+        self.connects += 1
+        try:
+            banner = self._until_ok(deadline)
+            if any(b"Authentication required" in ln for ln in banner):
+                named = [ln[1:-1] for ln in banner if len(ln) > 2 and ln[:1] == b"'" and ln[-1:] == b"'"]
+                ok = {self.token_path.encode(), os.path.realpath(self.token_path).encode()}
+                if named and not set(named) <= ok:
+                    self.disabled = True  # this console expects another token file: never send ours
+                    raise ConsoleUnavailable("console names another token file")
+                tok = self._read_token()
+                self._send("auth " + tok, secret=True)
+                try:
+                    self._until_ok(deadline)
+                except ConsoleError:
+                    self.disabled = True
+                    raise ConsoleUnavailable("console auth refused") from None
+        except ConsoleUnavailable:
+            self._close()
+            raise
+        except (ConsoleError, OSError) as e:
+            self._close()
+            raise ConsoleUnavailable("console handshake failed: %s" % (type(e).__name__,)) from None
+
+    def _close(self):
+        s, self.sock = self.sock, None
+        self.buf = b""
+        if s is not None:
+            try:
+                s.close()
+            except OSError:
+                pass
+
+
 def apk_package(path):
     """The `package` attribute of <manifest> in the APK's binary AndroidManifest.xml, or None.
 
@@ -326,6 +522,7 @@ class Host:
         self.install = None
         self.stopping = False
         self.input = InputShell([self.adb_bin, "-P", "5641", "-s", self.serial, "shell"])
+        self.console = None
         self.busy = 0
         self.last_activity = time.monotonic()
         self._exit = os._exit
@@ -387,12 +584,26 @@ class Host:
         rc, w = self.adb("shell", "wm size", timeout=10)
         m = re.search(r"(\d+)x(\d+)", w)
         size = [int(m.group(1)), int(m.group(2))] if m else [0, 0]
+        self.console = self._make_console(size)
         self.out.control({"ch": "e", "kind": "booted", "avd": self.avd, "ms": boot_ms, "size": size})
         threading.Thread(target=self._modal_watch, daemon=True).start()
         threading.Thread(target=self._emu_watch, daemon=True).start()
         self.last_activity = time.monotonic()
         threading.Thread(target=self._idle_watch, daemon=True).start()
         return True
+
+    def _make_console(self, size):
+        """Console client for taps/swipes, or None (adb `input` path). The token is read only from the studio fake
+        HOME that aas-serve sets ($AAS_STATE/home), never from another HOME."""
+        home = os.environ.get("HOME", "")
+        if home != os.path.join(self.state, "home"):
+            log("HOME is not the studio home: console input off")
+            return None
+        try:
+            return Console(self.port, os.path.join(home, ".emulator_console_auth_token"), size)
+        except ValueError:
+            log("screen size unknown: console input off")
+            return None
 
     def _idle_watch(self, limit=IDLE_S, tick=5.0):
         while not self.stopping:
@@ -439,6 +650,8 @@ class Host:
             self._install_abort()
         if self.input is not None:
             self.input.close()
+        if self.console is not None:
+            self.console.close()
         if os.getpid() == 1:
             try:
                 os.kill(-1, signal.SIGKILL)
@@ -509,10 +722,16 @@ class Host:
         op = req["op"]
         if op == "tap":
             x, y = _int(req["x"], 0, 4096), _int(req["y"], 0, 4096)
+            res = self._console_input("tap", (x, y), 5.0)
+            if res is not None:
+                return res
             return self._ok_rc(self.input.run(("input", "tap", str(x), str(y)), timeout=10))
         if op == "swipe":
             a = [str(_int(req[k], 0, 4096)) for k in ("x1", "y1", "x2", "y2")]
             ms = _int(req["ms"], 1, 5000)
+            res = self._console_input("swipe", tuple(int(v) for v in a) + (ms,), 10.0)
+            if res is not None:
+                return res
             return self._ok_rc(self.input.run(("input", "swipe", *a, str(ms)), timeout=20))
         if op == "text":
             t = req["t"]
@@ -601,6 +820,23 @@ class Host:
                 os.unlink(inst["path"])
             return {"ok": rc == 0 and "Success" in txt, "phase": "done", "pkg": pkg, "msg": txt[-200:]}
         raise ValueError("bad op")
+
+    def _console_input(self, kind, args, timeout):
+        """Touch through the emulator console; None means "use the adb input path" (console unavailable, nothing
+        was sent). A console error after a command was sent is returned as is: no adb retry, no double tap."""
+        c = self.console
+        if c is None:
+            return None
+        try:
+            getattr(c, kind)(*args, timeout=timeout)
+            return {"ok": True}
+        except ConsoleUnavailable as e:
+            log("console unavailable (%s), adb input" % (e,))
+            if c.disabled:
+                self.console = None
+            return None
+        except ConsoleError as e:
+            return {"ok": False, "err": "console: %s" % (str(e)[:100],)}
 
     def _packages(self):
         rc, txt = self.shell("pm", "list", "packages", timeout=60)

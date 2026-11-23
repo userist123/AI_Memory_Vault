@@ -176,6 +176,7 @@ def _host(tmp_path: Path) -> Any:
     h.out = _Out()
     h.calls = []
     h.stopping = False
+    h.console = None
 
     def adb(*args: str, timeout: float = 30, data: bool = False) -> Any:
         h.calls.append(("adb",) + args)
@@ -375,3 +376,316 @@ def test_reply_pkg_field_validated() -> None:
     assert protocol.parse_device_line(json.dumps({"ch": "c", "id": 1, "ok": True, "pkg": GOOD_PKG}).encode())
     with pytest.raises(protocol.ProtocolError):
         protocol.parse_device_line(json.dumps({"ch": "c", "id": 1, "ok": True, "pkg": "com.x"}).encode())
+
+
+# ---------- emulator console touch injection (N7, second step) ----------
+
+import socket  # noqa: E402
+import threading  # noqa: E402
+
+TOKEN = "AbCdEf0123456789"
+
+
+class _FakeConsole:
+    """Emulator-console stand-in on 127.0.0.1: banner, `auth`, `event mouse`; records every command line."""
+
+    def __init__(self, token: str = TOKEN, auth: bool = True, banner_path: str | None = None,
+                 drop_after: int | None = None, mute: bool = False, ko: bool = False) -> None:
+        self.token, self.auth, self.banner_path = token, auth, banner_path
+        self.drop_after, self.mute, self.ko = drop_after, mute, ko
+        self.lines: list[str] = []
+        self.accepts = 0
+        self.srv = socket.socket()
+        self.srv.bind(("127.0.0.1", 0))
+        self.srv.listen(4)
+        self.port = self.srv.getsockname()[1]
+        self.stop = False
+        threading.Thread(target=self._serve, daemon=True).start()
+
+    def _serve(self) -> None:
+        while not self.stop:
+            try:
+                c, _ = self.srv.accept()
+            except OSError:
+                return
+            self.accepts += 1
+            threading.Thread(target=self._client, args=(c,), daemon=True).start()
+
+    def _client(self, c: socket.socket) -> None:
+        f = c.makefile("rb")
+        if self.auth:
+            path = self.banner_path or "/x/.emulator_console_auth_token"
+            c.sendall(b"Android Console: Authentication required\r\nAndroid Console: type 'auth <auth_token>' to "
+                      b"authenticate\r\nAndroid Console: you can find your <auth_token> in \r\n'"
+                      + path.encode() + b"'\r\nOK\r\n")
+        else:
+            c.sendall(b"Android Console: type 'help' for a list of commands\r\nOK\r\n")
+        authed = not self.auth
+        n = 0
+        try:
+            for raw in f:
+                line = raw.decode().rstrip("\r\n")
+                self.lines.append(line)
+                if line.startswith("auth "):
+                    if line[5:] == self.token:
+                        authed = True
+                        c.sendall(b"Android Console: type 'help' for a list of commands\r\nOK\r\n")
+                    else:
+                        c.sendall(b"KO: authentication token does not match ~/.emulator_console_auth_token\r\n")
+                    continue
+                if not authed:
+                    c.sendall(b"KO: unknown command, try 'help'\r\n")
+                    continue
+                n += 1
+                if self.drop_after is not None and n > self.drop_after:
+                    self.drop_after = None
+                    self.lines.pop()  # never processed
+                    c.close()
+                    return
+                if self.mute:
+                    continue
+                c.sendall(b"KO: Invalid arguments. Make sure you provide 4 integers.\r\n" if self.ko else b"OK\r\n")
+        except OSError:
+            pass
+        c.close()
+
+    def close(self) -> None:
+        self.stop = True
+        self.srv.close()
+
+
+def _console(tmp_path: Path, fake: _FakeConsole, token: str = TOKEN, size: tuple[int, int] = (1080, 2340)) -> Any:
+    tok = tmp_path / ".emulator_console_auth_token"
+    tok.write_bytes((token + "\n").encode("latin-1"))
+    if fake.banner_path is None:
+        fake.banner_path = str(tok)  # the real console names the token file it expects
+    return devhost.Console(fake.port, str(tok), list(size))
+
+
+def _mouse(lines: list[str]) -> list[str]:
+    return [ln for ln in lines if ln.startswith("event mouse")]
+
+
+def test_console_auth_and_tap(tmp_path: Path) -> None:
+    fake = _FakeConsole(banner_path=str(tmp_path / ".emulator_console_auth_token"))
+    c = _console(tmp_path, fake)
+    try:
+        t0 = time.monotonic()
+        for i in range(20):
+            c.tap(10 + i, 20, timeout=5)
+        assert (time.monotonic() - t0) / 20 < 0.1
+        assert fake.accepts == 1 and c.connects == 1  # one persistent connection
+        assert fake.lines[0] == "auth " + TOKEN
+        assert _mouse(fake.lines)[:2] == ["event mouse 10 20 0 1", "event mouse 10 20 0 0"]
+        assert len(_mouse(fake.lines)) == 40
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_without_auth_banner(tmp_path: Path) -> None:
+    fake = _FakeConsole(auth=False)
+    c = _console(tmp_path, fake)
+    try:
+        c.tap(1, 2, timeout=5)
+        assert fake.lines == ["event mouse 1 2 0 1", "event mouse 1 2 0 0"]  # token not sent when not asked
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_wrong_token_disables(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    c = _console(tmp_path, fake, token="WrongToken000000")
+    try:
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert c.disabled
+        assert _mouse(fake.lines) == []  # nothing injected before auth succeeded
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert fake.accepts == 1  # disabled: no retry storm
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_banner_path_mismatch_refused(tmp_path: Path) -> None:
+    fake = _FakeConsole(banner_path="/home/owner/.emulator_console_auth_token")
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert c.disabled
+        assert not any(ln.startswith("auth") for ln in fake.lines)  # our token never sent to a foreign console
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_token_file_checks(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    try:
+        for bad in ("", "has space", "x" * 300, "tok\x00en", "tést"):
+            c = _console(tmp_path, fake, token=bad)
+            with pytest.raises(devhost.ConsoleUnavailable):
+                c.tap(1, 2, timeout=5)
+            c.close()
+        missing = devhost.Console(fake.port, str(tmp_path / "nope"), [1080, 2340])
+        with pytest.raises(devhost.ConsoleUnavailable):
+            missing.tap(1, 2, timeout=5)
+        assert not any(ln.startswith("auth") for ln in fake.lines)
+    finally:
+        fake.close()
+
+
+def test_console_connection_refused_is_unavailable(tmp_path: Path) -> None:
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()
+    tok = tmp_path / "t"
+    tok.write_text(TOKEN)
+    c = devhost.Console(port, str(tok), [1080, 2340])
+    with pytest.raises(devhost.ConsoleUnavailable):
+        c.tap(1, 2, timeout=2)
+    assert not c.disabled  # transient: the next call tries again
+
+
+def test_console_validation_and_bounds(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    c = _console(tmp_path, fake, size=(1080, 2340))
+    try:
+        for x, y in ((-1, 0), (1080, 0), (0, 2340), (True, 0), ("1", 0), (1.0, 0), (None, 0)):
+            with pytest.raises(ValueError):
+                c.tap(x, y, timeout=5)  # type: ignore[arg-type]
+        for args in ((0, 0, 1080, 0, 100), (0, 0, 1, 1, 0), (0, 0, 1, 1, 5001), (0, 0, 1, 1, True)):
+            with pytest.raises(ValueError):
+                c.swipe(*args, timeout=5)  # type: ignore[arg-type]
+        assert fake.accepts == 0  # validation happens before any connection
+        c.tap(1079, 2339, timeout=5)
+        assert _mouse(fake.lines) == ["event mouse 1079 2339 0 1", "event mouse 1079 2339 0 0"]
+        for bad in ([0, 0], [1080], ["1080", 2340], [True, 2340], [20000, 2340], (1080, 2340)):
+            with pytest.raises(ValueError):
+                devhost.Console(fake.port, "t", bad)
+        for line in ("kill", "event mouse 1 1 0 1\nkill", "event mouse 1 1 0 1 ", "auth x"):
+            with pytest.raises(ValueError):
+                c._send(line)
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_swipe_sequence(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    c = _console(tmp_path, fake)
+    try:
+        t0 = time.monotonic()
+        c.swipe(100, 1000, 300, 600, 160, timeout=5)
+        took = time.monotonic() - t0
+        m = _mouse(fake.lines)
+        assert m[0] == "event mouse 100 1000 0 1"
+        assert m[-1] == "event mouse 300 600 0 0"
+        assert m[-2] == "event mouse 300 600 0 1"
+        assert all(ln.endswith(" 0 1") for ln in m[:-1])
+        assert 4 <= len(m) - 2 <= 101
+        assert 0.14 <= took < 1.5, took
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_reconnects_after_drop(tmp_path: Path) -> None:
+    fake = _FakeConsole(drop_after=2)  # serves one tap (2 lines), then closes on the next command
+    c = _console(tmp_path, fake)
+    try:
+        c.tap(5, 6, timeout=5)
+        c.tap(7, 8, timeout=5)  # stale connection: reconnect once, resend
+        assert c.connects == 2 and fake.accepts == 2
+        assert _mouse(fake.lines) == ["event mouse 5 6 0 1", "event mouse 5 6 0 0",
+                                      "event mouse 7 8 0 1", "event mouse 7 8 0 0"]
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_timeout_closes_then_reconnects(tmp_path: Path) -> None:
+    fake = _FakeConsole(mute=True)
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.subprocess.TimeoutExpired):
+            c.tap(1, 2, timeout=0.5)
+        assert c.sock is None
+        fake.mute = False
+        c.tap(3, 4, timeout=5)
+        assert c.connects == 2
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_ko_reply_is_error(tmp_path: Path) -> None:
+    fake = _FakeConsole(ko=True)
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleError) as ei:
+            c.tap(1, 1, timeout=5)
+        assert "KO" in str(ei.value)
+        assert not c.disabled
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_host_tap_prefers_console_and_falls_back(tmp_path: Path) -> None:
+    h = _host(tmp_path)
+    seen: list[tuple[str, ...]] = []
+
+    class _Sh:
+        def run(self, words: tuple[str, ...], timeout: float) -> tuple[int, str]:
+            seen.append(tuple(words))
+            return 0, ""
+
+    class _Con:
+        def __init__(self, exc: Exception | None = None, disabled: bool = False) -> None:
+            self.calls: list[tuple[Any, ...]] = []
+            self.exc, self.disabled = exc, disabled
+
+        def tap(self, x: int, y: int, timeout: float) -> None:
+            self.calls.append(("tap", x, y))
+            if self.exc:
+                raise self.exc
+
+        def swipe(self, *a: int, timeout: float) -> None:
+            self.calls.append(("swipe",) + a)
+            if self.exc:
+                raise self.exc
+
+    h.input = _Sh()
+    h.console = _Con()
+    assert h.handle({"id": 1, "op": "tap", "x": 10, "y": 20}) == {"ok": True}
+    assert h.handle({"id": 2, "op": "swipe", "x1": 1, "y1": 2, "x2": 3, "y2": 4, "ms": 100}) == {"ok": True}
+    assert h.console.calls == [("tap", 10, 20), ("swipe", 1, 2, 3, 4, 100)] and seen == []
+    h.console = _Con(devhost.ConsoleUnavailable("refused"))
+    assert h.handle({"id": 3, "op": "tap", "x": 10, "y": 20})["ok"] is True
+    assert seen == [("input", "tap", "10", "20")] and h.console is not None
+    h.console = _Con(devhost.ConsoleUnavailable("auth"), disabled=True)
+    assert h.handle({"id": 4, "op": "tap", "x": 11, "y": 21})["ok"] is True
+    assert h.console is None  # auth failure: adb path for the rest of the session
+    h.console = _Con(devhost.ConsoleError("KO: bad"))
+    rep = h.handle({"id": 5, "op": "tap", "x": 12, "y": 22})
+    assert rep["ok"] is False and "console" in rep["err"]
+    assert len(seen) == 2  # a console error after sending is not retried on adb (no double tap)
+
+
+def test_host_console_home_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    h = _host(tmp_path)
+    h.port = 5600
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    c = h._make_console([1080, 2340])
+    assert c is not None and c.token_path == str(tmp_path / "home" / ".emulator_console_auth_token")
+    assert c.port == 5600
+    monkeypatch.setenv("HOME", str(tmp_path / "elsewhere"))
+    assert h._make_console([1080, 2340]) is None  # never the owner's ~/.emulator_console_auth_token
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    assert h._make_console([0, 0]) is None  # unknown screen size: adb path
