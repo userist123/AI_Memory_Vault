@@ -54,6 +54,11 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
     "device_screenshot": ({}, []),
     # S9b: export (owner approval bound to the artifact sha256; no approval field in the input)
     "app_export": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
+    # W6: visual regression check (compare only; approving baselines is an owner REST route)
+    "baseline_status": ({"projectId": PID,
+                         "intendedRoutes": {"anyOf": [{"type": "array", "maxItems": 8,
+                                                       "items": {"type": "string", "maxLength": 200}},
+                                                      {"type": "null"}]}}, ["projectId"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 

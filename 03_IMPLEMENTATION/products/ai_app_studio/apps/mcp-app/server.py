@@ -357,6 +357,26 @@ def preview_capture(projectId: ProjectId, frame: Literal["phone", "tablet", "des
     return Seen(res, "preview console", images, lines)
 
 
+@guarded("baseline_status")
+def baseline_status(projectId: ProjectId,  # noqa: N803
+                    intendedRoutes: Annotated[list[Annotated[str, Field(max_length=200)]],  # noqa: N803
+                                              Field(max_length=8)] | None = None) -> Any:
+    """Visual regression check (call after every app_build web): screenshots every screen the owner approved
+    (route x phone/tablet/desktop) and compares it with its baseline (perceptual diff, data-aas-volatile regions masked).
+    Returns per screen status same/changed, changedPct and bbox, plus warnings for screens that changed although their
+    route is not in intendedRoutes (revert or fix those). Diff images (changed pixels red) are attached for changed
+    screens. You cannot approve baselines: only the owner can, in the studio."""
+    from aas_build import baselines
+    res = baselines.check(studio(), projectId, intended_routes=intendedRoutes or None, run_id=CALL.run_id)
+    images: list[dict[str, Any]] = []
+    for r in ((res.get("lastCheck") or {}).get("results") or []) if res.get("status") == "changed" else []:
+        if r.get("status") == "changed" and r.get("diffSha256") and len(images) < 3:
+            img = _agent_image(baselines.baseline_file(studio().settings, projectId, r["diffSha256"]))
+            if img is not None:
+                images.append(img)
+    return Seen(res, "baseline diff", images, []) if images else res
+
+
 _DEVICE: Any = None
 
 

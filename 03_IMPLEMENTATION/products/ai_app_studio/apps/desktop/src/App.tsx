@@ -39,6 +39,8 @@ import { ExportPanel } from "./components/ExportPanel";
 import { exportArtifact, openExportFolder, ownerBuildStatus, startOwnerBuild } from "./lib/exportApi";
 import { RunControls } from "./components/RunControls";
 import { ChatPanel } from "./components/ChatPanel";
+import { ChangesPanel } from "./components/ChangesPanel";
+import { changesApi } from "./lib/baselinesApi";
 import { fetchChat, sendChat } from "./lib/chatApi";
 import { elapsed, Timeline } from "./components/Timeline";
 
@@ -110,6 +112,7 @@ export function App() {
   // ---- S8: capture thumbnails (authenticated fetch -> blob: URLs) and the live emulator mirror ----
   const captureLoader = useMemo(() => (session ? createCaptureLoader(session) : null), [session]);
   useEffect(() => () => captureLoader?.dispose(), [captureLoader]);
+  const changes = useMemo(() => (session ? changesApi(session) : null), [session]); // W6 baselines
   const mirrorLive = useMemo(
     () => (!demo && session && /^prj_[0-9a-f]{16}$/.test(state.projectId) ? { session, projectId: state.projectId } : null),
     [demo, session, state.projectId],
@@ -471,6 +474,7 @@ export function App() {
               onPlanEdit={onPlanEdit}
             />
           ) : null}
+          {!demo && changes && PROJECT_ID_RE.test(selectedProject) ? <ChangesPanel key={selectedProject} projectId={selectedProject} api={changes} runStatus={state.runStatus} /> : null}
           {state.runStatus === "failed" && state.endReason ? (
             <p className="warn banner" role="alert" data-testid="run-end-reason">
               {state.endReason}
