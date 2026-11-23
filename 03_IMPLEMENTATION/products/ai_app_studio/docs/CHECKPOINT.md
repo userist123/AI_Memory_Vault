@@ -230,3 +230,18 @@ Update 2026-11-23 (S9c review fixes M1-M3, L1-L2, local commit): see docs/slices
   `python -m aas_build.desktop secure`); vendor tree manifest (`record-vendor`) checked before each build; path remap +
   leak scan; build probe no longer takes the lock. Dev dir D:\w\_aas_desktop ACL tightened, manifest recorded.
 - One-time steps for a new machine: `cargo vendor`, then `python -m aas_build.desktop secure` and `record-vendor`.
+
+Update 2026-11-23 (B1 real run + B2 WebView2 probe, local commits on claude/ai-app-studio, nothing pushed):
+- B2 PASS: probe page written through the agent path (fake CLI -> MCP -> build) and run inside the preview iframe of
+  the real Tauri/WebView2 window: invoke(get_session), window.ipc, chrome.webview.postMessage, fetch ipc.localhost,
+  fetch API, parent document, top navigation, window.open all blocked; positive control in the top document works;
+  forged-Origin replay proves the Tauri ACL refuses the iframe origin. Residual: wry injects the IPC scripts into
+  subframes on Windows. Details: docs/slices/B2-webview2.md + B2-webview2.png.
+- B1 PASS: real CLI 2.1.330 run from the UI (tabs template, adversarial line refused), init mcp_servers ==
+  ["ai-app-studio"], catalogue-only tool_use, plan gate held, web build ok, capture returned; $0.12, 8 turns.
+  Found + fixed F1: CLI auto-memory loaded the owner's MEMORY.md into the builder context (autoMemoryEnabled=false +
+  CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, real-CLI test). Open: F2 project name from prompt fails on ":" ","; F3 app
+  revisions never commit (git add ... site). Details: docs/slices/B1-real-run.md + B1-real-run.png.
+- Verified: pytest tests/runner 54 passed (incl. real-CLI P5e + new auto-memory tests).
+- NEXT = fix F2/F3 (small), image rebuilds when C: >= 10 GB, final gate round 2 (fable-consultant -> Codex/Gemini ->
+  security-lockdown -> push + PR #413).

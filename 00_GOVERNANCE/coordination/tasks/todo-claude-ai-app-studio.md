@@ -123,3 +123,9 @@ Update 2026-11-23 (S9c done + S9b review fixes, local commits only on claude/ai-
 Update 2026-11-23 (S9c review fixes M1-M3, L1-L2, local commit on claude/ai-app-studio):
 - Exe+dist zip bound per build record, cargo config planting + owner-only root ACL refusals, vendor manifest, path remap, non-stealing
   build probe. Dev dir D:/w/_aas_desktop ACL tightened. Details: ai_app_studio/docs/slices/S9c.md. NEXT unchanged (B1/B2, final gate round 2).
+
+Update 2026-11-23 (B1 + B2 live verification, local commits on claude/ai-app-studio):
+- B2 real-WebView2 iframe probe PASS (all calls from the preview iframe blocked; Tauri ACL refuses the iframe origin).
+- B1 real agent run PASS ($0.12, 8 turns); fixed F1 owner auto-memory in the runner context. Open: F2 (project name
+  from prompt), F3 (app revisions not committed: git add ... site). Details: ai_app_studio/docs/slices/B1-real-run.md, B2-webview2.md.
+- NEXT = F2/F3, image rebuilds at C: >= 10 GB, final gate round 2.
