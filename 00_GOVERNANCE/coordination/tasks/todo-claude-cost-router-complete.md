@@ -139,3 +139,10 @@ Owner memory says "worker = general-purpose + model fable"; the hook rewrites an
 - 8d44949d2 flag shipped enabled (owner decision 2026-11-23 relayed by the Opus main session), enabled-by-default tests, SKILL.md 4G, agent description. a0430404b self-update/pinned-update tests now swap the newer pin onto the installed copy (the old setup installed a source that did not match its pin).
 - Targeted run: 1503 passed in 668.87s. f2d161088 release pin seq 13 pins a0430404b.
 - Not done: Opus review round of b32c4eca6..f2d161088; not installed globally.
+
+## M12 review round 2 fixes (branch claude/cost-router-m12)
+- 0488fb942 F1 pytest: `o`/`p` bundled after other short flags (`-qo addopts=...`, `-vvo`, `-xp evil`) denied; the scan stops at value options `-k -m -r -W`. F2/F4 dotnet build/test: option allowlist (--no-restore required, --no-build, --nologo, -c, -f, -v, --filter, --logger console|trx); every other option (-p:, /p:, -property:, -t:, -target:, -restore, /restore, --interactive, @file, --) denied; at most one project/solution argument, resolved from cwd, outside the worktree (junction too) = X4. F5 protected writes: GEMINI.md, .pre-commit-config.yaml, .gemini/.codex/.vscode/.husky/.idea/.devcontainer (any depth); .editorconfig stays writable.
+- b5aa6e55e, 1e385f554 SKILL.md 4G: the new rules, F3 residual (unsigned source-tree pin trusted; protects against Edit/Write tamper, not finding-1 code that rewrites the pin), F6 (reads outside the worktree + finding-1 code can reach the network = same exfiltration risk as vault-worker). SKILL.md kept under 500 lines.
+- b182ecfd8 release pin seq 14 pins 1e385f554 (40a4d818b was an earlier seq 14 pin for b5aa6e55e, superseded before any install).
+- Targeted run: 1555 passed in 434.85s.
+- Not done: delta review; not installed globally.
