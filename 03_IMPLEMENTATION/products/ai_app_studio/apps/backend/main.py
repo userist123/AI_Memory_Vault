@@ -51,6 +51,7 @@ from .security import MIN_TOKEN_CHARS, BoundaryMiddleware  # noqa: E402
 from .headers import install as install_api_hygiene  # noqa: E402
 from . import chat_routes  # noqa: E402
 from . import export_routes  # noqa: E402
+from . import qa_routes  # noqa: E402
 
 OWNER = Actor("human", "owner", "rest")
 HOST = "127.0.0.1"  # fixed: there is no setting, flag or env var that changes the bind address
@@ -187,6 +188,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     app.state.runner = runner
     app.state.video_hub = video_hub
     export_routes.register(app, studio, OWNER, runner)  # owner 2026-11-23: one-click APK build + export folder
+    qa_routes.register(app, studio, runner)  # W2: quality gates + Auto-polish (qa_routes.py)
 
     @app.exception_handler(StudioError)
     async def _studio_error(_r: Request, e: StudioError) -> JSONResponse:

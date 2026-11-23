@@ -54,6 +54,8 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
     "device_screenshot": ({}, []),
     # S9b: export (owner approval bound to the artifact sha256; no approval field in the input)
     "app_export": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
+    # W2: quality gates (read-only for the project files; screenshots stored like preview_capture)
+    "qa_run": ({"projectId": PID, "vision": {"type": "boolean"}}, ["projectId"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 
@@ -106,7 +108,8 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
                      ("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Evil.tsx", "content": "x"}),
                          ("activity_list", {}), ("app_build", {"projectId": pid, "target": "web"}),
                      ("plan_submit", {"projectId": pid, "title": "t", "steps": []}), ("device_tap", {"x": 1, "y": 1}),
-                     ("preview_capture", {"projectId": pid, "frame": "phone"})]
+                     ("preview_capture", {"projectId": pid, "frame": "phone"}),
+                     ("qa_run", {"projectId": pid, "vision": True})]
             for name, args in calls:  # default OFF: every tool refused
                 r = await s.call_tool(name, args)
                 b = body(r)
@@ -151,6 +154,7 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             assert w2["ok"] is True  # positive control: the same call without the unknown field
             for name, args in (("app_build", {"projectId": pid, "target": "android"}),
                                ("preview_capture", {"projectId": pid, "frame": "phone"}),
+                               ("qa_run", {"projectId": pid}),  # W2: no web build yet -> nothing to gate
                                ("device_start", {"form": "phone"}),  # device tools: owner setting is off by default
                                ("device_screenshot", {})):
                 r = await s.call_tool(name, args)
