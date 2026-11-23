@@ -7,6 +7,7 @@ by ``build`` here - it is copied into the build context by the build pipeline (a
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from . import app_templates, appfiles, project_kind
@@ -37,7 +38,11 @@ _ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width
 """
 
 BLANK_FILES = {"src/main.tsx": _MAIN_TSX, "src/App.tsx": _APP_TSX, "public/icon.svg": _ICON_SVG}
-TEMPLATE_FILES: dict[str, dict[str, str]] = {"blank": BLANK_FILES, **app_templates.TEMPLATES}  # S9b: tabs, list-detail
+# W3: the kit's preview-state hook (kit/template/src/aas-states.ts) ships with every template; the agent may edit it
+_KIT_STATE_HOOK = Path(__file__).resolve().parents[2] / "kit" / "template" / "src" / "aas-states.ts"
+KIT_FILES = {"src/aas-states.ts": _KIT_STATE_HOOK.read_text(encoding="utf-8")} if _KIT_STATE_HOOK.is_file() else {}
+TEMPLATE_FILES: dict[str, dict[str, str]] = {name: {**files, **KIT_FILES} for name, files in
+                                             {"blank": BLANK_FILES, **app_templates.TEMPLATES}.items()}  # S9b: tabs, list-detail
 
 
 class AppKind:
@@ -46,7 +51,7 @@ class AppKind:
     max_total_bytes = appfiles.MAX_TOTAL_BYTES
     max_file_bytes = appfiles.MAX_FILE_BYTES
     templates = frozenset(TEMPLATE_FILES)
-    file_roots = ("src", "public")  # committed to the project's git repo with model/project.json (F3)
+    file_roots = ("src", "public", "tests")  # committed to the project's git repo with model/project.json (F3); W3 tests/flows
 
     def initial_settings(self, template: str) -> dict[str, Any]:
         if template not in self.templates:

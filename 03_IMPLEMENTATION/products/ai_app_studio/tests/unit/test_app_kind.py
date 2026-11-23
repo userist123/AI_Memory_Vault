@@ -46,7 +46,7 @@ def test_project_has_kind_app_and_blank_template(app_studio: Studio) -> None:
     p = app_studio.create_project(HUMAN, "Blank1", "blank")
     assert p["kind"] == "app"
     files = app_studio.list_files(AGENT, p["id"])
-    assert {f["path"] for f in files} == {"src/App.tsx", "src/main.tsx", "public/icon.svg"}
+    assert {f["path"] for f in files} == {"src/App.tsx", "src/main.tsx", "public/icon.svg", "src/aas-states.ts"}  # W3 kit hook
     assert "createRoot" in app_studio.read_file(AGENT, p["id"], "src/main.tsx")["content"]
 
 

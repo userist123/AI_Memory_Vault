@@ -79,7 +79,7 @@ def test_rest_projects_files_activity(client: TestClient) -> None:
     assert p["kind"] == "app"
     assert [x["id"] for x in client.get("/api/v1/projects", headers=AUTH).json()] == [p["id"]]
     files = client.get(f"/api/v1/projects/{p['id']}/files", headers=AUTH).json()
-    assert {f["path"] for f in files} == {"src/App.tsx", "src/main.tsx", "public/icon.svg"}
+    assert {f["path"] for f in files} == {"src/App.tsx", "src/main.tsx", "public/icon.svg", "src/aas-states.ts"}  # W3 kit hook
     f = client.get(f"/api/v1/projects/{p['id']}/file", params={"path": "src/App.tsx"}, headers=AUTH).json()
     assert "App" in f["content"]
     bad = client.put(f"/api/v1/projects/{p['id']}/file", headers=AUTH,
