@@ -64,7 +64,15 @@ Done
   route PUT /api/v1/settings/external-mcp); backlog L1 (junction-safe walk), L2 (residuals required), L4 (OCR regions test).
   uv run pytest -q: 229 passed; check_vendored OK both modes; gen_vendored --check OK; live backend checked on 127.0.0.1:17875.
   Deviations: hex runs >= 40 chars are redacted at entropy > 3.0 (random hex tops out at 4.0); path prefix must be exactly
-  lowercase src/public; activity_events has no artifact/audit writers yet; create_project tool.call has no project_id.
+  lowercase src/public; activity_events has no artifact/audit writers yet.
+- S2 review fixes done (2026-11-23, local commit): typed sha256/git hash fields exempt from redaction; MCP inputs
+  validated strictly per call (unknown fields rejected, no side effect); leaf-by-leaf sanitise+redact before JSON in
+  activity and audit.redact; failed activity writes logged + `stream.dropped {count}` marker; WS subprotocols `aas.v1`
+  + `aas.token.<t>` (token never echoed, no aas.v1 -> 4400); ExternalMcp.enabled StrictBool; more invisible characters
+  dropped, unterminated OSC ends at newline; vendored AWS_* model/browser env names -> AAS_*; create_project tool.call
+  carries the new project id; DESIGN.md 5.3/5.4 updated (no 4409; residual: blocking send + per-socket DB replay).
+- Parallel slices on their own branches, to merge locally into claude/ai-app-studio: S3 (claude/aas-s3), S4
+  (claude/aas-s4), S5 (claude/aas-s5).
 
 Next (in order)
 5. Probes as failing tests (test-author), then implementation slices by one vault-worker at a time, each

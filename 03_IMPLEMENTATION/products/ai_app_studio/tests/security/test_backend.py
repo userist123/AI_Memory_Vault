@@ -121,7 +121,7 @@ def test_main_binds_loopback_only_and_reads_token_from_stdin(monkeypatch: pytest
 
 # ---------------------------------------------------------------- WebSocket (P6d, P6f)
 def _ws(client: TestClient, qs: str = "", token: str | None = TOKEN, headers: dict[str, str] | None = None):  # type: ignore[no-untyped-def]
-    protos = [f"aas.token.{token}"] if token else []
+    protos = ["aas.v1", f"aas.token.{token}"] if token else ["aas.v1"]
     return client.websocket_connect(f"ws://127.0.0.1:17875/api/v1/events{qs}", subprotocols=protos, headers=headers or {})
 
 
@@ -161,3 +161,24 @@ def test_ws_gap_marker_when_rows_missing(client: TestClient) -> None:
     assert [g.get("seq") for g in got if g.get("type") != "gap"] == [seqs[0], seqs[2], seqs[3]]
     gap = next(g for g in got if g.get("type") == "gap")
     assert gap["after"] == seqs[0] and gap["before"] == seqs[2]
+
+
+def test_ws_fixed_subprotocol_token_never_echoed(client: TestClient) -> None:
+    with _ws(client, "?afterSeq=0") as ws:
+        assert ws.accepted_subprotocol == "aas.v1"
+        assert TOKEN not in repr(ws.extra_headers)
+    url = "ws://127.0.0.1:17875/api/v1/events"
+    with pytest.raises(WebSocketDisconnect) as ei:  # authenticated but without the fixed protocol: refused
+        with client.websocket_connect(url, subprotocols=[f"aas.token.{TOKEN}"]) as ws:
+            ws.receive_json()
+    assert ei.value.code == 4400
+    with client.websocket_connect(url, subprotocols=[f"aas.token.{TOKEN}", "aas.v1"]) as ws:  # order-independent
+        assert ws.accepted_subprotocol == "aas.v1"
+
+
+@pytest.mark.parametrize("value", ["yes", "true", 1, 0, "on", None])
+def test_external_mcp_enabled_is_strict_bool(client: TestClient, value: object) -> None:
+    r = client.put("/api/v1/settings/external-mcp", json={"enabled": value}, headers=AUTH)
+    assert r.status_code == 422, r.text
+    assert client.get("/api/v1/settings/external-mcp", headers=AUTH).json() == {"enabled": False}
+    assert client.put("/api/v1/settings/external-mcp", json={"enabled": True}, headers=AUTH).status_code == 200

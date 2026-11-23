@@ -67,7 +67,7 @@ class ClaudeCodeProvider(Provider):
 
     def __init__(self, exe: str | None = None, model: str | None = None) -> None:
         self.exe = exe or shutil.which("claude")
-        self.model = model or os.environ.get("AWS_CLAUDE_CODE_MODEL") or None
+        self.model = model or os.environ.get("AAS_CLAUDE_CODE_MODEL") or None
 
     def available(self) -> bool:
         return bool(self.exe)
@@ -135,7 +135,7 @@ class AnthropicProvider(Provider):
     supports_images = True
 
     def __init__(self, model: str | None = None, client: Any = None) -> None:
-        self.model = model or os.environ.get("AWS_ANTHROPIC_MODEL") or ANTHROPIC_MODEL
+        self.model = model or os.environ.get("AAS_ANTHROPIC_MODEL") or ANTHROPIC_MODEL
         self._client = client
 
     def available(self) -> bool:
@@ -187,7 +187,7 @@ class OpenAIProvider(Provider):
     supports_images = True
 
     def __init__(self, model: str | None = None, transport: httpx.BaseTransport | None = None) -> None:
-        self.model = model or os.environ.get("AWS_OPENAI_MODEL") or "gpt-5"
+        self.model = model or os.environ.get("AAS_OPENAI_MODEL") or "gpt-5"
         self.transport = transport
 
     def available(self) -> bool:
@@ -220,7 +220,7 @@ class GeminiProvider(Provider):
     supports_images = True
 
     def __init__(self, model: str | None = None, transport: httpx.BaseTransport | None = None) -> None:
-        self.model = model or os.environ.get("AWS_GEMINI_MODEL") or "gemini-2.5-pro"
+        self.model = model or os.environ.get("AAS_GEMINI_MODEL") or "gemini-2.5-pro"
         self.transport = transport
 
     def available(self) -> bool:

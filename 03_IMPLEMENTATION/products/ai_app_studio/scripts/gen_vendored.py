@@ -33,8 +33,9 @@ FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/__init__.py", "core/studio_core/__init__.py", ""),
     ("core/studio_core/policy.py", "core/studio_core/policy.py", ""),
     ("core/studio_core/audit.py", "core/studio_core/audit.py",
-     "AAS value redaction: audit.redact now also runs activity.redact_text over string values (tokens, sk-/ghp_/AKIA "
-     "keys, JWT, PEM, high-entropy runs, the live owner token), so audit rows, tool_executions and approval params "
+     "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then "
+     "activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live "
+     "owner token), so a control character cannot split a secret and audit rows, tool_executions and approval params "
      "never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added; no other change."),
     ("core/studio_core/workspace.py", "core/studio_core/workspace.py", ""),
     ("core/studio_core/services.py", "core/studio_core/services.py",
@@ -47,7 +48,8 @@ FILES: list[tuple[str, str, str]] = [
      "set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry "
      "components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and "
      "project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, "
-     "Studio.operation also records a tool.call activity event (activity.record_operation, never raises), and "
+     "Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create "
+     "passes the id of the project it created), _git_model adds the project kind to the git snapshot, and "
      "get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings."),
     ("core/studio_core/db.py", "core/studio_core/db.py",
      "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
@@ -71,13 +73,16 @@ FILES: list[tuple[str, str, str]] = [
     ("core/studio_core/visual/service.py", "core/studio_core/visual/service.py",
      "desktop capture: the lazy import of computer_use.windows.capture_bitmap moved before the audited operation "
      "and an ImportError raises Unavailable (computer_use is not vendored), so no `ok` audit row is written for a "
-     "capture that cannot run; no other change."),
+     "capture that cannot run; AAS identity: the browsers path comes from AAS_PLAYWRIGHT_BROWSERS_PATH via "
+     "local_browsers_path() (AWS_PLAYWRIGHT_BROWSERS_PATH is ignored); no other change."),
     ("core/studio_core/visual/analyze.py", "core/studio_core/visual/analyze.py", ""),
     ("core/studio_core/visual/compare.py", "core/studio_core/visual/compare.py", ""),
     ("core/studio_core/visual/dom_probe.py", "core/studio_core/visual/dom_probe.py", ""),
     ("core/studio_core/visual/ocr.py", "core/studio_core/visual/ocr.py", ""),
     ("core/studio_core/ai/__init__.py", "core/studio_core/ai/__init__.py", ""),
-    ("core/studio_core/ai/providers.py", "core/studio_core/ai/providers.py", ""),
+    ("core/studio_core/ai/providers.py", "core/studio_core/ai/providers.py",
+     "AAS identity: model overrides read AAS_CLAUDE_CODE_MODEL, AAS_ANTHROPIC_MODEL, AAS_OPENAI_MODEL, "
+     "AAS_GEMINI_MODEL (the AWS_* names are ignored); no other change."),
     ("apps/backend/security.py", "apps/backend/security.py",
      "AAS boundary: X-AAS-Token header and 'aas.token.' WebSocket subprotocol replace the AWS ones (the AWS names "
      "are not accepted), BoundaryMiddleware refuses a token shorter than 32 characters; no other change."),

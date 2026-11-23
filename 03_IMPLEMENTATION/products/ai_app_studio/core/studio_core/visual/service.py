@@ -38,7 +38,12 @@ VIEWPORTS: dict[str, dict[str, int]] = {
     "mobile": {"width": 390, "height": 844},
 }
 
-_local_browsers = Path(os.environ.get("AWS_PLAYWRIGHT_BROWSERS_PATH", REPO_ROOT / ".tools" / "ms-playwright"))
+def local_browsers_path() -> Path:
+    """AAS identity: AAS_PLAYWRIGHT_BROWSERS_PATH (the AWS_* name is ignored)."""
+    return Path(os.environ.get("AAS_PLAYWRIGHT_BROWSERS_PATH", REPO_ROOT / ".tools" / "ms-playwright"))
+
+
+_local_browsers = local_browsers_path()
 if _local_browsers.exists():
     # Process-local override: the app uses the Chromium build pinned with its own Playwright,
     # regardless of a user-wide PLAYWRIGHT_BROWSERS_PATH pointing at other builds.

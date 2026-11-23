@@ -115,6 +115,21 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             assert body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev + 1, "path": "package.json",
                                                               "content": "{}"}))["ok"] is False
             assert body(await s.call_tool("activity_list", {}))["ok"] is True
+            # strict input schemas: unknown fields are rejected with an error and no side effect (P5a/P6b)
+            for name, args in (("code_write_file", {"projectId": pid, "baseRevision": rev + 1, "path": "src/Forged.tsx",
+                                                    "content": "x", "kind": "approval.requested"}),
+                               ("code_write_file", {"projectId": pid, "baseRevision": rev + 1, "path": "src/Forged.tsx",
+                                                    "content": "x", "approved": True}),
+                               ("project_list", {"approved": True}),
+                               ("activity_list", {"kind": "approval.requested"})):
+                r = await s.call_tool(name, args)
+                text = next(c for c in r.content if c.type == "text").text
+                assert r.is_error and "Extra inputs are not permitted" in text, (name, text)
+            assert studio.get_revision(pid) == rev + 1
+            assert "src/Forged.tsx" not in {f["path"] for f in studio.list_files(OWNER, pid)}
+            w2 = body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev + 1,
+                                                            "path": "src/Forged.tsx", "content": "x"}))
+            assert w2["ok"] is True  # positive control: the same call without the unknown field
             for name, args in (("app_build", {"projectId": pid, "target": "web"}),
                                ("preview_capture", {"projectId": pid, "frame": "phone"})):
                 r = await s.call_tool(name, args)

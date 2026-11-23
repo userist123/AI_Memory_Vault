@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .activity import redact_text
+from .activity import redact_text, sanitize_text
 from .db import AuditEvent
 from .ids import iso, new_id, utcnow
 from .policy import Actor
@@ -27,7 +27,9 @@ def redact(value: Any) -> Any:
     if isinstance(value, list):
         return [redact(v) for v in value[:100]]
     if isinstance(value, str):
-        value = redact_text(value[:20000])[0]  # AAS: value redaction (tokens, keys, JWT, PEM, high entropy)
+        # AAS: sanitise (ANSI/C0/C1/bidi/tag/zero-width) first, so a control character cannot split a secret, then
+        # value redaction (tokens, keys, JWT, PEM, high entropy)
+        value = redact_text(sanitize_text(value[:20000]))[0]
         if len(value) > 2000:
             return value[:2000] + "...[truncated]"
     return value

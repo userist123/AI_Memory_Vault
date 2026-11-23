@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
 
 import pytest
 from sqlalchemy import text
@@ -150,3 +152,99 @@ def test_operation_writes_tool_call_event(studio: Studio) -> None:
     studio.write_file(AGENT, p["id"], p["revision"], "notes/a.txt", "x")
     kinds = [(e["kind"], e["payload"].get("tool"), e["payload"].get("status")) for e in activity.list_events(studio)]
     assert ("tool.call", "code.write_file", "ok") in kinds
+
+
+# ---------------------------------------------------------------- S2 review fixes
+SHA = hashlib.sha256(b"artifact").hexdigest()
+GIT = hashlib.sha1(b"commit").hexdigest()  # noqa: S324 - a git object id, not a security hash
+HEX48 = CANARIES["hex48"]
+
+
+def test_sha_fields_are_typed_and_exempt_from_redaction(studio: Studio) -> None:
+    ev = activity.record(studio, "tool.result", artifact_sha256=SHA,
+                         payload={"tool": "t", "sha256": SHA, "commit": GIT, "excerpt": f"free {HEX48}"})
+    assert ev["payload"]["sha256"] == SHA and ev["payload"]["commit"] == GIT and ev["artifactSha256"] == SHA
+    assert HEX48 not in ev["payload"]["excerpt"] and "[REDACTED:hex]" in ev["payload"]["excerpt"]  # free text still redacted
+    bad = activity.record(studio, "tool.result", artifact_sha256="not-a-hash",
+                          payload={"tool": "t", "sha256": SHA.upper(), "commit": SHA, "excerpt": "x"})
+    assert "sha256" not in bad["payload"] and "commit" not in bad["payload"] and bad["artifactSha256"] is None
+    assert bad["dropped"] == 3  # two payload fields + the artifact column
+    secret = activity.record(studio, "tool.result", payload={"sha256": CANARIES["ghp"]})
+    assert "sha256" not in secret["payload"]
+
+
+def test_hash_keys_inside_inputs_are_exempt_other_text_redacted(studio: Studio) -> None:
+    ev = activity.record(studio, "tool.call", payload={"tool": "t", "input": {
+        "fileSha256": SHA, "content_sha256": SHA, "gitCommit": GIT, "sha": GIT, "note": HEX48,
+        "nested": [{"sha256": SHA}], "fakeSha256": HEX48}})
+    inp = ev["payload"]["input"]
+    assert inp.count(SHA) == 3 and inp.count(GIT) == 2
+    assert HEX48 not in inp
+
+
+SPLIT_ANSI = "sk-ant-\u001b[0mapi03" + "A" * 30
+SPLIT_ZW = "ghp_​" + "AB" * 20
+SPLIT_CORES = ("api03" + "A" * 30, "AB" * 20)
+
+
+def test_escape_or_zero_width_split_secret_in_nested_input_is_redacted(studio: Studio) -> None:
+    nested = {"a": [{"note": SPLIT_ANSI}], "b": ["ok-marker", SPLIT_ZW], SPLIT_ZW: 1}
+    ev = activity.record(studio, "tool.call", payload={"tool": "t", "input": nested})
+    activity.record(studio, "plan.proposed", payload={"steps": [SPLIT_ANSI, SPLIT_ZW]})
+    with studio.session() as s:
+        dump = json.dumps([r[0] for r in s.execute(text("SELECT payload FROM activity_events"))])
+    for core in SPLIT_CORES:
+        assert core not in dump
+    for bad in ("\u001b", "\u200b"):  # neither the raw character nor its JSON escape survives
+        assert bad not in dump and json.dumps(bad)[1:-1] not in dump
+    assert "ok-marker" in ev["payload"]["input"]  # positive control
+
+
+def test_audit_redact_sanitises_before_redaction() -> None:
+    from studio_core import audit
+    out = json.dumps(audit.redact({"x": [{"n": SPLIT_ANSI}], "y": SPLIT_ZW, "z": "plain-ok"}))
+    for core in SPLIT_CORES:
+        assert core not in out
+    for bad in ("\u001b", "\u200b"):
+        assert bad not in out and json.dumps(bad)[1:-1] not in out
+    assert "plain-ok" in out
+
+
+def test_record_operation_failure_is_logged_and_marked(studio: Studio, monkeypatch: pytest.MonkeyPatch,
+                                                       caplog: pytest.LogCaptureFixture) -> None:
+    real = activity._build_payload
+    state = {"fail": 2}
+
+    def flaky(kind: str, payload: dict) -> tuple:  # type: ignore[type-arg]
+        if kind == "tool.call" and state["fail"]:
+            state["fail"] -= 1
+            raise RuntimeError("database is locked")
+        return real(kind, payload)
+
+    monkeypatch.setattr(activity, "_build_payload", flaky)
+    with caplog.at_level(logging.WARNING, logger="studio_core.activity"):
+        for _ in range(2):
+            activity.record_operation(studio, tool="t", operation_id="op_1", status="ok", actor="a", project_id=None,
+                                      params={})
+    assert sum("activity" in r.getMessage() for r in caplog.records) == 2
+    assert activity.list_events(studio) == []
+    activity.record(studio, "step.started", payload={"index": 1})
+    activity.record(studio, "step.started", payload={"index": 2})
+    kinds = [(e["kind"], e["payload"].get("count")) for e in activity.list_events(studio)]
+    assert kinds == [("step.started", None), ("stream.dropped", 2), ("step.started", None)]
+
+
+def test_sanitise_drops_more_invisibles() -> None:
+    raw = "a؜b⁠c⁡d⁤e­f︀g️h\U000e0100i\U000e01efj"
+    assert activity.sanitize_text(raw) == "abcdefghij"
+
+
+def test_unterminated_osc_ends_at_newline() -> None:
+    assert activity.sanitize_text("x\x1b]0;title\nkept text") == "x\nkept text"
+    assert activity.sanitize_text("x\x1b]8;;http://e\x07link\x1b]8;;\x07 y") == "xlink y"
+
+
+def test_create_project_tool_call_carries_new_project_id(studio: Studio) -> None:
+    p = studio.create_project(HUMAN, "ActNew")
+    ev = [e for e in activity.list_events(studio) if e["payload"].get("tool") == "project.create"]
+    assert ev and ev[-1]["projectId"] == p["id"]

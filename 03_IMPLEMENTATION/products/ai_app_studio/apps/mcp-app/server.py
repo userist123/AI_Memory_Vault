@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
 
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 from mcp_types import CallToolResult, TextContent, ToolAnnotations  # noqa: E402
-from pydantic import Field  # noqa: E402
+from pydantic import ConfigDict, Field  # noqa: E402
 from studio_core import activity  # noqa: E402
 from studio_core.app_kind import register_app_kind  # noqa: E402
 from studio_core.config import load_settings  # noqa: E402
@@ -157,8 +157,18 @@ def preview_capture(projectId: ProjectId, frame: Literal["phone", "tablet", "des
     raise Unavailable("the preview is not available in this version", tool="preview_capture")
 
 
-for _t in mcp._tool_manager.list_tools():  # every input schema is closed: unknown fields are not part of the contract
-    _t.parameters["additionalProperties"] = False
+def _close_input_schemas() -> None:
+    """Every input schema is closed, in the published schema AND in the validator that runs on each call: an unknown
+    field (e.g. ``kind`` or ``approved``) is a validation error before the tool body runs, so it has no side effect."""
+    for t in mcp._tool_manager.list_tools():
+        t.parameters["additionalProperties"] = False
+        base = t.fn_metadata.arg_model
+        strict = type(base.__name__, (base,), {"__module__": base.__module__,
+                                               "model_config": ConfigDict(**base.model_config, extra="forbid")})
+        t.fn_metadata.arg_model = strict
+
+
+_close_input_schemas()
 
 
 def main() -> None:

@@ -223,9 +223,13 @@ class Studio:
             self.events.publish({"type": "operation", "operationId": op_id, "tool": tool, "status": status,
                                  "projectId": project_id, "actor": actor.label,
                                  "revision": ctx.result_revision if ctx else None})
-            # AAS: server-side activity timeline entry (never raises into the operation)
+            # AAS: server-side activity timeline entry (never raises into the operation); project.create has no
+            # project id up front, so its event carries the id of the project it created
+            act_pid = project_id
+            if act_pid is None and status == "ok" and tool == "project.create" and isinstance(result_payload, dict):
+                act_pid = result_payload.get("id")
             activity.record_operation(self, tool=tool, operation_id=op_id, status=status, actor=actor.label,
-                                      project_id=project_id, params=safe_params)
+                                      project_id=act_pid, params=safe_params)
 
     # ------------------------------------------------------------------ approvals
     def request_approval(self, actor: Actor, operation: str, params: dict[str, Any],

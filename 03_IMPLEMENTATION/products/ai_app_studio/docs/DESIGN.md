@@ -267,20 +267,35 @@ tools: unified diff capped 8 KiB, stats +N/-M); build service -> build.*; device
 | result | subtype, num_turns, total_cost_usd, usage.{input,output}_tokens, duration_ms | rest |
 | any other type/field | — | dropped, counted in stream.dropped |
 ### 5.3 Sanitising and value redaction (`activity.py`; P6a, P6c)
-Order: decode UTF-8 (replace) -> strip ANSI CSI/OSC (incl. OSC 52) -> drop C0 except \n \t, C1, U+E0000-E007F,
-U+202A-202E, U+2066-2069, U+200B-U+200F, U+FEFF -> value redaction -> cap. Value patterns: `sk-ant-[\w-]{20,}`,
+Order: decode UTF-8 (replace) -> strip ANSI CSI/OSC (incl. OSC 52; an unterminated OSC ends at the newline, the
+following text is kept) -> drop C0 except \n \t, C1, U+00AD, U+061C, U+200B-200F, U+2028-2029, U+202A-202E,
+U+2060-2064, U+2066-2069, U+FE00-FE0F, U+FEFF, U+E0000-E007F, U+E0100-E01EF -> value redaction -> cap. Dict/list
+inputs (activity and `audit.redact`) are sanitised and redacted leaf by leaf (keys too) BEFORE JSON encoding, so an
+escape or zero-width character cannot split a secret. Hash fields are typed: `tool.result.sha256`, `*sha256` keys
+and the `artifact_sha256` column accept only `^[0-9a-f]{64}$`, `tool.result.commit` / `sha` / `*commit` keys only
+`^[0-9a-f]{40}$`; a valid digest is stored verbatim (exempt from redaction), anything else is dropped (payload
+field) or redacted as free text (inside an input). Value patterns: `sk-ant-[\w-]{20,}`,
 `sk-[A-Za-z0-9]{20,}`, `gh[pousr]_[A-Za-z0-9]{30,}`, `github_pat_\w{30,}`, `AKIA[0-9A-Z]{16}`, `AIza[\w-]{35}`,
 `xox[abprs]-[\w-]{10,}`, `-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END`, JWT `eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+`,
 `(?i)bearer\s+\S{16,}`, `(?i)(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S+`, the live owner token
 (exact), hex/base64 runs >=40 chars with entropy >4.0 -> `[REDACTED:<kind>]`. The same function is added to
 `audit.redact` (key-name only today, audit.py:18-30) so audit rows and tool_executions get value redaction too.
 ### 5.4 Transport (P6d, P6f)
-WS `/api/v1/activity?afterSeq=N` behind BoundaryMiddleware (AWS:apps/backend/security.py:30-103: exact Host,
-Origin, token via `aas.token.` subprotocol). The socket always reads from the DB in seq order (the in-memory bus
-only wakes it; pattern of main.py:805-812); each frame is `{seq, prev, kind, ts, runId, payload}` where `prev` is
-the seq last sent on this socket; the client reconnects with `afterSeq=lastSeen` when `prev != lastSeen`. A slow
-client is closed with 4409 instead of silently dropping events (main.py:839-843 drops on QueueFull). Video uses
-a separate binary WS `/api/v1/device/video` (same auth), not stored.
+WS `/api/v1/events?afterSeq=N` behind BoundaryMiddleware (AWS:apps/backend/security.py:30-103: exact Host,
+Origin, token). The client offers two subprotocols: the fixed `aas.v1` and `aas.token.<t>` (order-free); the
+middleware checks the token entry, the server selects `aas.v1` only (the token entry is never echoed back in the
+handshake response) and closes with 4400 when `aas.v1` is not offered. The socket always reads from the DB in seq
+order (the in-memory bus only wakes it; a 0.5 s poll picks up rows written by the MCP process); each frame is
+`{seq, prev, kind, ts, runId, projectId, payload}` where `prev` is the seq last sent on this socket, and a
+`{type: "gap", after, before}` frame marks a row missing from the table; the client reconnects with
+`afterSeq=lastSeen` when `prev != lastSeen`. There is no 4409 slow-client close: sends are blocking (a slow client
+only slows its own socket) and each socket replays from the DB itself (residual: one DB query per socket per
+wake/poll, acceptable for the single-owner desktop). Video uses a separate binary WS `/api/v1/device/video` (same
+auth), not stored. A failed activity write is logged (warning) and counted; the next successful write appends a
+`stream.dropped {count}` row, so a loss is visible on the timeline.
+MCP (`apps/mcp-app/server.py`): every tool input schema is strict, both published (`additionalProperties: false`)
+and enforced by the per-call validator (`extra="forbid"`): an unknown field such as `kind` or `approved` is an
+error before the tool body runs, with no side effect.
 ### 5.5 UI (apps/desktop, React, text nodes only, no markdown, no `dangerouslySetInnerHTML`)
 - Plan gate: `plan_submit` creates a plan record; card in the approval region; built-in runner starts the
   execution phase only after `plan.decide`; for every MCP client, `code_write_file/code_delete_file` require an

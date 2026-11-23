@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
 from fastapi import FastAPI, Query, Request, WebSocket  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
-from pydantic import BaseModel, ConfigDict, Field  # noqa: E402
+from pydantic import BaseModel, ConfigDict, Field, StrictBool  # noqa: E402
 from studio_core import __version__, activity  # noqa: E402
 from studio_core.app_kind import BLANK_FILES, register_app_kind  # noqa: E402,F401
 from studio_core.config import Settings, load_settings  # noqa: E402
@@ -35,6 +35,7 @@ HOST = "127.0.0.1"  # fixed: there is no setting, flag or env var that changes t
 API = "/api/v1"
 POLL_SECONDS = 0.5
 REPLAY_BATCH = 200
+WS_SUBPROTOCOL = "aas.v1"  # the only protocol the server ever selects; the token entry is never echoed back
 
 
 class Strict(BaseModel):
@@ -54,7 +55,7 @@ class FileWrite(Strict):
 
 
 class ExternalMcp(Strict):
-    enabled: bool
+    enabled: StrictBool  # JSON true/false only: "yes", 1, "on" are 422
 
 
 def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] = ()) -> FastAPI:
@@ -113,9 +114,13 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     # ---------------------------------------------------------------- WebSocket: replay from the DB, then tail
     @app.websocket(f"{API}/events")
     async def events(ws: WebSocket, afterSeq: int = 0) -> None:  # noqa: N803
-        proto = next((p.strip() for p in ws.headers.get("sec-websocket-protocol", "").split(",")
-                      if p.strip().startswith("aas.token.")), None)
-        await ws.accept(subprotocol=proto)
+        # the boundary middleware already checked the token entry ("aas.token.<t>"); the client must also offer the
+        # fixed protocol, which is the one selected - echoing the token entry would leak it into response headers
+        offered = [p.strip() for p in ws.headers.get("sec-websocket-protocol", "").split(",")]
+        if WS_SUBPROTOCOL not in offered:
+            await ws.close(code=4400)
+            return
+        await ws.accept(subprotocol=WS_SUBPROTOCOL)
         loop = asyncio.get_running_loop()
         wake = asyncio.Event()
         unsub = studio.events.subscribe(lambda _e: loop.call_soon_threadsafe(wake.set))
