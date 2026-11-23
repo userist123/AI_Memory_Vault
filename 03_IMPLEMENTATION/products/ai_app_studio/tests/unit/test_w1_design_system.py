@@ -143,6 +143,19 @@ def test_viewport_fit_cover_is_in_the_kit_index() -> None:
 
 
 # ---------------------------------------------------------------- catalogue
+def test_token_utilities_are_generated_from_the_tokens() -> None:
+    """src/ui/utilities.css = one class per semantic token (W4 inspector allow-list); regenerate with
+    studio_core.app_templates.utilities_css() after changing globals.css."""
+    from studio_core import app_templates as at
+    css = (UI / "utilities.css").read_text(encoding="utf-8").replace("\r\n", "\n")
+    assert css == at.utilities_css()
+    root = _blocks((UI / "globals.css").read_text(encoding="utf-8"))[":root"]
+    assert {k[len("--space-"):] for k in root if k.startswith("--space-")} == set(at.SPACING_STEPS)
+    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", css)
+    assert 'import "./utilities.css"' in (UI / "index.ts").read_text(encoding="utf-8")
+    assert "src/ui/utilities.css" in at.files_for("blank")
+
+
 def test_catalogue_files_exist_and_are_exported() -> None:
     index = (UI / "index.ts").read_text(encoding="utf-8")
     for name in CATALOGUE:

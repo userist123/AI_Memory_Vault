@@ -57,6 +57,40 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
+def _token_names(kind: str) -> tuple[str, ...]:
+    """Names of the ``--<kind>-<name>`` custom properties declared in src/ui/globals.css, in first-seen order."""
+    css = _read(_UI / "globals.css")
+    return tuple(dict.fromkeys(re.findall(rf"--{kind}-([a-z0-9]+(?:-[a-z0-9]+)*)\s*:", css)))
+
+
+# The semantic tokens of the design system: the single source of truth for every consumer (the W4 inspector's
+# class allow-list, the utility classes in src/ui/utilities.css).
+SEMANTIC_COLOR_TOKENS: tuple[str, ...] = _token_names("color")  # bg, surface, fg, muted, primary, ...
+SPACING_STEPS: tuple[str, ...] = _token_names("space")  # 1..8 (4/8 px grid)
+COLOR_UTILITIES = {"text": "color", "bg": "background-color", "border": "border-color"}
+SPACING_UTILITIES = {"p": ("padding",), "px": ("padding-inline",), "py": ("padding-block",),
+                     "pt": ("padding-top",), "pb": ("padding-bottom",), "pl": ("padding-left",),
+                     "pr": ("padding-right",), "m": ("margin",), "mx": ("margin-inline",), "my": ("margin-block",),
+                     "mt": ("margin-top",), "mb": ("margin-bottom",), "gap": ("gap",)}
+
+
+def utility_classes() -> dict[str, list[str]]:
+    """Token utility class names by family ({"color": [text-primary, ...], "spacing": [p-1, ...]})."""
+    return {"color": [f"{p}-{t}" for p in COLOR_UTILITIES for t in SEMANTIC_COLOR_TOKENS],
+            "spacing": [f"{p}-{s}" for p in SPACING_UTILITIES for s in SPACING_STEPS]}
+
+
+def utilities_css() -> str:
+    """Expected content of kit/template/src/ui/utilities.css (generated from the tokens, checked by the tests)."""
+    out = ["/* AI App Studio token utilities (generated from globals.css by studio_core.app_templates.utilities_css;",
+           " * do not edit by hand). One class per semantic token: the click-to-edit inspector swaps these. */"]
+    out += [f".{p}-{t} {{ {prop}: var(--color-{t}); }}" for p, prop in COLOR_UTILITIES.items()
+            for t in SEMANTIC_COLOR_TOKENS]
+    out += [f".{p}-{s} {{ " + " ".join(f"{prop}: var(--space-{s});" for prop in props) + " }"
+            for p, props in SPACING_UTILITIES.items() for s in SPACING_STEPS]
+    return "\n".join(out) + "\n"
+
+
 def preset_ts(preset: str) -> str:
     """src/ui/preset.ts of a project: the per-project preset choice."""
     if preset not in PRESETS:

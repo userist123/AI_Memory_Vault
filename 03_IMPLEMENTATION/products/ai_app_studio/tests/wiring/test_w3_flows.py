@@ -226,6 +226,49 @@ def test_run_reports_pass_fail_with_screenshot_and_records_activity(studio) -> N
     assert shots and shots[0]["payload"]["frame"] == "phone"
 
 
+def test_run_writes_the_w6_flow_results_contract(studio) -> None:  # type: ignore[no-untyped-def]
+    """Integration W3+W6: a run writes <data>/flow_results/<pid>.json = {"results": [{flow, status, at, message}]}
+    (one entry per spec file), merged across runs, and the W6 acceptance checklist reads it."""
+    import json as _json
+
+    from aas_build import baselines
+    pid = new_project(studio)
+    service.build_web(studio, pid, run_build=make_fake(), docker=DOCKER, image=IMAGE)
+    rev = studio.get_revision(pid)
+    rev = studio.write_file(OWNER, pid, rev, "tests/flows/todo.spec.ts", GOOD)["revision"]
+    studio.write_file(OWNER, pid, rev, "tests/flows/Nav.spec.ts", "test('n', async ({ page }) => { await page.reload(); });")
+
+    def run(origin: str, frame: str, tests: list[flows.FlowTest]) -> tuple[list[dict[str, Any]], list[str]]:
+        return [{"status": "passed", "durationMs": 1} if t.title == "n" else
+                {"status": "failed", "durationMs": 2, "step": 0, "error": "boom\x1b[31m <b>x</b>"} for t in tests], []
+    flows.run(studio, OWNER, pid, execute=run)
+    path = Path(studio.settings.data_dir) / "flow_results" / f"{pid}.json"
+    data = _json.loads(path.read_text(encoding="utf-8"))
+    by = {r["flow"]: r for r in data["results"]}
+    assert set(by) == {"nav", "todo"}  # flow id = spec file name, lowercased (baselines.FLOW_ID_RE)
+    for r in data["results"]:
+        assert set(r) == {"flow", "status", "at", "message"} and r["status"] in baselines.FLOW_STATUSES
+        assert baselines.FLOW_ID_RE.match(r["flow"]) and r["at"].endswith("Z") and len(r["message"]) <= 300
+    failed = [r for r in data["results"] if r["status"] == "fail"]
+    assert len(failed) == 1 and "\x1b" not in failed[0]["message"] and failed[0]["flow"] == "todo"
+    assert failed[0]["message"].startswith("0/2 passed: ") and "boom" in failed[0]["message"]
+    assert by["nav"]["status"] == "pass" and by["nav"]["message"] == "1/1 passed"
+    # a run of one file keeps the other file's last result
+    run2, _ = _fake_exec([{"status": "passed", "durationMs": 1}] * 2)
+    flows.run(studio, OWNER, pid, file="todo", execute=run2)
+    by2 = {r["flow"]: r for r in _json.loads(path.read_text(encoding="utf-8"))["results"]}
+    assert set(by2) == set(by) and by2["nav"] == by["nav"]
+    # the W6 reader sees it in the owner's acceptance checklist
+    baselines.set_checklist(studio, OWNER, pid, {"flows": [{"id": "todo", "title": "Todo", "statements": ["adds"]},
+                                                           {"id": "nav", "title": "Nav", "statements": ["moves"]},
+                                                           {"id": "none", "title": "None", "statements": ["x"]}]})
+    cl = {f["id"]: f["result"]["status"] for f in baselines.get_checklist(studio.settings, pid)["flows"]}
+    assert cl == {"todo": by2["todo"]["status"], "nav": by["nav"]["status"], "none": "unknown"}
+    assert by2["todo"]["status"] == "pass" and by2["todo"]["message"] == "2/2 passed"
+    baselines.forget_project(studio.settings, pid)  # project delete drops the results too
+    assert not path.exists()
+
+
 def test_run_filters_one_file_and_bounds_total_tests(studio) -> None:  # type: ignore[no-untyped-def]
     pid = new_project(studio)
     service.build_web(studio, pid, run_build=make_fake(), docker=DOCKER, image=IMAGE)

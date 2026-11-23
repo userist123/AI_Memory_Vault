@@ -14,9 +14,10 @@ const BOX = { display: "flex", flexDirection: "column", gap: 6 } as const;
 
 function family(cls: string, opts: InspectorOptions | null): string[] {
   if (!opts) return [];
-  const prefix = cls.slice(0, cls.lastIndexOf("-"));
+  // utility prefixes (text, bg, p, gap, ...) have no dash; token names may (surface-2, on-primary-soft)
+  const prefix = cls.slice(0, cls.indexOf("-"));
   for (const list of [opts.families.color, opts.families.spacing]) {
-    if (list.includes(cls)) return list.filter((c) => c.slice(0, c.lastIndexOf("-")) === prefix);
+    if (list.includes(cls)) return list.filter((c) => c.slice(0, c.indexOf("-")) === prefix);
   }
   return [];
 }

@@ -31,7 +31,7 @@ import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from
 import { ApprovalRegion } from "./components/ApprovalRegion";
 import { CaptureThumb } from "./components/Captures";
 import { type PreviewState, StateSwitcher, withPreviewState } from "./components/StateSwitcher";
-import { FlowTestsPanel } from "./components/FlowTestsPanel";
+import { QaResultsPanel } from "./components/QaResultsPanel";
 import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
@@ -60,7 +60,7 @@ import { DEFAULT_PREVIEW_THEME, ThemedPreview, ThemeSwitcher, type PreviewTheme 
 import type { PresetId } from "./components/PresetPicker";
 import { QaBadge } from "./components/QaBadge";
 import { AutoPolishButton } from "./components/AutoPolishButton";
-import { fetchQa, polishStatus, runQa, startPolish } from "./lib/qaApi";
+import { fetchQa, polishStatus, runQa, startPolish, type QaResult } from "./lib/qaApi";
 
 const FOLLOW_PAUSE_MS = 10_000;
 const PROJECT_ID_RE = /^prj_[0-9a-f]{16}$/;
@@ -130,6 +130,7 @@ export function App() {
   // W4 click-to-edit inspector: one toggle for the frames, the current selection, the element attached to the chat
   const [inspectOn, setInspectOn] = useState(false);
   const [inspected, setInspected] = useState<InspectorSelection | null>(null);
+  const [qaGates, setQaGates] = useState<QaResult | null>(null); // W2 gates, shown with the W3 flows (QaResultsPanel)
   const [chatAttachment, setChatAttachment] = useState<ChatAttachment | null>(null);
   const [frameEl, setFrameEl] = useState<HTMLIFrameElement | null>(null);
   const buildRef = useRef<HTMLDivElement>(null);
@@ -570,7 +571,7 @@ export function App() {
           <StateSwitcher value={previewState} onChange={setPreviewState} />
           <span className="spacer" />
           <ThemeSwitcher value={previewTheme} onChange={setPreviewTheme} />
-          {!demo && session ? <QaBadge projectId={selectedProject} nonce={state.previewNonce} api={{ load: (p) => fetchQa(session, p), run: (p, a) => runQa(session, p, a) }} /> : null}
+          {!demo && session ? <QaBadge projectId={selectedProject} nonce={state.previewNonce} onResult={setQaGates} api={{ load: (p) => fetchQa(session, p), run: (p, a) => runQa(session, p, a) }} /> : null}
           {!demo && session ? <AutoPolishButton projectId={selectedProject} disabled={state.runStatus === "running" || runBusy} api={{ start: (p) => startPolish(session, p), status: (p) => polishStatus(session, p) }} /> : null}
           <span className="tag" data-testid="revision">
             rev {state.revision}
@@ -609,7 +610,7 @@ export function App() {
             </aside>
           ) : null;
         })}
-        <FlowTestsPanel qa={state.qa} captures={state.captures} load={captureLoader?.load ?? null} />
+        <QaResultsPanel gates={!demo && session ? qaGates : null} qa={state.qa} captures={state.captures} load={captureLoader?.load ?? null} />
         <div className={rightTab === "mirror" ? "mirror-wrap" : "mirror-wrap hidden"}>
           <EmulatorMirror
             stream={mirrorLive ? null : mirrorStream}

@@ -247,7 +247,7 @@ def baseline_file(settings: Any, project_id: str, sha256: str) -> Path | None:
 
 
 def forget_project(settings: Any, project_id: str) -> None:
-    """Project delete: drop the project's baselines, checklist and diffs."""
+    """Project delete: drop the project's baselines, checklist, diffs and flow results."""
     try:
         d = project_dir(settings, project_id)
     except ValidationFailed:
@@ -255,6 +255,12 @@ def forget_project(settings: Any, project_id: str) -> None:
     with _LOCK:
         if d.is_dir() and not d.is_symlink():
             shutil.rmtree(d, ignore_errors=True)
+        try:  # the W3 flow results of the project (checklist pass/fail)
+            r = capture._contained(Path(settings.data_dir) / "flow_results", f"{_check_pid(project_id)}.json")  # noqa: SLF001
+            if r.is_file() or r.is_symlink():
+                r.unlink()
+        except (OSError, ValidationFailed):
+            pass
 
 
 # ---------------------------------------------------------------- capture (Playwright, masks measured in the page)

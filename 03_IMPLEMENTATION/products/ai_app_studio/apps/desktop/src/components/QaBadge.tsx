@@ -14,6 +14,8 @@ export function QaBadge(props: {
   projectId: string;
   nonce: number;
   api: { load: (pid: string) => Promise<QaState>; run: (pid: string, auto: boolean) => Promise<QaResult | null> };
+  /** the latest gate result (null on project switch), for the QA results panel under the preview */
+  onResult?: (r: QaResult | null) => void;
 }) {
   const { projectId, nonce } = props;
   const apiRef = useRef(props.api);
@@ -23,6 +25,11 @@ export function QaBadge(props: {
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState("");
   const seq = useRef(0);
+  const onResultRef = useRef(props.onResult);
+  onResultRef.current = props.onResult;
+  useEffect(() => {
+    onResultRef.current?.(result);
+  }, [result]);
   const inflight = useRef(false);
   const again = useRef(false); // an automatic request arrived while a run was in flight (its own captures bump nonce)
 

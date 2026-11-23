@@ -21,13 +21,16 @@ event (suite ``flows``) for the owner's UI.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import hashlib
+import json
 import os
 import re
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from studio_core import activity
@@ -53,6 +56,12 @@ KILL_JOIN_S = 15.0
 MAX_ERROR_CHARS = 600
 MAX_CONSOLE_RAW = 200
 DEFAULT_FRAME = "phone"
+# W6 contract: <data>/flow_results/<project>.json = {"results": [{flow, status, at, message}]} (read by
+# aas_build.baselines for the owner's acceptance checklist). One entry per spec file: flow = the file name.
+RESULTS_DIR = "flow_results"
+MAX_RESULTS = 200
+MAX_RESULT_MESSAGE = 300
+_FLOW_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,39}$")  # = baselines.FLOW_ID_RE
 _RUN_LOCK = threading.Lock()
 _STATE = threading.Lock()
 _ACTIVE: dict[str, Any] = {}
@@ -796,6 +805,59 @@ def _summary(revision: int, passed: int, total: int, tests: list[dict[str, Any]]
     return out if len(out) <= 480 else out[:477] + "..."
 
 
+def results_path(settings: Any, project_id: str) -> Path:
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
+        raise ValidationFailed("invalid project id")
+    return capture._contained(Path(settings.data_dir) / RESULTS_DIR, f"{project_id}.json")  # noqa: SLF001
+
+
+def _file_results(tests: list[dict[str, Any]], errors: dict[int, str], at: str) -> list[dict[str, Any]]:
+    """One {flow, status, at, message} per spec file of this run: fail if any test failed or did not parse, pass if
+    every test passed, otherwise skip. The message is a short, cleaned summary (page text is untrusted data)."""
+    by_file: dict[str, list[int]] = {}
+    for i, t in enumerate(tests):
+        by_file.setdefault(str(t.get("file", "")), []).append(i)
+    out: list[dict[str, Any]] = []
+    for path, idx in by_file.items():
+        m = FLOW_PATH.fullmatch(path)
+        flow = m.group(1).lower() if m else ""
+        if not _FLOW_ID.fullmatch(flow):
+            continue
+        st = [tests[i]["status"] for i in idx]
+        passed = st.count("passed")
+        status = "fail" if any(x in ("failed", "invalid") for x in st) else "pass" if passed == len(st) else "skip"
+        msg = f"{passed}/{len(st)} passed"
+        first = next((errors[i] for i in idx if i in errors), None)
+        if first:
+            msg += ": " + (sight.console_lines([first]) or [""])[0]
+        out.append({"flow": flow, "status": status, "at": at, "message": msg[:MAX_RESULT_MESSAGE]})
+    return out
+
+
+def write_results(settings: Any, project_id: str, tests: list[dict[str, Any]], errors: dict[int, str]) -> None:
+    """Merge this run's per-file results into the W6 contract file (atomic replace; other files keep their last
+    result, so running one spec does not forget the others)."""
+    path = results_path(settings, project_id)
+    at = _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    new = _file_results(tests, errors, at)
+    if not new:
+        return
+    old: list[Any] = []
+    try:
+        if not path.is_symlink() and path.is_file():
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            old = raw.get("results") if isinstance(raw, dict) and isinstance(raw.get("results"), list) else []
+    except (OSError, ValueError):
+        old = []
+    fresh = {r["flow"] for r in new}
+    kept = [r for r in old if isinstance(r, dict) and isinstance(r.get("flow"), str) and r["flow"] not in fresh]
+    data = {"results": (kept + new)[-MAX_RESULTS:]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.parent / f".{path.name}.{os.getpid()}.{threading.get_ident()}.partial"
+    tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def run(studio: Any, actor: Any, project_id: str, *, file: str | None = None, frame: str = DEFAULT_FRAME,
         run_id: str | None = None, url: str | None = None,
         execute: Callable[[str, str, list[FlowTest]], tuple[list[dict[str, Any]], list[str]]] = _execute,
@@ -890,6 +952,10 @@ def run(studio: Any, actor: Any, project_id: str, *, file: str | None = None, fr
     total = len(tests)
     err_lines = sight.console_lines([f"{tests[i]['file'].rsplit('/', 1)[-1]} › {tests[i]['title']}: {msg}"
                                      for i, msg in sorted(errors.items())])
+    try:
+        write_results(studio.settings, project_id, tests, errors)  # W6 acceptance checklist reads this
+    except (OSError, ValidationFailed):
+        pass  # the run result is still returned; the checklist shows the previous status
     try:
         activity.record(studio, "qa.result", project_id=project_id, run_id=run_id, source="build",
                         payload={"suite": "flows", "passed": passed, "failed": total - passed,

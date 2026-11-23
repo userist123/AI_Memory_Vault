@@ -1,5 +1,6 @@
 // AI App Studio component catalogue (kit/DESIGN.md). Build screens from these; style with the tokens in globals.css.
 import "./ui.css";
+import "./utilities.css"; // token utility classes (text-*, bg-*, border-*, p-*, m-*, gap-*), after ui.css
 
 export { Button, type ButtonProps, type ButtonVariant } from "./Button";
 export { Input, type InputProps } from "./Input";

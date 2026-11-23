@@ -24,6 +24,10 @@ both copies identical). They are style rules only: they never change what the ag
   `--color-danger` / `--color-on-danger`, `--color-success`, `--color-focus`, `--color-scrim`.
 - Dark mode is tonal: the canvas is a dark tinted grey (never #000), elevated surfaces get lighter, text is
   off-white. Every text/background pair of every preset is contrast-checked by `tests/unit/test_w1_design_system.py`.
+- Token utilities (`src/ui/utilities.css`, generated from the tokens above): `text-<colour>`, `bg-<colour>`,
+  `border-<colour>` for each colour token (e.g. `bg-surface-2`, `text-on-primary`) and
+  `p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|gap-<1..8>` for the spacing scale. Prefer them in `className` for colour and
+  spacing: the studio's click-to-edit inspector can swap exactly these classes.
 
 ## Style presets
 

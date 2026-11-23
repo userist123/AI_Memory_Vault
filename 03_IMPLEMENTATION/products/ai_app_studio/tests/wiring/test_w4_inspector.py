@@ -132,11 +132,37 @@ def test_class_swap_within_the_same_family() -> None:
     path, out = ir.plan_class_swap(files(), d, "p-2", "p-4")
     assert path == "src/App.tsx" and 'className="btn bg-primary p-4"' in out
     assert 'className="lead p-2 text-muted"' in out  # the other element keeps its class
-    _, out = ir.plan_class_swap(files(), d, "bg-primary", "bg-accent")
-    assert 'className="btn bg-accent p-2"' in out
+    _, out = ir.plan_class_swap(files(), d, "bg-primary", "bg-danger")
+    assert 'className="btn bg-danger p-2"' in out
 
 
-@pytest.mark.parametrize(("old", "new"), [("p-2", "bg-accent"), ("p-2", "p-99"), ("p-2", "p-2"), ("btn", "p-4"),
+def test_allow_list_is_the_w1_design_system() -> None:
+    """Integration W1+W4: the swappable classes are exactly one utility per W1 semantic token (single source)."""
+    from studio_core import app_templates as at
+    assert ir.FAMILIES == at.utility_classes()
+    assert ir.FAMILIES["color"] == [f"{p}-{t}" for p in ("text", "bg", "border") for t in at.SEMANTIC_COLOR_TOKENS]
+    assert ir.FAMILIES["spacing"] == [f"{p}-{s}" for p in ir.SPACING_PREFIXES for s in at.SPACING_STEPS]
+    assert {"primary", "surface-2", "on-primary-soft", "danger"} <= set(at.SEMANTIC_COLOR_TOKENS)
+    assert "bg-accent" not in ir.FAMILIES["color"] and "p-12" not in ir.FAMILIES["spacing"]  # not W1 tokens
+    # every allowed class really exists in the kit CSS shipped to the project
+    css = (Path(at.KIT_TEMPLATE) / "src" / "ui" / "utilities.css").read_text(encoding="utf-8")
+    for c in ir.FAMILIES["color"] + ir.FAMILIES["spacing"]:
+        assert f".{c} {{" in css, c
+
+
+def test_class_swap_with_a_dashed_token_keeps_the_prefix_family() -> None:
+    d = ir.Descriptor.model_validate(desc(tag="div", text="", classes=["bg-surface"]))
+    f = {"src/A.tsx": 'export const A = () => <div className="bg-surface">a</div>;\n'}
+    _, out = ir.plan_class_swap(f, d, "bg-surface", "bg-surface-2")
+    assert 'className="bg-surface-2"' in out
+    _, out = ir.plan_class_swap(f, d, "bg-surface", "bg-on-primary-soft")
+    assert 'className="bg-on-primary-soft"' in out
+    for bad in ("text-surface-2", "border-on-primary-soft", "p-2"):
+        with pytest.raises(ValidationFailed):
+            ir.plan_class_swap(f, d, "bg-surface", bad)
+
+
+@pytest.mark.parametrize(("old", "new"), [("p-2", "bg-danger"), ("p-2", "bg-accent"), ("p-2", "p-99"), ("p-2", "p-2"), ("btn", "p-4"),
                                           ("p-4", "p-6"), ("p-2", "p-4 evil"), ("bg-primary", "px-2")])
 def test_class_swap_outside_the_allowed_list_is_refused(old: str, new: str) -> None:
     d = ir.Descriptor.model_validate(desc(tag="button", text="Add habit", classes=["btn", "bg-primary", "p-2"]))

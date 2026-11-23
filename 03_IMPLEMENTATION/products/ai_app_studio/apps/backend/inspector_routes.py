@@ -27,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, m
 
 from aas_build import capture
 from aas_runner.claude import RunInProgress
+from studio_core import app_templates
 from studio_core.errors import ConflictError, NotFound, StudioError, Unavailable, ValidationFailed
 from studio_core.policy import Actor
 
@@ -43,15 +44,15 @@ SOURCE_EXT = (".tsx", ".jsx", ".ts", ".js")
 _BAD_CHARS = re.compile(r"[\x00-\x1f\x7f\u2028\u2029\u202a-\u202e\u2066-\u2069]")
 _CLASS = re.compile(r"^[A-Za-z0-9_:/.\[\]%#-]{1,64}$")
 
-COLOR_TOKENS = ("primary", "secondary", "accent", "muted", "surface", "danger", "success", "warning")
-SPACING_SCALE = ("0", "1", "2", "3", "4", "5", "6", "8", "10", "12")
-COLOR_PREFIXES = ("text", "bg", "border")
-SPACING_PREFIXES = ("p", "px", "py", "pt", "pb", "pl", "pr", "m", "mx", "my", "mt", "mb", "gap")
-FAMILIES: dict[str, list[str]] = {
-    "color": [f"{p}-{t}" for p in COLOR_PREFIXES for t in COLOR_TOKENS],
-    "spacing": [f"{p}-{s}" for p in SPACING_PREFIXES for s in SPACING_SCALE],
-}
-_FAMILY_OF: dict[str, str] = {c: c.rsplit("-", 1)[0] for fam in FAMILIES.values() for c in fam}  # class -> prefix
+# The allow-list is the W1 design system: one utility class per semantic token (studio_core.app_templates, parsed
+# from kit/template/src/ui/globals.css; the classes live in src/ui/utilities.css). Never a second copy here.
+COLOR_TOKENS = app_templates.SEMANTIC_COLOR_TOKENS
+SPACING_SCALE = app_templates.SPACING_STEPS
+COLOR_PREFIXES = tuple(app_templates.COLOR_UTILITIES)
+SPACING_PREFIXES = tuple(app_templates.SPACING_UTILITIES)
+FAMILIES: dict[str, list[str]] = app_templates.utility_classes()
+# class -> utility prefix (prefixes have no dash; token names may: surface-2, on-primary-soft)
+_FAMILY_OF: dict[str, str] = {c: c.split("-", 1)[0] for fam in FAMILIES.values() for c in fam}
 
 
 class AmbiguousEdit(ConflictError):

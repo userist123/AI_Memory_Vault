@@ -181,7 +181,7 @@ describe("InspectorPanel", () => {
       fireEvent.click(getByTestId("inspector-attach"));
     });
     expect(capture).toHaveBeenCalledWith(SEL);
-    const a = onAttach.mock.calls[0][0];
+    const a = onAttach.mock.calls[0]![0];
     expect(a.projectId).toBe(PID);
     expect(a.captureSha).toBe("a".repeat(64));
     expect(a.context).toContain('text: "Habits"');
