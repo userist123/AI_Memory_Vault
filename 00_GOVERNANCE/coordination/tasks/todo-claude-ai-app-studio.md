@@ -112,3 +112,10 @@ Update 2026-11-23 (S9b done + S9a review fixes, local commits only on claude/ai-
   pytest 652+1 passed / 22 skipped; local gate 150/22; vitest 127; Playwright 15; cargo 5. Details: ai_app_studio/docs/slices/S9b.md.
 - Must-do: rebuild aas-web-build (tsc) + aas-android-build (Gradle 8.14.8) at C: >= 10 GB; installed-mode e2e.
 - NEXT = S9c Windows desktop wrapper (Tauri) for generated apps, then B1 real run + B2 WebView2 probe + final gate round 2.
+
+Update 2026-11-23 (S9c done + S9b review fixes, local commits only on claude/ai-app-studio):
+- S9c: app_build/app_export target desktop (studio Tauri wrapper, host cargo offline/locked on vendored crates, unsigned
+  exe, export approval bound to sha256). Real build 220 s / 58 s, exe 3.0 MiB. Details: ai_app_studio/docs/slices/S9c.md.
+- S9b review fixes M1 (cross-process build lock), L1-L5 (export hard link + link chain, runtime bundle hashes/sha
+  verify, CI gitleaks tests + hash-pinned lint tools, untrusted marker escaping).
+- NEXT = image rebuilds when C: >= 10 GB, B1 real run, B2 WebView2 probe, final gate round 2.

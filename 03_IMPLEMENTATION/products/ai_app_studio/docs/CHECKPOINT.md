@@ -205,3 +205,21 @@ Update 2026-11-23 (S9b done + S9a review fixes, local commits on claude/ai-app-s
   check; installed-mode e2e (install, first launch, capture); CI workflow never ran on GitHub.
 - Next = S9c Windows desktop wrapper (Tauri) for generated apps, then B1 real run + B2 WebView2 probe + final gate round 2
   (fable-consultant -> Codex/Gemini -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S9c done + S9b review fixes, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S9c.md
+- S9c: generated app as a Windows desktop exe. Studio-owned Tauri 2 wrapper images/desktop-wrapper (tauri =2.12.7,
+  committed Cargo.lock, no app commands/plugins, studio-written tauri.conf.json: dev.aiappstudio.p<id16>, kit CSP,
+  capabilities []), agent supplies only the validated web dist; host `cargo build --release --offline --locked` against
+  the vendored crates (`AAS_DESKTOP_ROOT` or <data>/desktop: vendor/ target/ cargo-home/ tmp/; one-time `cargo vendor`),
+  minimal env + dead proxy, 1800 s timeout, exe read after exit; app_build/app_export target desktop (plan gate, approval
+  bound to sha256, scan of exe + embedded dist), UI "Export desktop (exe)". Real build: 220 s first / 58 s next, exe 3.0 MiB.
+- S9b review fixes: M1 cross-process build lock (OS file lock, delete 409 from any process), L1 hard link refused in the
+  export reader, L2 export link chain before mkdir, L3 runtime bundle (git ls-files, --require-hashes, whole-stage reparse
+  check, runtime.version = sha256 verified by lib.rs via certutil), L4 CI (tests gitleaks config, actionlint binary sha256,
+  zizmor --require-hashes, YAML fix), L5 untrusted markers escaped + console only in the wrapper.
+- Verified: uv run pytest -q 681 passed / 23 skipped + 1 failure (lib.rs certutil spawn matched the B3 stderr guard) fixed and its file rerun (16 passed); desktop tsc clean, vitest 128; cargo test --lib 6; check_vendored both modes + gen_vendored
+  --check OK; actionlint 0, zizmor 0; gitleaks tests config clean + positive control.
+- Not done: launch button for the built exe (owner only), NSIS for generated apps, live build_runtime.ps1 re-run (C: 6.9 GB).
+- NEXT = image rebuilds when C: >= 10 GB (aas-web-build tsc, aas-android-build Gradle 8.14.8), B1 one budget-capped real
+  agent run, B2 real-WebView2 iframe probe, final gate round 2 (fable-consultant -> Codex/Gemini -> security-lockdown ->
+  push + PR #413).
