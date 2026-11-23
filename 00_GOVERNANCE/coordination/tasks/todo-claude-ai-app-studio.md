@@ -62,3 +62,9 @@ Update 2026-11-23 ~05:30 (S7 done, local commits only):
   content hash bound to the approval). pytest 513 passed / 20 skipped; vitest 92; Playwright 13. Demo: docs/slices/S7-demo.png.
 - Open: capture thumbnails in the UI, emulator mirror stream, Nested-Virt modal, CI digest of the android image, paid run.
 - NEXT = final gate (fable-consultant, then Codex/Gemini via agent-bridge, fix and repeat, security-lockdown, push + PR #413).
+
+Update 2026-11-23 (S7 review findings M1-M3, L1-L4 fixed, local commits only on claude/ai-app-studio):
+- M1 install sha256 vs build.finished + private copy; M2 committed strict Gradle verification metadata (residual TOFU of the
+  initial generation); M3 capture quota/disk gate; L1 licence note (hash unverified offline); L2 purge after exclusive bind;
+  L3 capture kill+join; L4 keystore pending-marker commit. Details: ai_app_studio/docs/slices/S7.md.
+- NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).

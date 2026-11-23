@@ -140,3 +140,9 @@ Update 2026-11-23 ~05:30 (S7 done, local commits on claude/ai-app-studio, nothin
 - Open: capture thumbnails in the UI; emulator mirror pane black; Nested-Virt modal; CI build of the android image with a
   pinned digest; real paid agent run.
 - Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S7 review fixes M1-M3, L1-L4, local commits only, nothing pushed) - see docs/slices/S7.md "S7 review fixes"
+- Install verifies the APK sha256 against build.finished and installs a private copy; android Gradle verification metadata
+  committed + strict (residual: initial generation TOFU); capture quota/disk gate/kill+join; licence note (hash unverified
+  offline); grant purge after exclusive port bind; keystore+record pending-marker commit.
+- Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> security-lockdown -> push + PR #413).

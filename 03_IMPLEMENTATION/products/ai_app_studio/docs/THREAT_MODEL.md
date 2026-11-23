@@ -130,3 +130,17 @@ Slice prerequisites (must exist before the named slice, not before first commit)
 - N7 (device-stream slice): stdout always drained, bounded queue that drops video first, h264 decoded in a worker;
   probe: video client stalled 10 s, tap replies < 1 s; [+] unbounded queue stalls.
 - N8 accepted residual: -gpu host and shared X11/Wayland only matter after a VM escape (already <owner-user>/root).
+
+## S7 review (2026-11-23)
+- M1 (tampered APK between build and install): install checks the sha256 of the bytes against the recorded
+  `build.finished` and installs a private copy of those bytes. Probe: replace the APK after the build -> refused [+] the
+  untouched APK installs.
+- M2 (trust on first use of Gradle artifacts at every image build): the verification metadata is committed and strict;
+  a missing or different artifact fails the image build. **Residual:** initial generation was trust-on-first-use on
+  2026-11-23. Probe: artifact entry removed -> "Dependency verification failed" [+] full file passes.
+- M3 (capture disk exhaustion): per-project 200 files / 200 MB, PNG <= 8 MiB, refused below 5 GiB free.
+- L1 (licence): acceptance of the Android SDK licence is made on the owner's behalf (owner decision 2026-11-23); the
+  recorded hash is unverified offline.
+- L2 (a second backend start wiping the live backend's grants): purge only after an exclusive bind, never live runs.
+- L3 (hung browser keeps running while a new capture starts): kill + join before the lock is released.
+- L4 (keystore without record dead end): pending-marker commit with recovery.

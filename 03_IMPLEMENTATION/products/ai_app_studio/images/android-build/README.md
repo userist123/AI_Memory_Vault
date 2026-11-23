@@ -38,3 +38,10 @@ exactly one signer equal to the mounted studio key and prints `AAS-SIGNER-SHA256
 Output: only `/out/app-debug.apk` (host reader: one regular file, no link, nlink 1, ZIP magic, <= 100 MB).
 
 Measured 2026-11-23: offline build of the blank kit app ~30 s, APK ~4.1 MB.
+
+## Licence and dependency pinning (S7 review)
+- Installing the studio accepts the Android SDK licence on the owner's behalf (owner decision recorded 2026-11-23). The
+  Dockerfile writes the acceptance hash into `licenses/android-sdk-license`; that hash could not be verified offline
+  (the licence text is only in Google's repository2-3.xml) and is recorded as unverified.
+- `template/gradle/verification-metadata.xml` is committed and the build runs `--dependency-verification strict`;
+  to change dependencies regenerate it with `gradle --write-verification-metadata sha256`, review the diff, commit.
