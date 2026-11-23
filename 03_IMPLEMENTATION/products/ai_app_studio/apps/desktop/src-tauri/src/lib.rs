@@ -3,7 +3,7 @@
 //! Responsibilities (and nothing else):
 //!  0. API port 17875 (AAS_API_PORT overrides for dev/test; the CSP in tauri.conf.json allows 17875 only),
 //!  1. generate a 256-bit owner token from the OS CSPRNG at startup,
-//!  2. spawn `python -I apps/backend/main.py --token-stdin` (loopback) and hand it the token on stdin
+//!  2. spawn the backend (`python -I` + runpy launcher of `apps/backend/__main__.py`, `--token-stdin`, loopback) and hand it the token on stdin
 //!     (first line) - never on a command line, in the environment, in a file or in a log,
 //!  3. expose exactly one command, `get_session` -> `{ apiBase, token }`, to the `main` window only
 //!     (capability `default`; preview frames are remote `*.localhost:17880` origins and get no IPC),

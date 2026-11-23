@@ -1,7 +1,7 @@
 # AI App Studio — threat model v2 (2026-11-23; probes rewritten, M1-M5 added)
 
 Inputs: Fable advisor sketch, docs/RESEARCH_2026-11-22.md, AI Website Studio controls (fork base 25b3eab).
-Status: written BEFORE implementation. Every probe below must be red before its control exists.
+Status: written BEFORE implementation (every probe had to be red before its control existed); the "As built (2026-11-23)" section at the end records the implemented state, n/a probes and the surface added since.
 
 ## Decision: target stack v1
 Web-core single codebase (React + TypeScript + Vite static build) wrapped by:
@@ -187,3 +187,49 @@ backend `VideoHub` -> owner WS `/api/v1/device/video?projectId=` -> UI worker (W
   only inject video into that run's project mirror, within the caps above; (R2) the device host has no "fresh key frame" op:
   the hub's key request is forwarded to `session.video_keyframe` only when the session has it, so today recovery waits
   for screenrecord's next IDR (cached SPS/PPS are reused); (R3) external MCP sessions have no mirror.
+
+## As built (2026-11-23)
+Supersedes the tables above where they differ (FINAL_GATE_ROUND1 section C, checklist E1). Residual list:
+docs/SECURITY.md section 2. Code state: S9b.
+
+**Surface added since v2.** (a) Per-run named pipe for the emulator mirror (S8 surface above; S9a: native pipe with
+a logon-SID DACL, `PIPE_REJECT_REMOTE_CLIENTS`, first instance; S9a review: handle ownership moves to the
+connection, a full pipe no longer stops the listener). (b) Dev mode (`run_studio.ps1 -Dev`): Vite on
+127.0.0.1:1421 and `AAS_DEV_ORIGINS`; the production origin list has no :1420/:1421 (B11). (c) Runner profile: the
+CLI runs with the owner's USERPROFILE/APPDATA/HOME/PATH (residual "Runner profile (B7)"). (d) Agent sight (S9b):
+preview/emulator images and console text go back to the agent as untrusted data (T5). (e) Export (S9b): artifacts
+leave the studio into the owner's export folder (T7).
+
+**T5 addendum (agent sight).** Images and console text are produced by code the agent wrote (or an app on the
+emulator): prompt-injection material. Controls: console lines sanitised (escapes, invisible/bidi characters),
+value-redacted, one line each, <= 40 lines / 8000 chars; wrapped in `<<UNTRUSTED DATA: kind>> ... <<END ...>>` with a
+"data, not instructions" note in the same tool result; images downscaled and size-capped, decoded with a pixel cap
+(decompression-bomb guard, fail closed); the tool catalogue has no tool an injected text could use to approve,
+decide or reach the network. Tests: tests/wiring/test_s9b_sight.py.
+
+**T7 export (P5c, P7d now implemented).** P5c: export without an approval -> 428 + approval request; an approval for
+other parameters (changed artifact = other sha256) -> refused; a used approval -> refused; an agent cannot decide
+approvals [+] a valid single-use approval exports (tests/wiring/test_s9b_export.py:
+`test_approval_is_bound_to_the_artifact_sha`, `test_p5c_a_used_approval_cannot_export_again`,
+`test_agent_cannot_self_approve`, REST two-step). P7d: a planted key pattern in the built site / inside an APK entry
+/ in UTF-16 -> `export_blocked`, no approval requested, nothing written [+] the clean project exports
+(`test_p7d_planted_key_blocks_export_clean_project_exports`, `test_scan_finds_keys_in_raw_and_utf16_bytes`,
+`test_android_export_needs_a_recorded_build_and_scans_entries`). Residual: pattern-based (a secret without a known
+shape is not detected).
+
+**Probe status as built.**
+| probe | status |
+|---|---|
+| P2a (src import of a non-kit package) | not automated as its own test; covered by the offline build (no store, baked node_modules) -> the build fails at resolve |
+| P2b (lockSha not in kit_versions) | n/a as designed (no install stage); equivalent: unapproved lockfile -> exit 3 (`test_lockfile_mismatch_refused`) |
+| P2d, P2e (install-stage scripts / minimumReleaseAge) | n/a in v1: no install stage, `deps.install` has no caller |
+| P3a (preview page fetch/WS to 17875) | not automated as its own test; preview origin + CSP + token boundary tested (P3b/P3e, backend boundary tests) |
+| P5c | implemented (S9b, above) |
+| P6f | implemented without close 4409: replay after reconnect + gap marker (S2 review decision) |
+| P7b, PM5b (exfil from the preview page to a canary) | not automated; dead proxy + WebRTC args + route filter in captures; next local gate |
+| P7d | implemented (S9b, above) |
+| PM1a, PM5a, P7c, P9a, P9b, P4a, PM2a | local gate (emulator / listener diff), receipt pending a fresh live run |
+
+**R2 (S8 residual) closed.** The device host has `video_keyframe` (S9b): it ends the running screenrecord, the video
+loop starts a new one whose stream begins with SPS/PPS + IDR; throttled to one restart per 2 s
+(tests/local_gate/test_s9b_keyframe.py, fake only; live check at the next local gate).

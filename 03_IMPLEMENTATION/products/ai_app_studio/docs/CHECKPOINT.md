@@ -21,7 +21,7 @@ Done
 
 - docs/DESIGN.md (368 lines) + THREAT_MODEL.md v2 (probes with positive controls, M1-M5, R-EXT residual;
   v1 backup .THREAT_MODEL.v1.bak.md). Vendored core from 25b3eab with VENDORED.json hashes; data root
-  %LOCALAPPDATA%\AIAppStudio; ports 17875 API / 17880 preview; MCP `ai-app-studio` 30 tools; emulator probes run
+  %LOCALAPPDATA%\AIAppStudio; ports 17875 API / 17880 preview; MCP `ai-app-studio` 30 tools (design; as built 15, DESIGN.md "As built"); emulator probes run
   in a local gate (no KVM on GitHub CI). Open: --setting-sources "" support (P5e), Nested-Virt modal key,
   WSLg window from inside netns, unshare -p --kill-child (PM3d), Capacitor 8.5.2 compileSdk.
   Owner decision pending (recorded, not blocking): add <owner-user> to group kvm to drop `sudo -n runuser`.
@@ -186,3 +186,22 @@ Update 2026-11-23 (S9a hardening from final gate round 1, local commits on claud
 - Open: android image rebuild (C: >= 10 GB); guest IPv6 + WSLg window eye check at the next live gate; runtime bundle.
 - Next = S9b (features: agent sight, export, deps stage, templates; CI jobs B10; doc drift C), then real run B1 +
   WebView2 iframe probe B2 + final gate round 2 (fable-consultant -> Codex/Gemini -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S9b done + S9a review fixes, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S9b.md
+- S9a review fixes (own commit): trash purge by deletion stamp, delete removes unreferenced capture PNGs, pipe handle
+  ownership + ERROR_PIPE_BUSY, delete refused during a build of the project, B7 hooks/plugins residual in SECURITY.md.
+- S9b: agent sight (preview_capture / device_screenshot return a downscaled image as MCP image content + sha256, console
+  errors / uncaught exceptions as sanitised UNTRUSTED text), tsc --noEmit in aas-build-web (exit 5, capped excerpt,
+  kit/aas-env.d.ts), app_export (MCP) + REST two-step + UI buttons (deterministic dist zip / recorded APK, final secret
+  scan fail closed, owner approval bound to sha256, export folder setting), devhost video_keyframe (screenrecord
+  restart, throttled; MANIFEST + install.ps1), templates tabs + list-detail, CI (actionlint, gitleaks history, Windows
+  pytest, desktop tsc/vitest/vite build/cargo test --lib, vendored), "As built (2026-11-23)" in DESIGN.md and
+  THREAT_MODEL.md (MCP catalogue = 15 tools, not 30), README status, scripts/build_runtime.ps1 + tauri.release.conf.json.
+- Verified: uv run pytest -q (Docker up) 652 passed / 22 skipped + 1 PM3a static failure fixed and rerun (build_runtime.ps1 no longer ships the device-host setup); local gate non-live 150/22; desktop tsc clean, vitest 127, Playwright 15; cargo test --lib 5; check_vendored both modes + gen_vendored --check OK; actionlint 0, zizmor 0, gitleaks dir + history clean.
+- Live: runtime.zip built (224 MB, version c146dd51c82bf06a), extracted, backend from it answered /health and created a
+  `tabs` project (zip then deleted, rebuild = scripts/build_runtime.ps1); new aas-build-web bind-mounted over the old
+  image: 3 templates build, a type error exits 5. No emulator launch; no image rebuild (C: 9.1 GB).
+- Must-do: rebuild aas-web-build:dev (tsc) + aas-android-build:dev (Gradle 8.14.8) at C: >= 10 GB; live video_keyframe
+  check; installed-mode e2e (install, first launch, capture); CI workflow never ran on GitHub.
+- Next = S9c Windows desktop wrapper (Tauri) for generated apps, then B1 real run + B2 WebView2 probe + final gate round 2
+  (fable-consultant -> Codex/Gemini -> security-lockdown -> push + PR #413).

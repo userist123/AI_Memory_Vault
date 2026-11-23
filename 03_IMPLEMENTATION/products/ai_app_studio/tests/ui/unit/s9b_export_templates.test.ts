@@ -47,7 +47,7 @@ describe("templates", () => {
     await createProject(SESSION, "n", "list-detail");
     expect(JSON.parse(String(f.mock.calls[0]?.[1]?.body))).toEqual({ name: "n", template: "list-detail" });
     await createProject(SESSION, "n", "evil" as never);
-    expect(JSON.parse(String(f.mock.calls[1]?.[1]?.body))).toEqual({ name: "n", template: "blank" });
+    expect(JSON.parse(String(f.mock.calls[1]?.[1]?.body))).toEqual({ name: "n" }); // blank = the server default: not sent
   });
 });
 

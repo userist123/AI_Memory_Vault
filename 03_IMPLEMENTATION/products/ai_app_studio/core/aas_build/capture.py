@@ -4,8 +4,8 @@
 - Chromium gets the studio args of the preview WebView (dead proxy for every non-loopback request, WebRTC limited to
   proxied UDP) plus a route filter that aborts any request that is not same-origin, data: or blob: (M5, P7b).
 - Frames: phone 390x844, tablet 834x1112, desktop 1440x900 (the UI's device frames). Each PNG is stored once under
-  ``<data>/captures/<sha256>.png`` and announced with ``preview.captured {revision, frame, sha256}``; only digests go
-  back to the agent. The owner's UI fetches an image by its sha256 over the authenticated REST API.
+  ``<data>/captures/<sha256>.png`` and announced with ``preview.captured {revision, frame, sha256}``; S9b: the MCP
+  tool returns a downscaled copy (sight.py) plus the page's console errors, as untrusted data. The owner's UI fetches an image by its sha256 over the authenticated REST API.
 - Sync Playwright refuses to run on a thread with an asyncio loop (the MCP server's), so each capture runs on its own
   worker thread. On timeout the Playwright driver (and so Chromium) is killed and the worker joined BEFORE the capture
   lock is released (S7 review L3); a worker that survives the kill releases the lock itself when it ends.

@@ -4,8 +4,10 @@ Safety properties:
   * OFF by default (PX1): every tool call is refused with ``external_mcp_disabled`` until the OWNER enables
     external MCP (setting stored in the studio DB, changed only through the owner-only REST route). The setting
     is read from the database on every call, so switching it off takes effect immediately.
-  * Small catalogue: project/file/activity reads, ``code_write_file`` and build/preview stubs that answer
-    ``unavailable``. No shell/exec/approve/decide/deploy/secret/config tool, no free URL, no host path.
+  * Small catalogue (15 tools, DESIGN.md "As built"): project/file/activity reads, code writes/deletes, plan_submit,
+    app_build, preview_capture and device_* (images + console returned as untrusted data), app_export (owner
+    approval bound to the artifact sha256). No shell/exec/approve/decide/deploy/secret/config tool, no free URL,
+    no host path.
   * Every input schema is ``additionalProperties: false`` with typed, length-bounded fields; the project id is
     ``^prj_[0-9a-f]{16}$``. All writes go through the audited Studio operations (policy, revision, appfiles
     allow-list). The agent actor is ``agent:<AAS_AGENT_ID>@mcp`` and is never the owner.

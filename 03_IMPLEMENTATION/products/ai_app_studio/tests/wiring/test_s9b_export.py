@@ -237,3 +237,15 @@ def test_rest_export_two_step_and_folder_setting(client: TestClient, tmp_path: P
     assert r.status_code == 200, r.text
     assert Path(r.json()["path"]).is_file()
     assert client.post(f"/api/v1/projects/{pid}/export", json={"target": "ios"}, headers=AUTH).status_code == 422
+
+
+def test_p5c_a_used_approval_cannot_export_again(studio, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+    pid = built(studio)
+    with pytest.raises(ApprovalRequired) as ei:
+        export.export(studio, OWNER, pid, "web", dest_root=tmp_path)
+    apr = ei.value.details["approvalId"]
+    approve(studio, apr)
+    export.export(studio, OWNER, pid, "web", approval_id=apr, dest_root=tmp_path)  # [+] single use works once
+    with pytest.raises(ApprovalRequired):
+        export.export(studio, OWNER, pid, "web", approval_id=apr, dest_root=tmp_path / "again")
+    assert not (tmp_path / "again").exists()

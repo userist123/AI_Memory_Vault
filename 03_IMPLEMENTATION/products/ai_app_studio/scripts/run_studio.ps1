@@ -144,7 +144,7 @@ try {
   Write-Host "UI ($mode) started; close its window to stop the studio"
   if ($PromptFile) { $Prompt = Get-Content -Raw -Encoding UTF8 $PromptFile }
   if ($Prompt) {
-    # the UI has no "start run" control yet: create a project and start the built-in runner with this prompt
+    # scripted start (the UI also has a prompt box): create a project and start the built-in runner with this prompt
     Start-Sleep -Seconds 4
     $hdr = @{ Authorization = "Bearer $Token" }
     $proj = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:$ApiPort/api/v1/projects" -Headers $hdr -ContentType 'application/json' -Body (@{ name = $ProjectName } | ConvertTo-Json)

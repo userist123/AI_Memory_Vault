@@ -1,6 +1,6 @@
 # AI App Studio — design v1 (2026-11-23)
 
-Status: design for review round 2. Supersedes DESIGN_DRAFT.md where they differ. No code yet.
+Status: design v1 + "As built (2026-11-23)" at the end (supersedes the design where they differ; code through S9b).
 Inputs: DESIGN_DRAFT.md (owner requirement: SEE live on the Windows desktop what the AI does), THREAT_MODEL.md
 (T1-T10, M1-M5, B1-B9), RESEARCH_2026-11-22.md, spike/EMULATOR_SPIKE.md + spike/scripts/s2_*.sh.
 Reused code is cited as `AWS:<path>:<line>` = AI Website Studio at commit 25b3eab. Probe ids refer to THREAT_MODEL.md.
@@ -423,3 +423,96 @@ than the release commit's device_host/ and wsl/ changes.
 - R-EXT premise corrected: NOPASSWD: ALL + docker group => <owner-user> == root in the distro; hashes are drift detection.
 - Launcher Popen uses a minimal env and fixed cwd (N4); install proxy allow-list probed (N5); VENDORED.json per-file
   patch list (N6); device stdout bounded queue + worker decode (N7).
+
+## As built (2026-11-23)
+This section supersedes the sections above where they differ (FINAL_GATE_ROUND1 section C). The sections above are
+the design; this is what the code does at S9b. Slice notes: docs/slices/S3.md .. S9b.md.
+
+**Layout (supersedes the section 1 tree).** `core/studio_core/` (vendored + AAS-local `project_kind.py`,
+`app_kind.py`, `app_templates.py`, `appfiles.py`, `activity.py`, `aas_models.py`, `plans.py`, `run_grants.py`; no
+`kinds/` package), `core/aas_build/` (`runner.py` = the only module that starts processes, P1c; `service.py`,
+`capture.py`, `sight.py`, `export.py`, `preview_server.py`), `core/aas_device/` (`service.py`, `video_relay.py`),
+`core/aas_runner/` (`claude.py`, `streamjson.py`), `apps/device_host/` (launcher + protocol, the only `wsl.exe`
+call site), `apps/backend/`, `apps/mcp-app/server.py`, `apps/desktop/` (React UI + Tauri shell), `kit/` (+
+`aas-env.d.ts`, `template/`), `images/`, `wsl/` (`install.ps1`, `setup-avd.sh`, `opt-aas-bin/aas_devhost.py`,
+`aas-ns`, `aas-preflight`, `aas-serve`, AVD configs, `MANIFEST.sha256`), `scripts/` (`run_studio.ps1`,
+`build_runtime.ps1`, `check_vendored.py`, `gen_vendored.py`).
+
+**Policy table as built (supersedes "Policy table"; `core/studio_core/policy.py`).** human/agent:
+`project.read|create|write` allow/allow; `project.export` allow/allow (the vendored website export, not reachable
+from MCP or REST); `project.archive` allow/approval; `project.delete` approval/approval; `app.build` allow/allow
+(plan gate + 5 GiB disk gate); `device.control` allow/allow (owner device setting + gates); **`app.export`
+approval/approval** (S9b, approval bound to {projectId, target, sha256}); `deps.install` approval/approval (no
+caller: the install stage is not built); `ai.run` allow/approval; `approval.decide` allow/deny; `terminal.run`
+allow/deny; `policy.modify`, `secrets.read`, `credentials.read`, `registry.modify`, `admin.execute`,
+`shell.execute` deny/deny; unknown -> deny. Plans are decided on the owner route `/plans/<id>/decide`
+(content-hash bound), not through a policy row.
+
+**MCP catalogue as built (supersedes the 30-tool list and CHECKPOINT "30 tools"): 15 tools.**
+`project_list`, `project_inspect`, `code_list_files`, `code_read_file`, `code_write_file`, `code_delete_file`,
+`activity_list`, `plan_submit`, `app_build {web|android}`, `preview_capture {phone|tablet|desktop}`,
+`device_start {phone|tablet}`, `device_install`, `device_tap`, `device_screenshot`, `app_export {web|android}`.
+All inputs are closed (`additionalProperties: false`), project ids pattern-checked, a runner grant pins every call
+to the run's project, external MCP is off by default (PX1). Results: a JSON text block; `preview_capture` and
+`device_screenshot` add an `<<UNTRUSTED DATA: ...>>` text block (console errors / note) and an MCP image block
+(downscaled to <= 1280 px, <= 768 KiB, PNG or JPEG) whose sha256 is reported next to the stored full-size PNG's.
+Not built: `deps_request_add`, `qa_run`, `preview_interact`, `device_swipe` / `device_text`, `app_build windows`
+(S9c).
+
+**Build stages as built (supersedes 3.3-3.4).** No install stage, no `aas-store-<lockSha>` volume, no
+`kit_versions`: the web-build image bakes the kit's `node_modules` at image build; `aas-build-web` refuses any
+lockfile other than the baked one (exit 3, `test_lockfile_mismatch_refused`) and a `node_modules` in the source.
+S9b: `tsc --noEmit -p tsconfig.json` (kit TypeScript 7.0.2) runs before `vite build`; type errors -> exit 5 ->
+`build_failed` "type check failed (N errors)" + at most 15 `file(l,c): error TS` lines (<= 1000 chars). Images are
+built on the owner PC and used by image id (`sha256:`); base images are pinned by digest in `images/DIGESTS.json`;
+CI does not build images. MUST-DO before release: rebuild `aas-web-build:dev` (tsc step) and
+`aas-android-build:dev` (Gradle 8.14.8).
+
+**Export as built (new, S9b).** `core/aas_build/export.py`; MCP `app_export`; owner REST
+`POST /api/v1/projects/<id>/export {target, approvalId?}` (428 -> approve -> repeat); owner setting
+`GET/PUT /api/v1/settings/export-folder` (default `%USERPROFILE%\Downloads\AIAppStudio`, never inside the data
+root); UI buttons "Export web (zip)" / "Export APK" with an owner confirmation that shows the sha256. Web = a
+deterministic zip of the current preview site only (dist); links, hard links and non-regular files are refused.
+Android = the APK whose sha256 matches its `build.finished` event. A final secret scan of the exact bytes (raw and
+UTF-16 views, every APK entry) blocks on key patterns or a registered owner secret (`export_blocked`, audited, names
+only). Output `<root>/<name>-<id16>/<name>-rev<N>-<sha12>.zip|.apk`.
+
+**Templates (S9b).** `blank`, `tabs`, `list-detail` (`core/studio_core/app_templates.py`), chosen at create (REST
+`template`; UI select for a new project).
+
+**Activity as built (supersedes 5.1-5.5 where different).** 25 kinds: run.started, run.finished, plan.proposed,
+plan.decided, step.started, tool.call, tool.result, file.diff, build.started, build.log, build.error,
+build.finished, preview.revision, preview.interaction, device.state, device.input, device.log, qa.result,
+approval.requested, approval.decided, agent.text, agent.typing, cost.update, preview.captured, stream.dropped.
+Retention: owner setting 1..3650 days (default 30), sweep at startup and every 6 h, the newest row kept; trash is
+purged by the deletion stamp in the folder name. No live file-content typing: `agent.typing` carries the model's
+text deltas and file content appears as `file.diff` after each write; build log lines arrive when the build ends.
+WebSocket: no close 4409 (S2 review) - bounded per-socket replay plus `stream.dropped` / gap markers.
+
+**Runner as built (supersedes the 6.1 env).** argv as in 6.1 plus `--no-session-persistence`; `claude` resolved to
+an absolute path when the backend starts. Env allow-list: SYSTEMROOT, WINDIR, SYSTEMDRIVE, PATH, PATHEXT, COMSPEC,
+USERPROFILE, APPDATA, LOCALAPPDATA, HOME (+ CLAUDE_CONFIG_DIR only when passed explicitly), TEMP/TMP = the run's tmp,
+`DISABLE_AUTOUPDATER=1`. PATH and the owner profile are not replaced (the CLI needs the owner's login): residual
+"Runner profile (B7)" in SECURITY.md. settings.json has no read-only ACL (it lives under the data root, same user).
+
+**Listeners as built (supersedes the first bullet of section 7).** `127.0.0.1:17875` API + WS (`/api/v1/events`,
+`/api/v1/device/video`); `127.0.0.1:17880` preview (inside the backend process since S9a, exclusive bind); one
+named pipe per run `\\.\pipe\aas-video-<random>` (logon-SID DACL, remote clients rejected, first instance, HMAC
+handshake) for the emulator mirror; MCP and the runner over stdio; the device host over `wsl.exe` stdio. Dev mode
+only (`-Dev`): Vite on 127.0.0.1:1421 and `AAS_DEV_ORIGINS`.
+
+**CI as built (supersedes the section 8 table; `.github/workflows/ai-app-studio.yml`).**
+| job | runner | does |
+|---|---|---|
+| gitleaks | ubuntu | product dir with the repo `.gitleaks.toml` |
+| gitleaks-history | ubuntu | every commit that touched the product (fetch-depth 0) |
+| actionlint | ubuntu | actionlint-py 1.7.12.25 on this workflow |
+| zizmor | ubuntu | zizmor 1.33.0 `--min-severity low` |
+| osv-scanner | ubuntu | uv.lock, both pnpm-lock.yaml, Cargo.lock |
+| vendored | ubuntu | check_vendored, CI mode (gen_vendored --check needs the upstream repo: owner PC) |
+| pytest | windows | full suite; Docker-image / Claude CLI / Chromium / WSL / emulator tests skip with a reason |
+| desktop | windows | pnpm (corepack, pinned) install --frozen-lockfile, tsc, vitest, vite build, cargo test --lib |
+Not in CI: Playwright e2e, Docker probes, the local gate (owner PC, SECURITY.md section 4).
+
+**Installed mode (S9b).** `scripts/build_runtime.ps1` -> `apps/desktop/src-tauri/runtime/{runtime.zip,
+runtime.version}`; `pnpm tauri build --config src-tauri/tauri.release.conf.json` bundles them (NSIS, unsigned).

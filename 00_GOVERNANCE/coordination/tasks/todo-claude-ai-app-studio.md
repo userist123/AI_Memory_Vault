@@ -103,3 +103,12 @@ Update 2026-11-23 (S9a done, local commits only on claude/ai-app-studio):
   pytest 606 passed / 22 skipped; vitest 120; Playwright 15; cargo 5. Details: ai_app_studio/docs/slices/S9.md.
 - Must-do: rebuild the android image (C: >= 10 GB); next live gate: guest IPv6 check + WSLg window eye check.
 - NEXT = S9b (features, CI jobs, doc drift), then real run B1 + WebView2 probe B2 + final gate round 2.
+
+Update 2026-11-23 (S9b done + S9a review fixes, local commits only on claude/ai-app-studio):
+- S9a review fixes (trash stamp, capture PNGs on delete, pipe busy/ownership, delete during build, B7 residual).
+- S9b: agent sight (image + untrusted console to the agent), tsc in the web build, app_export with owner approval bound
+  to sha256 + secret scan, devhost video_keyframe, templates tabs/list-detail, CI jobs (actionlint, gitleaks history,
+  Windows pytest, desktop tsc/vitest/cargo), As-built sections in DESIGN/THREAT_MODEL, scripts/build_runtime.ps1.
+  pytest 652+1 passed / 22 skipped; local gate 150/22; vitest 127; Playwright 15; cargo 5. Details: ai_app_studio/docs/slices/S9b.md.
+- Must-do: rebuild aas-web-build (tsc) + aas-android-build (Gradle 8.14.8) at C: >= 10 GB; installed-mode e2e.
+- NEXT = S9c Windows desktop wrapper (Tauri) for generated apps, then B1 real run + B2 WebView2 probe + final gate round 2.

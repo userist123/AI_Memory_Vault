@@ -165,7 +165,7 @@ export type Template = (typeof TEMPLATES)[number];
 
 export async function createProject(s: Session, name: string, template: Template = "blank"): Promise<string> {
   const t: Template = TEMPLATES.includes(template) ? template : "blank";
-  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify({ name: name.slice(0, 64), template: t }) });
+  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify(t === "blank" ? { name: name.slice(0, 64) } : { name: name.slice(0, 64), template: t }) });
   const id = body && typeof body === "object" ? (body as { id?: unknown }).id : undefined;
   if (typeof id !== "string" || !PROJECT_RE.test(id)) throw new Error("bad project id");
   return id;
