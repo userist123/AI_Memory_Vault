@@ -98,7 +98,11 @@ def test_trivial_prompt_keeps_the_existing_route(home, short):
     _prompt(home, IMPLEMENT)
     before = _state(home)
     _prompt(home, short)
-    assert _state(home) == before
+    after = _state(home)
+    assert after["epoch"] != before["epoch"]  # M12: a short prompt is a new prompt epoch (no old failure ladder)
+    assert after.get("followup") is True  # gate (i) marker
+    assert ({k: v for k, v in after.items() if k not in ("epoch", "followup")}
+            == {k: v for k, v in before.items() if k != "epoch"})
     for _ in range(3):
         _tool(home)
     assert _tool(home)["permissionDecision"] == "deny"

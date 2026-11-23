@@ -340,6 +340,10 @@ def test_release_pin_flag_validates_the_pin(env, tmp_path):
 
 def test_p8_fetched_installer_is_never_executed_and_install_uses_the_verified_staging(tmp_path, monkeypatch):
     e = Env(tmp_path)
+    e.commit_all("genuine")
+    e.publish()
+    e.pin(_g(e.work, "rev-parse", "HEAD"))
+    e.install()  # a genuine pinned release, installed by the genuine worktree installer
     sentinel = tmp_path / "SENTINEL"
     inst = e.work / ".claude/skills/cost-router/install.py"
     inst.write_text(f"open({str(sentinel)!r}, 'w').write('pwned')\n" + inst.read_text(encoding="utf-8"),
@@ -347,10 +351,12 @@ def test_p8_fetched_installer_is_never_executed_and_install_uses_the_verified_st
     hook = e.work / ".claude/skills/cost-router/hook_self_update.py"
     hook.write_text(f"open({str(sentinel)!r}, 'w').write('pwned')\n" + hook.read_text(encoding="utf-8"),
                     encoding="utf-8")
-    c1 = e.commit_all()
+    c1 = e.commit_all("poisoned")
     e.publish()
-    pin = e.pin(c1)
-    e.install()  # installs from the genuine worktree installer, pin only
+    pin = e.pin(c1, 2)
+    # the owner pins the poisoned release (install.py refuses to record a pin whose files differ from the source it
+    # installs, M12 finding 1, so the pin is swapped in as the trust root the hook reads)
+    _set_installed_pin(e, pin)
     mod = _hook(e.home)
     seen = []
     real_run = subprocess.run

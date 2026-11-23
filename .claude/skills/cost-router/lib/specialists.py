@@ -48,6 +48,26 @@ def fold(text: str) -> str:
     return " ".join(unicodedata.normalize("NFKD", s).casefold().split())
 
 
+# Look-alike letters (Cyrillic, Greek, IPA) -> ASCII, applied after NFKC by fold_strict: `dеploy` (Cyrillic e) and
+# `аmcache` (Cyrillic a) compare equal to the ASCII words. Latin letters with diacritics are NOT touched here.
+CONFUSABLES = str.maketrans({
+    "а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o", "р": "p", "с": "c", "т": "t",
+    "у": "y", "х": "x", "і": "i", "ї": "i", "ј": "j", "ѕ": "s", "ԁ": "d", "ԛ": "q", "ԝ": "w", "һ": "h", "ʏ": "y",
+    "А": "A", "В": "B", "Е": "E", "Ё": "E", "К": "K", "М": "M", "Н": "H", "О": "O", "Р": "P", "С": "C", "Т": "T",
+    "У": "Y", "Х": "X", "І": "I", "Ї": "I", "Ј": "J", "Ѕ": "S", "Ԁ": "D", "Ԛ": "Q", "Ԝ": "W", "Һ": "H",
+    "α": "a", "β": "b", "ε": "e", "η": "n", "ι": "i", "κ": "k", "ν": "v", "ο": "o", "ρ": "p", "τ": "t", "υ": "u",
+    "χ": "x", "ω": "w", "ϲ": "c", "ϳ": "j",
+    "Α": "A", "Β": "B", "Ε": "E", "Ζ": "Z", "Η": "H", "Ι": "I", "Κ": "K", "Μ": "M", "Ν": "N", "Ο": "O", "Ρ": "P",
+    "Τ": "T", "Υ": "Y", "Χ": "X", "Ϲ": "C",
+    "ɡ": "g", "ı": "i", "ȷ": "j", "ɑ": "a", "ɩ": "i", "ʋ": "v",
+})
+
+
+def fold_strict(text: str) -> str:
+    """fold() after NFKC and the CONFUSABLES map: the normalizer of the fable-executor brief checks (f)/(g)."""
+    return fold(unicodedata.normalize("NFKC", str(text)).translate(CONFUSABLES))
+
+
 def load(path: Path | None = None) -> dict | None:
     """The registry as {id: entry}, or None when missing/invalid (fail open)."""
     try:
@@ -122,13 +142,13 @@ def select(prompt: str, task_class: str, registry: dict | None = None) -> dict |
 
 def local_only_hits(prompt: str, registry: dict | None = None) -> list:
     """Ids of the trusted local_only (privacy) entries whose trigger appears in `prompt`, whatever the task class.
-    Used to keep the gated fable-executor off privacy work. [] when the registry cannot be loaded (callers that need
+    Used to keep the gated fable-executor off privacy work; scans the whole text with fold_strict. [] when the registry cannot be loaded (callers that need
     a guarantee check the registry themselves)."""
     try:
         reg = registry if registry is not None else load()
         if not reg:
             return []
-        text = fold(str(prompt)[:MAX_PROMPT])
+        text = fold_strict(str(prompt))  # the WHOLE text (no MAX_PROMPT head), look-alikes folded (M12)
         return sorted(e["id"] for e in reg.values()
                       if e.get("privacy") == "local_only" and not e.get("untrusted") and _hits(text, e["triggers"]))
     except Exception:

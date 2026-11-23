@@ -429,7 +429,7 @@
     ],
     "fable_main_session_allowed": false,
     "fable_executor": {
-      "enabled": false,
+      "enabled": true,
       "max_per_session": 2
     }
   },

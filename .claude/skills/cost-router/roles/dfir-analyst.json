@@ -42,13 +42,14 @@
    "lnk files",
    "jumplist",
    "intrusion",
-   "security log",
+   "windows security log",
    "event log",
    "malware execution",
-   "triage",
+   "forensic triage",
+   "incident triage",
    "event timeline",
    "forensic timeline",
-   "timeline of events",
+   "forensic timeline of events",
    "super timeline"
   ]
  },

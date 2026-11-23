@@ -401,7 +401,7 @@ never read a receipt file over 256 KB. Residual: the list is a denylist (a `!` f
 `--tier sonnet|opus` (any other value: exit 2) records the tier of the attempt whose work is checked; every receipt also
 records the session's current prompt epoch (`prompt_epoch`, from the route state; null without one).
 
-### 4G. `fable-executor` (M11, DEFAULT OFF)
+### 4G. `fable-executor` (M11; shipped ENABLED per owner decision 2026-11-23, Opus decides)
 
 `.claude/agents/fable-executor.md`: Fable 5.2 (`claude-fable-5-2`), tools exactly Read, Grep, Glob, Bash, Edit, Write
 (Agent/Task, MCP, WebFetch/WebSearch, NotebookEdit denied), checked by its own exact validator
@@ -423,23 +423,66 @@ prompt route) and no live-operation stem (`rules.implementer_risk_floor.never_fo
 `EXECUTOR_LIVE_PATTERNS`: push, apply, drop, upload, ship, release, rollout, migrate, truncate, `rm -rf`, force-push;
 deploy/rotate/publish match inside compounds such as autodeploy/redeploy), matched on the brief after
 `specialists.normalize/fold` (NFKC, Cf/zero-width removed, cedilla ş/ţ -> ș/ț, diacritics folded, casefold, whitespace
-collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the brief (same
-normalization), and the installed registry is readable; the prompt hook records the local_only scan on every path,
-`#direct` override and router error included; (h)
-`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails). On allow, the context says an Opus
+collapsed); (g) no local_only specialist (dfir-analyst) recorded for the prompt or triggered by the WHOLE brief (same
+normalization plus the `specialists.CONFUSABLES` look-alike fold, also used by (f)), and the installed registry is readable;
+the prompt hook records the local_only scan on every path, `#direct` override, router error and short/slash/trivial
+prompts included (a short prompt keeps its route but starts a new prompt epoch); (h)
+`COST_ROUTER_OFF` bypasses none of it (without a prompt state, (d) fails); (i) heavy task only: the CURRENT owner
+prompt's route state (hook_prompt_route, from the owner's own text, never the brief) has class implement, design or frontier
+and is not a short follow-up, trivial or slash prompt (`followup` marker); explore/summarize/review/unrouted/#direct-short
+are denied. When to spawn is the Opus main session's decision: never for easy tasks, only on a heavy task after a sonnet
+and an opus attempt failed the same check ((d) is that proof); the Opus vault-reviewer pass afterwards stays mandatory. On allow, the context says an Opus
 vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
 spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
-Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` under `rules.fable_executor` in
-`04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
+Flag state: Opus decides; the flag is shipped ENABLED (`"enabled": true`, `max_per_session` 2) per the owner decision
+of 2026-11-23 ("there is no owner switch; Opus decides when Fable is most needed; never for easy tasks; for a heavy
+task with a lot to run Opus may choose Fable if neither Opus nor Sonnet can do it"). Gates (b)-(i) and the tool-level
+guard below still apply to every spawn. To change it (no env switch): in a trusted checkout set `"enabled"` under
+`rules.fable_executor` in `04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
 (`python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n+1> --out <pin>`, commit the
 pin), then re-run `python .claude/skills/cost-router/install.py --source-ref <sha> --release-pin <pin>` and
 `install.py --verify --require-hooks` (exit 0, `policy_ok` true). Editing the installed `policy.json` by hand changes its
-hash and keeps the executor disabled (and fails `--verify`). Disable: the same steps with `false`.
+hash, disables the executor (gate (a) fails) and fails `--verify`. Disable: the same steps with `false`.
 Threat residuals: receipts, route state, the spawn record `route-<sid>.spawns` and `pins.sha256.json` live in the user
 cache and are writable by the same user, so a same-user process (or a hostile main session with Bash) can still forge the
 ladder by editing these files; the spawn record only raises the cost of a forgery from one check.py call to editing JSON
 by hand. The gate limits induced overspend; it does not stop a hostile Opus main session (E1). The stem and trigger lists
 are denylists.
+
+**Tool-level guard (M12, the real boundary).** The (f)/(g) brief checks are only an extra signal: a brief is
+attacker-shaped text (look-alike letters, words split by markdown or newlines, other languages). `hook_enforce_route.py`
+(`executor_guard`) decides on what an `agent_type` `fable-executor` actually RUNS, before COST_ROUTER_OFF,
+COST_ROUTER_ENFORCE=0, `#direct` or shadowing are looked at (X7), and fails CLOSED on any internal error. Threat model
+(the reviewer gets the same list): X1 git push/reset --hard/clean/branch -D/checkout -- ./restore/rebase/filter-branch/
+tag -d/remote, aliases; X2 network clients and package install/publish, gh, docker; X3 deploy/publish/release CLIs; X4
+recursive or out-of-worktree deletes and writes; X5 obfuscation (encoded commands, `-c`/`-e` wrappers, env-var indirection,
+substitution, here-strings, continuation, look-alikes, zero-width, quote splitting); X6 Write/Edit/NotebookEdit outside the
+worktree; X7 the kill switches. **Bash ALLOWLIST**: the command must be unchanged by NFKC + Cf removal + confusables fold,
+ASCII, <= 2000 chars, ONE simple command under Git Bash quoting (no unquoted `; & | < > ( ) { } $ backtick ! @`, no `$`
+or backtick even in double quotes, no newline, comment, line continuation, env assignment, program path or `~`), and one of:
+`pytest`/`python -m pytest` (M12 review: never `--pastebin`, `-p <plugin>` (only `-p no:<name>`), or `-o`/
+`--override-ini` touching addopts or plugins, abbreviations included; `o` or `p` bundled after other short flags such as `-qo addopts=...` or `-xp evil` is denied, the scan stops at value options `-k -m -r -W`); `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
+`node [--test] <script inside the worktree>`; `dotnet build|test --no-restore` (`dotnet restore` and an implicit
+restore are denied; options only from the allowlist `--no-restore --no-build --nologo -c|--configuration <name> -f|--framework <tfm> -v|--verbosity <level> --filter <expr> --logger console|trx`, so every MSBuild switch `-p:`/`/p:`/ `-property:`, `-t:`/`-target:`, `-restore`, `--interactive`, `--source`, `--output` and `@file` is denied; at most one project/solution argument, resolved from cwd and refused outside the worktree, junctions included); `npm|pnpm|yarn test | run test|build|lint [-- args]`;
+`git [--no-pager] [-C <dir in the worktree>] status|diff|log|show|blame|rev-parse|ls-files|add|commit` (never `--amend`,
+`--output`, `--ext-diff`, `--textconv`, `--exec`, `--upload-pack`, `--receive-pack`, `--config[-env]`, `--force*`,
+`--hard`, `--delete`, `--mirror`, `-c`, `--git-dir`, nor any abbreviation of them of 2+ characters such as `--am`), `git switch -c|checkout -b <new branch>`, `git stash list`,
+`git branch` listing; read-only `ls dir cat type Get-Content Select-String rg grep find head tail wc pwd` (no `find
+-exec/-delete/-fprint`, no `rg --pre`). Every path-like argument of an executing command (`--basetemp`, `--rootdir`, node
+ids, `-o`) must resolve inside the worktree, and for pytest/python so must every bare word naming an existing entry
+(a junction `tests` -> elsewhere is refused); unquoted globs are refused there. Anything else is denied naming the rule.
+**Writes**: the realpath of the target must be inside `git rev-parse --show-toplevel` of the session cwd (else no write
+at all), lexically too, not in `.git` (also `.GIT`, `.git.`), not through a symlink/junction/reparse point, not a hard
+link, not in a nested repository, not in `~/.claude`, no UNC/device/drive-relative path, no `:` stream, and never
+agent or repository configuration (case-insensitive, after realpath, at any depth): `.claude/**`, `.agents/**`,
+`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.gitattributes`, `.gitmodules`, `.gitconfig`, `.pre-commit-config.yaml`, `.gemini/**`, `.codex/**`, `.vscode/**`, `.husky/**`, `.idea/**`, `.devcontainer/**`, and `<root>/.github/workflows/**` (`.editorconfig` stays writable). **Install chain (finding 1)**: `install.py` refuses (exit 2, nothing changed) unless
+every file it copies matches the sha256 in the release pin (`--release-pin`, else the source tree's
+`release_pin.json`; no pin = refused). F3 residual: the source tree's own `release_pin.json` is unsigned and trusted; the pin protects against an Edit/Write tamper of the release files, not against finding-1 code (a script or test the executor wrote and ran) that rewrites both the files and the pin; install from a ref the Opus reviewer checked (`--source-ref <sha> --release-pin <pin>` from that commit). Residuals: the
+CONTENTS of an allowed worktree script, test/conftest file, package.json script, project file, or a tracked hooks dir that
+the repo's own `core.hooksPath` already points to are not inspected (the executor may write them, then run them through
+an allowed command); F6: reads outside the worktree stay allowed and, under the accepted finding 1, code the executor writes and runs can reach the network, so the exfiltration risk is the same as for vault-worker (the guard blocks network CLIs, not the network itself); a same-user process outside Claude Code is out of scope. Finding-1 residual (accepted with the flag on): an executor can run code it writes inside the
+worktree (a test, conftest or script, then `pytest`/`python`), the same as vault-worker; the guard bounds where it writes
+and what it calls, not what that code does.
 
 ## 5. Report shape (end of task)
 
