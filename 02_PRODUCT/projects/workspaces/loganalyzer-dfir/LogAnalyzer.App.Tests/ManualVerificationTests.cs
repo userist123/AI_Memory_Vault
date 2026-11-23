@@ -185,7 +185,7 @@ public sealed class ManualVerificationTests
             string text = "";
             InvestigationReportPdf.TextObserver.Value = t => text = t;
             InvestigationReportPdf.Write(r, Path.Combine(k.Dir, "verifica.pdf"), "investigator");
-            Assert.Contains("Cum verifici tu", text);
+            Assert.Contains("Cum verificați", text);
             Assert.Contains("-FilterXPath \"*[System[EventRecordID=4711]]\"", text);
             Assert.Contains("Get-WinEvent -Path '", text);
         }

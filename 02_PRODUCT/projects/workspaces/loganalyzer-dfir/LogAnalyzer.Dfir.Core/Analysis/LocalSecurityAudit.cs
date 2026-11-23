@@ -114,7 +114,7 @@ public static class LocalSecurityAudit
         foreach (var g in rows.Where(r => r.Locator.StartsWith("LocalAccounts[", StringComparison.Ordinal) && F(r, "Rid") == "501" && F(r, "Enabled") == "da"))
             res.Findings.Add(Make(g, host, nextId, RuleGuest, Severity.High, Confidence.High,
                 $"Contul Guest este activat: {F(g, "Name")} (RID 501)",
-                $"Contul local {F(g, "Name")} (SID {F(g, "Sid")}, RID 501, contul Guest) este activat în acest PC.",
+                $"Contul local {F(g, "Name")} (SID {F(g, "Sid")}, RID 501, contul Guest) este activat pe acest calculator.",
                 "Windows are activat contul Guest (oaspete), care permite accesul fără parolă personală",
                 "gravitate ridicată: un cont partajat și, de regulă, fără parolă lărgește suprafața de acces",
                 ["Poate fi activat deliberat pentru o partajare sau o demonstrație.", "O politică de securitate locală poate cere starea, iar un produs de administrare o poate reseta."],
@@ -134,13 +134,13 @@ public static class LocalSecurityAudit
         string shown = string.Join("; ", listing.Take(ListCap)) + (listing.Count > ListCap ? $"; … încă {listing.Count - ListCap}" : "");
         string expected = domainPc ? "contul Administrator încorporat (RID 500) și grupul Domain Admins" : "contul Administrator încorporat (RID 500)";
         var first = extra[0];
-        var evidence = extra.Take(ListCap).Select(m => Ref(m, $"membrul {F(m, "Member")} din grupul Administrators (SID {AdminSid}) păstrat în caz")).ToList();
+        var evidence = extra.Take(ListCap).Select(m => Ref(m, $"membrul {F(m, "Member")} din grupul Administratori (Administrators) (SID {AdminSid}) păstrat în caz")).ToList();
         res.Findings.Add(new Finding
         {
             FindingId = nextId(), RuleId = RuleExtraAdmins, Severity = onlyInteractive ? Severity.Low : Severity.Medium, Confidence = Confidence.High,
             Classification = Classification.Direct, Category = Category, Host = host, SemanticType = SemanticType.Configuration,
             Title = onlyInteractive ? $"Contul utilizatorului curent este membru al grupului Administrators: {F(first, "Member")}"
-                                    : $"{extra.Count} conturi sau grupuri în afara {expected} sunt în grupul Administrators",
+                                    : $"{extra.Count} conturi sau grupuri în afara {expected} sunt în grupul Administratori (Administrators)",
             Description = $"Grupul local Administrators (SID {AdminSid}) conține, pe lângă {expected}: {shown}. Verificați dacă fiecare cont are nevoie de drepturi de administrator.",
             PlainWhat = onlyInteractive ? "Contul cu care este folosit PC-ul are drepturi de administrator" : "Windows are conturi cu drepturi de administrator în afara celor așteptate",
             FirstSeenUtc = first.Time.Utc, LastSeenUtc = first.Time.Utc, SupportingEvidence = evidence,
@@ -194,7 +194,7 @@ public static class LocalSecurityAudit
         foreach (var a in accounts.Where(a => F(a, "Rid") == "500"))
             res.Findings.Add(Make(a, host, nextId, RuleBuiltinAdminEnabled, Severity.Medium, Confidence.High,
                 $"Contul Administrator încorporat este activat: {F(a, "Name")} (RID 500)",
-                $"Contul local {F(a, "Name")} (SID {F(a, "Sid")}, RID 500, administratorul încorporat) este activat în acest PC. Numele poate fi schimbat sau tradus, RID-ul rămâne 500. Verificare manuală: {Verify(F(a, "Name"))}.",
+                $"Contul local {F(a, "Name")} (SID {F(a, "Sid")}, RID 500, administratorul încorporat) este activat pe acest calculator. Numele poate fi schimbat sau tradus, RID-ul rămâne 500. Verificare manuală: {Verify(F(a, "Name"))}.",
                 "Windows are activat contul Administrator încorporat, un nume cunoscut de oricine",
                 "gravitate medie: un cont cu nume și RID cunoscute, cu drepturi complete, este o țintă obișnuită pentru ghicirea parolei",
                 ["Poate fi activat deliberat pentru depanare sau ca administrator local de rezervă.", "Pe unele PC-uri configurate de un furnizor sau de o organizație contul este activat intenționat."],

@@ -13,7 +13,7 @@ public sealed class RuleMistakesTests : IDisposable
     private readonly GapsTestKit _k = new();
     public void Dispose() { InvestigationReportPdf.TextObserver.Value = null; _k.Dispose(); }
 
-    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verifici tu:", "Ce NU dovedește:", "Siguranță:"];
+    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verificați:", "Ce NU dovedește:", "Grad de încredere:"];
 
     private static DetectionRule SigmaRule(string id, string title, string level, string fp = "") =>
         new("SIGMA:" + id, "2026-01-01", DetectionKind.Sigma, title, new string('a', 64), id + ".yml", "", level, fp);
@@ -99,7 +99,7 @@ public sealed class RuleMistakesTests : IDisposable
             r.Detections.Add(Hit(high, "row=10"));
         });
         var sec = Section(text);
-        Assert.Equal(2, Regex.Matches(sec, "(?m)^Siguranță:").Count);
+        Assert.Equal(2, Regex.Matches(sec, "(?m)^Grad de încredere:").Count);
         Assert.Contains("apare de 3 ori pe același element", sec);
         Assert.Contains("Greșeli găsite: 2 (din care 2 potriviri de reguli)", text);
     }

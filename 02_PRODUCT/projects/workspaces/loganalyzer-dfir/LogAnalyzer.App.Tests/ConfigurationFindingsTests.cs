@@ -186,7 +186,7 @@ public sealed class ConfigurationFindingsTests : IDisposable
         Assert.Contains("controlul contului de utilizator (UAC) dezactivat", sec);
         Assert.Contains("parolele utilizatorilor conectați în clar în memorie (WDigest)", sec);
         Assert.Contains("Citat: „EnableLUA = 0”", sec);
-        Assert.Contains("ora din: Registry LastWrite (cheie)", sec);
+        Assert.Contains("sursa orei: Registry LastWrite (cheie)", sec);
         Assert.Contains("(canal: Registry)", sec);
         Assert.Contains(@"reg query ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v EnableLUA", sec);
         Assert.Contains("Greșeli găsite: 2 (", text);

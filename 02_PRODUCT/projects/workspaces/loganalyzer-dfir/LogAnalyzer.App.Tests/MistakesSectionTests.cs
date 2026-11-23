@@ -13,7 +13,7 @@ public sealed class MistakesSectionTests : IDisposable
     private readonly GapsTestKit _k = new();
     public void Dispose() { InvestigationReportPdf.TextObserver.Value = null; _k.Dispose(); }
 
-    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verifici tu:", "Ce NU dovedește:", "Siguranță:", "Ce faci:"];
+    private static readonly string[] Labels = ["Ce s-a întâmplat:", "Când:", "Unde:", "Dovada:", "Cum verificați:", "Ce NU dovedește:", "Grad de încredere:", "Ce faceți:"];
 
     private static Finding F(string id, Severity sev, string title, int minute, Classification cls = Classification.Candidate, StandardState state = StandardState.NotAssessed,
                              bool alternatives = true, string user = "ana.pop") => new()
@@ -59,8 +59,8 @@ public sealed class MistakesSectionTests : IDisposable
         Assert.True(sec.IndexOf("Logon critic", StringComparison.Ordinal) < sec.IndexOf("Logon medie", StringComparison.Ordinal));
         foreach (var l in Labels) Assert.Equal(2, Regex.Matches(sec, "(?m)^" + Regex.Escape(l)).Count);
         Assert.Contains("Citat: „TargetUserName=ana.pop”", sec);
-        Assert.Contains("ora din: EVTX TimeCreated", sec);
-        Assert.Contains("1. ", sec[sec.IndexOf("Cum verifici tu:", StringComparison.Ordinal)..]);
+        Assert.Contains("sursa orei: EVTX TimeCreated", sec);
+        Assert.Contains("1. ", sec[sec.IndexOf("Cum verificați:", StringComparison.Ordinal)..]);
         Assert.True(text.IndexOf(". Greșeli găsite\n", StringComparison.Ordinal) < text.IndexOf(". Constatări\n", StringComparison.Ordinal));
         // the finding without alternatives prints the fallback, the one with them prints its alternative
         Assert.Contains(InvestigationReportText.NoAlternatives, sec);
@@ -89,7 +89,7 @@ public sealed class MistakesSectionTests : IDisposable
     {
         var text = Print(Enumerable.Range(1, 53).Select(i => F($"F-{i:0000}", Severity.High, "Problema numarul " + i, i % 50)));
         var sec = Section(text);
-        Assert.Equal(50, Regex.Matches(sec, "(?m)^Siguranță:").Count);
+        Assert.Equal(50, Regex.Matches(sec, "(?m)^Grad de încredere:").Count);
         Assert.Contains("Încă 3 greșeli nu sunt afișate aici", sec);
         Assert.Contains("Greșeli găsite: 53 (", text);
     }

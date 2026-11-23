@@ -82,7 +82,7 @@ public static class InvestigationReportPdf
         var ruleMistakes = InvestigationReportText.RuleMistakes(r.Detections, r.RulesUsed);   // planner #11 A7: high-level rule matches count as mistakes too
         int mistakeTotal = mistakes.Count + ruleMistakes.Count;
         var ownerGroups = InvestigationReportText.OwnerGroups(mistakes);
-        var ownerLines = InvestigationReportText.OwnerSummaryLines(ownerGroups);
+        var ownerSummary = InvestigationReportText.OwnerSummary(ownerGroups);
         var timelineIndex = new Lazy<Dictionary<(string EvidenceId, string Locator), TimelineEvent>>(() => LogAnalyzer.Dfir.Integrity.EvidenceQuote.Index(r.Timeline));
         bool showMistakes = S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings);   // the line on page 1 exists only where the section is printed
         var printed = new List<string>();
@@ -153,7 +153,13 @@ public static class InvestigationReportPdf
                     {
                         // planner #14 E1: every mistake of medium severity or higher, not only the grave ones listed above
                         P(sc, InvestigationReportText.OwnerSummaryHeading).Bold().FontSize(8.5f);
-                        foreach (var l in ownerLines) P(sc, "• " + l).FontSize(8);
+                        // G5: settings to correct first, then traces to investigate; each block with its count
+                        foreach (var b in ownerSummary.Blocks)
+                        {
+                            P(sc, b.HeadingWithCount).Bold().FontSize(8);
+                            foreach (var l in b.Lines) P(sc, "• " + l).FontSize(8);
+                        }
+                        if (ownerSummary.More is { } more) P(sc, more).FontSize(8);
                     }
                     if (showMistakes)
                         P(sc, ruleMistakes.Count == 0 ? $"Greșeli găsite: {mistakeTotal} (vezi secțiunea „Greșeli găsite”)"

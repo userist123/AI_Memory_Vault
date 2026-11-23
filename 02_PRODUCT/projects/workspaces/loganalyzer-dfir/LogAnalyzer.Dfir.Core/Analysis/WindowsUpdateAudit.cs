@@ -59,7 +59,7 @@ public static class WindowsUpdateAudit
         string latestText = latest is null ? "" : $"{latest.Time.Utc!.Value.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z";
         string title = latest is null
             ? $"Jurnalul System nu arată nicio actualizare de calitate instalată în cele {StaleDays} de zile dinaintea colectării"
-            : $"Ultima actualizare de calitate instalată cu succes este de acum {days} de zile, înainte de colectare";
+            : $"Ultima actualizare de calitate instalată cu succes a fost instalată cu {days} de zile înainte de colectare";
         string description = latest is null
             ? $"În jurnalul System (înregistrări din {oldestText} până la colectare, {coll}) nu există niciun eveniment Microsoft-Windows-WindowsUpdateClient 19 (instalare reușită) al unei actualizări de calitate (KB). Jurnalul acoperă cele {StaleDays} de zile dinaintea colectării."
             : $"Ultimul eveniment Microsoft-Windows-WindowsUpdateClient 19 (instalare reușită) al unei actualizări de calitate este din {latestText}: „{Title(latest)}”. Colectarea este din {coll}, adică {days} de zile după, mai mult de {StaleDays}.";
@@ -68,7 +68,7 @@ public static class WindowsUpdateAudit
         {
             FindingId = nextId(), RuleId = Rule, Title = title, Description = description, Severity = Severity.Medium, Confidence = Confidence.Medium,
             Classification = Classification.Direct, Category = "Configurație", Host = host, FirstSeenUtc = latest?.Time.Utc, LastSeenUtc = latest?.Time.Utc, SemanticType = SemanticType.Observation,
-            PlainWhat = latest is null ? "Windows nu a instalat nicio actualizare de calitate în ultimele 60 de zile înainte de colectare" : $"Windows nu a mai instalat o actualizare de calitate de {days} de zile",
+            PlainWhat = latest is null ? $"Jurnalul nu arată nicio actualizare de calitate instalată în cele {StaleDays} de zile dinaintea colectării" : $"Jurnalul nu mai arată o actualizare de calitate instalată de {days} de zile",
             SupportingEvidence = [Ref(anchor, latest is null ? "ultima înregistrare a jurnalului System (nu există niciun eveniment 19 de actualizare de calitate)" : "ultima instalare reușită a unei actualizări de calitate (WindowsUpdateClient 19)")],
             ClassificationReason = $"Evenimentele din jurnalul System păstrat în caz (SHA-256 în indexul probelor); gravitate medie: cu actualizările lipsă defectele cunoscute rămân deschise. Comparat cu data colectării ({coll}).",
             AlternativeExplanations =

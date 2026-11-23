@@ -28,9 +28,9 @@ public static class BitLockerAudit
 
         foreach (var os in off.Where(r => F(r, "IsOsVolume") == "da"))
             res.Findings.Add(Make(os, host, nextId, Severity.Medium, Confidence.High,
-                $"Volumul sistemului {F(os, "DriveLetter")} nu are protecția BitLocker pornită: {Status(os)}",
+                $"Volumul de sistem {F(os, "DriveLetter")} nu are protecția BitLocker pornită: {Status(os)}",
                 $"Volumul de sistem {F(os, "DriveLetter")} are ProtectionStatus = 0 (protecția oprită); starea conversiei: {F(os, "ConversionText")}. {Detail(os)}",
-                $"Discul de sistem {F(os, "DriveLetter")} nu este protejat prin criptare: cine îl ia poate citi fișierele",
+                $"Discul de sistem {F(os, "DriveLetter")} nu este protejat prin BitLocker: oricine are discul poate citi fișierele",
                 "gravitate medie: dacă stația se pierde sau este furată, conținutul discului poate fi citit fără parola Windows",
                 [os],
                 ["Stația poate folosi alt produs de criptare a discului sau criptare hardware (unitate cu autocriptare) care nu apare aici.", "Protecția poate fi suspendată temporar pentru o actualizare de firmware sau BIOS."]));
