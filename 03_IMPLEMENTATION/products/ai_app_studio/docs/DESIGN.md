@@ -317,7 +317,11 @@ sends the device's h264 chunks over a per-run `multiprocessing.connection` pipe 
 child's env only, HMAC challenge both ways, `recv_bytes` only, chunk <= 64 KiB, 2 MiB/s token bucket); the backend hub
 re-cuts at NAL boundaries, keeps SPS/PPS + the current GOP for late viewers and fans out per project to at most 2
 owner sockets (`?projectId=prj_<16 hex>`, existing project, `aas.v1` selected, 4400/4404/4422/4429 closes), each with
-a 4 MiB queue: overflow drops whole NALs and resumes at the next IDR (video dropped first). External MCP sessions get
+a 4 MiB queue: overflow drops whole NALs and resumes at the next IDR (video dropped first). S8 review: pipe messages
+and WS frames carry a seq (8-byte / 4-byte big-endian header); a gap is a discontinuity (resync at the next IDR, key
+request to the sender; the client reconnects with a bounded backoff, also after a decoder error); handshake timeout 2 s
+per connection off the accept loop; late-viewer prime <= 2 MiB counted apart from the live queue; run end drops the
+project's cached stream while the per-project WS stays open. External MCP sessions get
 no mirror (no pipe); the WSLg window stays the primary view. A failed activity write is logged (warning) and counted; the next successful write appends a
 `stream.dropped {count}` row, so a loss is visible on the timeline.
 MCP (`apps/mcp-app/server.py`): every tool input schema is strict, both published (`additionalProperties: false`)

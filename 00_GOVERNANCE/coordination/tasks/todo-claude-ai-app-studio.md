@@ -75,3 +75,10 @@ Update 2026-11-23 (S8 done, local commits only on claude/ai-app-studio):
   vitest 103; Playwright 15. Details: ai_app_studio/docs/slices/S8.md.
 - Open: live check (C: < 8 GB during S8), external MCP without mirror, paid run.
 - NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).
+
+Update 2026-11-23 (S8 review fixes M1 + L1-L4, local commits only on claude/ai-app-studio):
+- M1 seq on pipe + WS, gap -> resync at IDR / reconnect with backoff, SPS/PPS forwarded to synced viewers, launcher gap mark,
+  decoder error -> resync; L1 per-connection handshake timeout; L2 prime cap + separate budget; L3 run end clears the cached
+  stream (WS persists); L4 THREAT_MODEL S8 surface. pytest 561/20 skipped; vitest 111; Playwright 15.
+- Open: device-host key-frame op (residual R2), paid run.
+- NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).

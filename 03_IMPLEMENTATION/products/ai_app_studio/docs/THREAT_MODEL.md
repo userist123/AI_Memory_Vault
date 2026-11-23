@@ -144,3 +144,46 @@ Slice prerequisites (must exist before the named slice, not before first commit)
 - L2 (a second backend start wiping the live backend's grants): purge only after an exclusive bind, never live runs.
 - L3 (hung browser keeps running while a new capture starts): kill + join before the lock is released.
 - L4 (keystore without record dead end): pending-marker commit with recovery.
+
+## S8 surface: mirror pipe + video WS (added 2026-11-23, S8 review L4)
+Path: device host (WSL) -> launcher `DeviceSession.video_q` (MCP child) -> `VideoSender` -> per-run local pipe ->
+backend `VideoHub` -> owner WS `/api/v1/device/video?projectId=` -> UI worker (WebCodecs). Code:
+`core/aas_device/video_relay.py`, `apps/backend/main.py` (device_video), `apps/desktop/src/lib/video.ts`, `lib/mirror.ts`.
+
+- **Assets**: the pixels of the studio emulator (may show app data the owner types); backend availability (threads,
+  memory, CPU of the accept/read loops); UI availability (decoder worker, memory); the owner token (WS auth); the per-run
+  pipe key.
+- **Attackers**: (A1) another local process of the same user or a sandboxed app that can open named pipes and tries to
+  inject frames or block the pipe; (A2) the generated app / emulator guest shaping the h264 stream (oversize NALs, huge
+  dimensions, bursts); (A3) a web page or preview frame trying the video WS (cross-origin, no token); (A4) the agent CLI
+  trying to read the pipe key; (A5) a slow or stalled peer exhausting buffers.
+- **Controls**: random pipe name (128-bit) + per-run 256-bit key, HMAC challenge both ways before any byte, each
+  connection's handshake in its own short-lived thread with AUTH_TIMEOUT 2 s, at most 4 pending handshakes, wrong key
+  throttled, one sender per run, only `recv_bytes(MAX_CHUNK + 8)` (nothing unpickled), message < 8 bytes or > 64 KiB + 8
+  drops the sender; pipe chunks carry a seq, a gap (host seq jump, launcher drop mark) is a discontinuity: drop until
+  the next IDR + throttled key-frame request; 2 MiB/s + 2 MiB burst per project, NAL <= 1 MiB, GOP cache <= 2 MiB,
+  late-viewer prime <= 2 MiB (counted apart from the 4 MiB live queue), <= 2 viewers per project; the WS has the /events
+  boundary (token, exact Host, Origin, `aas.v1` echoed, never the token), 4422/4404/4429, binary frames = 4-byte seq +
+  whole NALs <= 64 KiB, nothing read from the client; UI: frame/budget caps close the socket, seq gap or decoder error
+  -> reconnect with a bounded doubling backoff (0.5 -> 8 s), 2 MiB parser buffer, decoder queue cap, frames above
+  4096x4096 stop the decoder; the key lives only in the MCP child's env, never the CLI's; run end closes the pipe and
+  drops the project's cached stream (the WS stays open and idle, no stale GOP).
+- **Probes** (tests/wiring/test_s8_video_relay.py, tests/wiring/test_s8_review_fixes.py, tests/ui/unit/s8_*.test.ts,
+  tests/ui/e2e/s8_mirror_captures.spec.ts):
+  PV1 wrong key -> refused, nothing relayed [+] right key relays. PV2 staller connects and never answers -> an honest
+  sender connects and relays within AUTH_TIMEOUT + 1 s, the staller is cut, `authTimeouts` 1, no `aas-video*` thread left
+  after close_run [+] the honest sender alone. PV3 oversize chunk / message without the seq header -> sender dropped
+  [+] 64 KiB chunk accepted. PV4 seq gap at the hub -> nothing until the next IDR, SPS + PPS in front of it, key request
+  sent once (throttled) [+] contiguous seq passes unchanged. PV5 launcher queue full -> whole chunks dropped, the next one
+  marked `gap`. PV6 WS without token / wrong token / foreign Origin / foreign Host / without aas.v1 -> 4401/4403/4421/4400
+  [+] owner socket accepted. PV7 project B's socket sees nothing of project A. PV8 rate cap, NAL cap, slow viewer -> whole
+  NALs dropped, resync at IDR. PV9 late viewer: prime above 2 MiB withheld, prime below it not counted against the live
+  queue [+] live NAL after the prime arrives. PV10 UI: seq gap / headerless frame / oversize frame / over budget -> socket
+  replaced; decoder error -> resync -> new decoder live again; resync backoff bounded [+] contiguous frames forwarded.
+  PV11 run end -> a later viewer gets no cached GOP [+] the next run's stream resumes on the same socket.
+- **Accepted residuals** (owner decision recorded with S8): (R1) **the pipe key is in the run's mcp.json** under the data
+  root for the run's lifetime (same exposure as the run grant secret: readable by any process of the owner's account;
+  never in the agent CLI's env, test `test_runner_opens_a_video_pipe_per_run_and_closes_it`); a holder of the key can
+  only inject video into that run's project mirror, within the caps above; (R2) the device host has no "fresh key frame" op:
+  the hub's key request is forwarded to `session.video_keyframe` only when the session has it, so today recovery waits
+  for screenrecord's next IDR (cached SPS/PPS are reused); (R3) external MCP sessions have no mirror.

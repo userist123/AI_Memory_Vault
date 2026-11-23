@@ -158,3 +158,14 @@ Update 2026-11-23 (S8 done, local commits on claude/ai-app-studio, nothing pushe
   modes + gen_vendored --check OK. Live part skipped: C: 7.8 GB free (< 8 GB rule); 0 emulator launches.
 - Open: live check of mirror + modal flag and S8-live.png when C: >= 8 GB; external MCP has no mirror; real paid agent run.
 - Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S8 review fixes M1, L1-L4, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S8.md
+- M1 mirror recovery: every SPS/PPS reaches synced viewers; pipe chunks and WS frames carry a seq, a gap = drop until the
+  next IDR + key request (hub) / reconnect with bounded backoff (client); launcher queue drops whole chunks and marks the
+  gap; decoder error -> VideoClient.resync -> primed SPS/PPS + GOP -> new decoder. L1 handshake 2 s per connection off the
+  accept loop, no leaked thread. L2 prime <= 2 MiB counted apart from the live queue; client budget prime + live. L3 run
+  end drops the cached stream, per-project WS stays open (documented). L4 THREAT_MODEL "S8 surface" (PV1-PV11, R1-R3).
+- Verified: uv run pytest -q 561 passed / 20 skipped (Docker up); tsc clean, vitest 111, Playwright 15; check_vendored
+  both modes + gen_vendored --check OK. No emulator launch.
+- Open: device host "fresh key frame" op (R2); external MCP without mirror; real paid agent run.
+- Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
