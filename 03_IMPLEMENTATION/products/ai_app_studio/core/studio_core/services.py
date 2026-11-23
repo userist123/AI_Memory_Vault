@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeVar
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from . import activity, audit, project_kind
@@ -50,6 +50,7 @@ from .workspace import Workspace
 
 T = TypeVar("T")
 _AUDIT_THREAD_LOCK = threading.RLock()
+MAX_APPROVALS_PER_AGENT = 50  # O8: approval records (any status) one agent identity / run may create
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.\-]{0,63}$")
 
 
@@ -239,6 +240,12 @@ class Studio:
     def request_approval(self, actor: Actor, operation: str, params: dict[str, Any],
                          project_id: str | None = None) -> dict[str, Any]:
         with self.audit_session() as s:
+            if actor.kind == "agent":  # O8: one agent identity (= one run) cannot flood the owner with approvals
+                n = s.execute(select(func.count()).select_from(Approval)
+                              .where(Approval.requested_by == actor.label)).scalar_one()
+                if n >= MAX_APPROVALS_PER_AGENT:
+                    raise PolicyDenied("too many approval requests from this agent run",
+                                       limit=MAX_APPROVALS_PER_AGENT)
             a = Approval(id=new_id("apr"), operation=operation, project_id=project_id,
                          request_hash=request_hash(operation, params), requested_by=actor.label,
                          params=audit.redact(params))

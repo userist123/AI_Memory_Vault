@@ -6,6 +6,8 @@ import {
   type Template,
   exportProject,
   createProject,
+  errorText,
+  projectTitle,
   decideApproval,
   decidePlan,
   getPlanGate,
@@ -223,11 +225,11 @@ export function App() {
     setRunBusy(true);
     setRunError("");
     void (async () => {
-      const pid = projectId || (await createProject(session, prompt.slice(0, 40).trim() || "Studio project", template));
+      const pid = projectId || (await createProject(session, projectTitle(prompt), template));
       await startRun(session, pid, prompt);
       if (!projectId) setProjects(await listProjects(session));
     })()
-      .catch(() => setRunError("The run could not be started."))
+      .catch((e: unknown) => setRunError(`The run could not be started: ${errorText(e)}`))
       .finally(() => setRunBusy(false));
   };
   const onStopRun = () => {

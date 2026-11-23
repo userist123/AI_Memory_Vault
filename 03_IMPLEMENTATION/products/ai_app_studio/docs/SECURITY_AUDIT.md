@@ -42,6 +42,10 @@ Cargo.lock files. `cargo audit` is not installed either.
 None by this audit (audit-only scope). Earlier rounds fixed B3, B4, B6, B8, B9, B11, B12 and the S9a/S9b/S9c review
 findings (see `docs/FINAL_GATE_ROUND1.md`, `docs/slices/S9*.md`).
 
+Follow-up (final fix slice, 2026-11-23, after this audit): O1 closed by the B2 probe (PASS, residual recorded), O3 by
+the B1 real run (PASS after the auto-memory fix), O2 by the B7 probe (PASS, no fix needed), O6-O8 fixed, O9 accepted.
+Status per row in the "Status" note under the table and in `docs/FINAL_GATE_ROUND2.md`.
+
 ## Open findings
 
 | # | Severity | Finding | Why open | Owner action needed |
@@ -55,6 +59,20 @@ findings (see `docs/FINAL_GATE_ROUND1.md`, `docs/slices/S9*.md`).
 | O7 | low | FastAPI 422 bodies echo the rejected input (C14). Only the token holder can reach them | hygiene | optional: custom `RequestValidationError` handler without `input` |
 | O8 | low | No cap on the number of approval / plan records an agent run can create (bounded indirectly by `--max-turns` / `--max-budget-usd`, `core/aas_runner/claude.py:92`) | hygiene | optional: per-run cap on pending approvals |
 | O9 | low | Rust advisories, informational only: `chrono 0.4.45` RUSTSEC-2026-0543 (unmaintained, via `serde_with`), `proc-macro-error 1.0.4` RUSTSEC-2024-0370 (unmaintained, via gtk macros), `glib 0.18.5` RUSTSEC-2024-0429 / GHSA-wrw7-89jp-8q8g (unsound iterator, fixed in 0.20). `glib`/`proc-macro-error` are pulled only by the GTK/webkit2gtk stack (Linux targets); none is compiled into the Windows build | upstream tauri/wry pins | none for v1; re-check when tauri moves to gtk-rs 0.20 |
+
+Status after the final fix slice (2026-11-23):
+
+| # | Status | Evidence |
+|---|---|---|
+| O1 | closed (PASS) | B2 real-WebView2 probe: every IPC channel from the preview iframe blocked; residual "wry injects the IPC scripts into subframes on Windows; blocked by CSP + ACL" accepted (`docs/slices/B2-webview2.md`) |
+| O2 | closed (PASS) | `tests/runner/test_b7_isolation_probe.py`, real CLI 2.1.330: plain `claude -p` loads the fixture hook, plugin, skill and agent (control); the runner flags load none and no hook fires. No new flag needed (`disableAllHooks` + `--setting-sources ""` already cover them) |
+| O3 | closed (PASS) | B1 budget-capped real run ($0.12, 8 turns) after the auto-memory fix (`docs/slices/B1-real-run.md`) |
+| O4 | open | image rebuilds need C: >= 10 GB free |
+| O5 | open | CI first run, installed-mode e2e (or v1 = repo mode decision), fresh live local gate |
+| O6 | fixed | `apps/backend/headers.py` (outermost middleware): `nosniff`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` on every API response incl. boundary rejects, 404 and 422; `tests/security/test_audit_lows.py` |
+| O7 | fixed | custom `RequestValidationError` handler: `{"error":"validation_failed","message":"request validation failed","details":{"fields":[...]}}`, field names only, no input; same test file |
+| O8 | fixed | `services.request_approval` refuses (403 `policy_denied`) an agent identity (one run) that already created 50 approval records; owner not capped; `tests/unit/test_o8_approval_cap.py` |
+| O9 | accepted | the three Rust advisories are informational (two "unmaintained", one unsound iterator in `glib` 0.18); `glib` and `proc-macro-error` are compiled only for the Linux GTK/webkit2gtk stack, not into the Windows build; `chrono` is pulled by tauri via `serde_with` and no advisory affects the API we use. No fixed version is reachable without a tauri/gtk-rs upgrade. Re-check at each tauri bump |
 
 Accepted residuals already recorded with the owner (unsigned installer and exe, host-build trust of ~430 vendored
 crates, R-EXT WSL root, Gradle TOFU, manifest trust, export scan pattern-based, grant/pipe key in `mcp.json`, debug-only
@@ -90,6 +108,9 @@ paths validated against traversal (preview + export link/junction checks); signe
 met - installer and generated exe are unsigned and there is no auto-update (accepted residual, owner-PC-only v1).
 
 ## Verdict
+
+Update after the final fix slice: O1, O2, O3 closed (PASS), O6-O8 fixed, O9 accepted; production ready still NO until
+O4 and O5 are done (see `docs/FINAL_GATE_ROUND2.md`). Original verdict:
 
 Production ready: NO - all 19 checks are PASS or N/A, but three high items specific to this desktop app are still open:
 O1 (the real-WebView2 iframe IPC probe B2 has not run), O2 (owner hooks/plugins under the runner profile not probed,

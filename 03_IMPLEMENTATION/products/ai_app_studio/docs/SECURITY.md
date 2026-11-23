@@ -1,7 +1,8 @@
 # AI App Studio — security controls, residuals, owner-machine notes
 
-Status: as built at S9a (2026-11-23). Threat model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`.
-Final-gate findings: `docs/FINAL_GATE_ROUND1.md`. This file is cited by `apps/backend/security.py`.
+Status: as built at S9c + B1/B2 live checks + final fix slice (2026-11-23; B7 probed, audit lows O6-O8 fixed). Threat
+model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate findings: `docs/FINAL_GATE_ROUND1.md`,
+`docs/FINAL_GATE_ROUND2.md`; audit: `docs/SECURITY_AUDIT.md`. This file is cited by `apps/backend/security.py`.
 
 ## 1. Controls
 
@@ -30,6 +31,13 @@ Final-gate findings: `docs/FINAL_GATE_ROUND1.md`. This file is cited by `apps/ba
 - Memory isolation (S9 probe, CLI 2.1.330): with a fixture user `~/.claude/CLAUDE.md` and a `CLAUDE.md` above the cwd,
   the runner argv sends neither marker to the model API and writes no session transcript; a plain `claude -p` sends
   both (positive control). Test: `tests/runner/test_s9_runner.py` (loopback API, dummy key, no cost).
+- Owner extensions (B7 probe, CLI 2.1.330): with a fixture user config holding a SessionStart/UserPromptSubmit hook,
+  an enabled plugin (local directory marketplace), a user skill and a user agent, plain `claude -p` loads all four and
+  the hook fires (positive control); with the runner argv + settings (`disableAllHooks`) + env none is listed in init
+  and no hook fires. Only CLI-bundled ("builtin") plugins/skills stay listed; init offers no tool outside the studio
+  catalogue, so they cannot be invoked. Test: `tests/runner/test_b7_isolation_probe.py` (real CLI, no login, no cost).
+- Agent images are capped at 512 KiB after base64 encoding; one stream-json line is capped at 2 MiB (N1).
+- One agent run can create at most 50 approval records (O8, `services.MAX_APPROVALS_PER_AGENT`).
 - One live run at a time (S9, B6): a second start answers 409 `run_in_progress`.
 - The first stream-json line must be a valid `system/init` naming only the studio MCP server and catalogue tools.
 - Every MCP call is bound to the run's project by a per-run grant; writes/deletes/builds need an approved plan (P5f).
@@ -98,12 +106,12 @@ Final-gate findings: `docs/FINAL_GATE_ROUND1.md`. This file is cited by `apps/ba
 | GPU | `swiftshader_indirect` renders the guest correctly (screencap, S9 live check); the visible WSLg window was not inspected by eye in that check | confirm in the next live session; fall back to `-gpu host` = residual (gfxstream / virglrenderer guest-to-host GL path, WSL `/dev/dxg`) |
 | ipv6=off | The emulator accepts `restrict=on,ipv6=off` on both NICs (qemu argv checked live); the guest-side IPv6 check did not run | next local-gate run |
 | Loopback listeners | Inside the device namespace the emulator listens on a few random loopback ports besides console/adb | namespace-private, not reachable from Windows |
-| Runner profile (B7) | The runner keeps the owner's real `USERPROFILE` / `HOME` / `APPDATA` (the CLI needs the owner's login). The S9 marker probe covers CLAUDE.md memory and session transcripts only; user hooks, plugins, skills and agents under the owner's `~/.claude` were NOT probed. `--setting-sources ""` + the studio `--settings` should keep user settings (and so user hooks) out, but an owner hook/plugin that the installed CLI still loads would run with the owner's rights | S9a review: recorded residual. Next: extend the marker probe with a fixture `~/.claude` holding a hook, a plugin, a skill and an agent (positive control: plain `claude -p` loads them), or run the CLI with a studio-owned profile copy holding only the credentials |
+| Runner profile (B7) | The runner keeps the owner's real `USERPROFILE` / `HOME` / `APPDATA` (the CLI needs the owner's login). Probed at the final fix slice (CLI 2.1.330): owner user hooks, plugins, skills and agents do not load under the runner flags (positive control loads all four; `tests/runner/test_b7_isolation_probe.py`); CLAUDE.md memory, auto-memory and transcripts were probed earlier (S9, B1). Remaining: a future CLI version could add a new user-scope extension type that `--setting-sources ""` / `disableAllHooks` do not cover | accepted: the probe runs with the real CLI in every local `uv run pytest`; re-run it after each CLI update. Stronger option kept for later: a studio-owned profile holding only the credentials |
 | Unsigned exe (S9c) | The generated desktop exe is not code-signed: SmartScreen warns on another PC and tampering is not detected by Windows | export is owner-approved and bound to the exe sha256 (printed in the result); signing = later, with the studio installer |
 | Host-build trust (S9c) | The desktop build runs on the Windows host, not in a container: the build scripts and proc-macros of the ~430 vendored crates (tauri, wry, windows, ...) run with the owner's rights. Integrity: cargo verifies every vendored crate against the Cargo.lock checksum (detects damage, not tampering by a writer: `.cargo-checksum.json` sits in the same dir); tampering is detected by a studio-held per-file sha256 manifest (outside the vendor dir) checked before every build and prevented by the owner-only root (ACL checked: other accounts cannot write it or replace it through a parent); no `.cargo` config in a parent of the build dir, cargo `--config` pins no rustc wrapper, studio CARGO_HOME config; the vendor step itself used the network once (TOFU on crates.io at that moment). The agent's only input is the dist (data embedded by tauri-codegen, which parses index.html for CSP hashes); the target dir is shared across projects (studio-owned) | accepted for v1 (same crates as the studio shell); later: build in a Windows container / sandbox user, `cargo vet` / audit of the lock |
 | No NSIS for apps (S9c) | Generated desktop apps ship as a bare exe (no installer, no uninstall entry); they need the WebView2 runtime | NSIS needs tauri-cli + a download at bundle time (not offline): later |
 | Second account | The pipe DACL test cannot simulate a second Windows account | manual check (docs/slices/S9.md) |
-| WebView2 iframe IPC | Same-origin iframe IPC (GHSA-57fm-592m-34r7 class) is avoided by keeping previews cross-origin | real-WebView2 probe B2 still to run |
+| WebView2 iframe IPC | Same-origin iframe IPC (GHSA-57fm-592m-34r7 class) is avoided by keeping previews cross-origin. B2 probe (real WebView2) PASS: every IPC channel from the preview iframe is blocked; wry still injects the IPC scripts into subframes on Windows | accepted: blocked by the CSP and the Tauri ACL (iframe origin refused); `docs/slices/B2-webview2.md` |
 
 ## 3. Owner machine recommendations (not changed automatically)
 - `%UserProfile%\.wslconfig`, section `[wsl2]` (keys documented at learn.microsoft.com/windows/wsl/wsl-config):

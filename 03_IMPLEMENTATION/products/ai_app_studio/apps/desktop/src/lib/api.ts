@@ -1,8 +1,50 @@
 /** REST client for http://127.0.0.1:17875/api/v1 (Bearer token). Responses are size-capped and validated. */
 import type { Session } from "./session";
-import { inspect, inspectList, SHORT_CAP } from "./sanitize";
+import { clean, inspect, inspectList, SHORT_CAP } from "./sanitize";
 
 const MAX_BODY = 1024 * 1024;
+const MAX_ERROR_BODY = 16 * 1024;
+
+/** A non-2xx API reply. `serverMessage` is the server's `message` field, sanitised and capped ("" if none). */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly serverMessage: string;
+  constructor(status: number, serverMessage: string) {
+    super(serverMessage ? `${serverMessage} (HTTP ${status})` : `HTTP ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.serverMessage = serverMessage;
+  }
+}
+
+async function apiError(res: Response): Promise<ApiError> {
+  let msg = "";
+  try {
+    const text = (await res.text()).slice(0, MAX_ERROR_BODY);
+    const body = JSON.parse(text) as unknown;
+    if (body && typeof body === "object") msg = clean((body as { message?: unknown }).message, SHORT_CAP).trim();
+  } catch {
+    msg = "";
+  }
+  return new ApiError(res.status, msg);
+}
+
+/** Sanitised, capped text of any thrown value, for an error line in the UI (React text node only). */
+export function errorText(e: unknown): string {
+  if (e instanceof ApiError) return e.message;
+  if (e instanceof Error) return clean(e.message, SHORT_CAP).trim() || "unknown error";
+  return "unknown error";
+}
+
+/**
+ * A project title the backend accepts (^[A-Za-z0-9][A-Za-z0-9 _.-]{0,63}$) from the first words of a prompt:
+ * accents folded, every other character dropped, spaces collapsed, at most 40 chars; "App" when nothing is left.
+ */
+export function projectTitle(prompt: string): string {
+  const folded = (typeof prompt === "string" ? prompt : "").slice(0, 400).normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  const t = folded.replace(/[^A-Za-z0-9 _.\-]+/g, " ").replace(/\s+/g, " ").replace(/^[^A-Za-z0-9]+/, "").slice(0, 40).trim();
+  return t || "App";
+}
 
 async function request(s: Session, path: string, init?: RequestInit): Promise<unknown> {
   const res = await fetch(`${s.apiBase}/api/v1${path}`, {
@@ -12,7 +54,7 @@ async function request(s: Session, path: string, init?: RequestInit): Promise<un
     redirect: "error",
     referrerPolicy: "no-referrer",
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw await apiError(res);
   const text = await res.text();
   if (text.length > MAX_BODY) throw new Error("response too large");
   return text ? (JSON.parse(text) as unknown) : null;

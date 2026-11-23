@@ -46,6 +46,7 @@ from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
 from .security import MIN_TOKEN_CHARS, BoundaryMiddleware  # noqa: E402
+from .headers import install as install_api_hygiene  # noqa: E402
 
 OWNER = Actor("human", "owner", "rest")
 HOST = "127.0.0.1"  # fixed: there is no setting, flag or env var that changes the bind address
@@ -418,6 +419,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     hosts = (f"{HOST}:{settings.api_port}", f"localhost:{settings.api_port}", *extra_hosts)
     app.add_middleware(BoundaryMiddleware, token=token, allowed_hosts=hosts,
                        allowed_origins=settings.allowed_origins, max_body=settings.max_body_bytes)
+    install_api_hygiene(app)  # O6/O7: security headers on every response (outermost), 422 without the input
     return app
 
 
