@@ -309,7 +309,7 @@ public static class Correlation
         var excludedPaths = events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 5007)).Select(e => ExcludedPathOf(F(e, "New Value", "NewValue")))
             .Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         // Team A G1: the 1116/1117 resource is classified (file / AMSI / command line / behaviour / registry / web); only a file has a file name.
-        // DEF-DETECTION is grouped by FILE NAME (or by AMSI process) across threat sets: one finding lists each threat with its first/last detection and count.
+        // DEF-DETECTION is grouped by FILE NAME (or by AMSI process, or by threat set for command lines) across threat sets: one finding lists each threat with its first/last detection and count.
         var defPaths = new List<(string Path, string Kind, string GroupKey, List<TimelineEvent> Events, List<string> Threats, int DetCount, (bool Resolved, string Text) Outcome, bool Build, Func<string, Finding> Make)>();
         foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 1116, 1117, 1006, 1007, 1015, 1118, 1119))
                                 .GroupBy(e => DefenderResource(F(e, "Path")).Kind + "|" + DefenderResource(F(e, "Path")).Value, StringComparer.OrdinalIgnoreCase))
@@ -318,13 +318,15 @@ public static class Correlation
             var first = ordered[0];
             var (kind, value) = DefenderResource(F(first, "Path"));
             var procName = WinPath.GetFileName(F(first, "Process Name").Trim().TrimEnd('\\'));
+            var threats = ordered.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var groupKey = kind switch
             {
                 "file" => "file|" + WinPath.GetFileName(value.TrimEnd('\\')).ToLowerInvariant(),
                 "amsi" => "amsi|" + procName.ToLowerInvariant(),
+                // Team E: command lines are grouped per distinct threat set (the command text differs on every run), not per command text.
+                "cmdline" when threats.Count > 0 => "cmdline|" + string.Join("|", threats.Select(t => t.ToLowerInvariant()).OrderBy(t => t, StringComparer.Ordinal)),
                 _ => kind + "|" + value.ToLowerInvariant(),
             };
-            var threats = ordered.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var detections = ordered.Where(e => DefenderDetectionIds.Contains(e.EventId)).ToList();
             int detCount = detections.Count > 0 ? detections.Count : ordered.Count;
             var outcome = DefenderOutcome(ordered, threats);
