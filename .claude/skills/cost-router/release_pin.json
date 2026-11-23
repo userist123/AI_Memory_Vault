@@ -1,5 +1,5 @@
 {
-  "commit": "f60bc3a202645d072b05811043057d7da1d5d754",
+  "commit": "37d6c4a23678fcbf1d06a5ccfc155638cdd321b4",
   "files": {
     ".claude/agents/Explore.md": "071e47fdf97105de10d1169d392c97eb124377908e584234db891354998a5b19",
     ".claude/agents/check-runner.md": "65167c8e85c1d63cc5a08e69b90001eebc7e03ef7b872849fa4c4f5c33d5b74b",
@@ -9,7 +9,7 @@
     ".claude/agents/test-author.md": "976665d1e8eceb4de5a12c73664c416aed37173d875e2d722060013a6e015f71",
     ".claude/agents/vault-reviewer.md": "44d898a5e1448547233f979f16372bfa60d553181470c741a3de8b600ab5804f",
     ".claude/agents/vault-worker.md": "5896ba5545d342081e83100afa6e28bb801a91d61112e25d2720529ae7af9432",
-    ".claude/skills/cost-router/SKILL.md": "f2b581dd1c2e952c36553d2d19773f0a2f4a635ddea63afdd0b6fc7e6f37bee1",
+    ".claude/skills/cost-router/SKILL.md": "20bad108b6b3547b8212bbcc3dc2c80cfc7c989ca5c1326bf4a409fb17335e9d",
     ".claude/skills/cost-router/chat/SKILL.md": "8a4775d1e44e567aadf8d0783b789158019e0d2cc0578b3ec472ca889dbcd312",
     ".claude/skills/cost-router/hook_agent_model.py": "64cd77aec91cabf9acfdcaf1f70170283962032b1aa3490a72bfcf4fbabea508",
     ".claude/skills/cost-router/hook_agent_usage.py": "8845a687a9ea96c7e358b98974dc975fe36b574a13c8df49145110d26c139cd8",
@@ -18,7 +18,7 @@
     ".claude/skills/cost-router/hook_repo_map.py": "150f66d0682b728f14f1d861dc0774646b795660488dd1a8dbe8c12d92d55e87",
     ".claude/skills/cost-router/hook_resume_guard.py": "6a65256804e943afe9fcda317863e6a449ca718212b8d2e596845a3f361a9309",
     ".claude/skills/cost-router/hook_self_update.py": "51d6791288a6545c722f4cf93d19ebc380af89348cac17e0f1c1e245a1050f8a",
-    ".claude/skills/cost-router/install.py": "c3c15509d63fee9adacfe34e595976a527dd13346c7dfd2df6a80e01d2963ec9",
+    ".claude/skills/cost-router/install.py": "0d1fa435c03659b94a0bdda7c340f192869e2acc82275388bf54acfb67ba9d5f",
     ".claude/skills/cost-router/lib/check.py": "887aab92a2d754d9f35880910cc7dd26e132bd9441be490251d52e706ae6d2c9",
     ".claude/skills/cost-router/lib/local_llm.py": "b5280a156f56ef6d8d70c52a2f4eb11bd2f604cfc258a093f29340823958bf75",
     ".claude/skills/cost-router/lib/registry_compile.py": "32e129005cfd196981c937b1599945ad9376a021261239c5b334846bb3bb8cfc",
@@ -29,10 +29,16 @@
     ".claude/skills/cost-router/lib/specialists.py": "f657ee867646c90b001c3087e6d9993744d2f6c89e52289642f61b1af5737b6e",
     ".claude/skills/cost-router/lib/transcript_usage.py": "154aa702b57ce9056e6da8d2e185bef2841341a61c979c74f4a7709f1dfbf925",
     ".claude/skills/cost-router/lib/vault_router.py": "ca018aff4491770bfa41ede438421429d4f18c1a9b3d160dee52af56ad55a22d",
+    ".claude/skills/cost-router/references/budgets-metrics.md": "adacedb68eae95e0d786a676ec6d497e7cfdbd9f1c6fea3f55e9a908815d408b",
+    ".claude/skills/cost-router/references/checkpoint.md": "4b37eee7c7f5337c945036336f4c9f60f78742b7e68acf46fbef214b34d4a65c",
+    ".claude/skills/cost-router/references/context.md": "cd196e2e8367bea2437b671f7dac40e8cde46a70cd17c4af1e75e98feb062f83",
+    ".claude/skills/cost-router/references/enforcement.md": "0d912af6e8dec7c56fb8b89c64f285c868749e4bf5fa8c93897f28c1cc71fffc",
+    ".claude/skills/cost-router/references/escalation.md": "b28ad7da19a304e792fc5c662c426a106c0bcbb514504c0203dfb78e4a1ed37f",
+    ".claude/skills/cost-router/references/fan-out.md": "a965af055a87c72355a4dc3709ff452cdf04eee7bb72f04408e3d214ccd2002e",
     ".claude/skills/cost-router/registry_src/skills/agent-bridge/route.meta.json": "1ac8a042e1908d30b67119f82b596297e712097c4b00ff0c19c1c25352cb0c5f",
     ".claude/skills/cost-router/registry_src/skills/analist-juridic/route.meta.json": "98a059cc24f764b55dc6f5b2d57fa920badf0940b469bf69b34782ef84da1b11",
     ".claude/skills/cost-router/registry_src/skills/animatie-3d/route.meta.json": "a969385c19377870885a6037d6fd83bec167fbe62cb95abfb52435922b8b9f21",
-    ".claude/skills/cost-router/registry_src/skills/aplicatie-securizata/route.meta.json": "49f8b5aef356246db108b1a65687d7fab5797a03079dc8314bfcb277fd4c7a25",
+    ".claude/skills/cost-router/registry_src/skills/aplicatie-securizata/route.meta.json": "e89daa5c7ae5a334684daa430112838d49405c11abbdd6601af9ffb03e32eef7",
     ".claude/skills/cost-router/registry_src/skills/clip/route.meta.json": "bc22000a7710e37fd2f368cdcde934fefa873970ec23d27fe4b17ad1bea2018f",
     ".claude/skills/cost-router/registry_src/skills/clips-kitty/route.meta.json": "85c0792496bd9de42d174eb03a18fec60285952296b597fb62a3c4f5ae280b43",
     ".claude/skills/cost-router/registry_src/skills/cost-router/route.meta.json": "4b2e5569c9daf2c03652c8bc749a8a196afd030deb67ccef74763c6be5d55b0c",
@@ -50,7 +56,7 @@
     "03_IMPLEMENTATION/packages/routing/claude_model_router.py": "c0b7efaf70370624290688bdd0a1c1746614b6790224da94675891c958f6546f",
     "04_CONFIG/claude_model_routing.json": "c50d49e8d994199cbdc500c536d924463d67fcb4feca5abb19626c3db084438c"
   },
-  "files_sha256": "46d07c3af6868ab9b9cd9f5146aba918c2d69377bb2070b74e5a249c5b3d33cb",
+  "files_sha256": "6da184c13bc7849f8e4d3eeff72d091284d3a245927d09cb5a6aec22a069fbdf",
   "schema": 1,
-  "seq": 15
+  "seq": 16
 }
