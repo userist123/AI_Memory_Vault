@@ -20,6 +20,8 @@
     "CFG-OS-EOL": "Treceți la o versiune de Windows care încă primește actualizări (Setări → Windows Update) sau, dacă acest calculator nu poate trece la ea, scoateți-l din rețea sau izolați-l.",
     "CFG-UPDATES-STALE": "Deschideți Setări → Windows Update, instalați actualizările în așteptare și verificați de ce nu s-au instalat (pauză, politică, spațiu pe disc).",
     "CFG-SMB-SIGNING": "Cereți semnarea mesajelor SMB din Politica de securitate locală (Server de rețea Microsoft: comunicații cu semnătură digitală, întotdeauna) dacă nicio aplicație veche nu se opune.",
+    "CFG-PSV2": "Dezactivați caracteristica Windows PowerShell 2.0 (Activare sau dezactivare caracteristici Windows) dacă nicio aplicație veche nu o cere.",
+    "CFG-OS-INSIDER": "Folosiți o versiune Insider doar pe un calculator de test; pentru lucru zilnic instalați o versiune stabilă de Windows.",
     "SVC-UNQUOTED-PATH": "Cereți furnizorului o versiune corectată sau cereți unui specialist să pună calea serviciului între ghilimele.",
     "CFG-AUDIT-PROCESS": "Porniți auditarea pentru crearea proceselor (Process Creation): auditpol /set /subcategory:\"{0CCE922B-69AE-11D9-BED3-505054503030}\" /success:enable, ca evenimentele viitoare să fie înregistrate.",
     "CFG-AUDIT-LOGON": "Porniți auditarea pentru autentificări (Logon): auditpol /set /subcategory:\"{0CCE9215-69AE-11D9-BED3-505054503030}\" /success:enable /failure:enable, ca evenimentele viitoare să fie înregistrate.",

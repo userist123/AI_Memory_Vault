@@ -244,10 +244,15 @@ public static class ManualVerification
         // planner #14 E4: the Windows version values (CFG-OS-EOL) are also visible in winver and in the lifecycle page of Microsoft
         else if (rel.StartsWith(@"Microsoft\Windows NT\CurrentVersion\", StringComparison.OrdinalIgnoreCase) && Regex.IsMatch(rel, @"\\(CurrentBuild|EditionID|DisplayVersion|ProductName|UBR)$"))
             what = "valoarea cu cea din constatare" + quoteHint + "; versiunea se vede și în winver (Win+R → winver; etichetele „Versiune” și „Compilare SO” sunt localizate), iar data de sfârșit a serviciului se compară cu pagina Microsoft Lifecycle a versiunii (tabelul aplicației are data din constatare și poate fi depășit)";
+        // CFG-PSV2: the CBS package state is also checked with DISM (as administrator); the PowerShellEngine leftover value is not a proof
+        bool psv2 = rel.Contains("Microsoft-Windows-PowerShell-V2-Client-Package", StringComparison.OrdinalIgnoreCase);
         string differs = "stația live poate fi diferită de cea de la colectare: o diferență nu infirmă copia din caz";
 
         if (live.Length > 0)
             steps.Add(new("PowerShell", QueryOf(live, tail), $"{what}; {differs}" + (hive is "NTUSER" or "UsrClass" ? "; HKCU este al utilizatorului cu care ești conectat, deci se potrivește doar dacă este contul din constatare" : ""), true));
+        if (psv2)
+            steps.Add(new("PowerShell", "dism /online /get-featureinfo /featurename:MicrosoftWindowsPowerShellV2",
+                "rulează ca administrator; „State : Enabled” înseamnă că motorul este prezent, iar eroarea 0x800f080c înseamnă că a fost eliminat; stația live poate fi diferită de cea de la colectare", true));
         // planner #14 E6: a service key (SYSTEM\ControlSetNNN\Services\<name>) is also checked with the service control manager, which shows the path as Windows will use it
         if (hive == "SYSTEM" && Regex.Match(rel, @"^ControlSet\d{3}\\Services\\([^\\]+)$") is { Success: true } svc)
             steps.Add(new("PowerShell", $"sc.exe qc {Dq(svc.Groups[1].Value)}",

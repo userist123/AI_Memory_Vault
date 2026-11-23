@@ -273,7 +273,7 @@ public sealed class ConfigurationHardeningTests
     {
         var f = One(Evaluate(Winl("1", "kiosk", null)), ConfigurationAudit.RuleAutologon);
         Assert.Equal(Severity.Medium, f.Severity);
-        Assert.Contains("logare automată fără parolă stocată în registru (parola poate fi în LSA secrets", f.Description);
+        Assert.Contains("conectare automată fără parolă stocată în registru (parola poate fi în secretele LSA", f.Description);
         Assert.Equal("AutoAdminLogon = 1; DefaultUserName = kiosk; DefaultPassword = (lipsă)", f.SupportingEvidence[0].Quote);
         // an empty password value counts as no stored password
         Assert.Equal(Severity.Medium, One(Evaluate(Winl("1", "kiosk", "")), ConfigurationAudit.RuleAutologon).Severity);

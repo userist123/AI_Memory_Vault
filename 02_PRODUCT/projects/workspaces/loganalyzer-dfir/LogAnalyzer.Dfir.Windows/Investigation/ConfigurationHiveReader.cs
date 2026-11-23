@@ -173,6 +173,27 @@ public static class ConfigurationHiveReader
             h.Lists[label + "\\" + lk] = new ConfigNames(key?.Values.Select(x => x.Name).Where(x => x.Length > 0).ToList(),
                 key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)));
         }
+        if (label == "SOFTWARE") h.PowerShellV2Package = ReadPowerShellV2Package(reg);
         return h;
+    }
+
+    /// <summary>
+    /// The neutral (~amd64~~) CBS package of the PowerShell 2.0 client, found by NAME PREFIX under Component Based Servicing\Packages (the version suffix differs between builds).
+    /// Several versions: one that is installed (0x70) wins, otherwise the last by name. No such key (or no Packages key, as in the Quick subkey hives) = null.
+    /// </summary>
+    private static CbsPackage? ReadPowerShellV2Package(RawRegistry reg)
+    {
+        var packages = reg.OpenKey(ConfigurationAudit.CbsPackagesKey);
+        if (packages is null) return null;
+        CbsPackage? best = null;
+        foreach (var name in packages.SubkeyNames.Where(n => n.StartsWith(ConfigurationAudit.Psv2PackagePrefix, StringComparison.OrdinalIgnoreCase)).OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+        {
+            var key = reg.OpenKey(ConfigurationAudit.CbsPackagesKey + "\\" + name);
+            if (key is null) continue;
+            uint? state = key.Value("CurrentState") is { Type: RawValue.RegDword } v && uint.TryParse(v.AsText, out var st) ? st : null;
+            var pkg = new CbsPackage(name, state, new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)));
+            if (best is null || state == ConfigurationAudit.CbsInstalled || best.CurrentState != ConfigurationAudit.CbsInstalled) best = pkg;
+        }
+        return best;
     }
 }

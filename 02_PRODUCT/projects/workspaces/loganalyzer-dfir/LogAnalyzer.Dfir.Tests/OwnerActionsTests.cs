@@ -13,7 +13,7 @@ public sealed class OwnerActionsTests
         ConfigurationAudit.RuleUac, ConfigurationAudit.RuleUacPrompt, ConfigurationAudit.RuleSmb1, ConfigurationAudit.RuleWdigest, ConfigurationAudit.RuleLsa,
         ConfigurationAudit.RuleDefenderOff, ConfigurationAudit.RuleDefenderExcl, ConfigurationAudit.RuleRdpNla,
         ConfigurationAudit.RuleFirewallOff, ConfigurationAudit.RuleRemoteRegistry, ConfigurationAudit.RuleAutologon, ConfigurationAudit.RuleTokenFilter, ConfigurationAudit.RuleAlwaysInstall,
-        ConfigurationAudit.RuleSmbSigning, "SVC-UNQUOTED-PATH", ConfigurationAudit.RuleOsEol, WindowsUpdateAudit.Rule, BitLockerAudit.Rule,
+        ConfigurationAudit.RuleSmbSigning, "SVC-UNQUOTED-PATH", ConfigurationAudit.RuleOsEol, ConfigurationAudit.RulePsv2, ConfigurationAudit.RuleOsInsider, WindowsUpdateAudit.Rule, BitLockerAudit.Rule,
         LocalSecurityAudit.RuleProcess, LocalSecurityAudit.RuleLogon, LocalSecurityAudit.RuleCredVal, LocalSecurityAudit.RuleGuest, LocalSecurityAudit.RuleExtraAdmins,
         LocalSecurityAudit.RuleNoPasswordRequired, LocalSecurityAudit.RulePasswordNeverExpires, LocalSecurityAudit.RuleBuiltinAdminEnabled,
         "PS-HISTORY-SUSPICIOUS", "HOSTS-REDIRECT", "HOSTS-SECURITY-DOMAIN", "LIVE-WMI-SUBSCRIPTION", "LIVE-STARTUP-FILE", "LIVE-STARTUP-LNK",
