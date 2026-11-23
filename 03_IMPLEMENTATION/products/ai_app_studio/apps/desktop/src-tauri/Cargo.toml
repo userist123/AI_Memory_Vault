@@ -1,0 +1,38 @@
+[package]
+name = "ai-app-studio"
+version = "0.1.0"
+description = "AI App Studio desktop shell"
+edition = "2021"
+rust-version = "1.77"
+publish = false
+
+[lib]
+name = "ai_app_studio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = [] }
+serde = { version = "1", features = ["derive"] }
+rand = "=0.8.8"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.59.0", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_JobObjects",
+  "Win32_System_Threading",
+  "Win32_System_IO",
+] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
