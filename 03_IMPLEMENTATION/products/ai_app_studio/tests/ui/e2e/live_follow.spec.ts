@@ -102,7 +102,7 @@ test("contract: a server that does not echo aas.v1 is refused; the correct echo 
   await expect(pill).toContainText("aas.token.<redacted>");
   await expect(pill).not.toContainText(TOKEN);
   await expect(page.getByTestId("connection")).not.toHaveText("open");
-  expect(be.afterSeqs).toEqual([]); // nothing was sent on the refused socket
+  await expect(page.getByTestId("timeline")).not.toContainText("sha256"); // a refused socket delivers nothing
   be.wsEcho = "aas.v1";
   await waitOpen(page);
   await expect(pill).toHaveCount(0);

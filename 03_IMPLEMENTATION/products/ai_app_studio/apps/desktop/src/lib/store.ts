@@ -1,6 +1,6 @@
 /** Activity state: a pure reducer over validated frames plus a tiny external store for React. */
 import { type ActivityEvent, P, isPreviewProjectId } from "./events";
-import { clean, TEXT_CAP } from "./sanitize";
+import { clean, inspect, TEXT_CAP } from "./sanitize";
 
 export type DeviceKind = "phone" | "tablet" | "desktop";
 export const DEVICES: Record<DeviceKind, { w: number; h: number; label: string }> = {
@@ -39,12 +39,6 @@ export interface FileView {
   removed: number;
   updatedAt: number;
 }
-export interface Plan {
-  planId: string;
-  title: string;
-  steps: string[];
-  decided: string | null;
-}
 export interface BuildLine {
   seq: number;
   text: string;
@@ -79,7 +73,6 @@ export interface State {
   runTitle: string;
   startedAt: number | null;
   endedAt: number | null;
-  plan: Plan | null;
   steps: Step[];
   files: Record<string, FileView>;
   fileOrder: string[];
@@ -109,7 +102,6 @@ export const initialState: State = {
   runTitle: "",
   startedAt: null,
   endedAt: null,
-  plan: null,
   steps: [],
   files: {},
   fileOrder: [],
@@ -253,19 +245,11 @@ function applyEvent(s0: State, e: ActivityEvent): State {
       }
       break;
     }
-    case "plan.proposed": {
-      s.plan = {
-        planId: P.id(e, "planId"),
-        title: P.text(e, "title", 300),
-        steps: P.list(e, "steps"),
-        decided: null,
-      };
-      break;
-    }
+    case "plan.proposed":
     case "plan.decided": {
-      if (s.plan && (P.id(e, "planId") === s.plan.planId || !P.id(e, "planId"))) {
-        s.plan = { ...s.plan, decided: P.short(e, "decision") || "decided" };
-      }
+      // never rendered from the event: the plan card comes only from the server record (GET /api/v1/approvals,
+      // kind "plan"); the event is just a signal to refetch
+      s.approvalsVersion = s.approvalsVersion + 1;
       break;
     }
     case "step.started": {
@@ -288,13 +272,13 @@ function applyEvent(s0: State, e: ActivityEvent): State {
       const row: ToolRow = {
         callId: P.id(e, "callId") || `c${e.seq}`,
         tool: P.short(e, "tool") || "tool",
-        target: P.text(e, "target", 500),
+        target: inspect(e.payload.target, 500).text,
         startedAt: ts,
         endedAt: null,
         ok: null,
         added: 0,
         removed: 0,
-        note: P.text(e, "input", 2000),
+        note: inspect(e.payload.input, 2000, false).text,
         sha256: "",
       };
       const tools = step.tools.concat(row).slice(-LIMITS.toolsPerStep);

@@ -3,7 +3,7 @@
  * stream, so the owner can watch what a run looks like without a backend. Approval cards still come from
  * "server records" (a local stand-in for GET /api/v1/approvals), never from the events.
  */
-import type { ApprovalRecord } from "./api";
+import type { ApprovalRecord, PlanRecord } from "./api";
 import { parseObject } from "./events";
 import type { Store } from "./store";
 
@@ -143,13 +143,32 @@ export const DEMO_APPROVAL: ApprovalRecord = {
   target: "kit/web/package.json",
   reason: "Needed for streak dates. Comes from the curated dependency kit.",
   runId: RUN,
+  unsafe: false,
+};
+
+export const DEMO_PLAN: PlanRecord = {
+  id: "plan-1",
+  title: "Build a habit tracker with a daily checklist",
+  steps: [
+    "Scaffold App.tsx with habit state",
+    "Add HabitList component",
+    "Install date-fns for streaks (needs approval)",
+    "Build, preview on phone/tablet/desktop, run QA taps",
+  ],
+  runId: RUN,
+  unsafe: false,
 };
 
 export interface DemoHandle {
   stop(): void;
 }
 
-export function runDemo(store: Store, onApprovals: (r: ApprovalRecord[]) => void, speed = 1): DemoHandle {
+export function runDemo(
+  store: Store,
+  onApprovals: (r: ApprovalRecord[]) => void,
+  speed = 1,
+  onPlans: (r: PlanRecord[]) => void = () => {},
+): DemoHandle {
   let seq = store.get().lastSeq;
   let i = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -173,6 +192,8 @@ export function runDemo(store: Store, onApprovals: (r: ApprovalRecord[]) => void
       if (r.ok) {
         store.dispatch({ type: "event", event: r.event });
         // the demo "server": a record exists between requested and decided
+        if (raw.kind === "plan.proposed") onPlans([DEMO_PLAN]);
+        if (raw.kind === "plan.decided") onPlans([]);
         if (raw.kind === "approval.requested") onApprovals([DEMO_APPROVAL]);
         if (raw.kind === "approval.decided") onApprovals([]);
       }

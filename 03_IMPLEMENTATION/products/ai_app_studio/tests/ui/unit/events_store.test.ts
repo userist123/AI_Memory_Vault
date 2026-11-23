@@ -136,3 +136,14 @@ describe("diff viewer target (App fallback)", () => {
     expect(pickShownFile("package.json", {}, [])).toBeNull();
   });
 });
+
+describe("frame size cap aligned with the backend payload cap (review S4 finding 6)", () => {
+  const frame = (n: number) => JSON.stringify({ seq: 1, prev: 0, kind: "agent.text", payload: { text: "a".repeat(n) } });
+  it("a frame carrying a maximal 8 KiB payload is accepted", () => {
+    expect(parseFrame(frame(8000)).ok).toBe(true);
+  });
+  it("a frame above 64 KiB is rejected before JSON.parse", () => {
+    const r = parseFrame(frame(70 * 1024));
+    expect(r.ok).toBe(false);
+  });
+});

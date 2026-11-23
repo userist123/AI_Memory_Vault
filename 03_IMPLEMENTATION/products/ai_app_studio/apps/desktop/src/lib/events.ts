@@ -40,8 +40,11 @@ export const KINDS = [
 export type Kind = (typeof KINDS)[number];
 const KIND_SET: ReadonlySet<string> = new Set(KINDS);
 
-/** Frames larger than this are discarded before JSON.parse (the backend caps payloads at 8 KiB). */
-export const MAX_FRAME_CHARS = 16 * 1024 * 1024;
+/**
+ * Frames larger than this are discarded before JSON.parse. The backend caps the payload JSON at 8 KiB
+ * (activity.py MAX_PAYLOAD_JSON) and the envelope is a few hundred bytes, so 64 KiB leaves wide headroom.
+ */
+export const MAX_FRAME_CHARS = 64 * 1024;
 
 export interface ActivityEvent {
   seq: number;
@@ -123,4 +126,22 @@ export const P = {
 const PROJECT_HOST_RE = /^[a-z0-9]{8,32}$/;
 export function isPreviewProjectId(id: string): boolean {
   return PROJECT_HOST_RE.test(id);
+}
+
+/** Server-side gap marker: {type: "gap", after, before} = rows after+1 .. before-1 are missing from the table. */
+export function parseGapFrame(raw: unknown): { after: number; before: number } | null {
+  if (typeof raw !== "string" || raw.length > MAX_FRAME_CHARS || !raw.includes('"gap"')) return null;
+  let o: unknown;
+  try {
+    o = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const g = o as Record<string, unknown>;
+  if (g.type !== "gap" || "kind" in g) return null;
+  const { after, before } = g;
+  if (typeof after !== "number" || typeof before !== "number") return null;
+  if (!Number.isSafeInteger(after) || !Number.isSafeInteger(before) || after < 0 || before <= after) return null;
+  return { after, before };
 }

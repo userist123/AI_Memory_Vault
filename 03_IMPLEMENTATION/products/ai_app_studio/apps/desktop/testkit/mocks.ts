@@ -1,5 +1,5 @@
 /**
- * Test-only mock backend for Playwright: REST /api/v1 + WS /api/v1/events (client offers subprotocols
+ * Test-only mock backend for Playwright: REST /api/v1 + WS /api/v1/events?afterSeq=N (client offers subprotocols
  * ["aas.v1", "aas.token.<token>"], the server echoes only "aas.v1"),
  * a preview origin server (Host must be p-<id>.localhost:<port>, DESIGN 4 CSP header on every response) and a
  * canary listener that counts every request it receives.
@@ -63,8 +63,9 @@ export class MockBackend {
       const offered = String(req.headers["sec-websocket-protocol"] ?? "")
         .split(",")
         .map((s) => s.trim());
+      const url = new URL(req.url ?? "/", "http://127.0.0.1");
       const ok =
-        req.url === "/api/v1/events" &&
+        url.pathname === "/api/v1/events" &&
         req.headers.host === `127.0.0.1:${PORTS.api}` &&
         req.headers.origin === UI_ORIGIN &&
         offered.includes("aas.v1") &&
@@ -74,7 +75,9 @@ export class MockBackend {
         socket.destroy();
         return;
       }
-      this.wss.handleUpgrade(req, socket, head, (ws) => this.onSocket(ws));
+      // contract (DESIGN 5.4): afterSeq is a query parameter of the upgrade URL, as in the backend's events(ws, afterSeq)
+      const after = Number(url.searchParams.get("afterSeq") ?? "0");
+      this.wss.handleUpgrade(req, socket, head, (ws) => this.onSocket(ws, Number.isSafeInteger(after) && after > 0 ? after : 0));
     });
     this.preview = createServer((req, res) => this.onPreview(req, res));
     this.canary = createServer((req, res) => {
@@ -126,26 +129,17 @@ export class MockBackend {
     for (const s of this.sockets) s.send(raw);
   }
 
-  private onSocket(ws: WebSocket): void {
+  private onSocket(ws: WebSocket, after: number): void {
     this.sockets.add(ws);
     ws.on("close", () => this.sockets.delete(ws));
-    ws.on("message", (data) => {
-      let msg: { afterSeq?: unknown };
-      try {
-        msg = JSON.parse(String(data)) as { afterSeq?: unknown };
-      } catch {
-        return;
+    this.afterSeqs.push(after);
+    let prev = after; // the first frame's prev is afterSeq itself (backend: sent = afterSeq)
+    for (const f of this.frames) {
+      if (f.seq > after) {
+        ws.send(JSON.stringify({ ...f, prev }));
+        prev = f.seq;
       }
-      const after = typeof msg.afterSeq === "number" ? msg.afterSeq : 0;
-      this.afterSeqs.push(after);
-      let prev = after;
-      for (const f of this.frames) {
-        if (f.seq > after) {
-          ws.send(JSON.stringify({ ...f, prev }));
-          prev = f.seq;
-        }
-      }
-    });
+    }
   }
 
   private cors(req: IncomingMessage, res: ServerResponse): boolean {

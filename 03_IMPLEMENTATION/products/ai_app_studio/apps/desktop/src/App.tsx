@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { type ApprovalRecord, decideApproval, decidePlan, fetchApprovals } from "./lib/api";
+import { type ApprovalRecord, type PlanRecord, decideApproval, decidePlan, fetchApprovals } from "./lib/api";
 import { DEMO_PROJECT, runDemo } from "./lib/demo";
 import { LiveClient } from "./lib/live";
 import { loadSession, previewOrigin, type Session } from "./lib/session";
@@ -55,6 +55,7 @@ export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionError, setSessionError] = useState("");
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
+  const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [approvalError, setApprovalError] = useState("");
   const [follow, setFollow] = useState(true);
   const [pausedUntil, setPausedUntil] = useState(0);
@@ -93,7 +94,8 @@ export function App() {
     if (!demo) return;
     store.dispatch({ type: "reset" });
     setApprovals([]);
-    const h = runDemo(store, setApprovals, speed);
+    setPlans([]);
+    const h = runDemo(store, setApprovals, speed, setPlans);
     void loadMirrorFixture().then(setMirrorStream);
     return () => h.stop();
   }, [demo, store, speed, demoRun]);
@@ -105,7 +107,8 @@ export function App() {
     fetchApprovals(session)
       .then((r) => {
         if (!live) return;
-        setApprovals(r);
+        setApprovals(r.approvals);
+        setPlans(r.plans);
         setApprovalError("");
       })
       .catch(() => live && setApprovalError("Approvals could not be loaded."));
@@ -147,7 +150,14 @@ export function App() {
     }
     if (session) void decideApproval(session, id, d).catch(() => setApprovalError("Decision failed."));
   };
-  const planId = state.plan?.planId ?? "";
+  const onPlanApprove = (id: string) => {
+    if (demo) setPlans((p) => p.filter((x) => x.id !== id));
+    else if (session) void decidePlan(session, id, "approve").catch(() => setApprovalError("Decision failed."));
+  };
+  const onPlanEdit = (id: string, note: string) => {
+    if (demo) setPlans((p) => p.filter((x) => x.id !== id));
+    else if (session) void decidePlan(session, id, "edit", note).catch(() => setApprovalError("Decision failed."));
+  };
 
   const runLabel =
     state.runStatus === "running"
@@ -219,15 +229,16 @@ export function App() {
             setBuildOpen={setBuildOpen}
             buildFocused={buildFocused && followActive}
             onOpenFile={(p) => setActiveFile(p)}
-            onPlanApprove={() => {
-              if (session && planId) void decidePlan(session, planId, "approve");
-            }}
-            onPlanEdit={(note) => {
-              if (session && planId) void decidePlan(session, planId, "edit", note);
-            }}
           />
         </div>
-        <ApprovalRegion records={approvals} error={approvalError} onDecide={onDecide} />
+        <ApprovalRegion
+          records={approvals}
+          plans={plans}
+          error={approvalError}
+          onDecide={onDecide}
+          onPlanApprove={onPlanApprove}
+          onPlanEdit={onPlanEdit}
+        />
       </aside>
 
       <main className="center">

@@ -16,7 +16,9 @@ const PAYLOADS = [
   `tag${TAG_A}chars`,
   "‮txt.exe",
 ];
-const BIG = "B".repeat(10 * 1024 * 1024);
+// the client rejects frames above 64 KiB (backend payload cap is 8 KiB); 40 KiB still gets text-capped
+const BIG = "B".repeat(40 * 1024);
+const OVERSIZE = "B".repeat(10 * 1024 * 1024);
 
 let be: MockBackend;
 test.beforeEach(async () => {
@@ -50,7 +52,9 @@ test.describe("P6a", () => {
       );
     }
     be.push({ kind: "agent.text", payload: { text: BIG } }, { kind: "build.log", payload: { line: BIG } });
+    be.pushRaw(JSON.stringify({ seq: be.lastSeq() + 1, prev: be.lastSeq(), kind: "agent.text", payload: { text: OVERSIZE } }));
     be.push({ kind: "step.started", payload: { title: "END-MARKER" } });
+    be.push({ kind: "tool.call", payload: { callId: "c-esc", tool: "code_write_file", target: PAYLOADS[5], input: PAYLOADS[5] } });
     await expect(page.getByText("END-MARKER")).toBeVisible();
     await page.getByTestId("build-log").getByRole("button").first().click(); // expand the log too
     await page.waitForTimeout(800);
@@ -68,7 +72,9 @@ test.describe("P6a", () => {
         active: document.querySelectorAll("#root img, #root a, #root script, #root object, #root embed").length,
         onAttrs: all.filter((e) => e.getAttributeNames().some((a) => a.startsWith("on"))).length,
         maxText,
-        hasEsc: text.includes("\u001b") || text.includes("]52;"),
+        hasEsc: text.includes(String.fromCharCode(27)) || text.includes(String.fromCharCode(7)),
+        // tool target/input show the raw code points as visible escapes
+        escapedShown: text.includes(String.fromCharCode(92) + "x1b]52;"),
         hasTag: [...text].some((c) => (c.codePointAt(0) ?? 0) >= 0xe0000 && (c.codePointAt(0) ?? 0) <= 0xe007f),
         hasBidi: /[‪-‮⁦-⁩]/.test(text),
         literal: text.includes("<script>window.__pwned=1</script>"),
@@ -80,6 +86,7 @@ test.describe("P6a", () => {
     expect(dom.active).toBe(0);
     expect(dom.onAttrs).toBe(0);
     expect(dom.hasEsc).toBe(false);
+    expect(dom.escapedShown).toBe(true);
     expect(dom.hasTag).toBe(false);
     expect(dom.hasBidi).toBe(false);
     expect(dom.literal).toBe(true); // markup visible as characters

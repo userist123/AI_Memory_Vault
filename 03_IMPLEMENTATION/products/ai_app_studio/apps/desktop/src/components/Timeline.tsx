@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BuildLine, Plan, State, Step } from "../lib/store";
+import type { BuildLine, State, Step } from "../lib/store";
 
 export function elapsed(from: number | null, to: number | null, now: number): string {
   if (from === null) return "";
@@ -16,59 +16,6 @@ function Pills({ added, removed }: { added: number; removed: number }) {
       <span className="pill add">+{added}</span>
       <span className="pill del">-{removed}</span>
     </span>
-  );
-}
-
-export function PlanCard(props: {
-  plan: Plan;
-  onApprove: () => void;
-  onEdit: (note: string) => void;
-}) {
-  const { plan } = props;
-  const [editing, setEditing] = useState(false);
-  const [note, setNote] = useState("");
-  return (
-    <section className="plan-card" data-testid="plan-card" aria-label="Plan gate">
-      <header>
-        <span className="eyebrow">Plan gate</span>
-        {plan.decided ? <span className="tag">{plan.decided}</span> : <span className="tag accent">waiting for you</span>}
-      </header>
-      <h3>{plan.title || "Proposed plan"}</h3>
-      <ol>
-        {plan.steps.map((s, i) => (
-          <li key={i}>{s}</li>
-        ))}
-      </ol>
-      {!plan.decided && (
-        <div className="row">
-          {editing ? (
-            <>
-              <textarea
-                value={note}
-                maxLength={4000}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="What should change in this plan?"
-              />
-              <button className="btn" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-              <button className="btn primary" onClick={() => props.onEdit(note)} disabled={!note.trim()}>
-                Send edit
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn" onClick={() => setEditing(true)}>
-                Edit
-              </button>
-              <button className="btn primary" onClick={props.onApprove}>
-                Approve plan
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -177,8 +124,6 @@ export function Timeline(props: {
   setBuildOpen: (v: boolean) => void;
   buildFocused: boolean;
   onOpenFile: (path: string) => void;
-  onPlanApprove: () => void;
-  onPlanEdit: (note: string) => void;
 }) {
   const { state, now } = props;
   const running = state.runStatus === "running";
@@ -189,8 +134,7 @@ export function Timeline(props: {
           {state.streamDropped} agent stream item(s) dropped by the server allow-list (not shown here).
         </div>
       )}
-      {state.plan && <PlanCard plan={state.plan} onApprove={props.onPlanApprove} onEdit={props.onPlanEdit} />}
-      {state.steps.length === 0 && !state.plan && (
+      {state.steps.length === 0 && (
         <p className="empty">{state.runStatus === "idle" ? "No run yet. Start one from Claude Code or the runner." : "Starting…"}</p>
       )}
       <ol className="steps">
