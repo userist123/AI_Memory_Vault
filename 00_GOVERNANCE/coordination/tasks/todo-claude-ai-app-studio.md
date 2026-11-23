@@ -1,16 +1,39 @@
 # todo-claude-ai-app-studio
 
-Task: AI App Studio — local AI app builder (phone/tablet/desktop) where the owner sees live on the desktop what the AI does.
-Branch/PR: claude/ai-app-studio (worktree D:\w\ai-app-studio), draft PR in this vault.
-Product dir: 03_IMPLEMENTATION/products/ai_app_studio. CI: .github/workflows/ai-app-studio.yml.
-Done: research (Codex + Gemini via agent-bridge), design + threat model (2 review rounds, implementation allowed),
-emulator spikes 1-2 (WSLg visible window, netns isolation, restrict=on), CI skeleton,
-S1 vendored core from AI Website Studio 25b3eab + ProjectKind seam + VENDORED.json check (N6), CI pytest via uv.
-S1 review fixes: restored security tests, generated VENDORED.json (scripts/gen_vendored.py), link-safe drift check,
-seam hardening (non-empty Publication.required, audited kind resolution, desktop capture Unavailable), uv sync --locked.
-S2 done (local, not pushed): AAS identity (AAS_* env, %LOCALAPPDATA%\AIAppStudio, ports 17875/17880), app kind + migration 0003 + appfiles allow-list,
-activity recorder (sanitiser, redaction, seq/prev), FastAPI backend + WS replay, MCP server ai-app-studio (off by default, PX1), backlog L1/L2/L4.
-Owner rule: everything is built and tested on the PC until the app is complete; final gate = fable-consultant verifies the whole app,
-open questions go via agent-bridge to Codex and Gemini, fix and repeat until clean, only then push + PR + vault CI + merge.
-Next: S3 = build pipeline (Docker, offline web build) + preview server + CSP header.
-Key files: docs/CHECKPOINT.md, docs/DESIGN.md, docs/THREAT_MODEL.md, docs/RESEARCH_2026-11-22.md, spike/EMULATOR_SPIKE.md.
+Task: AI App Studio — local AI app builder (phone/tablet/desktop); owner sees live on the desktop what the AI does.
+Owner rules: build and test everything on the PC (local commits only, NO push) until complete; final gate =
+fable-consultant verifies the whole app, its questions go via agent-bridge to Codex (ChatGPT) + Gemini, fix and
+repeat until clean, then security-lockdown skill, then push + PR #413 + vault CI + merge. Parallel slices allowed
+(owner, 2026-11-23) with per-slice worktrees and file ownership.
+
+Branches (all local, base 6254ee9c6 unless noted):
+- claude/ai-app-studio @ 39da19a45 (D:/w/ai-app-studio): S1 core+seam (merged here), S2 app kind/AAS identity/
+  backend/activity/MCP — round-2 review VERIFIED, merge-ready. Follow-ups for S6: F1 audit.redact hash exemption,
+  F2 sanitise audit keys before secret-key check, F3 DESIGN 5.4 wording (4400 is a 403 handshake under uvicorn).
+  Residuals to record in DESIGN 5.3: 64-hex values under hash-named keys kept verbatim; stream.dropped count is
+  in-memory per process.
+- claude/aas-s3 (D:/w/aas-s3, sparse): S3 build pipeline + preview @ 1ada33c3c; review round 1 PARTIAL; fixes
+  written but UNCOMMITTED and UNTESTED (Docker Desktop down after C: filled) — next: new worker finishes tests
+  listed in its report (preview %ff/dup Host/idle timeout/conn cap; e2e 300 MB writer, network fail text, P8b text,
+  unapproved lockfile, /tmp noexec; proxy isPublic table + DNS-rebinding stub), commit, then review round 2.
+- claude/aas-s4 (D:/w/aas-s4, sparse): S4 desktop UI — finishing worker running (WS contract aas.v1, red runs).
+- claude/aas-s5 (D:/w/aas-s5, sparse): S5 WSL device host — running; its emulator crash-looped and WSL crash dumps
+  (17 x ~2.7 GB in %TEMP%/wsl-crashes) filled C:. Dumps deleted. Worker told to find the cause, max 2 retries,
+  abort launch if C: < 5 GB.
+
+Next after the four slices: local merge of s3/s4/s5 into claude/ai-app-studio (main session), S6 built-in runner
+(Claude Code stream-json -> activity_events, runner flags per DESIGN 6.1) + wiring backend<->build<->preview<->
+device host<->UI, end-to-end demo on the desktop, then the final gate above.
+Key files (product dir 03_IMPLEMENTATION/products/ai_app_studio): docs/CHECKPOINT.md, docs/DESIGN.md,
+docs/THREAT_MODEL.md, docs/slices/S3.md|S4.md|S5.md, VENDORED.json.
+Disk: C: fills easily (Docker VHDX + WSL crash dumps); keep caches on D:.
+
+Update 2026-11-23 ~03:00:
+- S4 claude/aas-s4 @ 1b787c0df: round-2 VERIFIED, merge-ready. Integration follow-ups (S6): backend routes
+  GET /api/v1/approvals, POST /approvals/<id>/decide, POST /plans/<id>/decide, kind "plan" records; field names
+  (step.started title, tool.call/result callId+target, plan.proposed title, build.log line, cost.update vs usage);
+  backend DCS regex must stop at newline/end and OSC also at \r; flag U+3164/U+115F/U+180E/U+034F (front+back);
+  frontend clean() ESC[ sequence over-swallow; one non-sparse `tauri build` + manual launch (get_session under the
+  narrowed capability); S4.md says 6 vitest files, actual 5.
+- S5 claude/aas-s5 @ cfcdf2c3b: fixes done (80 tests), live probes DEFERRED until C: >= 8 GB; round-2 review running.
+- S3 claude/aas-s3: finishing worker running (Docker back up).

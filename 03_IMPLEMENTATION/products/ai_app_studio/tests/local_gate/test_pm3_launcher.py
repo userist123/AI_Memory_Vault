@@ -252,13 +252,16 @@ CODE_ROOTS = ("apps", "core", "kit", "scripts", "images")  # backend, desktop, a
 TEXT_SUFFIXES = {".py", ".ps1", ".psm1", ".cmd", ".bat", ".sh", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rs",
                  ".json", ".toml", ".yaml", ".yml", ""}
 SKIP_DIRS = {"node_modules", "__pycache__", ".venv", "target", "dist"}
+# Third-party dependency lockfiles are data, not studio code (kit/pnpm-lock.yaml pins the npm package `is-wsl`).
+SKIP_FILES = {"pnpm-lock.yaml", "uv.lock", "Cargo.lock", "package-lock.json"}
 
 
 def _code_files() -> list[Path]:
     out = []
     for root in CODE_ROOTS:
         for p in (PRODUCT / root).rglob("*"):
-            if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES and not SKIP_DIRS & set(p.parts):
+            if (p.is_file() and p.suffix.lower() in TEXT_SUFFIXES and not SKIP_DIRS & set(p.parts)
+                    and p.name not in SKIP_FILES):
                 out.append(p)
     return out
 

@@ -14,5 +14,5 @@ Exact steps for the follow-up slice:
    (currently 36, AGP 8.13.0, Gradle template 8.14.3).
 5. Write `/usr/local/bin/aas-build-android` (copy template to /tmp, copy /dist into `app/src/main/assets/public`, run
    `gradlew --offline --no-daemon --dependency-verification strict -Dorg.gradle.jvmargs=-Xmx2g assembleDebug` with the
-   mounted debug keystore, write the APK to /out).
+   mounted studio keystore (aas-debug.keystore, never the owner's), write the APK to /out).
 6. Proofs PB7a (offline strict succeeds; deleting one cache entry fails with "No cached version") and PB7b (APK signature).

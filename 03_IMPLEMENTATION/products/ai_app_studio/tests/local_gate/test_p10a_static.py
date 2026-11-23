@@ -1,6 +1,7 @@
 """P10a (T10): studio code and scripts never name the owner's emulator state (static scan, non-live)."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,9 @@ from tests.local_gate.conftest import PRODUCT
 
 ROOTS = ("core", "wsl", "kit", "images", "apps")
 FORBIDDEN = ("s9emu", "debug.keystore", "/.android", "~/android", "HOME/android", "5037")
+# "debug.keystore" only as the owner's file name: the studio's own key is aas-debug.keystore.
+PATTERNS = {w: re.compile(r"(?<![\w-])" + re.escape(w)) if w == "debug.keystore" else re.compile(re.escape(w))
+            for w in FORBIDDEN}
 SKIP_DIRS = {"node_modules", "__pycache__", ".venv", "target", "dist"}
 
 
@@ -26,7 +30,7 @@ def scan(base: Path) -> list[tuple[str, str]]:
             except UnicodeDecodeError:
                 text = p.read_bytes().decode("latin-1")
             for word in FORBIDDEN:
-                if word in text:
+                if PATTERNS[word].search(text):
                     hits.append((p.relative_to(base).as_posix(), word))
     return hits
 

@@ -42,6 +42,6 @@ RUN curl -fsSL -o /tmp/gradle.zip https://services.gradle.org/distributions/grad
 RUN chmod -R a+rX /opt && useradd -m -u 1000 aas || true
 USER 1000:1000
 WORKDIR /tmp
-# Run: --network none --read-only --tmpfs /tmp:rw,exec --memory 4g --cpus 4 -v <dist>:/dist:ro -v <keystore>:/keys/debug.keystore:ro
+# Run: --network none --read-only --tmpfs /tmp:rw,exec --memory 4g --cpus 4 -v <dist>:/dist:ro -v <keystore>:/keys/aas-debug.keystore:ro
 #   gradlew --offline --no-daemon --dependency-verification strict assembleDebug ...
 ENTRYPOINT ["/usr/local/bin/aas-build-android"]
