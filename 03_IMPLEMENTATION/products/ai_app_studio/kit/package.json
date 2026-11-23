@@ -1,0 +1,25 @@
+{
+  "name": "aas-app-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Studio-owned app kit. Agents can never write this file (outside the write allow-list).",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8"
+  }
+}
