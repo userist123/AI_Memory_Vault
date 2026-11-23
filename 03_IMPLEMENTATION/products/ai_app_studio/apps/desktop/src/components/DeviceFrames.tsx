@@ -47,6 +47,8 @@ export function DeviceFrame(props: {
   demoRevision: number | null;
   taps: Tap[];
   now: number;
+  /** W4: the preview iframe element (the inspector arms it and checks message sources against it) */
+  frameRef?: (el: HTMLIFrameElement | null) => void;
 }) {
   const d = DEVICES[props.device];
   const [ref, scale] = useFitScale(d.w, d.h);
@@ -56,6 +58,7 @@ export function DeviceFrame(props: {
         {props.src ? (
           <iframe
             key={props.src}
+            ref={props.frameRef}
             title={`${props.device} preview`}
             data-testid={`frame-${props.device}`}
             src={props.src}
