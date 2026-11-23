@@ -422,10 +422,21 @@ def _ex_root(cwd: str):
     return root if os.path.isdir(root) else None
 
 
+# Path module the executor guard resolves with. Tests swap in `posixpath` to simulate Linux/macOS on Windows.
+_EX_PATH = os.path
+
+
+def _ex_windows_absolute(raw: str) -> bool:
+    r"""True when `raw` is absolute in Windows terms on EVERY OS: a drive path (`X:/`, `X:\`, drive-relative `X:`), a
+    root-relative `\path`, or a UNC/device path (`\\server\share`, `//server/share`, `\\?\`, `\\.\`). posixpath
+    treats all of these as relative names, so on Linux they would otherwise resolve inside the worktree."""
+    return bool(re.match(r"^[A-Za-z]:", raw)) or raw.startswith("\\") or raw.startswith("//")
+
+
 def _ex_within(path: str, root: str) -> bool:
-    a, b = os.path.normcase(path), os.path.normcase(root)
+    a, b = _EX_PATH.normcase(path), _EX_PATH.normcase(root)
     try:
-        return os.path.commonpath([a, b]) == b
+        return _EX_PATH.commonpath([a, b]) == b
     except ValueError:
         return False  # another drive
 
@@ -451,8 +462,11 @@ def _ex_resolve(raw: str, cwd: str, root: str):
     bad = _ex_shape_problem(raw)
     if bad:
         return bad
-    lexical = os.path.abspath(os.path.join(cwd, os.path.expanduser(raw) if raw.startswith("~") else raw))
-    real = os.path.realpath(lexical)
+    if _ex_windows_absolute(raw) and _EX_PATH.sep != "\\":
+        return f"{raw!r} is a Windows drive, root-relative or UNC path, which is outside the git worktree on this OS"
+    pm = _EX_PATH  # on Windows a drive path inside the worktree stays allowed: realpath + containment below decide
+    lexical = pm.abspath(pm.join(cwd, pm.expanduser(raw) if raw.startswith("~") else raw))
+    real = pm.realpath(lexical)
     if not _ex_within(real, root):
         return f"{raw!r} resolves outside the git worktree {root}"
     if _ex_within(real, _ex_home_claude()):

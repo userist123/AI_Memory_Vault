@@ -8,6 +8,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import posixpath
 import subprocess
 import sys
 from pathlib import Path
@@ -177,6 +178,55 @@ def test_write_outside_the_worktree_is_denied(wt, tmp_path):
     for p in (tmp_path / "outside" / "x.py", "../outside/x.py", "scripts/../../outside/x.py", "C:/Windows/x.txt",  # hygiene: intentional-absolute-path
               "\\\\srv\\share\\x.txt", "//srv/share/x.txt", "\\\\?\\C:\\x.txt", "Z:x.txt", ""):  # hygiene: intentional-absolute-path
         assert _path(p, wt), p
+
+
+# Non-Windows simulation (CI runs on Linux): with posixpath a Windows drive, root-relative or UNC string is a relative
+# name and would resolve INSIDE the worktree. The guard must classify it as absolute on every OS and deny it.
+POSIX_FOREIGN_COMMANDS = [
+    "git -C C:/Windows status", "python C:/Windows/x.py", "python \\\\srv\\share\\x.py",  # hygiene: intentional-absolute-path
+    "pytest --basetemp C:/Users", "python -m pytest --basetemp=C:/", "python //srv/share/x.py",  # hygiene: intentional-absolute-path
+    "dotnet build C:/Windows/x.csproj --no-restore", "cmd /c mklink /J a C:/",  # hygiene: intentional-absolute-path
+]
+POSIX_FOREIGN_PATHS = [
+    "C:/Windows", "C:\\Windows\\x.txt", "c:/", "Z:x.txt", "\\srvsharex.py", "\\\\srv\\share\\x.txt",  # hygiene: intentional-absolute-path
+    "//srv/share/x.txt", "\\\\?\\C:\\x.txt", "\\\\.\\pipe\\x", "//?/C:/x.txt",  # hygiene: intentional-absolute-path
+]
+
+
+@pytest.fixture()
+def posix_guard(monkeypatch):
+    monkeypatch.setattr(enf, "_EX_PATH", posixpath)
+    root = "/srv/ci/wt"
+    return root
+
+
+@pytest.mark.parametrize("raw", POSIX_FOREIGN_PATHS)
+def test_windows_absolute_path_is_outside_the_worktree_on_posix(posix_guard, raw):
+    assert enf._ex_windows_absolute(raw), raw
+    got = enf._ex_resolve(raw, posix_guard, posix_guard)
+    assert isinstance(got, str), (raw, got)  # denied: by the shape check (UNC, drive-relative) or as outside
+
+
+def test_posix_simulation_still_resolves_relative_paths(posix_guard):
+    got = enf._ex_resolve("scripts/run.py", posix_guard, posix_guard)
+    assert got == ("/srv/ci/wt/scripts/run.py", "/srv/ci/wt/scripts/run.py")
+    assert isinstance(enf._ex_resolve("../x.py", posix_guard, posix_guard), str)
+    assert not enf._ex_windows_absolute("scripts/run.py") and not enf._ex_windows_absolute("./a:b")
+
+
+@pytest.mark.parametrize("cmd", POSIX_FOREIGN_COMMANDS)
+def test_windows_absolute_command_argument_is_denied_on_posix(wt, posix_guard, monkeypatch, cmd):
+    """Full Bash path with posixpath resolution and a POSIX worktree root: every such argument must be denied."""
+    monkeypatch.setattr(enf, "_ex_root", lambda cwd: posix_guard)
+    reason = enf.executor_bash_problem(cmd, posix_guard)
+    assert reason and reason.startswith("cost-router: fable-executor"), (cmd, reason)
+
+
+def test_windows_drive_path_inside_the_worktree_stays_allowed_on_windows(wt):
+    if os.name != "nt":
+        pytest.skip("Windows drive paths only exist on Windows")
+    assert _path(str(wt / "scripts" / "new.py"), wt) is None
+    assert _bash(f"python {(wt / 'scripts' / 'run.py').as_posix()}", wt) is None
 
 
 def test_write_into_git_metadata_is_denied(wt):
