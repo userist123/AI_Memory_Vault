@@ -12,6 +12,9 @@
 - Limits (S7 review M3): per project at most MAX_FILES files / MAX_BYTES bytes (the oldest are pruned; a file another
   project still references is kept), a PNG larger than MAX_PNG_BYTES is refused, and a capture is refused when the data
   drive has less than MIN_FREE_BYTES free. The per-project index is ``captures/.index/<project>.json``.
+- W2 gate hook: ``capture(..., probe=fn)`` calls ``fn(context, page, frame)`` in each frame right after its screenshot
+  (same browser, same request filter, same timeout/kill and lock) and returns the per-frame results under ``probe``.
+  The quality gates (qa.py) use it; nothing is injected into a served file, the page CSP is left as served.
 """
 from __future__ import annotations
 
@@ -156,13 +159,18 @@ def _same_origin(url: str, origin: str) -> bool:
 MAX_CONSOLE_RAW = 200  # raw entries kept per capture before sanitising (sight.console_lines caps again)
 
 
-def _shoot(url: str, frames: list[str]) -> tuple[dict[str, bytes], list[str]]:
-    """PNG per frame + the page's console errors and uncaught exceptions (S9b: raw text, sanitised by the caller)."""
+Probe = Callable[[Any, Any, str], Any]
+
+
+def _shoot(url: str, frames: list[str], probe: Probe | None = None) -> Any:
+    """PNG per frame + the page's console errors and uncaught exceptions (S9b: raw text, sanitised by the caller).
+    With ``probe`` (W2 gate hook) a third item maps each frame to ``probe(context, page, frame)``."""
     from playwright.sync_api import sync_playwright
 
     origin = url.rstrip("/")
     shots: dict[str, bytes] = {}
     console: list[str] = []
+    probed: dict[str, Any] = {}
 
     def note(prefix: str, text: Any) -> None:
         if len(console) < MAX_CONSOLE_RAW:
@@ -188,20 +196,23 @@ def _shoot(url: str, frames: list[str]) -> tuple[dict[str, bytes], list[str]]:
                     page.goto(url, wait_until="load", timeout=NAV_TIMEOUT_MS)
                     page.wait_for_timeout(SETTLE_MS)
                     shots[frame] = page.screenshot(full_page=False, type="png")
+                    if probe is not None:
+                        probed[frame] = probe(ctx, page, frame)
                 finally:
                     ctx.close()
         finally:
             browser.close()
             _ACTIVE.pop("proc", None)
-    return shots, console
+    return (shots, console, probed) if probe is not None else (shots, console)
 
 
 def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, run_id: str | None = None,
             url: str | None = None, shoot: Callable[[str, list[str]], dict[str, bytes]] = _shoot,
             kill: Callable[[], None] | None = None, timeout: float = CAPTURE_TIMEOUT_S, join_timeout: float = KILL_JOIN_S,
-            free_bytes: Callable[[], int] | None = None) -> dict[str, Any]:
+            free_bytes: Callable[[], int] | None = None, probe: Probe | None = None) -> dict[str, Any]:
     """Capture ``frames``; returns {revision, url, captures: [{frame, sha256, width, height, bytes}], console: [...]}.
-    ``shoot`` returns the PNGs per frame, or (PNGs, raw console lines)."""
+    ``shoot`` returns the PNGs per frame, or (PNGs, raw console lines). With ``probe`` it is called as
+    ``shoot(url, frames, probe)`` and returns (PNGs, console, {frame: probe result}); the result gains ``probe``."""
     if not isinstance(project_id, str) or not _PID.match(project_id):
         raise ValidationFailed("invalid project id")
     frames = list(frames or FRAMES)
@@ -222,9 +233,11 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
 
         def work() -> None:
             try:
-                got = shoot(url, frames)
+                got = shoot(url, frames) if probe is None else shoot(url, frames, probe)
                 if isinstance(got, tuple):
                     box["shots"], box["console"] = got[0], list(got[1] or [])
+                    if probe is not None and len(got) > 2 and isinstance(got[2], dict):
+                        box["probe"] = got[2]
                 else:
                     box["shots"] = got
             except BaseException as e:  # noqa: BLE001 - reported below
@@ -276,8 +289,11 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
             stored.append((sha, len(png)))
             out.append({"frame": frame, "sha256": sha, "width": w, "height": h, "bytes": len(png)})
         _register_and_prune(studio.settings, project_id, stored)
-        return {"revision": revision, "url": url, "captures": out,
-                "console": sight.console_lines(box.get("console"))}
+        res = {"revision": revision, "url": url, "captures": out, "console": sight.console_lines(box.get("console"))}
+        if probe is not None:
+            res["probe"] = dict(box.get("probe") or {})
+            res["consoleRaw"] = list(box.get("console") or [])[:MAX_CONSOLE_RAW]  # qa.py counts per frame, then sanitises
+        return res
     finally:
         if not handed_off:
             _CAP_LOCK.release()

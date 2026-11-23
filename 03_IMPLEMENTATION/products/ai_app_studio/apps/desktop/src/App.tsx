@@ -42,6 +42,9 @@ import { fetchChat, sendChat } from "./lib/chatApi";
 import { elapsed, Timeline } from "./components/Timeline";
 import { DEFAULT_PREVIEW_THEME, ThemedPreview, ThemeSwitcher, type PreviewTheme } from "./components/ThemeSwitcher";
 import type { PresetId } from "./components/PresetPicker";
+import { QaBadge } from "./components/QaBadge";
+import { AutoPolishButton } from "./components/AutoPolishButton";
+import { fetchQa, polishStatus, runQa, startPolish } from "./lib/qaApi";
 
 const FOLLOW_PAUSE_MS = 10_000;
 const PROJECT_ID_RE = /^prj_[0-9a-f]{16}$/;
@@ -514,6 +517,8 @@ export function App() {
           </button>
           <span className="spacer" />
           <ThemeSwitcher value={previewTheme} onChange={setPreviewTheme} />
+          {!demo && session ? <QaBadge projectId={selectedProject} nonce={state.previewNonce} api={{ load: (p) => fetchQa(session, p), run: (p, a) => runQa(session, p, a) }} /> : null}
+          {!demo && session ? <AutoPolishButton projectId={selectedProject} disabled={state.runStatus === "running" || runBusy} api={{ start: (p) => startPolish(session, p), status: (p) => polishStatus(session, p) }} /> : null}
           <span className="tag" data-testid="revision">
             rev {state.revision}
           </span>
