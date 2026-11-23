@@ -59,13 +59,14 @@ public class F2DefenderGroupingTests
     }
 
     [Fact]
-    public void A_different_threat_on_the_same_file_name_stays_separate()
+    public void A_different_threat_on_the_same_file_name_is_merged_into_one_finding_listing_both_threats()
     {
         var ev = new List<TimelineEvent> { Det(1116, 0, BuildDll(0), Threat), Det(1116, 1, BuildDll(1), Threat), Det(1116, 2, BuildDll(2), "Trojan:Win32/Wacatac.H!ml") };
-        var f = Def(ev);
-        Assert.Equal(2, f.Count);
-        Assert.Contains(f, x => x.Title.Contains("2 locații") && x.Title.Contains(Threat));
-        Assert.Contains(f, x => x.Title.Contains("Wacatac") && !x.Title.Contains("locații"));
+        var f = Assert.Single(Def(ev));
+        Assert.Contains("3 locații", f.Title);
+        Assert.Contains(Threat, f.Description);
+        Assert.Contains("Wacatac", f.Description);
+        Assert.Contains("Wacatac.H!ml (1 detecții", f.Description);
     }
 
     [Fact]

@@ -51,6 +51,12 @@ public static partial class Wp11Rules
             var impact = (first is null ? [] : c.Existing.Concat(o).Where(f => IsImpactFinding(f, lists) && (f.FirstSeenUtc ?? f.LastSeenUtc) is { } ft && (ft - first.Value).Duration() <= c.Options.ImpactWindow)).ToList();
             var sev = !anyDelete ? Severity.Low : impact.Count > 0 ? Severity.High : Severity.Medium;
             bool processStart = hits.Any(h => h.ProcessStart);
+            // Team A G4: a 4104 script block is TEXT Windows saw, not proof that the action ran; say so, and name the dev-script alternative when the script sits in a dev/build folder.
+            var scriptHits = hits.Where(h => !h.ProcessStart).ToList();
+            bool devScript = scriptHits.Any(h => Correlation.IsDevOrBuildScriptPath(F(h.Event, "Path")));
+            var scriptNote = scriptHits.Count == 0 ? "" : scriptHits.Count == hits.Count
+                ? " Windows a văzut acest text într-un bloc de script PowerShell; nu dovedește că acțiunea s-a executat."
+                : $" {scriptHits.Count} din {hits.Count} înregistrări sunt text văzut de Windows într-un bloc de script PowerShell; textul nu dovedește că acțiunea s-a executat.";
             var vssUser = F(ordered[0].Event, "SubjectUserName", "User");
             var vssAct = anyDelete ? vssOnly ? "o comandă care șterge copiile de rezervă ale discului (copiile shadow, din care se pot recupera fișierele)" : "o comandă care șterge copiile de rezervă sau dezactivează recuperarea sistemului"
                                    : "o comandă care reduce spațiul copiilor de rezervă ale discului (copiile shadow)";
@@ -65,14 +71,15 @@ public static partial class Wp11Rules
                 Confidence = impact.Count > 0 ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1490",
                 FirstSeenUtc = first, LastSeenUtc = last, User = F(ordered[0].Event, "SubjectUserName", "User"), Process = ordered[0].Event.Process,
                 Description = $"{hits.Count} comenzi ({string.Join(", ", hits.Select(h => $"{h.Pattern.Tool} {h.Pattern.Kind}").Distinct())}): {Join(hits.Select(h => h.Command.ReplaceLineEndings(" ").Length > 160 ? h.Command.ReplaceLineEndings(" ")[..160] + "…" : h.Command.ReplaceLineEndings(" ")), 3)}. " +
-                              "Înregistrarea arată că a fost lansată comanda; nu arată că ștergerea a reușit sau ce copii existau." +
+                              "Înregistrarea arată că a fost lansată comanda; nu arată că ștergerea a reușit sau ce copii existau." + scriptNote +
                               (near.Count > 0 ? $" Evenimente de sistem VSS/volsnap în ±{c.Options.ImpactWindow.TotalHours:0} h: {Join(near.Select(e => $"{e.Provider} {e.EventId}"), 6)} (volsnap 33 = cea mai veche copie ștearsă pentru limita de spațiu; 8193/8194 = erori VSS)." : "") +
                               (impact.Count > 0 ? $" Dovezi de impact deja în caz: {Join(impact.Select(f => f.Title), 3)}." : ""),
                 ClassificationReason = impact.Count > 0 ? "Comandă de ștergere a copiilor shadow și, în ±24 h, o constatare de impact existentă (nu un detector nou)." : "Linie de comandă de ștergere a copiilor shadow în 4688 / Sysmon 1 / PowerShell 4104.",
                 SemanticType = processStart ? SemanticType.Execution : SemanticType.Observation,
                 SupportingEvidence = ordered.Take(12).Select(h => Ref(h.Event, $"{h.Event.EventId} {h.Pattern.Tool} {h.Pattern.Kind}")).Concat(near.Take(8).Select(e => Ref(e, $"{e.Provider} {e.EventId}"))).ToList(),
                 RelatedFindingIds = impact.Select(f => f.FindingId).ToList(),
-                AlternativeExplanations = ["Administratorii șterg sau redimensionează copiile shadow pentru a elibera spațiu sau înainte de o reconfigurare.", "Software de backup poate folosi aceste comenzi."],
+                AlternativeExplanations = ["Administratorii șterg sau redimensionează copiile shadow pentru a elibera spațiu sau înainte de o reconfigurare.", "Software de backup poate folosi aceste comenzi.",
+                    .. (devScript ? new[] { "Script de dezvoltare/compilare sau de test (calea scriptului este într-un folder de dezvoltare), care conține doar textul comenzii." } : [])],
             });
             return;
         }

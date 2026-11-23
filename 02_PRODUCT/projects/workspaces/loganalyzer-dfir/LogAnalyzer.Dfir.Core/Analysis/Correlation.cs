@@ -308,30 +308,40 @@ public static class Correlation
         // A path in a build folder or in a Defender exclusion path gets an honest alternative explanation, never a lower severity by itself.
         var excludedPaths = events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 5007)).Select(e => ExcludedPathOf(F(e, "New Value", "NewValue")))
             .Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        var defPaths = new List<(string Path, List<TimelineEvent> Events, List<string> Threats, int DetCount, (bool Resolved, string Text) Outcome, bool Build, Func<string, Finding> Make)>();
+        // Team A G1: the 1116/1117 resource is classified (file / AMSI / command line / behaviour / registry / web); only a file has a file name.
+        // DEF-DETECTION is grouped by FILE NAME (or by AMSI process) across threat sets: one finding lists each threat with its first/last detection and count.
+        var defPaths = new List<(string Path, string Kind, string GroupKey, List<TimelineEvent> Events, List<string> Threats, int DetCount, (bool Resolved, string Text) Outcome, bool Build, Func<string, Finding> Make)>();
         foreach (var g in events.Where(e => Ev(e, "Microsoft-Windows-Windows Defender/Operational", 1116, 1117, 1006, 1007, 1015, 1118, 1119))
-                                .GroupBy(e => DefenderContainer(F(e, "Path")), StringComparer.OrdinalIgnoreCase))
+                                .GroupBy(e => DefenderResource(F(e, "Path")).Kind + "|" + DefenderResource(F(e, "Path")).Value, StringComparer.OrdinalIgnoreCase))
         {
             var ordered = g.OrderBy(e => e.Time.Utc).ThenBy(e => e.EventId, StringComparer.Ordinal).ToList();
             var first = ordered[0];
+            var (kind, value) = DefenderResource(F(first, "Path"));
+            var procName = WinPath.GetFileName(F(first, "Process Name").Trim().TrimEnd('\\'));
+            var groupKey = kind switch
+            {
+                "file" => "file|" + WinPath.GetFileName(value.TrimEnd('\\')).ToLowerInvariant(),
+                "amsi" => "amsi|" + procName.ToLowerInvariant(),
+                _ => kind + "|" + value.ToLowerInvariant(),
+            };
             var threats = ordered.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var detections = ordered.Where(e => DefenderDetectionIds.Contains(e.EventId)).ToList();
             int detCount = detections.Count > 0 ? detections.Count : ordered.Count;
             var outcome = DefenderOutcome(ordered, threats);
-            bool buildPath = IsBuildPath(g.Key) || excludedPaths.Any(x => g.Key.StartsWith(x, StringComparison.OrdinalIgnoreCase));
+            bool buildPath = kind == "file" && (IsBuildPath(value) || excludedPaths.Any(x => value.StartsWith(x, StringComparison.OrdinalIgnoreCase)));
             var span = detCount > 1 ? $" ({detCount} detecții, prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {ordered.Max(e => e.Time.Utc):yyyy-MM-dd HH:mm} UTC)" : "";
             var alt = new List<string>();
             if (buildPath) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
             var moreEv = ordered.Count - 50;
-            defPaths.Add((g.Key, ordered, threats, detCount, outcome, buildPath, id => new Finding
+            defPaths.Add((value, kind, groupKey, ordered, threats, detCount, outcome, buildPath, id => new Finding
             {
                 FindingId = id, RuleId = "DEF-DETECTION",
-                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}{span}",
+                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(value.TrimEnd('\\'))}{span}",
                 Severity = outcome.Resolved ? Severity.Medium : Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
-                FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
-                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {(threats.Count == 1 ? PlainPhrases.Q(threats[0]) : threats.Count == 0 ? "ceva periculos" : $"{threats.Count} amenințări")} în {PlainPhrases.Q(PlainPhrases.Leaf(g.Key.TrimEnd('\\')))}" +
+                FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = value, User = F(first, "Detection User"),
+                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {(threats.Count == 1 ? PlainPhrases.Q(threats[0]) : threats.Count == 0 ? "ceva periculos" : $"{threats.Count} amenințări")} în {PlainPhrases.Q(PlainPhrases.Leaf(value.TrimEnd('\\')))}" +
                             (detCount > 1 ? $"; detecția s-a repetat de {detCount} ori" : "") + (outcome.Resolved ? $"; ultima acțiune a Defender: {outcome.Text}" : ""),
-                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}." +
+                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {value}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}." +
                               (outcome.Text.Length > 0 ? $" Ultima stare cunoscută: {outcome.Text}." : "") +
                               (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
                 ClassificationReason = "Înregistrare directă în jurnalul Defender." + (outcome.Resolved ? " Severitatea este Medium pentru că ultima acțiune a Defender pentru fiecare amenințare a fost carantină, ștergere sau permitere de către utilizator; arată că fișierul a fost tratat, nu că detecția a fost falsă." : ""),
@@ -340,38 +350,83 @@ public static class Correlation
                 RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
             }));
         }
-        // Planner #15 F2: the same file NAME with the same set of threats in many folders (build outputs, worktrees) is one finding; every location and
-        // every evidence reference is kept (capped lists carry a "și încă N" note). A different threat set stays a separate finding.
-        foreach (var grp in defPaths.GroupBy(d => WinPath.GetFileName(d.Path.TrimEnd('\\')).ToLowerInvariant() + "|" +
-                                                  string.Join("|", d.Threats.Select(t => t.ToLowerInvariant()).OrderBy(t => t, StringComparer.Ordinal))))
+        foreach (var grp in defPaths.GroupBy(d => d.GroupKey, StringComparer.Ordinal))
         {
             var items = grp.ToList();
-            if (items.Count == 1) { f.Add(items[0].Make(Id())); continue; }
+            var kind = items[0].Kind;
             var first = items[0];
             var all = items.SelectMany(d => d.Events).OrderBy(e => e.Time.Utc).ThenBy(e => e.EventId, StringComparer.Ordinal).ToList();
-            var threats = first.Threats;
-            var name = WinPath.GetFileName(first.Path.TrimEnd('\\'));
+            // A single file location with a single threat set keeps the per-item finding; everything else (several locations, several threat sets, AMSI and other resources) is merged.
+            if (items.Count == 1 && kind == "file" && first.Threats.Count <= 1) { f.Add(first.Make(Id())); continue; }
+            var threats = all.Select(e => F(e, "Threat Name")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var perThreat = threats.Select(t =>
+            {
+                var te = all.Where(e => F(e, "Threat Name").Equals(t, StringComparison.OrdinalIgnoreCase)).ToList();
+                var de = te.Where(e => DefenderDetectionIds.Contains(e.EventId)).ToList();
+                return (Threat: t, First: te.Min(e => e.Time.Utc), Last: te.Max(e => e.Time.Utc), Count: de.Count > 0 ? de.Count : te.Count);
+            }).ToList();
+            string Span(DateTimeOffset? d) => d is { } x ? x.ToString("yyyy-MM-dd HH:mm") : "?";
+            var threatLines = string.Join("; ", perThreat.Take(15).Select(t => $"{t.Threat} ({t.Count} detecții, prima {Span(t.First)}, ultima {Span(t.Last)} UTC)")) + (perThreat.Count > 15 ? $"; și încă {perThreat.Count - 15} amenințări" : "");
             int detTotal = items.Sum(d => d.DetCount), handled = items.Count(d => d.Outcome.Resolved), builds = items.Count(d => d.Build);
             var threatText = threats.Count == 1 ? threats[0] : threats.Count is > 1 and <= 3 ? string.Join(", ", threats) : $"{threats.Count} amenințări";
             var sev = items.Max(d => d.Outcome.Resolved ? Severity.Medium : Severity.High);
             var locs = items.Select(d => d.Path).ToList();
             var alt = new List<string>();
-            if (builds == items.Count) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
             int moreLoc = locs.Count - 20, moreEv = all.Count - 50;
+            var when = $"prima {all[0].Time.Utc:yyyy-MM-dd HH:mm}, ultima {all[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC";
+            var evNote = moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : "";
+            var user = F(first.Events[0], "Detection User");
+            if (kind != "file")
+            {
+                var proc = WinPath.GetFileName(F(first.Events[0], "Process Name").Trim().TrimEnd('\\'));
+                if (proc.Length == 0) proc = "un proces necunoscut";
+                var contents = items.Select(d => d.Path).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var contentText = string.Join("; ", contents.Take(10).Select(x => "„" + (x.Length > 120 ? x[..120] + "…" : x) + "”")) + (contents.Count > 10 ? $"; și încă {contents.Count - 10}" : "");
+                var (title, what, nature, notProve) = kind switch
+                {
+                    "amsi" => ($"Microsoft Defender a blocat conținut scanat în memorie (AMSI) de {proc}: {threatText}",
+                               $"Microsoft Defender a blocat conținut scanat în memorie (AMSI) de {proc}; nu este un fișier pe disc",
+                               $"Conținutul scanat de {proc} prin AMSI (nu este un fișier pe disc) a avut numele {contentText}.",
+                               "Ce NU dovedește: conținutul poate proveni dintr-un test sau dintr-un script care doar conține textul respectiv; detecția arată ce a văzut scanerul în memorie, nu că acțiunea s-a executat."),
+                    "cmdline" => ($"Microsoft Defender a detectat o linie de comandă: {threatText}", "Microsoft Defender a detectat o linie de comandă suspectă; nu este un fișier pe disc",
+                                  $"Linia de comandă detectată: {contentText}.", "Ce NU dovedește: detecția arată textul comenzii, nu rezultatul ei."),
+                    "behavior" => ($"Microsoft Defender a detectat un comportament: {threatText}", "Microsoft Defender a detectat un comportament suspect al unui proces; nu este un fișier pe disc",
+                                   $"Resursa detectată (comportament): {contentText}.", "Ce NU dovedește: o detecție comportamentală este o euristică și poate fi fals pozitivă."),
+                    "registry" => ($"Microsoft Defender a detectat o cheie de registru: {threatText}", "Microsoft Defender a detectat o cheie de registru; nu este un fișier pe disc",
+                                   $"Cheia de registru detectată: {contentText}.", "Ce NU dovedește: cheia poate exista fără ca programul asociat să ruleze."),
+                    _ => ($"Microsoft Defender a detectat un fișier web: {threatText}", "Microsoft Defender a detectat un fișier descărcat de pe web, înainte de salvare pe disc",
+                          $"Adresa detectată: {contentText}.", "Ce NU dovedește: detecția arată adresa, nu că fișierul a fost salvat sau rulat."),
+                };
+                if (kind == "amsi") alt.Add("conținut dintr-un test sau dintr-un script care doar conține textul detectat");
+                f.Add(new Finding
+                {
+                    FindingId = Id(), RuleId = "DEF-DETECTION", Title = $"{title} ({detTotal} detecții, {when})",
+                    Severity = sev, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
+                    FirstSeenUtc = all.Min(e => e.Time.Utc), LastSeenUtc = all.Max(e => e.Time.Utc), User = user, Process = kind == "amsi" ? proc : "",
+                    PlainWhat = $"{what}; {detTotal} detecții",
+                    Description = $"{nature} Amenințări: {threatLines}. {notProve}" + (handled > 0 ? $" Tratate de Defender: {handled} din {items.Count}." : "") + evNote,
+                    ClassificationReason = "Înregistrări directe în jurnalul Defender, grupate după resursa detectată." + (sev == Severity.Medium ? " Severitatea este Medium pentru că ultima acțiune a Defender a fost blocare, carantină, ștergere sau permitere de către utilizator." : " Severitatea este cea mai mare dintre grupuri."),
+                    SupportingEvidence = all.Take(50).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
+                    AlternativeExplanations = alt,
+                    RecommendedNextSteps = kind == "amsi" ? ["Identificați scriptul sau programul care a trimis conținutul către AMSI.", "Căutați același text în scripturile și testele din folderele de dezvoltare."] : ["Verificați procesul care a declanșat detecția."],
+                });
+                continue;
+            }
+            var name = WinPath.GetFileName(first.Path.TrimEnd('\\'));
+            if (builds == items.Count) alt.Add("fișier produs de compilare; detecțiile ML pe binare proprii pot fi fals pozitive");
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "DEF-DETECTION",
-                Title = $"Microsoft Defender a detectat {threatText} în {name} ({locs.Count} locații, {detTotal} detecții, prima {all[0].Time.Utc:yyyy-MM-dd HH:mm}, ultima {all[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC)",
+                Title = $"Microsoft Defender a detectat {threatText} în {name} ({(locs.Count > 1 ? $"{locs.Count} locații, " : "")}{detTotal} detecții, {when})",
                 Severity = sev, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
-                FirstSeenUtc = all.Min(e => e.Time.Utc), LastSeenUtc = all.Max(e => e.Time.Utc), File = first.Path, User = F(first.Events[0], "Detection User"),
-                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {PlainPhrases.Q(threatText)} în {PlainPhrases.Q(name)}, în {locs.Count} locații diferite; în total {detTotal} detecții",
-                Description = $"Același fișier „{name}” cu aceeași amenințare ({threatText}) în {locs.Count} locații, {detTotal} detecții. Locații: {string.Join("; ", locs.Take(20))}" +
+                FirstSeenUtc = all.Min(e => e.Time.Utc), LastSeenUtc = all.Max(e => e.Time.Utc), File = first.Path, User = user,
+                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {PlainPhrases.Q(threatText)} în {PlainPhrases.Q(name)}" + (locs.Count > 1 ? $", în {locs.Count} locații diferite" : "") + $"; în total {detTotal} detecții",
+                Description = $"Același fișier „{name}” în {locs.Count} {(locs.Count == 1 ? "locație" : "locații")}, {detTotal} detecții. Amenințări: {threatLines}. Locații: {string.Join("; ", locs.Take(20))}" +
                               (moreLoc > 0 ? $"; și încă {moreLoc} locații" : "") + "." +
                               $" Tratate de Defender (carantină, ștergere sau permis de utilizator): {handled} din {locs.Count} locații; netratate: {locs.Count - handled}." +
                               (builds == items.Count ? " Toate locațiile sunt foldere de compilare (bin\\Debug, bin\\Release, obj)." :
-                               builds > 0 ? $" {builds} din {locs.Count} locații sunt foldere de compilare; celelalte nu, deci explicația „fișier produs de compilare” nu se aplică tuturor." : "") +
-                              (moreEv > 0 ? $" Primele 50 de evenimente sunt atașate ca probă; și încă {moreEv} sunt în cronologie." : ""),
-                ClassificationReason = "Înregistrări directe în jurnalul Defender, grupate după numele fișierului și amenințare." + (sev == Severity.Medium ? " Severitatea este Medium pentru că în fiecare locație ultima acțiune a Defender a fost carantină, ștergere sau permitere de către utilizator." : " Severitatea este cea mai mare dintre locații."),
+                               builds > 0 ? $" {builds} din {locs.Count} locații sunt foldere de compilare; celelalte nu, deci explicația „fișier produs de compilare” nu se aplică tuturor." : "") + evNote,
+                ClassificationReason = "Înregistrări directe în jurnalul Defender, grupate după numele fișierului." + (sev == Severity.Medium ? " Severitatea este Medium pentru că în fiecare locație ultima acțiune a Defender a fost carantină, ștergere sau permitere de către utilizator." : " Severitatea este cea mai mare dintre locații."),
                 SupportingEvidence = all.Take(50).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
                 AlternativeExplanations = alt,
                 RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
@@ -394,6 +449,12 @@ public static class Correlation
                 "4688" or "1" or "4104" => $"comandă: {Trunc(F(e, "CommandLine", "ScriptBlockText"), 160)}",
                 _ => $"eveniment {e.EventId}",
             };
+            // Team A G4: a 4104 script block is text Windows saw, not proof the action ran.
+            var scriptTamper = tamperCommands.Where(e => Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104)).ToList();
+            bool devTamperScript = scriptTamper.Any(e => IsDevOrBuildScriptPath(F(e, "Path")));
+            var tamperScriptNote = scriptTamper.Count == 0 ? "" : scriptTamper.Count == tamper.Count + tamperCommands.Count && tamper.Count == 0 && scriptTamper.Count == tamperCommands.Count
+                ? " Windows a văzut acest text într-un bloc de script PowerShell; nu dovedește că acțiunea s-a executat."
+                : $" {scriptTamper.Count} din {tamper.Count + tamperCommands.Count} înregistrări sunt text văzut de Windows într-un bloc de script PowerShell; textul nu dovedește că acțiunea s-a executat.";
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "DEF-TAMPER", Title = "Microsoft Defender dezactivat, slăbit sau cu excluderi adăugate",
@@ -401,10 +462,11 @@ public static class Correlation
                 FirstSeenUtc = all.Count > 0 ? all.Min(e => e.Time.Utc) : null, LastSeenUtc = all.Count > 0 ? all.Max(e => e.Time.Utc) : null, MitreTechniqueId = "T1562.001",
                 PlainWhat = DefenderPlain(tamper, tamperCommands, (e, n) => F(e, n)),
                 Description = string.Join("; ", tamper.Concat(tamperCommands).Take(10).Select(Describe)) +
-                              ". Ce s-a întâmplat: protecția antivirus a fost oprită sau slăbită, ori s-a încercat. De ce contează: atacatorii o fac înainte să ruleze programe dăunătoare, ca să nu fie detectați.",
+                              ". Ce s-a întâmplat: protecția antivirus a fost oprită sau slăbită, ori s-a încercat. De ce contează: atacatorii o fac înainte să ruleze programe dăunătoare, ca să nu fie detectați." + tamperScriptNote,
                 ClassificationReason = "Înregistrări directe: jurnalul Defender (5001 protecție dezactivată, 5007 configurație modificată, 5013 modificare blocată de Tamper Protection) sau o linie de comandă / script PowerShell care apelează comenzile Defender de modificare a preferințelor (din lista de date a regulii).",
                 SupportingEvidence = tamper.Concat(tamperCommands).Take(20).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
-                AlternativeExplanations = ["Excludere sau modificare făcută intenționat de un administrator pentru un program legitim."],
+                AlternativeExplanations = ["Excludere sau modificare făcută intenționat de un administrator pentru un program legitim.",
+                    .. (devTamperScript ? new[] { "Script de dezvoltare/compilare sau de test (calea scriptului este într-un folder de dezvoltare), care conține doar textul comenzii." } : [])],
                 RecommendedNextSteps = ["Stabiliți cine a modificat setarea (Security 4688/4657, contul din eveniment) și dacă există o justificare aprobată.", "Verificați starea actuală a protecției și a listei de excluderi în Windows Security."],
             });
         }
@@ -1551,18 +1613,30 @@ public static class Correlation
         return (all, string.Join("; ", parts));
     }
 
-    /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>
+    /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip". Empty when the resource is not a file (AMSI content, command line, behaviour, registry key, web address).</summary>
     public static string DefenderContainer(string path)
+    {
+        var (kind, value) = DefenderResource(path);
+        return kind == "file" ? value : "";
+    }
+
+    /// <summary>
+    /// Team A G1: classifies the Defender 1116/1117 "Path" resource: file, amsi (<c>amsi:_name</c>, content scanned in memory, not a file), cmdline (<c>CmdLine:_</c>),
+    /// behavior (<c>behavior:_</c>), registry (<c>regkey:_</c>), web (<c>webfile:_</c>). The value has the prefix removed; for a file the part after "-&gt;" is dropped.
+    /// </summary>
+    public static (string Kind, string Value) DefenderResource(string path)
     {
         // Behaviour detections list "process:_pid:…" before the file: prefer the container, then the file segment.
         var parts = path.Split(';').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
         var first = parts.FirstOrDefault(s => s.StartsWith("containerfile:_", StringComparison.OrdinalIgnoreCase))
                     ?? parts.FirstOrDefault(s => s.StartsWith("file:_", StringComparison.OrdinalIgnoreCase))
                     ?? parts.FirstOrDefault() ?? "";
+        foreach (var (prefix, kind) in new[] { ("amsi:_", "amsi"), ("cmdline:_", "cmdline"), ("behavior:_", "behavior"), ("regkey:_", "registry"), ("webfile:_", "web") })
+            if (first.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return (kind, first[prefix.Length..]);
         foreach (var prefix in new[] { "containerfile:_", "file:_", "process:_" })
             if (first.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) first = first[prefix.Length..];
         var arrow = first.IndexOf("->", StringComparison.Ordinal);
-        return arrow > 0 ? first[..arrow] : first;
+        return ("file", arrow > 0 ? first[..arrow] : first);
     }
 
     /// <summary>Prefetch paths start with \VOLUME{guid}\; compare on the part after the volume.</summary>
