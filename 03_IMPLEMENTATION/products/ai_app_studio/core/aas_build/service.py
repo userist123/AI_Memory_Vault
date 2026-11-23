@@ -5,7 +5,7 @@ files + the project's ``src/`` and ``public/`` only, never mounted from the proj
 ``docker run --network none`` -> validated output copied to ``<data>/preview/<project>/site-<ms>`` -> pointer file
 ``current`` switched -> the preview server (``p-<id16>.localhost``) serves the new site on the next request. A failed
 build leaves the previous site in place. Events: build.started, build.log (tail lines), build.error, build.finished,
-preview.captured. One build at a time (the machine has 2 cpus / 2 GB reserved for it).
+preview.captured. One build at a time across processes (`build_lock`: in-process lock + OS file lock; S9b review M1).
 S9 (B4/B12): no build starts with less than 5 GiB free on the data or system drive, and every build (web and android)
 runs inside ``Studio.operation`` (policy ``app.build``, tool_executions + audit row with actor, project and target).
 """
@@ -17,7 +17,8 @@ import shutil
 import threading
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -73,9 +74,92 @@ class BuildFailed(StudioError):
     http_status = 422
 
 
-def building_project() -> str | None:
-    """Project whose build (web or android, any caller incl. external MCP) holds the build lock, else None."""
-    return _BUILDING.get("project")
+def _lock_files(settings: Any) -> tuple[Path, Path]:
+    d = Path(settings.data_dir) / "build"
+    return d / "build.lock", d / "build.holder"
+
+
+def _try_os_lock(fd: int) -> bool:
+    """Exclusive, non-blocking OS lock on byte 0 (released by the OS when the holder process dies)."""
+    os.lseek(fd, 0, os.SEEK_SET)
+    try:
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def _os_unlock(fd: int) -> None:
+    os.lseek(fd, 0, os.SEEK_SET)
+    try:
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_UN)
+    except OSError:
+        pass
+
+
+@contextmanager
+def build_lock(settings: Any, project_id: str) -> Iterator[None]:
+    """S9b review M1: ONE build at a time across processes (backend, built-in runner MCP child, external MCP server).
+    In-process: ``_LOCK``; cross-process: an OS lock on ``<data>/build/build.lock`` (dies with its process, so a
+    crashed holder never leaves a stale lock) + ``build.holder`` naming the project for ``building_project``."""
+    if not _LOCK.acquire(blocking=False):
+        raise Unavailable("a build is already running")
+    try:
+        lock, holder = _lock_files(settings)
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(lock, os.O_RDWR | os.O_CREAT | getattr(os, "O_BINARY", 0), 0o600)
+        try:
+            if not _try_os_lock(fd):
+                raise Unavailable("a build is already running (another studio process)")
+            try:
+                tmp = holder.with_name(f"build.holder.{os.getpid()}.tmp")
+                tmp.write_text(project_id[:40], encoding="utf-8")
+                os.replace(tmp, holder)
+                _BUILDING["project"] = project_id
+                yield
+            finally:
+                _BUILDING.pop("project", None)
+                holder.unlink(missing_ok=True)
+                _os_unlock(fd)
+        finally:
+            os.close(fd)
+    finally:
+        _LOCK.release()
+
+
+def building_project(settings: Any | None = None) -> str | None:
+    """Project whose build (web, android or desktop; any process incl. an external MCP server) holds the build lock,
+    else None. Without ``settings`` only this process is checked."""
+    if _BUILDING.get("project"):
+        return _BUILDING["project"]
+    if settings is None:
+        return None
+    lock, holder = _lock_files(settings)
+    try:
+        fd = os.open(lock, os.O_RDWR | getattr(os, "O_BINARY", 0))
+    except OSError:
+        return None
+    try:
+        if _try_os_lock(fd):
+            _os_unlock(fd)
+            return None
+        try:
+            name = holder.read_text(encoding="utf-8")[:40].strip()
+        except OSError:
+            return "unknown"
+        return name if re.fullmatch(r"prj_[0-9a-f]{16}", name) else "unknown"
+    finally:
+        os.close(fd)
 
 
 def preview_base(settings: Settings, project_id: str) -> Path:
@@ -141,9 +225,8 @@ def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: C
     if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
     _disk_gate(studio.settings, free_bytes)
-    if not _LOCK.acquire(blocking=False):
-        raise Unavailable("a build is already running")
-    _BUILDING["project"] = project_id
+    held = ExitStack()
+    held.enter_context(build_lock(studio.settings, project_id))
     t0 = time.monotonic()
     build_root = studio.settings.data_dir / "build" / ("b" + uuid.uuid4().hex[:16])
     try:
@@ -185,8 +268,7 @@ def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: C
                 "durationMs": dur, "url": f"http://p-{project_id[4:]}.localhost:{studio.settings.preview_port}/"}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
-        _BUILDING.pop("project", None)
-        _LOCK.release()
+        held.close()
 
 
 def apk_path(settings: Settings, project_id: str) -> Path:
@@ -219,9 +301,8 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
     if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
     _disk_gate(studio.settings, free_bytes)
-    if not _LOCK.acquire(blocking=False):
-        raise Unavailable("a build is already running")
-    _BUILDING["project"] = project_id
+    held = ExitStack()
+    held.enter_context(build_lock(studio.settings, project_id))
     t0 = time.monotonic()
     build_root = studio.settings.data_dir / "build" / ("a" + uuid.uuid4().hex[:16])
     try:
@@ -265,8 +346,7 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
                 "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
-        _BUILDING.pop("project", None)
-        _LOCK.release()
+        held.close()
 
 
 # ---- Windows desktop (S9c) ---------------------------------------------------------------------------------------------
@@ -302,9 +382,8 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
         raise Unavailable(str(e)) from e
     if free_bytes is None and root.exists() and shutil.disk_usage(root).free < MIN_FREE_BYTES:
         raise Unavailable("builds are disabled: less than 5 GiB free on the desktop build drive")
-    if not _LOCK.acquire(blocking=False):
-        raise Unavailable("a build is already running")
-    _BUILDING["project"] = project_id
+    held = ExitStack()
+    held.enter_context(build_lock(studio.settings, project_id))
     t0 = time.monotonic()
     build_root = root / "builds" / ("d" + uuid.uuid4().hex[:16])
     try:
@@ -355,5 +434,4 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
                 "appId": desktop.app_id(project_id), "signed": False, "durationMs": dur}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
-        _BUILDING.pop("project", None)
-        _LOCK.release()
+        held.close()

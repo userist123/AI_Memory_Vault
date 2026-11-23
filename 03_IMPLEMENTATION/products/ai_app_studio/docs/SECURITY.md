@@ -18,7 +18,8 @@ Final-gate findings: `docs/FINAL_GATE_ROUND1.md`. This file is cited by `apps/ba
   activity retention (`PUT /api/v1/settings/retention`, 1..3650 days, default 30).
 - Project delete (S9, B4): `DELETE /api/v1/projects/<id>` creates an approval and answers 428; the owner approves it
   (`POST /api/v1/approvals/<id>/decide`) and repeats the call with `approvalId`. Single use, bound to the project id.
-  Refused with 409 while a run of the project is live. Files go to `<data>/trash` (purged after the retention period);
+  Refused with 409 while a run of the project is live or a build of it holds the build lock in ANY process (OS file
+  lock `<data>/build/build.lock` + holder file, S9b review M1; an external MCP server is a separate process). Files go to `<data>/trash` (purged after the retention period);
   the preview site, APK and capture index are removed at once.
 
 ### Agent side (built-in runner, `core/aas_runner/claude.py`)
@@ -88,6 +89,7 @@ Final-gate findings: `docs/FINAL_GATE_ROUND1.md`. This file is cited by `apps/ba
 | No network in generated apps | Kit CSP `connect-src 'self'` | feature, not a bug, for v1 |
 | Emulator in WSL | Nested virtualisation in WSL2 is not an officially supported setup | local gate covers it |
 | Unsigned installer | The NSIS installer (`pnpm tauri build --config src-tauri/tauri.release.conf.json` after `scripts/build_runtime.ps1`) is not code-signed: SmartScreen warns, and a tampered copy is not detected by Windows | v1 is built and installed on the owner PC only, never downloaded; the runtime.zip sha256 is printed by the build and its first 16 hex are the runtime version the shell checks; signing = later (certificate cost) |
+| Runtime integrity (S9b review L3) | The shell verifies runtime.zip against the sha256 in runtime.version before extracting: this catches damage and partial copies, not a deliberate swap of both files in the install dir | code signing of the installer (residual above) |
 | Runtime bundle | `scripts/build_runtime.ps1` (S9b) stages python + locked deps + Chromium headless shell + app sources; Docker images, the Android SDK/emulator and the Claude CLI are not inside (owner PC prerequisites) | installed-mode end-to-end test (install, first launch, capture) still to run |
 | Export scan | The export secret scan is pattern-based (key shapes + the registered owner token); a secret without a known shape is not detected | owner approval of the exact sha256 is the second control |
 | Web-build image | The local `aas-web-build:dev` image predates the S9b `tsc --noEmit` step (C: < 10 GB, not rebuilt); verified with the script bind-mounted | MUST-DO before release (DIGESTS.json `_must_do_s9b_web_build`) |

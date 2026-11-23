@@ -141,7 +141,7 @@ def _site_files(root: Path) -> list[tuple[str, bytes]]:
         with os.scandir(d) as it:
             entries = sorted(it, key=lambda e: e.name)
         for e in entries:
-            st = e.stat(follow_symlinks=False)
+            st = os.stat(e.path, follow_symlinks=False)  # S9b review L1: DirEntry.stat() has st_nlink 0 on Windows
             r = f"{rel}{e.name}"
             if e.is_symlink() or getattr(st, "st_file_attributes", 0) & _REPARSE:
                 raise ValidationFailed("the build output contains a link: export refused", file=r)
@@ -328,9 +328,11 @@ def _safe_dir(p: Path) -> None:
 
 def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root: Path | None = None) -> dict[str, Any]:
     root = Path(dest_root) if dest_root is not None else export_root(studio)
+    _safe_dir(root / f"{art.name}-{art.project_id[4:]}")  # S9b review L2: no link in the chain BEFORE any mkdir
 
     def _do(ctx: Any) -> dict[str, Any]:
         folder = root / f"{art.name}-{art.project_id[4:]}"
+        _safe_dir(folder)
         folder.mkdir(parents=True, exist_ok=True)
         _safe_dir(folder)
         ext = {"web": ".zip", "android": ".apk", "desktop": ".exe"}[art.target]

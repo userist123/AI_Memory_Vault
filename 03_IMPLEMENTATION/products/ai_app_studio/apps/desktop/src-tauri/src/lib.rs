@@ -98,19 +98,54 @@ pub(crate) fn is_version(v: &str) -> bool {
         && !v.contains("..")
 }
 
+pub(crate) fn is_sha256_hex(v: &str) -> bool {
+    v.len() == 64 && v.chars().all(|c| c.is_ascii_digit() || ('a'..='f').contains(&c))
+}
+
+/// The sha256 line of `certutil -hashfile <file> SHA256` (older Windows prints the hex with spaces).
+pub(crate) fn parse_certutil_sha256(out: &str) -> Option<String> {
+    out.lines()
+        .map(|l| l.trim().replace(' ', "").to_ascii_lowercase())
+        .find(|l| is_sha256_hex(l))
+}
+
+/// sha256 of a file via the OS certutil (absolute System32 path; no hashing crate in the shell).
+fn zip_sha256(path: &Path) -> Result<String, String> {
+    let certutil = env_path("SystemRoot")
+        .unwrap_or_else(|| PathBuf::from(r"C:\Windows"))
+        .join("System32")
+        .join("certutil.exe");
+    let mut cmd = Command::new(certutil);
+    cmd.arg("-hashfile").arg(path).arg("SHA256").stdin(Stdio::null()); // output() captures stdout + stderr
+    hide_window(&mut cmd);
+    let out = cmd.output().map_err(|e| format!("could not run certutil to verify the runtime: {e}"))?;
+    if !out.status.success() {
+        return Err(format!("certutil could not hash the runtime ({})", out.status));
+    }
+    parse_certutil_sha256(&String::from_utf8_lossy(&out.stdout))
+        .ok_or_else(|| "certutil printed no sha256 for the runtime".to_string())
+}
+
 /// Extracts the bundled runtime once per version (ported from the AI Website Studio shell) and returns its directory.
 fn prepare_runtime(bundle: &Path, local: &Path) -> Result<PathBuf, String> {
-    let version = std::fs::read_to_string(bundle.join("runtime.version"))
+    // S9b review L3: runtime.version = the full sha256 of runtime.zip; the extraction dir is its first 16 hex
+    let expected = std::fs::read_to_string(bundle.join("runtime.version"))
         .map_err(|e| format!("bundled runtime version unreadable: {e}"))?
         .trim()
         .to_ascii_lowercase();
-    if !is_version(&version) {
-        return Err("bundled runtime version is malformed".into());
+    if !is_sha256_hex(&expected) {
+        return Err("bundled runtime version is not a sha256 (rebuild with scripts/build_runtime.ps1)".into());
     }
+    let version = expected[..16].to_string();
     let base = local.join("runtime");
     let dir = base.join(&version);
     if dir.join(".complete").is_file() {
         return Ok(dir);
+    }
+    let zip = bundle.join("runtime.zip");
+    let got = zip_sha256(&zip)?;
+    if got != expected {
+        return Err("runtime.zip does not match runtime.version (damaged or modified bundle)".into());
     }
     std::fs::create_dir_all(&base).map_err(|e| format!("cannot create {}: {e}", base.display()))?;
     let partial = base.join(format!("{version}.partial-{}", std::process::id()));
@@ -124,7 +159,7 @@ fn prepare_runtime(bundle: &Path, local: &Path) -> Result<PathBuf, String> {
     let mut cmd = Command::new(tar);
     cmd.arg("-x")
         .arg("-f")
-        .arg(bundle.join("runtime.zip"))
+        .arg(&zip)
         .arg("-C")
         .arg(&partial)
         .stdin(Stdio::null())
@@ -543,6 +578,22 @@ mod tests {
         let l = choose_launch(Some(PathBuf::from("Z:/no/such/resources")), None).expect("repo launch");
         assert!(l.root.join("apps").join("backend").join("__main__.py").is_file());
         assert!(l.env.is_empty());
+    }
+
+    #[test]
+    fn certutil_output_and_sha_format() {
+        let h = "4d6e7fcd88371d36dc92e1ac1710a9ae6e5f52748c8d0be445c6932ffbdff9fd";
+        let out = format!("SHA256 hash of runtime.zip:
+{h}
+CertUtil: -hashfile command completed successfully.
+");
+        assert_eq!(parse_certutil_sha256(&out).as_deref(), Some(h));
+        let spaced = "SHA256 hash of file:
+4d 6e 7f cd 88 37 1d 36 dc 92 e1 ac 17 10 a9 ae 6e 5f 52 74 8c 8d 0b e4 45 c6 93 2f fb df f9 fd
+";
+        assert_eq!(parse_certutil_sha256(spaced).as_deref(), Some(h));
+        assert_eq!(parse_certutil_sha256("CertUtil: error"), None);
+        assert!(is_sha256_hex(h) && !is_sha256_hex(&h[..16]) && !is_sha256_hex(&h.to_uppercase()));
     }
 
     #[test]

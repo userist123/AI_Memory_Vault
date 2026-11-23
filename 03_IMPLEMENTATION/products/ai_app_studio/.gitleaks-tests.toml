@@ -1,0 +1,25 @@
+# S9b review L4: product tests are scanned with the DEFAULT gitleaks rules (the repository .gitleaks.toml allowlists
+# every tests/ path). Only the known synthetic fixtures below are allowed, each by exact file path AND rule id.
+title = "AI App Studio tests"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "synthetic JWT canary (P6c redaction test)"
+targetRules = ["jwt"]
+paths = ['''(^|/)tests/security/test_activity\.py$''']
+
+[[allowlists]]
+description = "fake console token of the device-host unit test"
+targetRules = ["generic-api-key"]
+paths = ['''(^|/)tests/local_gate/test_devhost_unit\.py$''']
+
+[[allowlists]]
+description = "planted AWS-shaped key of the export secret-scan test (P7d)"
+targetRules = ["aws-access-token"]
+paths = ['''(^|/)tests/wiring/test_s9b_export\.py$''']
+
+[[allowlists]]
+description = "bytecode caches are never tracked (local runs only)"
+paths = ['''(^|/)__pycache__/''']

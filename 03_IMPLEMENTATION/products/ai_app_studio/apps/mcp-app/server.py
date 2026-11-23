@@ -352,7 +352,8 @@ def preview_capture(projectId: ProjectId, frame: Literal["phone", "tablet", "des
         c["agentImage"] = _meta(img)
         if img is not None:
             images.append(img)
-    lines = list(res.get("console") or [])
+    lines = list(res.pop("console", None) or [])  # S9b review L5: console text only inside the untrusted block
+    res["consoleLines"] = len(lines)
     return Seen(res, "preview console", images, lines)
 
 

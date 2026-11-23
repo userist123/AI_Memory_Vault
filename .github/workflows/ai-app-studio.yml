@@ -29,7 +29,8 @@ env:
   UV_VERSION: "0.13.9"
   UV_SHA256: "a7fbaff2b9a271d85c1bdb540941090fd1ce011797b4abeb48e4dcd39c2471d5"
   UV_WIN_SHA256: "edd61f7f5728a56cc62455386661860bdfc7bab65872f39b0c25bdcc1d8e1beb"
-  ACTIONLINT_PY_VERSION: "1.7.12.25"
+  ACTIONLINT_VERSION: "1.7.12"
+  ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
   PNPM_VERSION: "10.28.2"
 
 jobs:
@@ -50,6 +51,8 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
       - name: Scan
         run: '"$RUNNER_TEMP/gitleaks" dir --config .gitleaks.toml --redact --no-banner --exit-code 1 "$PRODUCT_DIR"'
+      - name: Scan product tests (default rules; only exact fixture path + rule allowed)
+        run: '"$RUNNER_TEMP/gitleaks" dir --config "$PRODUCT_DIR/.gitleaks-tests.toml" --redact --no-banner --exit-code 1 "$PRODUCT_DIR/tests"'
 
   gitleaks-history:
     name: secrets (gitleaks, product history)
@@ -77,11 +80,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.13"
-      - name: Install actionlint (pinned)
-        run: python -m pip install --disable-pip-version-check "actionlint-py==${ACTIONLINT_PY_VERSION}"
+      - name: Install actionlint (release binary, checksum verified)
+        run: |
+          set -euo pipefail
+          f="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$f" "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$f"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" actionlint
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
       - name: Lint this workflow
         run: actionlint .github/workflows/ai-app-studio.yml
 
@@ -95,8 +101,11 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.13"
-      - name: Install zizmor
-        run: python -m pip install --disable-pip-version-check "zizmor==${ZIZMOR_VERSION}"
+      - name: Install zizmor (hash-checked wheel)
+        run: |
+          set -euo pipefail
+          echo "zizmor==${ZIZMOR_VERSION} --hash=sha256:fc766cf422e4de8b6d35a9f81725b84a400408494cce38767582cd06e7b71844" > "$RUNNER_TEMP/zizmor-req.txt"
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary :all: -r "$RUNNER_TEMP/zizmor-req.txt"
       - name: Audit this workflow
         run: zizmor --offline --min-severity low .github/workflows/ai-app-studio.yml
 
@@ -130,7 +139,7 @@ jobs:
         run: '"$RUNNER_TEMP/osv-scanner" scan source --recursive "$PRODUCT_DIR"'
 
   vendored:
-    name: vendored drift (check_vendored; gen_vendored --check needs the upstream repo: owner PC)
+    name: "vendored drift (check_vendored; gen_vendored --check needs the upstream repo: owner PC)"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:

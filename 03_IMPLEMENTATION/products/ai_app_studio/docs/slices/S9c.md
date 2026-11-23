@@ -74,3 +74,33 @@ not launched (owner action). Target dir after both builds: ~1.1 GB on D:.
 
 ## Open
 - Launch button (owner only); NSIS bundle once an offline NSIS is pinned; code signing (residual "Unsigned exe").
+
+## S9b review fixes (own commit, sent by the main session)
+TDD: `tests/wiring/test_s9b_review_fixes.py` (6 failed: no `build_lock`, hard link accepted, link chain checked after
+the approval, markers not escaped, console in the JSON body), `tests/unit/test_s9b_review_runtime.py` (4 failed),
+`tests/ci/test_s9b_review_ci.py` (2 failed) -> all passed.
+- **M1** build lock across processes: `service.build_lock` = in-process lock + OS lock on `<data>/build/build.lock`
+  (`msvcrt.locking` / `flock`; released by the OS when the holder dies) + `build.holder` (project id). Web, android
+  and desktop builds use it; `DELETE /projects/<id>` asks `building_project(settings)` (any process) -> 409 for the
+  project (or an unknown holder). Test: a second Python process holds the lock -> delete 409, a build in this process
+  refused, released after; a killed holder leaves no stale lock (Windows releases it shortly after the kill).
+  S9b.md and SECURITY.md wording corrected (the S9b lock was per process).
+- **L1** export reader: `os.stat(path, follow_symlinks=False).st_nlink` (DirEntry.stat() reports 0 on Windows); a
+  hard-linked file in the site is refused.
+- **L2** export write: the folder chain is checked for links/junctions before the approval is consumed and before any
+  mkdir (and again after); a junction in the parent path -> refused, nothing created through it.
+- **L3** `scripts/build_runtime.ps1`: app sources = `git ls-files -z` of the listed dirs (no untracked/ignored file);
+  `uv export` keeps hashes and `uv pip install --require-hashes`; reparse-point check over the whole stage (python/,
+  ms-playwright/, app/); `runtime.version` = full runtime.zip sha256; the shell (lib.rs) checks it is a sha256,
+  hashes runtime.zip with `%SystemRoot%\System32\certutil.exe -hashfile` before extracting and refuses a mismatch
+  (extraction dir = first 16 hex). Integrity check against damage/partial copies, not authenticity (both files sit
+  in the same install dir; signing = residual "Unsigned installer"). cargo test --lib 6 passed (new
+  certutil-parse test). Not re-run live: build_runtime.ps1 (needs ~250 MB on C: staging; C: 6.9 GB).
+- **L4** CI: `.gitleaks-tests.toml` (default rules; allowlists = exact path + one rule: the JWT canary, the devhost
+  fake token, the planted AWS key of the export test; `__pycache__`) and a second gitleaks step over
+  `$PRODUCT_DIR/tests`; positive control: a new AWS-shaped key in a test file is found. actionlint = release binary
+  1.7.12 sha256-verified (actionlint-py is sdist-only, its build downloads the binary unverified); zizmor wheel
+  installed with `--require-hashes --only-binary :all:`. A pre-existing YAML error (unquoted `:` in the vendored job
+  name) fixed; actionlint 0, zizmor 0 locally.
+- **L5** sight: `<<`/`>>` inside untrusted lines are broken up (`< <`), so data cannot fake the end/start marker;
+  `preview_capture` keeps console lines only in the UNTRUSTED block (`consoleLines` count in the JSON body).

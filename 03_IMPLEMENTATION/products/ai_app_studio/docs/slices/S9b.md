@@ -11,7 +11,7 @@ TDD: failing test first per item; where a helper was written before its test it 
    `ERROR_PIPE_BUSY` (231) on the next instance no longer raises: `accept()` returns None until an instance is free
    (no double close). 4. SECURITY.md residual "Runner profile (B7)": hooks/plugins/skills/agents of the owner's
    `~/.claude` were not probed (the runner keeps the owner's profile; `disableAllHooks` is in the studio settings).
-   5. `DELETE /projects/<id>` -> 409 while a build of that project holds the build lock (any caller, incl. external
+   5. `DELETE /projects/<id>` -> 409 while a build of that project holds the build lock (in-process only at S9b - corrected in the S9b review fixes: cross-process OS lock; any caller, incl. external
    MCP; `service.building_project()`). Red: `tests/wiring/test_s9a_review_fixes.py` 4 failed (purge, PNG, building_project
    missing, WinError 231) -> 4 passed; S8/S9 pipe + hardening suites 45 passed. Stray `w_aas_uvcache` folder deleted.
 

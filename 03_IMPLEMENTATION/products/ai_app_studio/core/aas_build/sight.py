@@ -93,7 +93,16 @@ def console_lines(raw: list[Any] | None) -> list[str]:
     return out
 
 
+def _defang(line: str) -> str:
+    """S9b review L5: data can never contain the wrapper markers (no fake end/start of the untrusted block)."""
+    line = " ".join(str(line).split())
+    while "<<" in line or ">>" in line:
+        line = line.replace("<<", "< <").replace(">>", "> >")
+    return line
+
+
 def untrusted(kind: str, lines: list[str]) -> str:
-    """Text block for the tool result: header + note + one ``| ``-prefixed line per entry + footer."""
-    body = "\n".join(f"| {ln}" for ln in lines) if lines else "| (none)"
+    """Text block for the tool result: header + note + one ``| ``-prefixed line per entry + footer. Marker-like
+    ``<<`` / ``>>`` inside the data are broken up (S9b review L5)."""
+    body = "\n".join(f"| {_defang(ln)}" for ln in lines) if lines else "| (none)"
     return (f"<<UNTRUSTED DATA: {kind}>>\n{UNTRUSTED_NOTE}\n{body}\n<<END UNTRUSTED DATA: {kind}>>")

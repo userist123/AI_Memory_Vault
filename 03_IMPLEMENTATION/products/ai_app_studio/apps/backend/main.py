@@ -212,7 +212,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             raise ValidationFailed("invalid project id")
         if runner.live_project() == pid:
             raise runner_mod.RunInProgress("a run of this project is in progress: stop it first", projectId=pid)
-        if build_service.building_project() == pid:  # also a build started by an external MCP client
+        if build_service.building_project(settings) in (pid, "unknown"):  # any process: also an external MCP server (M1)
             raise runner_mod.RunInProgress("a build of this project is in progress: wait for it", projectId=pid)
         studio.get_project(OWNER, pid, with_components=False)  # NotFound
         if b is None or not b.approvalId:

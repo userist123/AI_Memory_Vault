@@ -61,9 +61,10 @@ Step 'python (relocatable build)' {
 Step 'dependencies (locked, no dev group)' {
   $req = Join-Path $Stage 'requirements.txt'
   Push-Location $Root
-  try { uv export --frozen --no-dev --no-hashes --no-emit-project --no-header -o $req | Out-Null } finally { Pop-Location }
+  # S9b review L3: the export keeps the uv.lock hashes and the install refuses any file without a matching hash
+  try { uv export --frozen --no-dev --no-emit-project --no-header -o $req | Out-Null } finally { Pop-Location }
   if ($LASTEXITCODE -ne 0) { throw 'uv export failed' }
-  uv pip install --python (Join-Path $Stage 'python\python.exe') --break-system-packages --link-mode copy --no-progress -r $req
+  uv pip install --python (Join-Path $Stage 'python\python.exe') --break-system-packages --link-mode copy --no-progress --require-hashes -r $req
   if ($LASTEXITCODE -ne 0) { throw 'uv pip install failed' }
   Remove-Item $req
   # console-script launchers embed the build machine's absolute path; the app never uses them
@@ -84,10 +85,16 @@ Step 'application sources' {
   $app = Join-Path $Stage 'app'
   $dirs = 'core\studio_core', 'core\aas_build', 'core\aas_device', 'core\aas_runner',
           'apps\backend', 'apps\mcp-app', 'apps\device_host', 'kit', 'images'
-  foreach ($d in $dirs) {
-    $dst = Join-Path $app $d
+  # S9b review L3: only files tracked by git (no stray, ignored or untracked file of the working tree)
+  $git = @($dirs | ForEach-Object { $_.Replace('\', '/') })
+  $listed = (git -C $Root ls-files -z -- @git) -split "`0" | Where-Object { $_ }
+  if ($LASTEXITCODE -ne 0 -or -not $listed) { throw 'git ls-files failed (the runtime is built from a git checkout)' }
+  foreach ($rel in $listed) {
+    $src = Join-Path $Root $rel
+    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) { continue }  # tracked but deleted in the working tree
+    $dst = Join-Path $app $rel
     New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null
-    Copy-Item (Join-Path $Root $d) $dst -Recurse
+    Copy-Item -LiteralPath $src $dst
   }
   Get-ChildItem $app -Recurse -Directory -Force -Include __pycache__, .pytest_cache, .mypy_cache, node_modules |
     Remove-Item -Recurse -Force
@@ -136,13 +143,20 @@ Step 'smoke test of the staged runtime (isolated from this checkout)' {
   Remove-Item $smoke
 }
 
+Step 'no link anywhere in the stage' {
+  # S9b review L3: python/, ms-playwright/ and app/ (the shell extracts the zip with tar)
+  $links = Get-ChildItem $Stage -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
+  if ($links) { throw "links in the stage: $(($links | Select-Object -First 10).FullName -join ', ')" }
+}
+
 Step 'zip + version' {
   $zip = Join-Path $Out 'runtime.zip'
   if (Test-Path $zip) { Remove-Item $zip -Force }
   & "$env:SystemRoot\System32\tar.exe" -a -c -f $zip -C $Stage python ms-playwright app
   if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
   $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-  Set-Content (Join-Path $Out 'runtime.version') $hash.Substring(0, 16) -NoNewline -Encoding ascii
+  # S9b review L3: the full sha256; the shell verifies runtime.zip against it before extracting (dir = first 16 hex)
+  Set-Content (Join-Path $Out 'runtime.version') $hash -NoNewline -Encoding ascii
   '{0} MB, version {1}, sha256 {2}' -f [math]::Round((Get-Item $zip).Length / 1MB), $hash.Substring(0, 16), $hash
 }
 if (-not $KeepStage) { Remove-Item $Stage -Recurse -Force }
