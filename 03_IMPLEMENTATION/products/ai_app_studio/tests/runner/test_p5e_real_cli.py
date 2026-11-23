@@ -92,3 +92,22 @@ def test_runner_flags_leave_only_the_studio_server_and_catalogue_tools(fixture_e
     init = first_init(argv, env, run)
     assert names(init) == ["ai-app-studio"], init.get("mcp_servers")
     sj.check_init(init)  # tools are a subset of the catalogue, no built-ins
+
+
+def test_runner_flags_and_env_turn_the_owner_auto_memory_off(fixture_env, tmp_path: Path) -> None:
+    """B1 live finding (2026-11-23): `--setting-sources ""` keeps CLAUDE.md out but NOT the CLI auto-memory; init showed
+    memory_paths.auto -> the owner's ~/.claude/projects/<cwd-key>/memory and a canary run confirmed its MEMORY.md was in
+    the builder's context. Control: the plain CLI reports an auto-memory path; the runner settings + env report none."""
+    env, run = fixture_env
+    control = first_init([CLAUDE, "-p", "--output-format", "stream-json", "--verbose"], env, run)
+    assert (control.get("memory_paths") or {}).get("auto"), "control: this CLI reports no auto-memory path"
+    mcp = tmp_path / "mcp.json"
+    mcp.write_text(json.dumps({"mcpServers": {"ai-app-studio": {
+        "command": sys.executable, "args": ["-c", "import time; time.sleep(30)"]}}}))
+    settings = tmp_path / "settings.json"
+    settings.write_text(json.dumps(rc.SETTINGS_JSON))
+    argv = rc.build_argv(cli=[CLAUDE], model="sonnet", mcp_config=mcp, settings=settings, max_turns=1,
+                         max_budget_usd=0.01)
+    renv = {**env, **{k: v for k, v in rc.runner_env(tmp_path, base={}).items() if k not in ("TEMP", "TMP")}}
+    init = first_init(argv, renv, run)
+    assert not (init.get("memory_paths") or {}).get("auto"), init.get("memory_paths")

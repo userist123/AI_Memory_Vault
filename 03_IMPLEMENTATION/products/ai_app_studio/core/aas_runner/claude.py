@@ -41,6 +41,9 @@ DENIED_BUILTINS = ("Bash", "Edit", "Write", "MultiEdit", "NotebookEdit", "Read",
 SETTINGS_JSON: dict[str, Any] = {
     "disableAllHooks": True,
     "enableAllProjectMcpServers": False,
+    # B1 live finding: `--setting-sources ""` does not stop the CLI auto-memory (~/.claude/projects/<cwd-key>/memory);
+    # the owner's MEMORY.md reached the builder's context. Off here and via CLAUDE_CODE_DISABLE_AUTO_MEMORY in runner_env.
+    "autoMemoryEnabled": False,
     "permissions": {"defaultMode": "dontAsk", "deny": ["Bash", "Read", "Edit", "Write", "WebFetch", "WebSearch"]},
 }
 SYSTEM_PROMPT = (
@@ -105,6 +108,7 @@ def runner_env(tmp_dir: Path, base: Mapping[str, str] | None = None,
         env[k] = v
     env["TEMP"] = env["TMP"] = str(tmp_dir)
     env["DISABLE_AUTOUPDATER"] = "1"  # B7: the runner never updates the owner's CLI binary mid-run
+    env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"  # B1: no owner auto-memory in the builder's context
     return env
 
 

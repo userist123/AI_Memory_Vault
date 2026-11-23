@@ -67,7 +67,8 @@ def test_cwd_is_a_fresh_empty_run_dir_outside_workspaces_and_env_is_minimal(
     assert not any(k.startswith("AAS_") or "TOKEN" in k or "API_KEY" in k for k in keys)
     assert keys <= {"SYSTEMROOT", "WINDIR", "PATH", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "HOME",
                     "SYSTEMDRIVE", "PATHEXT", "COMSPEC", "PYTHONIOENCODING", "PYTHONUTF8", "CLAUDE_CODE_ENTRYPOINT",
-                    "PYTHONHASHSEED", "DISABLE_AUTOUPDATER"}  # S9 B7: the runner turns the CLI auto-updater off
+                    "PYTHONHASHSEED", "DISABLE_AUTOUPDATER",  # S9 B7: the runner turns the CLI auto-updater off
+                    "CLAUDE_CODE_DISABLE_AUTO_MEMORY"}  # B1: and the CLI auto-memory
     assert Path(rec["env"]["TEMP"]).resolve().parent == (studio.settings.data_dir / "runner" / "tmp").resolve()
 
 

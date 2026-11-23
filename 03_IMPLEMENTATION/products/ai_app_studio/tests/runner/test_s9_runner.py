@@ -37,6 +37,14 @@ def test_runner_env_disables_the_auto_updater(tmp_path: Path) -> None:
     assert env["DISABLE_AUTOUPDATER"] == "1"
 
 
+def test_runner_settings_and_env_disable_the_owner_auto_memory(tmp_path: Path) -> None:
+    """B1 live finding: the CLI auto-memory (~/.claude/projects/<cwd-key>/memory/MEMORY.md) is loaded even with
+    `--setting-sources ""`; the runner turns it off twice (flag settings + env), an inherited "0" cannot re-enable it."""
+    assert rc.SETTINGS_JSON["autoMemoryEnabled"] is False
+    env = rc.runner_env(tmp_path, base={"PATH": "x", "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "0"})
+    assert env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
+
+
 def test_resolve_cli_returns_an_absolute_path_or_none(tmp_path: Path) -> None:
     exe = tmp_path / ("claude.exe" if os.name == "nt" else "claude")
     exe.write_bytes(b"")
