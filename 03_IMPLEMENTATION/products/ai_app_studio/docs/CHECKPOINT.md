@@ -169,3 +169,20 @@ Update 2026-11-23 (S8 review fixes M1, L1-L4, local commits on claude/ai-app-stu
   both modes + gen_vendored --check OK. No emulator launch.
 - Open: device host "fresh key frame" op (R2); external MCP without mirror; real paid agent run.
 - Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S9a hardening from final gate round 1, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S9.md
+- B3 preview server in the backend lifespan (one process; run_studio.ps1 starts no second process), exclusive preview bind,
+  Tauri product root resolved at run time (installed runtime.zip or exe ancestors), backend log <data>/logs (capped);
+  B4 5 GiB build disk gate, device-shot quota, activity retention (owner setting, default 30 d), owner-only two-step
+  project delete; B6 one live run (409); B7 --no-session-persistence + DISABLE_AUTOUPDATER=1 + absolute claude path,
+  memory probe: no user/project CLAUDE.md under the runner flags (CLI 2.1.330); B8 native named pipe (logon-SID DACL,
+  reject remote, first instance); B9 wry default args re-added, decoder prefer-software + NAL allow-list + SPS bounds +
+  AU cap + SPS/PPS/IDR first; B11 no :1420 origins; B12 builds/devices via Studio.operation (policy app.build /
+  device.control + audit); emulator restrict=on,ipv6=off on both NICs, -grpc-use-jwt, -no-snapshot,
+  -gpu swiftshader_indirect (live check ok), console token fail-closed, no adb reverse/forward; Gradle pin 8.14.8
+  (image NOT rebuilt: must-do); docs/SECURITY.md.
+- Verified: uv run pytest -q 606 passed / 22 skipped (Docker up); local gate non-live 147/22; tsc clean, vitest 120,
+  Playwright 15; cargo test --lib 5; check_vendored both modes + gen_vendored --check OK. 1 emulator launch, no new dump.
+- Open: android image rebuild (C: >= 10 GB); guest IPv6 + WSLg window eye check at the next live gate; runtime bundle.
+- Next = S9b (features: agent sight, export, deps stage, templates; CI jobs B10; doc drift C), then real run B1 +
+  WebView2 iframe probe B2 + final gate round 2 (fable-consultant -> Codex/Gemini -> security-lockdown -> push + PR #413).

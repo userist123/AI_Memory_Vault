@@ -97,3 +97,9 @@ CI jobs (actionlint, desktop tsc+vitest, cargo, windows pytest or markers, gitle
 findings. Then: B2 real-WebView2 iframe probe, B1 one budget-capped real agent run, fresh local-gate receipt,
 Fable round 2 + one Opus delta review, security-lockdown skill, then push + PR #413 + vault CI + merge.
 Windows desktop wrapper for generated apps (Tauri) = decide in S9: implement or record as v1.1 residual.
+
+Update 2026-11-23 (S9a done, local commits only on claude/ai-app-studio):
+- Final-gate fixes B3, B4, B6, B7, B8, B9, B11, B12 + emulator hardening + Gradle pin 8.14.8 + docs/SECURITY.md.
+  pytest 606 passed / 22 skipped; vitest 120; Playwright 15; cargo 5. Details: ai_app_studio/docs/slices/S9.md.
+- Must-do: rebuild the android image (C: >= 10 GB); next live gate: guest IPv6 check + WSLg window eye check.
+- NEXT = S9b (features, CI jobs, doc drift), then real run B1 + WebView2 probe B2 + final gate round 2.
