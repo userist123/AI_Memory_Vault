@@ -1,0 +1,28 @@
+// Studio-owned (AI App Studio, DESIGN 3.5). Replaces the Capacitor template's root build.gradle: no google-services
+// classpath, one pinned build-tools version for every Android module (the image ships only build-tools 36.0.0 and
+// android.builder.sdkDownload=false, so a module asking for another version fails instead of downloading it).
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+    }
+}
+
+apply from: "variables.gradle"
+ext.aasBuildToolsVersion = '36.0.0'
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+subprojects {
+    plugins.withId('com.android.library') {
+        android { buildToolsVersion = rootProject.ext.aasBuildToolsVersion }
+    }
+}

@@ -71,7 +71,7 @@ test("plan gate: a plan.proposed event alone never renders a plan card; a server
   await expect(region).toContainText("none pending");
 
   // positive control: the server record makes exactly one actionable plan card, inside the approval region
-  be.approvals = [{ id: "pl-1", kind: "plan", title: "Build it", steps: ["Scaffold", "Build"], status: "pending" }];
+  be.approvals = [{ id: "pl-1", kind: "plan", title: "Build it", steps: ["Scaffold", "Build"], status: "pending", contentSha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }];
   be.push({ kind: "plan.proposed", payload: { planId: "pl-1" } });
   await expect(region.getByTestId("plan-card")).toHaveCount(1);
   await expect(page.getByTestId("timeline").getByTestId("plan-card")).toHaveCount(0);

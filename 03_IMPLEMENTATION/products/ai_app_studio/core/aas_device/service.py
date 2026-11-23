@@ -35,6 +35,7 @@ SETTING_KEY = "device_enabled"
 MIN_FREE_BYTES = 8 * 1024 ** 3
 COORD_MAX = 10_000
 _PID = re.compile(r"^prj_[0-9a-f]{16}$")
+PKG_PREFIX = "dev.aiappstudio.p"  # + id16 = the device host's PKG_RE (device host script aas_devhost.py)
 
 
 def is_enabled(studio: Any) -> bool:
@@ -186,15 +187,29 @@ class DeviceService:
         self._rec("device.log", text=f"screenshot {sha[:12]} {len(png)} bytes")
         return {"sha256": sha, "size": len(png)}
 
-    def install(self, project_id: str) -> dict[str, Any]:
+    def install(self, project_id: str, *, launch: bool = False) -> dict[str, Any]:
+        """Install the project's debug APK (the device host accepts only dev.aiappstudio.p<16 hex>); with ``launch``
+        the installed package must be exactly the project's package id and is then started."""
         s = self._need()
         if not isinstance(project_id, str) or not _PID.match(project_id):
             raise ValidationFailed("invalid project id")
         apk = self.studio.settings.data_dir / "preview" / project_id / "app-debug.apk"
         if not apk.is_file() or apk.is_symlink():
-            raise Unavailable("no APK has been built for this project (the Android build is not available yet)")
-        self._rec("device.log", text=f"install {apk.name}")
-        return s.install(apk)
+            raise Unavailable("no APK has been built for this project (call app_build with target android first)")
+        sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+        self._rec("device.log", text=f"install {apk.name} sha256 {sha[:12]}")
+        rep = s.install(apk)
+        if not launch:
+            return rep
+        pkg = PKG_PREFIX + project_id[4:]
+        if not rep.get("ok") or rep.get("pkg") != pkg:
+            self._rec("device.log", text=f"install failed: {str(rep.get('err') or rep.get('msg') or '')[:200]}")
+            return {"install": rep, "launch": None}
+        self._rec("device.log", text=f"installed {pkg}")
+        self._need()  # gates again before the app runs
+        lr = s.launch(pkg)
+        self._rec("device.log", text=f"launch {pkg} {'ok' if lr.get('ok') else 'failed'}")
+        return {"install": rep, "launch": lr, "packageId": pkg, "apkSha256": sha}
 
     def stop(self) -> dict[str, Any]:
         with self._lock:

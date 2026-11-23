@@ -1,0 +1,58 @@
+#!/bin/sh
+# aas-build-android (DESIGN 3.5; PB7a/PB7b). Runs inside the container with NO network.
+#   build : /dist (read-only web build) + /keys/aas-debug.keystore (read-only studio debug key) -> /out/app-debug.apk
+#   genkey: create the studio debug keystore in /keys-out (first use only; the studio calls this once per install)
+# Gradle runs --offline with --dependency-verification strict against the read-only cache baked into the image
+# (GRADLE_RO_DEP_CACHE=/opt/gradle-ro) and gradle/verification-metadata.xml (sha256 of every artifact).
+set -eu
+fail() { echo "aas-build-android: $1" >&2; exit "${2:-2}"; }
+STORE_PASS=android
+ALIAS=androiddebugkey
+
+signer_of_keystore() {
+  keytool -exportcert -keystore "$1" -storepass "$STORE_PASS" -alias "$ALIAS" | sha256sum | cut -d' ' -f1
+}
+
+mode="${1:-build}"
+case "$mode" in
+  genkey)
+    [ -d /keys-out ] || fail "/keys-out is not mounted"
+    [ -e /keys-out/aas-debug.keystore ] && fail "a keystore already exists in /keys-out"
+    keytool -genkeypair -noprompt -storetype PKCS12 -keystore /keys-out/aas-debug.keystore \
+      -storepass "$STORE_PASS" -keypass "$STORE_PASS" -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+      -dname "CN=AI App Studio Debug,O=AI App Studio,C=US" >/dev/null 2>&1 || fail "keytool failed"
+    echo "AAS-SIGNER-SHA256=$(signer_of_keystore /keys-out/aas-debug.keystore)"
+    exit 0 ;;
+  build) ;;
+  *) fail "unknown mode" ;;
+esac
+
+APP_ID="${AAS_APP_ID:-}"
+printf '%s' "$APP_ID" | grep -Eqx 'dev\.aiappstudio\.p[0-9a-f]{16}' || fail "AAS_APP_ID is not a studio package id"
+[ -f /dist/index.html ] || fail "/dist/index.html is missing (run the web build first)"
+[ -z "$(find /dist ! -type f ! -type d | head -1)" ] || fail "/dist contains a link or a special file"
+[ -f /keys/aas-debug.keystore ] || fail "the studio keystore is not mounted at /keys/aas-debug.keystore"
+[ -d /out ] || fail "/out is not mounted"
+[ -z "$(ls -A /out)" ] || fail "/out must be empty"
+
+W=/tmp/w
+mkdir -p "$W" "${HOME:-/tmp/home}" "$GRADLE_USER_HOME" "$ANDROID_USER_HOME"
+cp -R /opt/aas/android-template/. "$W/"
+PUB="$W/android/app/src/main/assets/public"
+rm -rf "$PUB"
+mkdir -p "$PUB"
+cp -R /dist/. "$PUB/"
+cd "$W/android"
+gradle --offline --no-daemon --console=plain --dependency-verification strict \
+  -PaasAppId="$APP_ID" -PaasKeystore=/keys/aas-debug.keystore assembleDebug
+APK=app/build/outputs/apk/debug/app-debug.apk
+[ -f "$APK" ] || fail "Gradle produced no app-debug.apk" 5
+
+# PB7b: the APK must be signed by exactly one signer: the mounted studio key
+want=$(signer_of_keystore /keys/aas-debug.keystore)
+certs=$(apksigner verify --print-certs "$APK") || fail "apksigner verify failed" 6
+nsig=$(printf '%s\n' "$certs" | grep -c '^Signer #[0-9]* certificate SHA-256 digest: ' || true)
+have=$(printf '%s\n' "$certs" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+[ "$nsig" = "1" ] && [ "$have" = "$want" ] || fail "APK is not signed by the studio key alone" 6
+echo "AAS-SIGNER-SHA256=$have"
+cp "$APK" /out/app-debug.apk

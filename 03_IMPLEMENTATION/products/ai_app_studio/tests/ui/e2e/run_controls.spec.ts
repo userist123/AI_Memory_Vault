@@ -31,7 +31,9 @@ test("prompt box starts a run, plan card approves it, Stop stops it", async ({ p
   expect(be.runStarts[0]).toEqual({ projectId: created, prompt: "Build a habit tracker" });
 
   // the run's own events (from the server) switch the UI to running; the plan arrives as a server record
-  be.approvals = [{ id: "apr_1", kind: "plan", title: "Habit tracker", steps: ["Scaffold", "Build"], runId: RUN, status: "pending" }];
+  be.approvals = [
+    { id: "apr_1", kind: "plan", title: "Habit tracker", steps: ["Scaffold", "Build"], runId: RUN, status: "pending", contentSha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+  ];
   be.push(
     { kind: "run.started", runId: RUN, payload: { title: "Build a habit tracker" } },
     { kind: "plan.proposed", runId: RUN, payload: { planId: "apr_1" } },
@@ -42,8 +44,22 @@ test("prompt box starts a run, plan card approves it, Stop stops it", async ({ p
   await expect(card).toHaveCount(1);
   await card.getByRole("button", { name: "Approve plan" }).click();
   await expect.poll(() => be.decisions.length).toBe(1);
-  expect(be.decisions[0]).toEqual({ url: "/api/v1/plans/apr_1/decide", body: { decision: "approve", note: "" } });
+  expect(be.decisions[0]).toEqual({ url: "/api/v1/plans/apr_1/decide", body: { decision: "approve", note: "", contentSha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } });
 
   await page.getByTestId("run-stop").click();
   await expect.poll(() => be.runStops).toEqual([RUN]);
+});
+
+test("S7: the plan gate toggle reads and writes the owner-only setting", async ({ page }) => {
+  await injectDevSession(page);
+  await page.goto("/");
+  await waitOpen(page);
+  const toggle = page.getByTestId("plan-gate-toggle").locator("input");
+  await expect(toggle).toBeChecked(); // default ON (and fail closed when the server says nothing else)
+  await toggle.click(); // controlled by the server's answer: the box changes only after the PUT returned
+  await expect.poll(() => be.planGatePuts).toEqual([{ enabled: false }]);
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  await expect.poll(() => be.planGatePuts).toEqual([{ enabled: false }, { enabled: true }]);
+  await expect(toggle).toBeChecked();
 });

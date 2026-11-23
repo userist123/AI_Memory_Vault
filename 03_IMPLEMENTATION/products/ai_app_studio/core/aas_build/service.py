@@ -139,3 +139,71 @@ def build_web(studio: Any, project_id: str, *, run_id: str | None = None,
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
         _LOCK.release()
+
+
+def apk_path(settings: Settings, project_id: str) -> Path:
+    """Where the project's current debug APK lives (read by aas_device.DeviceService.install)."""
+    return preview_base(settings, project_id) / "app-debug.apk"
+
+
+def keys_dir(settings: Settings) -> Path:
+    """Studio debug keystore directory: <data root>/keys (%LOCALAPPDATA%/AIAppStudio/keys), never the owner's
+    Android user dir."""
+    return settings.data_dir / "keys"
+
+
+def build_android(studio: Any, project_id: str, *, run_id: str | None = None,
+                  run_build: Callable[..., runner.AndroidResult] = runner.run_android_build,
+                  ensure_keys: Callable[..., tuple[Path, str]] = runner.ensure_keystore,
+                  docker: str | None = None, image: str | None = None) -> dict[str, Any]:
+    """Current web build of the project (the preview site) -> offline Docker Gradle build -> signed debug APK at
+    ``apk_path``. Events: build.started {target android}, build.log, build.error, build.finished {target, status,
+    artifactSha256, sizeBytes} with the APK sha256 also in the typed artifact column."""
+    if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+        raise BuildFailed("invalid project id")
+    if not _LOCK.acquire(blocking=False):
+        raise Unavailable("a build is already running")
+    t0 = time.monotonic()
+    build_root = studio.settings.data_dir / "build" / ("a" + uuid.uuid4().hex[:16])
+    try:
+        revision = studio.get_revision(project_id)
+        site = site_root_for(studio.settings)(project_id[4:])
+        if site is None:
+            raise Unavailable("build the web target first (app_build target web): the APK packages the web build")
+        docker = docker or shutil.which("docker")
+        if not docker or not os.path.isabs(docker):
+            raise Unavailable("docker is not installed or not on PATH")
+        try:
+            image = image or runner.resolve_image(docker, runner.ANDROID_TAG)
+        except runner.BuildError as e:
+            raise Unavailable(str(e).replace("images/web-build", "images/android-build")) from e
+        _rec(studio, "build.started", project_id, run_id, target="android", revision=revision)
+        out = build_root / "out"
+        try:
+            keystore, signer = ensure_keys(docker=docker, image=image, keys_dir=keys_dir(studio.settings))
+            out.mkdir(parents=True)
+            res = run_build(docker=docker, build_id=build_root.name, dist=site, keystore=keystore,
+                            expected_signer=signer, out=out, image=image, app_id=runner.app_id_for(project_id),
+                            dest=apk_path(studio.settings, project_id))
+        except (runner.BuildError, OSError, StudioError) as e:
+            msg = str(e)[:1000]
+            _rec(studio, "build.error", project_id, run_id, code="build_failed", message=msg)
+            _rec(studio, "build.finished", project_id, run_id, target="android", status="failed", revision=revision,
+                 durationMs=int((time.monotonic() - t0) * 1000))
+            raise BuildFailed(msg) from e
+        for line in [ln for ln in res.log_tail.splitlines() if ln.strip()][-LOG_LINES:]:
+            _rec(studio, "build.log", project_id, run_id, stream="stdout", line=line)
+        dur = int((time.monotonic() - t0) * 1000)
+        try:
+            activity.record(studio, "build.finished", project_id=project_id, run_id=run_id, source="build",
+                            artifact_sha256=res.sha256,
+                            payload={"target": "android", "status": "ok", "revision": revision, "durationMs": dur,
+                                     "artifactSha256": res.sha256, "sizeBytes": res.size,
+                                     "signerSha256": res.signer_sha256})
+        except Exception:  # noqa: BLE001
+            activity._note_dropped(studio)  # noqa: SLF001
+        return {"ok": True, "target": "android", "revision": revision, "apkSha256": res.sha256, "sizeBytes": res.size,
+                "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur}
+    finally:
+        shutil.rmtree(build_root, ignore_errors=True)
+        _LOCK.release()

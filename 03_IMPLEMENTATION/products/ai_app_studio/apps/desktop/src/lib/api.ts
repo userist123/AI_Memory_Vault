@@ -39,6 +39,8 @@ export interface PlanRecord {
   title: string;
   steps: string[];
   runId: string;
+  /** sha256 of the plan content stored at submit; the decision is bound to it (S7). Missing/invalid -> unsafe. */
+  contentSha256: string;
   unsafe: boolean;
 }
 
@@ -48,6 +50,7 @@ export interface ServerRecords {
 }
 
 const ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
+const SHA256_RE = /^[0-9a-f]{64}$/;
 
 export function parseRecords(body: unknown): ServerRecords {
   const list = Array.isArray(body)
@@ -65,7 +68,15 @@ export function parseRecords(body: unknown): ServerRecords {
     if (r.kind === "plan") {
       const title = inspect(r.title, 300);
       const steps = inspectList(r.steps, 20, 300);
-      out.plans.push({ id: r.id, title: title.text, steps: steps.items, runId, unsafe: title.unsafe || steps.unsafe });
+      const contentSha256 = typeof r.contentSha256 === "string" && SHA256_RE.test(r.contentSha256) ? r.contentSha256 : "";
+      out.plans.push({
+        id: r.id,
+        title: title.text,
+        steps: steps.items,
+        runId,
+        contentSha256,
+        unsafe: title.unsafe || steps.unsafe || !contentSha256,
+      });
       continue;
     }
     const action = inspect(r.action ?? r.kind, SHORT_CAP);
@@ -101,12 +112,31 @@ export async function decideApproval(s: Session, id: string, decision: "approve"
   });
 }
 
-export async function decidePlan(s: Session, planId: string, decision: "approve" | "edit", note = ""): Promise<void> {
-  if (!ID_RE.test(planId)) return;
+export async function decidePlan(
+  s: Session,
+  planId: string,
+  contentSha256: string,
+  decision: "approve" | "edit",
+  note = "",
+): Promise<void> {
+  if (!ID_RE.test(planId) || !SHA256_RE.test(contentSha256)) return;
   await request(s, `/plans/${encodeURIComponent(planId)}/decide`, {
     method: "POST",
-    body: JSON.stringify({ decision, note: note.slice(0, 4000) }),
+    body: JSON.stringify({ decision, note: note.slice(0, 4000), contentSha256 }),
   });
+}
+
+// ---------------------------------------------------------------- owner settings
+/** The plan gate (P5f): ON = writes, deletes and builds need an approved plan. Owner-only route, default ON. */
+export async function getPlanGate(s: Session): Promise<boolean> {
+  const body = await request(s, "/settings/plan-gate");
+  // fail closed: anything but an explicit false is shown as ON
+  return !(body && typeof body === "object" && (body as { enabled?: unknown }).enabled === false);
+}
+
+export async function setPlanGate(s: Session, enabled: boolean): Promise<boolean> {
+  const body = await request(s, "/settings/plan-gate", { method: "PUT", body: JSON.stringify({ enabled }) });
+  return !(body && typeof body === "object" && (body as { enabled?: unknown }).enabled === false);
 }
 
 // ---------------------------------------------------------------- runs (owner actions from the prompt box)

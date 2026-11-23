@@ -104,7 +104,7 @@ def _approve_when_pending(studio: Studio, decision: str = "approve", run_id: str
         while time.time() < deadline:
             recs = [r for r in plans.list_records(studio) if r.get("kind") == "plan" and r["runId"] == run_id]
             if recs:
-                plans.decide(studio, OWNER, recs[0]["id"], decision, "change step 2")
+                plans.decide(studio, OWNER, recs[0]["id"], decision, "change step 2", content_hash=recs[0]["contentSha256"])
                 return
             time.sleep(0.1)
     t = threading.Thread(target=go, daemon=True)
@@ -152,7 +152,7 @@ async def test_p5f_plan_approved_for_another_run_does_not_unlock(studio: Studio)
     a, _ = two_projects(studio)
     rev = studio.get_revision(a)
     other = plans.submit(studio, Actor("agent", f"runner:{RUN_B}", "mcp"), a, "other", ["x"], run_id=RUN_B)
-    plans.decide(studio, OWNER, other["planId"], "approve")
+    plans.decide(studio, OWNER, other["planId"], "approve", content_hash=other["contentSha256"])
     async with session(studio, **grant_env(studio, RUN_A, a)) as s:
         res = body(await s.call_tool("code_write_file", {"projectId": a, "baseRevision": rev, "path": "src/X.tsx",
                                                          "content": "x"}))
@@ -189,14 +189,14 @@ async def test_p5f_external_mcp_needs_an_approved_plan_of_its_own_session(studio
     rev = studio.get_revision(a)
     studio.set_external_mcp(OWNER, True)
     stale = plans.submit(studio, AGENT, a, "someone else's", ["x"])
-    plans.decide(studio, OWNER, stale["planId"], "approve")
+    plans.decide(studio, OWNER, stale["planId"], "approve", content_hash=stale["contentSha256"])
     async with session(studio) as s:
         res = body(await s.call_tool("code_write_file", {"projectId": a, "baseRevision": rev, "path": "src/X.tsx",
                                                          "content": "x"}))
         assert res["error"] == "plan_required", res
         sub = body(await s.call_tool("plan_submit", {"projectId": a, "title": "Build", "steps": ["one"]}))
         assert sub["result"]["status"] == "pending"  # external sessions are not paused; the gate still holds
-        plans.decide(studio, OWNER, sub["result"]["planId"], "approve")
+        plans.decide(studio, OWNER, sub["result"]["planId"], "approve", content_hash=sub["result"]["contentSha256"])
         w = body(await s.call_tool("code_write_file", {"projectId": a, "baseRevision": rev, "path": "src/X.tsx",
                                                        "content": "export {}\n"}))
         assert w["ok"] is True, w

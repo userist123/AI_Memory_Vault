@@ -11,6 +11,10 @@ plan of that run (``run_grants.attach_plan`` on approval). ``wait_decision`` is 
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
+import re
 import time
 from datetime import timedelta
 from typing import Any
@@ -28,6 +32,34 @@ PLAN_OP = "plan.review"
 RUN_ID_PATTERN = r"^run_[0-9a-f]{16}$"
 GATE_KEY = "plan_gate_enabled"
 SYSTEM_ACTOR = Actor("system", "runner", "system")
+
+
+_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def content_hash(project_id: str, run_id: str, title: str, steps: list[str]) -> str:
+    """sha256 over the canonical JSON of what the owner reads on the plan card (S7: approval bound to the content)."""
+    body = json.dumps({"projectId": project_id or "", "runId": run_id or "", "steps": [str(x) for x in steps],
+                       "title": title}, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def _recomputed(a: Approval) -> str:
+    p = a.params or {}
+    steps = p.get("steps") if isinstance(p.get("steps"), list) else []
+    return content_hash(a.project_id or "", str(p.get("runId") or ""), str(p.get("title", "")), steps)
+
+
+def _intact(a: Approval) -> bool:
+    """The stored hash still matches the stored plan text (a later edit of the row breaks it)."""
+    stored = str((a.params or {}).get("contentSha256", ""))
+    return bool(_HASH_RE.match(stored)) and hmac.compare_digest(stored, _recomputed(a))
+
+
+def _bound(a: Approval) -> bool:
+    """Approved AND the approval was given for exactly the current content."""
+    approved = str((a.params or {}).get("approvedSha256", ""))
+    return _intact(a) and hmac.compare_digest(approved, str((a.params or {}).get("contentSha256", "")))
 
 
 class PlanRequired(PolicyDenied):
@@ -66,10 +98,11 @@ def submit(studio: Any, actor: Actor, project_id: str, title: str, steps: list[s
     studio.get_project(actor, project_id, with_components=False)
     clean_steps = [_clip(s, 300) for s in list(steps)[:20]]
     params = {"title": _clip(title, 200), "steps": clean_steps, "runId": run_id or ""}
+    params["contentSha256"] = content_hash(project_id, params["runId"], params["title"], clean_steps)
     rec = studio.request_approval(actor, PLAN_OP, params, project_id)
     activity.record(studio, "plan.proposed", project_id=project_id, run_id=run_id, source="server",
                     payload={"planId": rec["approvalId"], "title": params["title"], "steps": clean_steps})
-    return {"planId": rec["approvalId"], "status": "pending"}
+    return {"planId": rec["approvalId"], "status": "pending", "contentSha256": params["contentSha256"]}
 
 
 def _row(studio: Any, approval_id: str) -> Approval:
@@ -81,14 +114,29 @@ def _row(studio: Any, approval_id: str) -> Approval:
         return a
 
 
-def decide(studio: Any, actor: Actor, plan_id: str, decision: str, note: str = "") -> dict[str, Any]:
-    """Owner only. ``approve`` -> approved; ``edit`` (the owner wants changes) -> rejected, with the note kept."""
+def decide(studio: Any, actor: Actor, plan_id: str, decision: str, note: str = "", *,
+           content_hash: str = "") -> dict[str, Any]:
+    """Owner only. ``approve`` -> approved; ``edit`` (the owner wants changes) -> rejected, with the note kept.
+
+    ``content_hash`` is the hash of the plan the owner was shown (``list_records``); it must equal the hash stored at
+    submit, and that hash must still match the stored text, otherwise nothing is decided (S7)."""
     if decision not in ("approve", "edit"):
         raise ValidationFailed("decision must be 'approve' or 'edit'")
     a = _row(studio, plan_id) if actor.is_owner else None  # a non-owner gets the policy error, not a lookup oracle
     if a is not None and a.operation != PLAN_OP:
         raise ValidationFailed("this record is not a plan")
+    if a is not None:
+        if not _intact(a):
+            raise ValidationFailed("the stored plan no longer matches its content hash; it cannot be decided")
+        if not isinstance(content_hash, str) or not hmac.compare_digest(content_hash,
+                                                                         str(a.params.get("contentSha256", ""))):
+            raise ValidationFailed("the decision is not for the current plan content (contentSha256 mismatch)")
     res = studio.decide_approval(actor, plan_id, decision == "approve")
+    if decision == "approve" and a is not None:
+        with studio.session() as s:  # bind the approval to the exact content that was approved
+            row = s.get(Approval, plan_id)
+            if row is not None:
+                row.params = {**(row.params or {}), "approvedSha256": content_hash}
     run_id = ((a.params or {}).get("runId") or None) if a else None
     clean_note = _clip(note, 500)
     if clean_note and a is not None:
@@ -119,14 +167,15 @@ def decide_approval(studio: Any, actor: Actor, approval_id: str, decision: str) 
 def is_approved(studio: Any, plan_id: str, project_id: str) -> bool:
     with studio.session() as s:
         a = s.get(Approval, plan_id)
-        return bool(a and a.operation == PLAN_OP and a.project_id == project_id and a.status == "approved")
+        return bool(a and a.operation == PLAN_OP and a.project_id == project_id and a.status == "approved"
+                    and _bound(a))
 
 
 def is_approved_for_run(studio: Any, plan_id: str, project_id: str, run_id: str) -> bool:
     with studio.session() as s:
         a = s.get(Approval, plan_id)
         return bool(a and a.operation == PLAN_OP and a.project_id == project_id and a.status == "approved"
-                    and (a.params or {}).get("runId") == run_id)
+                    and (a.params or {}).get("runId") == run_id and _bound(a))
 
 
 def wait_decision(studio: Any, plan_id: str, timeout: float, poll: float = 0.25) -> dict[str, Any]:
@@ -194,7 +243,8 @@ def list_records(studio: Any) -> list[dict[str, Any]]:
             p = a.params or {}
             if a.operation == PLAN_OP:
                 out.append({"id": a.id, "kind": "plan", "status": a.status, "title": p.get("title", ""),
-                            "steps": p.get("steps", []), "runId": p.get("runId", ""), "projectId": a.project_id})
+                            "steps": p.get("steps", []), "runId": p.get("runId", ""), "projectId": a.project_id,
+                            "contentSha256": str(p.get("contentSha256", ""))})
                 continue
             argv = p.get("argv")
             out.append({"id": a.id, "action": a.operation, "status": a.status,

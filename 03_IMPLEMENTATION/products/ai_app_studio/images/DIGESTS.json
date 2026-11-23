@@ -2,5 +2,15 @@
   "_comment": "Base images pinned by digest. Refresh deliberately (docker pull, record the new RepoDigest) - never use a tag at build time.",
   "node:24-alpine": "sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5",
   "node_version": "24.22.3",
-  "pnpm": "10.28.2"
+  "pnpm": "10.28.2",
+  "python:3.12-slim": "sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b",
+  "android-build": {
+    "_comment": "S7: every download of images/android-build/Dockerfile (ADD --checksum). Android zips: sha1 matched Google's repository2-3.xml (2026-11-23), sha256 from the same bytes.",
+    "temurin-21.0.13.1+2-linux-x64.tar.gz": "bb8a93f9ae6e7a693b2b721e85dbeff26ae1a77447985a8d7afcdd9c7cf6222e",
+    "platform-36_r02.zip": "37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29631d2e",
+    "build-tools_r36_linux.zip": "5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b",
+    "gradle-8.14.3-bin.zip": "bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531",
+    "commandlinetools-linux-16111833_latest.zip (pinned, not used: --licenses refused)": "0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8",
+    "image_id_local_2026-11-23": "sha256:936aa4ff53274b5a41f9bd19d84101c3575cbc7f3aeb003f400532ab48099a7c"
+  }
 }

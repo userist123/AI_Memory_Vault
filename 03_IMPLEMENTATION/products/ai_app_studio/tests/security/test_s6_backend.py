@@ -81,13 +81,20 @@ def test_owner_decides_approval_once_and_event_is_written(client: TestClient) ->
 def test_plan_decide_route_and_cross_route_refusal(client: TestClient) -> None:
     studio = client.app.state.studio
     pid = pid_of(client)
-    plan = plans.submit(studio, AGENT, pid, "T", ["s"], run_id=RUN)["planId"]
+    sub = plans.submit(studio, AGENT, pid, "T", ["s"], run_id=RUN)
+    plan, h = sub["planId"], sub["contentSha256"]
     apr = studio.request_approval(AGENT, "deps.install", {"argv": ["x"]}, pid)["approvalId"]
     # a plan cannot be decided as a generic approval and vice versa
     assert client.post(f"/api/v1/approvals/{plan}/decide", headers=AUTH, json={"decision": "approve"}).status_code == 422
     assert client.post(f"/api/v1/plans/{apr}/decide", headers=AUTH, json={"decision": "approve"}).status_code == 422
     assert client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "nope"}).status_code == 422
-    r = client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "approve", "note": ""})
+    # S7: the decision must carry the content hash of the plan the owner was shown
+    assert client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "approve"}).status_code == 422
+    assert client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH,
+                       json={"decision": "approve", "contentSha256": "0" * 64}).status_code == 422
+    assert plans.is_approved(studio, plan, pid) is False
+    r = client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "approve", "note": "",
+                                                                         "contentSha256": h})
     assert r.status_code == 200 and r.json()["status"] == "approved"
     assert plans.is_approved(studio, plan, pid) is True
     assert any(e["kind"] == "plan.decided" and e["payload"]["decision"] == "approve" for e in activity.list_events(studio))
@@ -98,8 +105,10 @@ def test_plan_decide_route_and_cross_route_refusal(client: TestClient) -> None:
 def test_plan_edit_decision_rejects_the_plan(client: TestClient) -> None:
     studio = client.app.state.studio
     pid = pid_of(client)
-    plan = plans.submit(studio, AGENT, pid, "T", ["s"], run_id=RUN)["planId"]
-    r = client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "edit", "note": "use dark mode"})
+    sub = plans.submit(studio, AGENT, pid, "T", ["s"], run_id=RUN)
+    plan = sub["planId"]
+    r = client.post(f"/api/v1/plans/{plan}/decide", headers=AUTH, json={"decision": "edit", "note": "use dark mode",
+                                                                         "contentSha256": sub["contentSha256"]})
     assert r.status_code == 200 and r.json()["status"] == "rejected"
     assert plans.is_approved(studio, plan, pid) is False
 

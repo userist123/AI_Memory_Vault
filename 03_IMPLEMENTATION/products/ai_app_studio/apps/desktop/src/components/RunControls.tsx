@@ -14,6 +14,9 @@ export function RunControls(props: {
   error: string;
   onStart: (projectId: string, prompt: string) => void;
   onStop: () => void;
+  /** owner setting (P5f): plan approval required before writes/builds; default ON */
+  planGate?: boolean;
+  onPlanGate?: (enabled: boolean) => void;
 }) {
   const { projects, running, busy } = props;
   const [prompt, setPrompt] = useState("");
@@ -51,6 +54,16 @@ export function RunControls(props: {
           Stop
         </button>
       </div>
+      {props.onPlanGate ? (
+        <label className="plan-gate" data-testid="plan-gate-toggle" title="Owner setting: writes, deletes and builds wait for your approval of the AI's plan">
+          <input
+            type="checkbox"
+            checked={props.planGate !== false}
+            onChange={(e) => props.onPlanGate?.(e.target.checked)}
+          />
+          Require plan approval
+        </label>
+      ) : null}
       {props.error ? (
         <p className="warn" role="alert" data-testid="run-error">
           {props.error}

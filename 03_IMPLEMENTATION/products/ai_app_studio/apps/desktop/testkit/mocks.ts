@@ -63,6 +63,9 @@ export class MockBackend {
   projectCreates: unknown[] = [];
   runStops: string[] = [];
   decisions: Array<{ url: string; body: unknown }> = [];
+  /** S7: owner plan-gate setting (GET/PUT /api/v1/settings/plan-gate) */
+  planGate = true;
+  planGatePuts: unknown[] = [];
   rejectedUpgrades = 0;
   canaryHits: string[] = [];
   /** every API request as "<origin> <method> <url>" (origin "-" when absent), before auth */
@@ -168,7 +171,7 @@ export class MockBackend {
     if (req.headers.origin === UI_ORIGIN) {
       res.setHeader("Access-Control-Allow-Origin", UI_ORIGIN);
       res.setHeader("Access-Control-Allow-Headers", "authorization, content-type");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
     }
     if (req.method === "OPTIONS") {
       res.writeHead(204);
@@ -198,6 +201,20 @@ export class MockBackend {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end("{}");
       });
+      return;
+    }
+    if (req.url === "/api/v1/settings/plan-gate" && (req.method === "GET" || req.method === "PUT")) {
+      const reply = () => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ enabled: this.planGate }));
+      };
+      if (req.method === "GET") reply();
+      else
+        void readJson(req).then((body) => {
+          this.planGatePuts.push(body);
+          if (body && typeof body === "object") this.planGate = (body as { enabled?: unknown }).enabled !== false;
+          reply();
+        });
       return;
     }
     if (req.method === "GET" && req.url === "/api/v1/projects") {

@@ -340,3 +340,164 @@ def collect_output(out: Path, dest: Path, *, container_exists: Callable[[str], b
         shutil.rmtree(stage, ignore_errors=True)
         raise
     return BuildResult(dest=dest, files=sorted(r for r, _ in files), total_bytes=total, dist_sha256=h.hexdigest())
+
+
+# ---- Android (DESIGN 3.5; PB7a/PB7b) ----------------------------------------------------------------------------------
+ANDROID_TAG = "aas-android-build:dev"
+ANDROID_TIMEOUT_S = 1500
+ANDROID_FSIZE_ULIMIT = 512 * 1024 * 1024  # Gradle writes dex/jar transforms well above the web build's 64 MiB cap
+APK_MAX_BYTES = 100 * 1024 * 1024
+KEYSTORE_NAME = "aas-debug.keystore"
+SIGNER_NAME = "aas-debug.cert.sha256"
+_APP_ID_RE = re.compile(r"^dev\.aiappstudio\.p[0-9a-f]{16}$")  # = aas_devhost.PKG_RE (the device host allow-list)
+_SIGNER_LINE = re.compile(r"^AAS-SIGNER-SHA256=([0-9a-f]{64})\s*$", re.M)
+
+
+@dataclass
+class AndroidResult:
+    apk: Path
+    sha256: str
+    size: int
+    signer_sha256: str
+    log_tail: str = ""
+
+
+def app_id_for(project_id: str) -> str:
+    """Studio package id of a project: dev.aiappstudio.p<id16> (the only prefix the device host installs)."""
+    if not re.fullmatch(r"prj_[0-9a-f]{16}", project_id or ""):
+        raise BuildError("invalid project id")
+    return "dev.aiappstudio.p" + project_id[4:]
+
+
+def _hardening(cpus: str, memory: str, fsize: int, pids: int) -> list[str]:
+    if not re.fullmatch(r"[0-9]{1,2}(\.[0-9])?", cpus) or not re.fullmatch(r"[0-9]{1,4}[mg]", memory):
+        raise BuildError("invalid resource limit")
+    return ["--network", "none", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+            "--user", "1000:1000", "--cpus", cpus, "--memory", memory, "--pids-limit", str(pids),
+            "--ulimit", f"fsize={fsize}:{fsize}"]
+
+
+def _studio_keystore(p: Path) -> None:
+    if p.name != KEYSTORE_NAME or any(part.casefold() == ".android" for part in p.parts):
+        raise BuildError("only the studio keystore may be used (never the owner's Android debug key)")
+
+
+def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path, out: Path, image: str, app_id: str,
+                       cpus: str = "4", memory: str = "4g") -> list[str]:
+    """Fixed argv of the offline APK build. /tmp is noexec: Gradle runs from the image (/opt), aapt2 comes from the
+    pinned build-tools (android.aapt2FromMavenOverride) and native integration is off (org.gradle.native=false)."""
+    if not os.path.isabs(docker):
+        raise BuildError("docker executable must be an absolute path")
+    if not _BUILD_ID_RE.match(build_id):
+        raise BuildError("invalid build id")
+    if not _IMAGE_RE.match(image):
+        raise BuildError("image must be pinned by sha256 digest or image id")
+    if not isinstance(app_id, str) or not _APP_ID_RE.match(app_id):
+        raise BuildError("application id is not a studio package id")
+    _studio_keystore(keystore)
+    return [
+        docker, "run", "--rm", "--name", CONTAINER_PREFIX + build_id,
+        *_hardening(cpus, memory, ANDROID_FSIZE_ULIMIT, 1024),
+        "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=3g",  # noqa: S108 - container path
+        "-e", f"AAS_APP_ID={app_id}",
+        "-v", f"{_check_dir(dist, 'dist')}:/dist:ro",
+        "-v", f"{_check_dir(keystore, 'keystore')}:/keys/{KEYSTORE_NAME}:ro",
+        "-v", f"{_check_dir(out, 'out')}:/out:rw",
+        image, "build",
+    ]
+
+
+def build_genkey_argv(*, docker: str, build_id: str, keys_out: Path, image: str) -> list[str]:
+    if not os.path.isabs(docker) or not _BUILD_ID_RE.match(build_id) or not _IMAGE_RE.match(image):
+        raise BuildError("invalid docker path, build id or image")
+    return [docker, "run", "--rm", "--name", CONTAINER_PREFIX + build_id, *_hardening("1", "512m", 1024 * 1024, 128),
+            "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",  # noqa: S108 - container path
+            "-v", f"{_check_dir(keys_out, 'keys')}:/keys-out:rw", image, "genkey"]
+
+
+def ensure_keystore(*, docker: str, image: str, keys_dir: Path) -> tuple[Path, str]:
+    """The studio debug keystore (generated once per install inside the build image, never the owner's
+    Android debug key) and its certificate sha256. Returns (keystore path, signer sha256)."""
+    keystore, signer_file = keys_dir / KEYSTORE_NAME, keys_dir / SIGNER_NAME
+    _studio_keystore(keystore)
+    if keystore.is_file() and not keystore.is_symlink() and signer_file.is_file():
+        sha = signer_file.read_text(encoding="ascii", errors="replace").strip()
+        if re.fullmatch(r"[0-9a-f]{64}", sha):
+            return keystore, sha
+        raise BuildError("the studio keystore certificate record is damaged")
+    if keystore.exists() or keystore.is_symlink():
+        raise BuildError("a studio keystore exists without its certificate record; refusing to replace it")
+    keys_dir.mkdir(parents=True, exist_ok=True)
+    stage = keys_dir / f".gen-{uuid.uuid4().hex[:8]}"
+    stage.mkdir()
+    try:
+        bid = "k" + uuid.uuid4().hex[:15]
+        r = subprocess.run(build_genkey_argv(docker=docker, build_id=bid, keys_out=stage, image=image),  # noqa: S603
+                           capture_output=True, timeout=180, check=False, shell=False, env=_env(),
+                           stdin=subprocess.DEVNULL)
+        m = _SIGNER_LINE.search(r.stdout.decode("utf-8", "replace"))
+        made = stage / KEYSTORE_NAME
+        if r.returncode != 0 or not m or not made.is_file() or made.is_symlink():
+            raise BuildError("studio keystore generation failed: " + r.stderr.decode("utf-8", "replace")[-300:])
+        os.replace(made, keystore)
+        signer_file.write_text(m.group(1) + "\n", encoding="ascii")
+        return keystore, m.group(1)
+    finally:
+        shutil.rmtree(stage, ignore_errors=True)
+
+
+def collect_apk(out: Path, dest: Path, *, container_exists: Callable[[str], bool], container_name: str,
+                max_bytes: int = APK_MAX_BYTES) -> tuple[str, int]:
+    """`<out>` must hold exactly one regular file app-debug.apk (no link, nlink 1, ZIP magic, <= cap). Copied
+    atomically to `dest`; returns (sha256, size)."""
+    if container_exists(container_name):
+        raise BuildError("build container still exists; refusing to read output")
+    names = {e.name for e in os.scandir(out)}
+    if names != {"app-debug.apk"}:
+        raise BuildError(f"output must contain exactly app-debug.apk, found {sorted(names)[:10]}")
+    p = Path(out) / "app-debug.apk"
+    st = os.lstat(p)
+    if _is_link_like(st) or not stat.S_ISREG(st.st_mode) or st.st_nlink > 1:
+        raise BuildError("app-debug.apk is not a plain regular file")
+    if st.st_size > max_bytes:
+        raise BuildError(f"APK over {max_bytes} bytes")
+    data = _read_regular(p, st, max_bytes)
+    if not data.startswith(b"PK\x03\x04"):
+        raise BuildError("app-debug.apk is not a ZIP/APK file")
+    sha = hashlib.sha256(data).hexdigest()
+    tmp = dest.parent / f".{dest.name}.partial-{uuid.uuid4().hex[:8]}"
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_bytes(data)
+        os.replace(tmp, dest)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    return sha, len(data)
+
+
+def run_android_build(*, docker: str, build_id: str, dist: Path, keystore: Path, expected_signer: str, out: Path,
+                      image: str, app_id: str, dest: Path, container_exists: Callable[[str], bool] | None = None,
+                      timeout: int = ANDROID_TIMEOUT_S, poll: float = 0.5) -> AndroidResult:
+    """Offline APK build; on ANY failure `out` is deleted and `dest` is left untouched."""
+    argv = build_android_argv(docker=docker, build_id=build_id, dist=dist, keystore=keystore, out=out, image=image,
+                              app_id=app_id)
+    name = CONTAINER_PREFIX + build_id
+    try:
+        o = _run_capped(argv, timeout=timeout, out=out, max_out_bytes=APK_MAX_BYTES,
+                        kill=lambda: _docker_kill(docker, name), poll=poll, max_files=4)
+        if o.over_cap or o.over_files:
+            raise BuildError("APK output over its cap during the build; container killed")
+        if o.timed_out:
+            raise BuildError(f"Android build timed out after {timeout}s")
+        if o.returncode != 0:
+            raise BuildError(f"Android build container exit code {o.returncode}: {o.tail[-900:]}")
+        signers = set(_SIGNER_LINE.findall(o.tail))
+        if signers != {expected_signer}:  # PB7b: the in-image apksigner check must report the studio key alone
+            raise BuildError("the APK is not signed by the studio keystore")
+        exists = container_exists or (lambda n: docker_container_exists(docker, n))
+        sha, size = collect_apk(out, dest, container_exists=exists, container_name=name)
+    except BaseException:
+        shutil.rmtree(out, ignore_errors=True)
+        raise
+    return AndroidResult(apk=dest, sha256=sha, size=size, signer_sha256=expected_signer, log_tail=o.tail)

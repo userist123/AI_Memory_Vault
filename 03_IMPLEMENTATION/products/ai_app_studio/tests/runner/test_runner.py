@@ -143,7 +143,8 @@ def test_agent_writes_go_through_mcp_with_runner_grant_while_external_mcp_is_off
     deadline = time.time() + 30  # P5f: the run waits on plan_submit until the owner approves
     while time.time() < deadline and not plans.list_records(studio):
         time.sleep(0.1)
-    plans.decide(studio, OWNER, plans.list_records(studio)[0]["id"], "approve")
+    rec = plans.list_records(studio)[0]
+    plans.decide(studio, OWNER, rec["id"], "approve", content_hash=rec["contentSha256"])
     assert r.wait(run, 60) in ("success", "failed")  # the scenario has no result line
     assert "from runner" in studio.read_file(OWNER, pid, "src/App.tsx")["content"]
     ev = events(studio)

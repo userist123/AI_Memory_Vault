@@ -199,7 +199,7 @@ describe("plan gate comes from a server record only (review S4 finding 2)", () =
   });
   it("positive control: a server plan record renders one actionable card in the approval region", () => {
     const decided: string[] = [];
-    const { container } = region({ items: [{ id: "pl-1", kind: "plan", title: "Build it", steps: ["one", "two"], status: "pending" }] }, decided);
+    const { container } = region({ items: [{ id: "pl-1", kind: "plan", title: "Build it", steps: ["one", "two"], status: "pending", contentSha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }] }, decided);
     expect(container.querySelectorAll("[data-testid=plan-card]").length).toBe(1);
     expect(container.querySelectorAll("[data-testid=approval-card]").length).toBe(0);
     fireEvent.click([...container.querySelectorAll("button")].find((b) => b.textContent === "Approve plan")!);
@@ -209,6 +209,14 @@ describe("plan gate comes from a server record only (review S4 finding 2)", () =
     const { container } = region({ items: [{ id: "pl-2", kind: "plan", title: "t", steps: [`a${ESC}]b`], status: "pending" }] });
     const btn = [...container.querySelectorAll("button")].find((b) => b.textContent === "Approve plan") as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+  it("S7: a plan record without a valid content hash cannot be approved", () => {
+    for (const contentSha256 of [undefined, "", "A".repeat(64), "a".repeat(63)]) {
+      const { container } = region({ items: [{ id: "pl-3", kind: "plan", title: "t", steps: ["s"], status: "pending", contentSha256 }] });
+      const btn = [...container.querySelectorAll("button")].find((b) => b.textContent === "Approve plan") as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+      expect(container.querySelector("[data-testid=plan-unsafe]")?.textContent).toContain("content hash");
+    }
   });
   it("parseApprovals ignores plan records", () => {
     expect(parseApprovals({ items: [{ id: "pl-1", kind: "plan", status: "pending" }] })).toEqual([]);

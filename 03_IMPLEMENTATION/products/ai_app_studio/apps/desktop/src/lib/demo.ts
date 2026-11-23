@@ -148,6 +148,7 @@ export const DEMO_APPROVAL: ApprovalRecord = {
 
 export const DEMO_PLAN: PlanRecord = {
   id: "plan-1",
+  contentSha256: "0".repeat(64),
   title: "Build a habit tracker with a daily checklist",
   steps: [
     "Scaffold App.tsx with habit state",

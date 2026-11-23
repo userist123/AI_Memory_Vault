@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import contextlib
 import dataclasses
+import hashlib
 import json
 import os
 import re
@@ -26,14 +27,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
 
 from fastapi import FastAPI, Query, Request, WebSocket  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.responses import JSONResponse  # noqa: E402
+from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field, StrictBool  # noqa: E402
+from aas_build import capture  # noqa: E402
 from aas_device import service as dsvc  # noqa: E402
 from aas_runner.claude import Runner  # noqa: E402
 from studio_core import __version__, activity, plans  # noqa: E402
 from studio_core.app_kind import BLANK_FILES, register_app_kind  # noqa: E402,F401
 from studio_core.config import Settings, load_settings  # noqa: E402
-from studio_core.errors import StudioError, ValidationFailed  # noqa: E402
+from studio_core.errors import NotFound, StudioError, ValidationFailed  # noqa: E402
 from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
@@ -75,6 +77,7 @@ class Decision(Strict):
 class PlanDecision(Strict):
     decision: str = Field(max_length=16)
     note: str = Field(default="", max_length=4000)
+    contentSha256: str = Field(pattern=r"^[0-9a-f]{64}$")  # S7: the plan content the owner was shown  # noqa: N815
 
 
 class ExternalMcp(Strict):
@@ -158,7 +161,22 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
 
     @app.post(f"{API}/plans/{{plan_id}}/decide")
     def decide_plan(plan_id: str, b: PlanDecision) -> dict[str, Any]:
-        return plans.decide(studio, OWNER, plan_id, b.decision, b.note)
+        return plans.decide(studio, OWNER, plan_id, b.decision, b.note, content_hash=b.contentSha256)
+
+    # ---------------------------------------------------------------- preview captures (S7), by sha256 id
+    @app.get(f"{API}/captures/{{sha256}}")
+    def get_capture(sha256: str) -> Response:
+        if not re.fullmatch(r"[0-9a-f]{64}", sha256):
+            raise ValidationFailed("invalid capture id")
+        p = capture.capture_file(settings, sha256)
+        if p is None:
+            raise NotFound("capture not found")
+        data = p.read_bytes()
+        if hashlib.sha256(data).hexdigest() != sha256:  # content-addressed: a changed file is never served
+            raise NotFound("capture not found")
+        return Response(data, media_type="image/png",
+                        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store",
+                                 "Content-Security-Policy": "default-src 'none'"})
 
     # ---------------------------------------------------------------- activity + owner-only settings
     @app.get(f"{API}/activity")

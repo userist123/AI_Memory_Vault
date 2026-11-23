@@ -6,6 +6,8 @@ import {
   createProject,
   decideApproval,
   decidePlan,
+  getPlanGate,
+  setPlanGate,
   fetchApprovals,
   listProjects,
   startRun,
@@ -68,6 +70,7 @@ export function App() {
   const [sessionError, setSessionError] = useState("");
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
   const [plans, setPlans] = useState<PlanRecord[]>([]);
+  const [planGateOn, setPlanGateOn] = useState(true);
   const [approvalError, setApprovalError] = useState("");
   const [follow, setFollow] = useState(true);
   const [pausedUntil, setPausedUntil] = useState(0);
@@ -139,6 +142,9 @@ export function App() {
     listProjects(session)
       .then((p) => live && setProjects(p))
       .catch(() => live && setRunError("Projects could not be loaded."));
+    getPlanGate(session)
+      .then((on) => live && setPlanGateOn(on))
+      .catch(() => live && setPlanGateOn(true)); // unknown -> shown as ON (the server default)
     return () => {
       live = false;
     };
@@ -177,13 +183,26 @@ export function App() {
     }
     if (session) void decideApproval(session, id, d).catch(() => setApprovalError("Decision failed."));
   };
+  // the decision carries the content hash of the card the owner saw: the server refuses it if the plan changed (S7)
+  const shownHash = (id: string): string | null => {
+    const p = plans.find((x) => x.id === id);
+    return p && !p.unsafe ? p.contentSha256 : null;
+  };
   const onPlanApprove = (id: string) => {
     if (demo) setPlans((p) => p.filter((x) => x.id !== id));
-    else if (session) void decidePlan(session, id, "approve").catch(() => setApprovalError("Decision failed."));
+    else if (session && shownHash(id))
+      void decidePlan(session, id, shownHash(id) ?? "", "approve").catch(() => setApprovalError("Decision failed."));
   };
   const onPlanEdit = (id: string, note: string) => {
     if (demo) setPlans((p) => p.filter((x) => x.id !== id));
-    else if (session) void decidePlan(session, id, "edit", note).catch(() => setApprovalError("Decision failed."));
+    else if (session && shownHash(id))
+      void decidePlan(session, id, shownHash(id) ?? "", "edit", note).catch(() => setApprovalError("Decision failed."));
+  };
+  const onPlanGate = (enabled: boolean) => {
+    if (!session) return;
+    void setPlanGate(session, enabled)
+      .then(setPlanGateOn)
+      .catch(() => setRunError("The plan gate setting could not be changed."));
   };
 
   const onStartRun = (projectId: string, prompt: string) => {
@@ -274,6 +293,8 @@ export function App() {
               error={runError}
               onStart={onStartRun}
               onStop={onStopRun}
+              planGate={planGateOn}
+              onPlanGate={onPlanGate}
             />
           ) : null}
           <Timeline

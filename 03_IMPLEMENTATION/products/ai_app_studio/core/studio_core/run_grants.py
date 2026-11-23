@@ -96,6 +96,13 @@ def revoke(studio: Any, run_id: str) -> None:
         s.execute(delete(AppSetting).where(AppSetting.key == PREFIX + run_id))
 
 
+def purge_all(studio: Any) -> int:
+    """Delete every grant (R-A): called when the Runner starts, so no grant of a crashed earlier process survives."""
+    with studio.session() as s:
+        res = s.execute(delete(AppSetting).where(AppSetting.key.like(PREFIX + "%")))
+        return int(res.rowcount or 0)
+
+
 def count(studio: Any) -> int:
     with studio.session() as s:
         return int(s.execute(select(func.count()).select_from(AppSetting)

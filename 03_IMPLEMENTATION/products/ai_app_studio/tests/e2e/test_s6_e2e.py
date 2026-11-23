@@ -143,7 +143,8 @@ def run_to_end(pid: str, marker: str) -> str:
         for rec in call("GET", "/api/v1/approvals"):
             if rec.get("kind") == "plan" and rec.get("runId") == run:
                 SEEN_PLANS.append(rec)
-                call("POST", f"/api/v1/plans/{rec['id']}/decide", {"decision": "approve", "note": ""})
+                call("POST", f"/api/v1/plans/{rec['id']}/decide", {"decision": "approve", "note": "",
+                                                                     "contentSha256": rec["contentSha256"]})
         return any(e["kind"] == "run.finished" and e["runId"] == run
                    for e in call("GET", f"/api/v1/activity?limit=1000&projectId={pid}"))
     wait_for(finished, f"run {run} to finish", 300)

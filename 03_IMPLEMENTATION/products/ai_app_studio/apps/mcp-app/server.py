@@ -31,7 +31,7 @@ from aas_build import service as build_service  # noqa: E402
 from studio_core import activity, plans, run_grants  # noqa: E402
 from studio_core.app_kind import register_app_kind  # noqa: E402
 from studio_core.config import load_settings  # noqa: E402
-from studio_core.errors import PolicyDenied, StudioError, Unavailable  # noqa: E402
+from studio_core.errors import PolicyDenied, StudioError  # noqa: E402
 from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
@@ -252,10 +252,19 @@ def activity_list(projectId: Annotated[str, Field(pattern=PROJECT_ID_PATTERN)] |
 
 @guarded("app_build")
 def app_build(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  # noqa: N803
-    """Build the app offline in Docker (web) and refresh the preview. The Android build is not available yet."""
-    if target != "web":
-        raise Unavailable("the Android build is not available in this version", tool="app_build")
-    return build_service.build_web(studio(), projectId, run_id=CALL.run_id)
+    """Build the app offline in Docker. web: refresh the preview. android: debug APK of the current web build, signed
+    with the studio key; when the studio emulator is running (owner setting on) it is installed and launched."""
+    if target == "web":
+        return build_service.build_web(studio(), projectId, run_id=CALL.run_id)
+    res = build_service.build_android(studio(), projectId, run_id=CALL.run_id)
+    if _DEVICE is not None and _DEVICE.session is not None:
+        try:  # gates (owner setting, free disk) are re-checked inside install
+            res["device"] = _DEVICE.install(projectId, launch=True)
+        except Exception as e:  # noqa: BLE001 - the APK exists either way; report why it was not installed
+            res["device"] = {"ok": False, "error": type(e).__name__, "message": str(e)[:200]}
+    else:
+        res["device"] = {"ok": False, "skipped": "no running studio emulator (device_start, owner setting)"}
+    return res
 
 
 @guarded("plan_submit")
@@ -273,8 +282,10 @@ def plan_submit(projectId: ProjectId, title: Annotated[str, Field(min_length=1, 
 
 @guarded("preview_capture")
 def preview_capture(projectId: ProjectId, frame: Literal["phone", "tablet", "desktop"]) -> Any:  # noqa: N803
-    """Capture the preview (not available yet)."""
-    raise Unavailable("the preview is not available in this version", tool="preview_capture")
+    """Screenshot the project's preview in a device frame (phone 390x844, tablet 834x1112, desktop 1440x900). Returns
+    the PNG's sha256 and size; the image stays on the owner's PC and is shown in the studio."""
+    from aas_build import capture
+    return capture.capture(studio(), projectId, [frame], run_id=CALL.run_id)
 
 
 _DEVICE: Any = None
@@ -308,8 +319,8 @@ def device_start(form: Literal["phone", "tablet"]) -> Any:
 
 @guarded("device_install")
 def device_install(projectId: ProjectId) -> Any:  # noqa: N803
-    """Install the project's debug APK on the running emulator."""
-    return device().install(projectId)
+    """Install the project's debug APK on the running emulator and launch it."""
+    return device().install(projectId, launch=True)
 
 
 @guarded("device_tap")

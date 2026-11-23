@@ -125,7 +125,7 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             assert body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",
                                                               "content": "export {}\n"}))["error"] == "plan_required"
             sub = body(await s.call_tool("plan_submit", {"projectId": pid, "title": "t", "steps": ["s"]}))
-            plans.decide(studio, OWNER, sub["result"]["planId"], "approve")
+            plans.decide(studio, OWNER, sub["result"]["planId"], "approve", content_hash=sub["result"]["contentSha256"])
             w = body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",
                                                            "content": "export {}\n"}))
             assert w["ok"] is True and w["result"]["revision"] == rev + 1

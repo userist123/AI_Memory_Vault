@@ -150,7 +150,7 @@ def test_approved_plan_lets_the_run_write(studio, fake_cli, tmp_path: Path) -> N
         time.sleep(0.1)
     rec = plans.list_records(studio)
     assert rec and rec[0]["runId"] == run
-    plans.decide(studio, OWNER, rec[0]["id"], "approve")
+    plans.decide(studio, OWNER, rec[0]["id"], "approve", content_hash=rec[0]["contentSha256"])
     r.wait(run, 60)
     assert "gated" in studio.read_file(OWNER, pid, "src/App.tsx")["content"]
 

@@ -28,7 +28,9 @@ export function PlanCard(props: {
       </ol>
       {plan.unsafe ? (
         <p className="warn" role="alert" data-testid="plan-unsafe">
-          This plan contains hidden or control characters (shown as escapes above). It cannot be approved here.
+          {plan.contentSha256
+            ? "This plan contains hidden or control characters (shown as escapes above). It cannot be approved here."
+            : "This plan has no valid content hash from the server. It cannot be approved here."}
         </p>
       ) : null}
       <div className="row">
