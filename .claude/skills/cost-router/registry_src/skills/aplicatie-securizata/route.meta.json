@@ -19,16 +19,13 @@
    "securizeaza aplicatia",
    "hardening",
    "echipa de agenti pentru aplicatie",
-   "aplicatie cap coada",
-   "instaleaza unealta"
+   "aplicatie cap coada"
   ],
   "en": [
    "secure app",
    "build a secure",
    "harden the app",
-   "agent team app",
-   "end to end app",
-   "install missing tool"
+   "agent team app"
   ]
  },
  "summary": "Secure-by-design app: threat model, tests first, independent review.",

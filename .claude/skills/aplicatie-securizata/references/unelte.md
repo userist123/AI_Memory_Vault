@@ -79,7 +79,10 @@ Rules:
 - One install at a time: create the lock `<X>:\tools\.install.lock` atomically
   (`New-Item -ItemType File -Path <lock> -ErrorAction Stop` fails if it exists, or
   `[IO.File]::Open(<lock>, 'CreateNew')`) and write the PID + process start time into it. The lock is
-  stale only if no process with that PID AND that start time exists, or it is older than 2 hours. Windows Installer exit 1618 = another install is running: wait, retry.
+  stale only if no process with that PID AND that start time exists, or it is older than 2 hours.
+  Clear a stale lock atomically: rename it to a unique name (`.install.lock.stale-<guid>`; only one
+  waiter's rename succeeds), then create a fresh lock with CreateNew; never delete-then-create.
+  Windows Installer exit 1618 = another install is running: wait, retry.
 - Ledger `<X>:\tools\INSTALLED.json`: write atomically (temp file + rename). Per entry: name, version,
   source URL, sha256/signature, install dir, PATH change, size, date, reason, project, exact uninstall
   command, and a state: INSTALLING, VERIFIED, FAILED_NEEDS_CLEANUP, UNINSTALLED. No secrets in the
@@ -143,8 +146,10 @@ empty; set the ledger state to UNINSTALLED. User data is listed separately and k
 owner's task says otherwise. Deleting files:
 - Delete only paths recorded at INSTALLING time that, after full path resolution
   (`[IO.Path]::GetFullPath` / `Resolve-Path`), lie under `<X>:\tools\<name>\`.
-- Check each path is not a junction/symlink: `(Get-Item -Force <p>).LinkType` must be empty. Never
-  recurse through reparse points: Windows PowerShell 5.1 `Remove-Item -Recurse` follows junctions.
-  Remove a link itself with `[System.IO.Directory]::Delete(<p>, $false)` or `cmd /c rmdir <p>`
-  (without /s), or use PowerShell 7+.
+- `GetFullPath` does not resolve links, so check EVERY path component from `<X>:\tools\<name>`
+  down to the target: none may be a junction/symlink (`(Get-Item -Force <c>).LinkType` empty and no
+  `ReparsePoint` in `.Attributes`). If any component is a link, do not delete: list it in the report.
+- Never recurse through reparse points: Windows PowerShell 5.1 `Remove-Item -Recurse` follows
+  junctions. Delete a whole directory with `cmd /c rmdir /s /q <p>` (does not follow junctions);
+  remove a link itself with `[System.IO.Directory]::Delete(<p>, $false)` or `cmd /c rmdir <p>`.
 - Anything outside `<X>:\tools\<name>\` is listed in the report, never deleted.

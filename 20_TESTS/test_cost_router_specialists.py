@@ -413,6 +413,9 @@ def test_overlap_priority_and_overlay_pairing(registry):
     "analiza dfir a PC-ului cap coada",
     "fa un clip cap coada",
     "repara bug-ul cap coada in parser",
+    "write an end to end app test with playwright",
+    "install missing tool for the dfir analysis of the PC",
+    "instaleaza unealta ffmpeg",
     "review the agent team PR",
 ])
 def test_generic_phrases_do_not_select_aplicatie_securizata(registry, prompt):
