@@ -721,6 +721,9 @@ public sealed class InvestigationPipeline
         // Planner #14 E3: an Add-MpPreference -ExclusionPath line of the PowerShell history that matches a listed Defender exclusion becomes evidence of CFG-DEFENDER-EXCL
         var exclMerged = DefenderExclusionHistoryMerger.Merge(found);
         if (exclMerged.Merged > 0) { found = exclMerged.Findings; ws.Audit("finding.exclusion_history_merged", $"{exclMerged.Merged} comenzi din istoricul PowerShell unite cu constatarea excluderilor Defender"); }
+        // G2: the Defender 5007 that added each listed exclusion path becomes evidence of CFG-DEFENDER-EXCL; DEF-DETECTION findings under that folder become related findings
+        var exclDetections = DefenderExclusionDetectionMerger.Merge(found, r.Timeline);
+        if (exclDetections.Linked > 0) { found = exclDetections.Findings; ws.Audit("finding.exclusion_detection_linked", $"{exclDetections.Linked} căi excluse de la scanarea Defender legate de evenimentul 5007 și de detecțiile din acel folder"); }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
         var expectedIssues = new List<string>();
