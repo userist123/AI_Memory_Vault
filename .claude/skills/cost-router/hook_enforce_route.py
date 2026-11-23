@@ -292,9 +292,22 @@ _EX_GIT_BAD_LONG = ("output", "ext-diff", "textconv", "exec", "upload-pack", "re
 # Finding 2: pytest network/plugin loading. `-p no:<name>` only disables a plugin and stays allowed.
 _EX_PYTEST_PLUGIN_OFF = re.compile(r"^no:[A-Za-z0-9_.\-]+$")
 # Finding 3: agent configuration a write must never touch (compared per path part, case-insensitively, after realpath)
-_EX_PROTECTED_DIRS = frozenset({".claude", ".agents"})
-_EX_PROTECTED_FILES = frozenset({"claude.md", "claude.local.md", "agents.md", ".mcp.json", ".gitattributes",
-                                 ".gitmodules", ".gitconfig"})
+_EX_PROTECTED_DIRS = frozenset({".claude", ".agents", ".gemini", ".codex", ".vscode", ".husky", ".idea",
+                                ".devcontainer"})
+_EX_PROTECTED_FILES = frozenset({"claude.md", "claude.local.md", "agents.md", "gemini.md", ".mcp.json",
+                                 ".gitattributes", ".gitmodules", ".gitconfig", ".pre-commit-config.yaml"})
+# Review round 2 (F1): pytest short options whose value is the rest of the bundle; scanning a bundle stops at them.
+_EX_PYTEST_VALUE_SHORT = frozenset("kmrW")
+# Review round 2 (F2): the only dotnet build/test options; every other option (-p:, -t:, -restore, @file, ...) is denied.
+_EX_DOTNET_FLAGS = frozenset({"--no-restore", "--no-build", "--nologo"})
+_EX_DOTNET_VALUE = {
+    "-c": re.compile(r"^[A-Za-z0-9_.\-]{1,40}$"), "--configuration": re.compile(r"^[A-Za-z0-9_.\-]{1,40}$"),
+    "-f": re.compile(r"^[A-Za-z0-9_.\-]{1,40}$"), "--framework": re.compile(r"^[A-Za-z0-9_.\-]{1,40}$"),
+    "-v": re.compile(r"^(?:q|quiet|m|minimal|n|normal|d|detailed|diag|diagnostic)$", re.I),
+    "--verbosity": re.compile(r"^(?:q|quiet|m|minimal|n|normal|d|detailed|diag|diagnostic)$", re.I),
+    "--logger": re.compile(r"^(?:console|trx)$", re.I),
+    "--filter": re.compile(r"^[^-/@][^;]{0,300}$"),
+}
 _EX_BRANCH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")
 _EX_BRANCH_LIST = frozenset({"--show-current", "--list", "-a", "-v", "-vv", "-r", "-av", "-avv", "-l"})
 _EX_PKG_FORMS = (("test",), ("run", "test"), ("run", "build"), ("run", "lint"))
@@ -542,6 +555,11 @@ def _ex_pytest(args, cwd: str, root: str):
                 i += 1
         elif a.startswith("-") and not a.startswith("--"):
             flags = a[1:]
+            for n, ch in enumerate(flags):  # F1: `-qo addopts=...`, `-xp evil`: o/p bundled after other flags
+                if ch in _EX_PYTEST_VALUE_SHORT:
+                    break
+                if ch in "op" and n > 0:
+                    return _ex_deny("X2", f"pytest {a!r} bundles -{ch} after other short flags (give -{ch} on its own)")
             if flags.startswith("o"):
                 ini = flags[1:].lstrip("=")
                 if not flags[1:]:
@@ -558,6 +576,36 @@ def _ex_pytest(args, cwd: str, root: str):
                 return _ex_deny("X2", f"pytest ini override {ini!r} touches addopts or plugins")
         i += 1
     return _ex_path_args(args, cwd, root, bare=True)
+
+
+def _ex_dotnet(args, cwd: str, root: str):
+    """F2/F4: dotnet build|test options come from a strict allowlist (no MSBuild -p:/-t:/-restore switches, no response
+    files, no --interactive/--source/--output); at most one project/solution argument, resolved inside the worktree."""
+    i, positional = 0, 0
+    while i < len(args):
+        a = args[i]
+        low = a.lower()
+        if low in _EX_DOTNET_FLAGS:
+            i += 1
+            continue
+        if low in _EX_DOTNET_VALUE:
+            val = args[i + 1] if i + 1 < len(args) else ""
+            if not _EX_DOTNET_VALUE[low].match(val):
+                return _ex_deny("X2", f"dotnet {a} {val!r} is not an allowed value")
+            i += 2
+            continue
+        if a.startswith(("-", "/", "@")) or any(c in a for c in "=;"):
+            return _ex_deny("X2", f"dotnet option {a!r} is not on the allowlist (--no-restore, --no-build, --nologo, "
+                                  "-c, -f, -v, --filter, --logger console|trx); MSBuild switches may restore or run "
+                                  "targets")
+        positional += 1
+        if positional > 1:
+            return _ex_deny("X2", f"dotnet takes at most one project or solution argument ({a!r})")
+        got = _ex_resolve(a, cwd, root)
+        if isinstance(got, str):
+            return _ex_deny("X4", "dotnet project " + got)
+        i += 1
+    return None
 
 
 def _ex_git(args, cwd: str, root: str):
@@ -683,7 +731,7 @@ def executor_bash_problem(cmd, cwd) -> str | None:
             return _ex_deny(rule, "dotnet is allowed only for build and test (with --no-restore)")
         if "--no-restore" not in args[1:]:  # finding 5: an implicit restore downloads packages and runs their targets
             return _ex_deny("X2", "dotnet build/test is allowed only with --no-restore")
-        return _ex_path_args(args[1:], cwd, root)
+        return _ex_dotnet(args[1:], cwd, root)
     for form in _EX_PKG_FORMS:  # npm / pnpm / yarn
         n = len(form)
         if tuple(args[:n]) == form and (len(args) == n or args[n] == "--"):

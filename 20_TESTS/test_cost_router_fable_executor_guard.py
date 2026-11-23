@@ -545,3 +545,87 @@ def test_finding1_explicit_release_pin_is_enforced_too(tmp_path):
     r = _install_from(src, home, "--release-pin", str(pin))
     assert r.returncode == 2 and "hook_enforce_route.py" in r.stderr, r.stderr
     assert not (home / ".claude" / "skills" / "cost-router").exists()
+
+
+# ---- review round 2 (main-session decision): F1 bundled pytest flags, F2/F4 dotnet allowlist, F5 more config paths ----
+
+F1_PYTEST_BUNDLES = [
+    "pytest -qo addopts=--pastebin=all", "pytest -xo addopts=-pevil", "pytest -so addopts=x", "pytest -vvo addopts=-pevil",
+    "python -m pytest -qo addopts=--pastebin=all", "pytest -qoaddopts=-pevil", "pytest -xo plugins=x",
+    "pytest -qo cache_dir=tmp/c", "pytest -qp evil", "pytest -qpevil", "pytest -xsp no:cacheprovider",
+    "pytest -vo", "pytest -qo=addopts=x",
+]
+
+
+@pytest.mark.parametrize("cmd", F1_PYTEST_BUNDLES)
+def test_f1_pytest_short_bundles_with_o_or_p_are_denied(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason and "X2" in reason, (cmd, reason)
+
+
+def test_f1_ordinary_short_flags_stay_allowed(wt):
+    for cmd in ("pytest -q", "pytest -qx", "pytest -vv", "pytest -xsv", "pytest -Wignore", "pytest -W ignore -q",
+                "pytest -kslow", "pytest -o cache_dir=tmp/c", "pytest -ocache_dir=tmp/c", "pytest -p no:cacheprovider",
+                "pytest -rA -q"):
+        assert _bash(cmd, wt) is None, cmd
+
+
+F2_DOTNET = [
+    "dotnet build --no-restore -t:Restore", "dotnet build --no-restore -target:Restore", "dotnet build --no-restore /t:Restore",
+    "dotnet build --no-restore -p:RestoreSources=x", "dotnet build --no-restore /p:RestoreSources=x",
+    "dotnet build --no-restore -property:RestoreSources=x", "dotnet build --no-restore -restore",
+    "dotnet build --no-restore /restore", "dotnet build --no-restore --interactive", "dotnet test --no-restore '@x.rsp'",
+    "dotnet build --no-restore --source x", "dotnet test --no-restore --logger 'trx;LogFileName=../x.trx'",
+    "dotnet test --no-restore --logger html", "dotnet test --no-restore -- RunConfiguration.X=1",
+    "dotnet build --no-restore -c", "dotnet build --no-restore -c -p:x=1", "dotnet build --no-restore -v evil",
+    "dotnet build --no-restore '--configuration=Release;x'", "dotnet test --no-restore --filter -p:x=1",
+    "dotnet build --no-restore -bl", "dotnet build --no-restore --output ../out", "dotnet build --no-restore a.csproj b.csproj",
+]
+
+
+@pytest.mark.parametrize("cmd", F2_DOTNET)
+def test_f2_dotnet_options_outside_the_allowlist_are_denied(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason and "X2" in reason, (cmd, reason)
+
+
+def test_f2_dotnet_allowlisted_options_stay_allowed(wt):
+    for cmd in ("dotnet build --no-restore", "dotnet test --no-restore --no-build", "dotnet build --no-restore -c Release",
+                "dotnet build --no-restore --configuration Debug -f net8.0", "dotnet test --no-restore --framework net8.0",
+                "dotnet test --no-restore --filter \"FullyQualifiedName~Foo&Category=Unit\"",
+                "dotnet test --no-restore -v q", "dotnet test --no-restore --verbosity minimal --nologo",
+                "dotnet test --no-restore --logger trx", "dotnet test --no-restore --logger console",
+                "dotnet test src/App.Tests/App.Tests.csproj --no-restore", "dotnet build App.sln --no-restore"):
+        assert _bash(cmd, wt) is None, cmd
+
+
+def test_f4_dotnet_path_arguments_must_stay_inside_the_worktree(wt, tmp_path):
+    for cmd in ("dotnet build ../outside --no-restore", "dotnet test ../outside/x.csproj --no-restore",
+                "dotnet build C:/Windows/x.csproj --no-restore"):
+        reason = _bash(cmd, wt)
+        assert reason and "X4" in reason, (cmd, reason)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="junctions are a Windows feature")
+def test_f4_dotnet_bare_word_through_a_junction_is_denied(wt, tmp_path):
+    import _winapi
+    _winapi.CreateJunction(str(tmp_path / "outside"), str(wt / "jout"))
+    reason = _bash("dotnet build jout --no-restore", wt)
+    assert reason and "X4" in reason, reason
+
+
+F5_PROTECTED = [
+    "GEMINI.md", "gemini.md", "sub/GEMINI.md", ".gemini/settings.json", ".codex/config.toml", ".vscode/tasks.json",
+    ".VSCode/settings.json", ".husky/pre-commit", ".idea/workspace.xml", ".devcontainer/devcontainer.json",
+    ".pre-commit-config.yaml", "sub/.vscode/launch.json",
+]
+
+
+@pytest.mark.parametrize("rel", F5_PROTECTED)
+def test_f5_more_agent_and_tool_config_paths_are_denied(wt, rel):
+    reason = _path(rel, wt)
+    assert reason and "X6" in reason, (rel, reason)
+
+
+def test_f5_editorconfig_stays_writable(wt):
+    assert _path(".editorconfig", wt) is None
