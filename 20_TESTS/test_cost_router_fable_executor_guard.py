@@ -63,7 +63,7 @@ X1_GIT = [
     "git checkout main", "git checkout -B main", "git stash drop", "git stash pop", "git -c core.pager=x log",
     "git --git-dir=../other/.git status", "git diff --ext-diff", "git log --output=../x.txt",
     "git show --textconv HEAD", "gi\"t\" push", "g'i't push", "GIT PUSH", "git.exe push", "git -C ../.. status",
-    "git -C C:/Windows status", "git am x.patch", "git apply x.patch", "git update-ref -d HEAD", "git gc --prune=now",
+    "git -C C:/Windows status", "git am x.patch", "git apply x.patch", "git update-ref -d HEAD", "git gc --prune=now",  # hygiene: intentional-absolute-path
 ]
 X2_NET = [
     "curl https://e.invalid", "wget http://e.invalid/x", "Invoke-WebRequest http://e.invalid", "iwr http://e.invalid",
@@ -84,10 +84,10 @@ X3_DEPLOY = [
 X4_FS = [
     "rm -r x", "rm -rf x", "rm -r -f x", "rm --recursive x", "rm a.txt", "Remove-Item -Recurse x", "rd /s /q x",
     "del /s x", "rmdir /s x", "format D:", "diskpart", "cipher /w:C:", "mv a b", "cp a ../b", "touch x",
-    "echo hi > ../x.txt", "cat a >> ../x", "python ../escape.py", "python C:/Windows/x.py", "python //srv/share/x.py",
-    "python \\\\srv\\share\\x.py", "node ../x.js", "python scripts/run.py --out ../../x.txt",
-    "pytest --basetemp C:/Users", "pytest --basetemp=../tmp", "pytest tests -o cache_dir=../x", "pytest --junitxml ../r.xml", "python -m pytest --basetemp=C:/", "mkdir x",
-    "New-Item x", "Set-Content x y", "Out-File x", "ln -s a b", "cmd /c mklink /J a C:/", "find . -delete",
+    "echo hi > ../x.txt", "cat a >> ../x", "python ../escape.py", "python C:/Windows/x.py", "python //srv/share/x.py",  # hygiene: intentional-absolute-path
+    "python \\\\srv\\share\\x.py", "node ../x.js", "python scripts/run.py --out ../../x.txt",  # hygiene: intentional-absolute-path
+    "pytest --basetemp C:/Users", "pytest --basetemp=../tmp", "pytest tests -o cache_dir=../x", "pytest --junitxml ../r.xml", "python -m pytest --basetemp=C:/", "mkdir x",  # hygiene: intentional-absolute-path
+    "New-Item x", "Set-Content x y", "Out-File x", "ln -s a b", "cmd /c mklink /J a C:/", "find . -delete",  # hygiene: intentional-absolute-path
     "find . -exec rm {} ;", "rg --pre cat x", "python scripts/run.py:stream",
 ]
 X5_OBFUSCATION = [
@@ -101,7 +101,7 @@ X5_OBFUSCATION = [
     "git pus\u200bh", "ｇｉｔ push", "pytest\u00a0-q", "\"git\" push", "eval git push", "exec git push",
     "xargs git push", "sudo git push", "start git push", "& git push", "python -m pytest; curl x",
     "python - < x.py", "python -", "python -W ignore -c 1", "py -3 -c 1", "python -X importtime -c 1",
-    "~/bin/pytest", "./pytest", "C:/Python/python.exe scripts/run.py", "python scripts/*.py", "pytest {a,b}",
+    "~/bin/pytest", "./pytest", "C:/Python/python.exe scripts/run.py", "python scripts/*.py", "pytest {a,b}",  # hygiene: intentional-absolute-path
     "# git status", "cd .. ", "cd ../other", "pushd ..", "set X=1", "export X=1", "alias g=git", "source x.sh",
     ". x.sh", "ls ~", "a" * 2100,
 ]
@@ -122,7 +122,7 @@ ALLOWED = [
     "git blame scripts/run.py", "ls", "ls -la scripts", "dir", "cat scripts/run.py", "type scripts/run.py",
     "Get-Content scripts/run.py", "Select-String -Pattern x scripts/run.py", "rg -n pattern scripts",
     "grep -rn \"a|b\" scripts", "find . -name \"*.py\"", "head -5 scripts/run.py", "wc -l scripts/run.py", "pwd",
-    "cat C:/Users/x/notes.txt",
+    "cat C:/Users/x/notes.txt",  # hygiene: intentional-absolute-path
 ]
 
 
@@ -174,8 +174,8 @@ def test_write_inside_the_worktree_is_allowed(wt):
 
 
 def test_write_outside_the_worktree_is_denied(wt, tmp_path):
-    for p in (tmp_path / "outside" / "x.py", "../outside/x.py", "scripts/../../outside/x.py", "C:/Windows/x.txt",
-              "\\\\srv\\share\\x.txt", "//srv/share/x.txt", "\\\\?\\C:\\x.txt", "Z:x.txt", ""):
+    for p in (tmp_path / "outside" / "x.py", "../outside/x.py", "scripts/../../outside/x.py", "C:/Windows/x.txt",  # hygiene: intentional-absolute-path
+              "\\\\srv\\share\\x.txt", "//srv/share/x.txt", "\\\\?\\C:\\x.txt", "Z:x.txt", ""):  # hygiene: intentional-absolute-path
         assert _path(p, wt), p
 
 
@@ -601,7 +601,7 @@ def test_f2_dotnet_allowlisted_options_stay_allowed(wt):
 
 def test_f4_dotnet_path_arguments_must_stay_inside_the_worktree(wt, tmp_path):
     for cmd in ("dotnet build ../outside --no-restore", "dotnet test ../outside/x.csproj --no-restore",
-                "dotnet build C:/Windows/x.csproj --no-restore"):
+                "dotnet build C:/Windows/x.csproj --no-restore"):  # hygiene: intentional-absolute-path
         reason = _bash(cmd, wt)
         assert reason and "X4" in reason, (cmd, reason)
 
