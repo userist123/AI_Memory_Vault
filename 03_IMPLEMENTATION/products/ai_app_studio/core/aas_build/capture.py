@@ -118,7 +118,7 @@ def _register_and_prune(settings: Any, project_id: str, added: list[tuple[str, i
         pruned: list[str] = []
         while len(entries) > 1 and (len(entries) > MAX_FILES or sum(e["bytes"] for e in entries) > MAX_BYTES):
             pruned.append(entries.pop(0)["sha"])
-        tmp = idx / f".{project_id}.{os.getpid()}.partial"
+        tmp = _contained(idx, f".{project_id}.{os.getpid()}.partial")
         tmp.write_text(json.dumps(entries), encoding="utf-8")
         os.replace(tmp, path)
         if pruned:

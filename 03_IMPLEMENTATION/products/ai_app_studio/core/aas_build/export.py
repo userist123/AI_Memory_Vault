@@ -384,8 +384,11 @@ def project_folder(studio: Any, project_id: str, dest_root: Path | None = None) 
     if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
     project = studio.get_project(Actor("system", "export", "system"), project_id, with_components=False)
-    root = Path(dest_root) if dest_root is not None else export_root(studio)
-    return root / f"{_slug(str(project.get('name', '')))}-{project_id[4:]}"
+    root = os.path.normpath(os.path.abspath(Path(dest_root) if dest_root is not None else export_root(studio)))
+    full = os.path.normpath(os.path.join(root, f"{_slug(str(project.get('name', '')))}-{project_id[4:]}"))
+    if not full.startswith(root + os.sep):
+        raise ValidationFailed("export folder escapes the export root")
+    return Path(full)
 
 
 def status_of(studio: Any, approval_id: str) -> str:
