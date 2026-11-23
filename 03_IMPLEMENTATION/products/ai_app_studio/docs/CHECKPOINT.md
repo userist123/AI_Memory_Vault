@@ -15,11 +15,12 @@
   (a) DONE: Docker Desktop disk moved to D: (C: ~30 GB free);
   (b) DONE 2026-11-23: aas-web-build:dev sha256:5b3a6cae2153 (431 MB, tsc baked; planted type error exits 5) and
       aas-android-build:dev sha256:ad389dfcab6b (1.93 GB, Gradle 8.14.8, strict verification, 179 s); DIGESTS.json updated,
-      Docker probes rerun (test_docker_e2e + test_android incl. PB7a/PB7b: 34 passed). Open finding: P1c AST gate
-      (tests/build/test_runner.py::test_p1c_ast_only_runner_spawns_processes) fails at HEAD - core/aas_build/desktop.py (S9c)
-      imports subprocess/ctypes; needs a decision before (d);
-  (c) fresh live local gate with C: >= 8 GB (new receipt incl. PM1a/PM5a/P7c/P9b/P4a/PM2a, or record each missing one);
-  (d) full suite once at the release SHA;
+      Docker probes rerun (test_docker_e2e + test_android incl. PB7a/PB7b: 34 passed). P1c AST gate fixed in 0375006ce:
+      icacls spawn moved into runner.py, ACL ctypes code in winacl.py (explicit AST-checked exception);
+  (c) DONE 2026-11-23: live gate run d4c76e32c806 (170 passed / 2 skipped) + live extras (2 launches: guest IPv6 off,
+      live video_keyframe -> SPS + IDR, aas-tablet boot + tap; docs/slices/LOCAL_GATE_RELEASE.md); PM1a, PM5a, P7c, P9b,
+      P4a, PM2a recorded as accepted residuals (SECURITY.md section 2);
+  (d) DONE: Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
   (e) push + PR #413 + vault CI once;
   (f) Romanian report to the owner.
 

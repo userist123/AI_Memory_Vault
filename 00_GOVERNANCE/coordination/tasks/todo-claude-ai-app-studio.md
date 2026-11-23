@@ -140,3 +140,11 @@ Update 2026-11-23 (release prep, local commit on claude/ai-app-studio, not pushe
   (d) full suite once at the release SHA;
   (e) push + PR #413 + vault CI once;
   (f) Romanian report to the owner.
+
+Update 2026-11-23 (release steps c + d DONE, local commits on claude/ai-app-studio, not pushed):
+- P1c gate fixed (0375006ce): icacls spawn in runner.py, ACL ctypes in winacl.py (AST-checked exception).
+- Live extras (2 emulator launches): guest IPv6 off, live video_keyframe -> SPS + IDR, aas-tablet boot + tap.
+- Residuals recorded: PM1a, PM5a, P7c, P9b, P4a, PM2a not automated; external-MCP approval-cap label; installer
+  experimental/unsigned; v1 = run_studio.ps1. Release notes: ai_app_studio/docs/RELEASE_NOTES.md.
+- Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
+- NEXT = (e) push + PR #413 + vault CI once; (f) Romanian report to the owner.
