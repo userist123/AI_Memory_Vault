@@ -30,6 +30,8 @@ import { loadSession, previewOrigin, type Session } from "./lib/session";
 import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from "./lib/store";
 import { ApprovalRegion } from "./components/ApprovalRegion";
 import { CaptureThumb } from "./components/Captures";
+import { type PreviewState, StateSwitcher, withPreviewState } from "./components/StateSwitcher";
+import { FlowTestsPanel } from "./components/FlowTestsPanel";
 import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
@@ -101,6 +103,7 @@ export function App() {
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>(DEFAULT_PREVIEW_THEME);
   const [rightTab, setRightTab] = useState<RightTab>("phone");
+  const [previewState, setPreviewState] = useState<PreviewState | null>(null);
   const [buildOpen, setBuildOpen] = useState(false);
   const [buildFocused, setBuildFocused] = useState(false);
   const [mirrorStream, setMirrorStream] = useState<ArrayBuffer | null>(null);
@@ -515,6 +518,7 @@ export function App() {
           <button className={`tab${rightTab === "mirror" ? " active" : ""}`} onClick={() => setRightTab("mirror")}>
             Emulator
           </button>
+          <StateSwitcher value={previewState} onChange={setPreviewState} />
           <span className="spacer" />
           <ThemeSwitcher value={previewTheme} onChange={setPreviewTheme} />
           {!demo && session ? <QaBadge projectId={selectedProject} nonce={state.previewNonce} api={{ load: (p) => fetchQa(session, p), run: (p, a) => runQa(session, p, a) }} /> : null}
@@ -529,7 +533,7 @@ export function App() {
               theme={previewTheme}
               key={d}
               device={d}
-              src={previewSrc(d)}
+              src={withPreviewState(previewSrc(d), previewState)}
               demoRevision={demo && state.revision > 0 ? state.revision : null}
               taps={state.taps.filter((t) => t.target === d)}
               now={now}
@@ -545,6 +549,7 @@ export function App() {
             </aside>
           ) : null;
         })}
+        <FlowTestsPanel qa={state.qa} captures={state.captures} load={captureLoader?.load ?? null} />
         <div className={rightTab === "mirror" ? "mirror-wrap" : "mirror-wrap hidden"}>
           <EmulatorMirror
             stream={mirrorLive ? null : mirrorStream}

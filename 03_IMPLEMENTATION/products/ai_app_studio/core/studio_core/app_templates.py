@@ -80,7 +80,9 @@ def _ui_files(preset: str) -> dict[str, str]:
 def _app_files(template: str) -> dict[str, str]:
     root = _SRC if template == "blank" else KIT_TEMPLATE / template
     return {"src/main.tsx": _read(_SRC / "main.tsx"), "src/App.tsx": _read(root / "App.tsx"),
-            "src/app.css": _read(root / "app.css"), "public/icon.svg": ICON_SVG}
+            "src/app.css": _read(root / "app.css"), "public/icon.svg": ICON_SVG,
+            # W3: the kit's preview-state hook ships with every template; the agent may edit it
+            "src/aas-states.ts": _read(_SRC / "aas-states.ts")}
 
 
 def parse_template_id(value: object) -> tuple[str, str] | None:

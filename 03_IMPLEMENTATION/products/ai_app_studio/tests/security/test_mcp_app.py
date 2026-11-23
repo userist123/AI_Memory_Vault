@@ -56,6 +56,15 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
     "app_export": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
     # W2: quality gates (read-only for the project files; screenshots stored like preview_capture)
     "qa_run": ({"projectId": PID, "vision": {"type": "boolean"}}, ["projectId"]),
+    # W3: flow tests (spec = data parsed into a closed Playwright subset; run by the studio, preview origin only)
+    "flow_test_write": ({"projectId": PID, "baseRevision": {"type": "integer", "minimum": 0},
+                         "name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,40}$"},
+                         "content": {"type": "string", "maxLength": 20000}},
+                        ["projectId", "baseRevision", "name", "content"]),
+    "flow_test_run": ({"projectId": PID, "frame": {"enum": ["phone", "tablet", "desktop"]},
+                       "name": {"anyOf": [{"description": "Flow test name: tests/flows/<name>.spec.ts",
+                                           "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,40}$", "type": "string"},
+                                          {"type": "null"}]}}, ["projectId"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 
@@ -109,7 +118,10 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
                          ("activity_list", {}), ("app_build", {"projectId": pid, "target": "web"}),
                      ("plan_submit", {"projectId": pid, "title": "t", "steps": []}), ("device_tap", {"x": 1, "y": 1}),
                      ("preview_capture", {"projectId": pid, "frame": "phone"}),
-                     ("qa_run", {"projectId": pid, "vision": True})]
+                     ("qa_run", {"projectId": pid, "vision": True}),
+                     ("flow_test_write", {"projectId": pid, "baseRevision": rev, "name": "nav",
+                                          "content": "test('t', async ({ page }) => { await page.reload(); });"}),
+                     ("flow_test_run", {"projectId": pid})]
             for name, args in calls:  # default OFF: every tool refused
                 r = await s.call_tool(name, args)
                 b = body(r)

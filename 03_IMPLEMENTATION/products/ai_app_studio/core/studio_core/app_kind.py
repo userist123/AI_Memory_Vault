@@ -24,7 +24,7 @@ class AppKind:
     max_total_bytes = appfiles.MAX_TOTAL_BYTES
     max_file_bytes = appfiles.MAX_FILE_BYTES
     templates = frozenset(TEMPLATE_FILES)
-    file_roots = ("src", "public")  # committed to the project's git repo with model/project.json (F3)
+    file_roots = ("src", "public", "tests")  # committed to the project's git repo with model/project.json (F3); W3 tests/flows
 
     def initial_settings(self, template: str) -> dict[str, Any]:
         """``template`` or ``template:preset`` (W1: the style preset chosen at project creation, kept in the project's

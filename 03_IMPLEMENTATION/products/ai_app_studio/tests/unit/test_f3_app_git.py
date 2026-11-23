@@ -37,7 +37,7 @@ def _show(root: Path, commit: str, path: str) -> str:
 
 
 def test_app_kind_declares_its_file_roots(studio: Studio) -> None:
-    assert tuple(studio.kind.file_roots) == ("src", "public")
+    assert tuple(studio.kind.file_roots) == ("src", "public", "tests")  # W3: tests/flows/*.spec.ts is versioned too
 
 
 def test_app_revision_commits_src_and_public_and_restore_works(studio: Studio) -> None:

@@ -47,9 +47,10 @@ def test_project_has_kind_app_and_blank_template(app_studio: Studio) -> None:
     assert p["kind"] == "app"
     files = app_studio.list_files(AGENT, p["id"])
     paths = {f["path"] for f in files}
-    # W1: blank also ships the kit design system (src/app.css + the src/ui catalogue, tokens and preset), nothing else
-    assert {"src/App.tsx", "src/main.tsx", "src/app.css", "public/icon.svg"} <= paths
-    assert {p for p in paths if not p.startswith("src/ui/")} == {"src/App.tsx", "src/main.tsx", "src/app.css", "public/icon.svg"}
+    # W1: blank also ships the kit design system (src/app.css + the src/ui catalogue, tokens and preset)
+    # and the W3 kit preview-state hook src/aas-states.ts, nothing else
+    assert {"src/App.tsx", "src/main.tsx", "src/app.css", "public/icon.svg", "src/aas-states.ts"} <= paths
+    assert {p for p in paths if not p.startswith("src/ui/")} == {"src/App.tsx", "src/main.tsx", "src/app.css", "public/icon.svg", "src/aas-states.ts"}
     assert {"src/ui/index.ts", "src/ui/globals.css", "src/ui/preset.ts", "src/ui/Button.tsx"} <= paths
     assert "createRoot" in app_studio.read_file(AGENT, p["id"], "src/main.tsx")["content"]
 

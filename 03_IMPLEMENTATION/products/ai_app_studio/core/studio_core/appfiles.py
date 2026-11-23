@@ -5,6 +5,9 @@ A path is accepted only if it has the exact shape
     src/<dir>{0,4}/<name>.<ext>      ext in SRC_EXT
     public/<dir>{0,3}/<name>.<ext>   ext in PUBLIC_EXT
 
+    tests/flows/<name>.spec.ts                 (W3: agent flow tests; data run by the studio's Playwright, never
+                                               copied into a build context)
+
 where every ``dir`` and ``name`` matches ``^[A-Za-z0-9][A-Za-z0-9_-]{0,40}$`` - so there is no dot, colon (ADS),
 tilde (8.3 short name), space, trailing dot/space, backslash, or hidden file in any segment, and no ``..``.
 Everything else (package.json, lockfiles, *.config.*, index.html, .npmrc, android/**, AGENTS.md, CLAUDE.md,
@@ -32,6 +35,8 @@ _RESERVED = re.compile(r"^(con|prn|aux|nul|clock\$|com[0-9]|lpt[0-9])$", re.I)
 _CONTROL_STEMS = frozenset({"package", "package-lock", "tsconfig", "jsconfig", "claude", "agents", "gemini", "mcp"})
 _MAX_DIRS = {"src": 4, "public": 3}
 _EXT = {"src": SRC_EXT, "public": PUBLIC_EXT}
+# W3: the only shape accepted under tests/ - exact lowercase dirs, one flat folder, a single-segment name, .spec.ts
+_FLOW_SPEC = re.compile(r"^tests/flows/([A-Za-z0-9][A-Za-z0-9_-]{0,40})\.(?i:spec\.ts)$")
 
 
 def validate_path(path: str) -> str:
@@ -40,8 +45,18 @@ def validate_path(path: str) -> str:
         raise ValidationFailed("invalid file path")
     parts = path.split("/")
     root = parts[0]
+    if root == "tests":
+        m = _FLOW_SPEC.fullmatch(path)
+        if not m:
+            raise ValidationFailed("under tests/ only tests/flows/<name>.spec.ts is allowed", path=path)
+        if _RESERVED.fullmatch(m.group(1)):
+            raise ValidationFailed("reserved device name", path=path)
+        if m.group(1).casefold() in _CONTROL_STEMS:
+            raise ValidationFailed("this file name is reserved for the studio", path=path)
+        return path
     if root not in _EXT or len(parts) < 2:
-        raise ValidationFailed("files must live under src/ or public/", path=path)
+        raise ValidationFailed("files must live under src/ or public/ (flow tests: tests/flows/<name>.spec.ts)",
+                               path=path)
     dirs, leaf = parts[1:-1], parts[-1]
     if len(dirs) > _MAX_DIRS[root]:
         raise ValidationFailed(f"at most {_MAX_DIRS[root]} folders below {root}/", path=path)
