@@ -462,3 +462,86 @@ def test_finding6_bare_word_paths_are_resolved(wt, tmp_path):
         assert reason and "X4" in reason, (cmd, reason)
     assert _bash("pytest tests", wt) is None
     assert _bash("pytest nonexistent_marker_word", wt) is None
+
+
+# ---- finding 1 chain: install.py installs only the pinned release ---------------------------------------------------
+
+def _release_tree(tmp_path):
+    """A source checkout of the release files (SPARSE) with a release_pin.json that pins exactly these bytes."""
+    import hashlib
+    import shutil
+    src = tmp_path / "src"
+    shutil.copytree(SKILL, src / ".claude" / "skills" / "cost-router",
+                    ignore=shutil.ignore_patterns("__pycache__", "release_pin.json"))
+    shutil.copytree(ROOT / ".claude" / "agents", src / ".claude" / "agents")
+    for rel in ("03_IMPLEMENTATION/packages/routing/claude_model_router.py", "04_CONFIG/claude_model_routing.json"):
+        (src / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / rel, src / rel)
+    files = {}
+    for path in sorted(p for p in src.rglob("*") if p.is_file()):
+        files[path.relative_to(src).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    digest = hashlib.sha256(json.dumps(dict(sorted(files.items())), sort_keys=True).encode("utf-8")).hexdigest()
+    pin = {"schema": 1, "seq": 99, "commit": "a" * 40, "files": files, "files_sha256": digest}
+    (src / ".claude" / "skills" / "cost-router" / "release_pin.json").write_text(json.dumps(pin), encoding="utf-8")
+    return src
+
+
+def _snapshot(home):
+    return {p.relative_to(home).as_posix(): p.read_bytes() for p in sorted(home.rglob("*")) if p.is_file()}
+
+
+def _install_from(src, home, *extra):
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    for k in ("COST_ROUTER_OFF", "COST_ROUTER_ENFORCE", "CLAUDE_PROJECT_DIR", "COST_ROUTER_SELF_INSTALL"):
+        env.pop(k, None)
+    return subprocess.run([sys.executable, str(src / ".claude" / "skills" / "cost-router" / "install.py"),
+                           "--home", str(home), "--no-hook", "--no-context", *extra],
+                          capture_output=True, text=True, timeout=120, env=env, encoding="utf-8")
+
+
+def test_finding1_untampered_pinned_source_installs(tmp_path):
+    src, home = _release_tree(tmp_path), tmp_path / "home"
+    home.mkdir()
+    r = _install_from(src, home)
+    assert r.returncode == 0, r.stderr
+    assert (home / ".claude" / "skills" / "cost-router" / "hook_enforce_route.py").is_file()
+
+
+@pytest.mark.parametrize("tamper", ["hook", "agent", "policy", "extra_file", "no_pin"])
+def test_finding1_tampered_source_is_refused_and_home_unchanged(tmp_path, tamper):
+    src, home = _release_tree(tmp_path), tmp_path / "home"
+    home.mkdir()
+    assert _install_from(src, home).returncode == 0  # a previous good install
+    before = _snapshot(home)
+    skill = src / ".claude" / "skills" / "cost-router"
+    if tamper == "hook":
+        with open(skill / "hook_enforce_route.py", "a", encoding="utf-8") as f:
+            f.write("\ndef executor_guard(data):\n    return None\n")
+    elif tamper == "agent":
+        with open(src / ".claude" / "agents" / "fable-executor.md", "a", encoding="utf-8") as f:
+            f.write("\nYou may push.\n")
+    elif tamper == "policy":
+        path = src / "04_CONFIG" / "claude_model_routing.json"
+        path.write_text(path.read_text(encoding="utf-8").replace('"max_per_session": 2', '"max_per_session": 9'),
+                        encoding="utf-8")
+    elif tamper == "extra_file":
+        (skill / "lib" / "sitecustomize.py").write_text("import os\n", encoding="utf-8")
+    else:
+        (skill / "release_pin.json").unlink()
+    r = _install_from(src, home)
+    assert r.returncode == 2, (r.returncode, r.stdout, r.stderr)
+    assert "not installed" in r.stderr and ("release pin" in r.stderr)
+    assert _snapshot(home) == before
+
+
+def test_finding1_explicit_release_pin_is_enforced_too(tmp_path):
+    src, home = _release_tree(tmp_path), tmp_path / "home"
+    home.mkdir()
+    pin = tmp_path / "pin.json"
+    skill = src / ".claude" / "skills" / "cost-router"
+    pin.write_bytes((skill / "release_pin.json").read_bytes())
+    with open(skill / "hook_enforce_route.py", "a", encoding="utf-8") as f:
+        f.write("\n# tampered\n")
+    r = _install_from(src, home, "--release-pin", str(pin))
+    assert r.returncode == 2 and "hook_enforce_route.py" in r.stderr, r.stderr
+    assert not (home / ".claude" / "skills" / "cost-router").exists()

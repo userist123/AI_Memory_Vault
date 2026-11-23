@@ -396,6 +396,56 @@ def source_manifest() -> dict[str, str]:
     return manifest(SKILL_SRC, _added_files())
 
 
+class SourcePinMismatch(ValueError):
+    """A file install() would copy is not byte-for-byte the pinned release (finding 1 chain): never install."""
+
+
+def _source_files(skill_src: Path, router_src: Path, policy_src: Path, agents_src: Path) -> dict[str, Path]:
+    """Repository-relative path (the pin's key) -> source file, for every file install() copies from a source tree."""
+    out: dict[str, Path] = {}
+    base = release_pin.PIN_REPO_PATH.rsplit("/", 1)[0]
+    for dirpath, dirnames, filenames in os.walk(skill_src):
+        dirnames[:] = [d for d in dirnames if d not in _IGNORE]
+        for name in filenames:
+            path = Path(dirpath) / name
+            rel = path.relative_to(skill_src).as_posix()
+            if rel != PIN_NAME:  # the pin is committed after the release it pins
+                out[f"{base}/{rel}"] = path
+    out["03_IMPLEMENTATION/packages/routing/claude_model_router.py"] = router_src
+    out["04_CONFIG/claude_model_routing.json"] = policy_src
+    for src in sorted(agents_src.glob("*.md")):
+        out[f".claude/agents/{src.name}"] = src
+    return out
+
+
+def check_source_against_pin(pin_data: dict | None, files: dict[str, Path], pin_name: str) -> None:
+    """Every file to be copied must be in the release pin with the same sha256 (raw bytes, or the same text with
+    CRLF normalized to LF as git stores it); raises SourcePinMismatch naming the files that differ."""
+    if pin_data is None:
+        raise SourcePinMismatch("no release pin: the source tree has no release_pin.json and none was given with "
+                                "--release-pin, so its files cannot be verified")
+    pinned = pin_data["files"]
+    bad = []
+    for rel, path in sorted(files.items()):
+        want = pinned.get(rel)
+        if want is None:
+            bad.append(f"{rel} (not in the pin)")
+            continue
+        try:
+            if path.is_symlink():
+                bad.append(f"{rel} (a link)")
+                continue
+            if want not in (_file_sha(path), _lf_sha(path)):
+                bad.append(f"{rel} (sha256 differs)")
+        except OSError as exc:
+            bad.append(f"{rel} ({type(exc).__name__})")
+    if bad:
+        shown = ", ".join(bad[:8]) + (f" and {len(bad) - 8} more" if len(bad) > 8 else "")
+        raise SourcePinMismatch(f"source files do not match the release pin {pin_name} (seq {pin_data['seq']}, "
+                                f"commit {pin_data['commit'][:12]}): {shown}. Nothing was changed; check out the "
+                                "pinned commit or regenerate the pin with lib/release_pin.py generate")
+
+
 def _pin_seq(path: Path) -> int | None:
     try:
         return release_pin.load_pin(path)["seq"]
@@ -607,7 +657,7 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         current = vfile.read_text(encoding="utf-8").splitlines()[:1] if vfile.is_file() else []
         if current != [source_ref]:
             raise ValueError(f"installed copy is no longer the pinned release {source_ref} (changed during the update)")
-    pin_bytes = None
+    pin_bytes = pin_data = None
     new_pin = pin_file or (skill_src / PIN_NAME if (skill_src / PIN_NAME).is_file() else None)
     if new_pin is not None:  # validate and read it once, before anything is copied or swapped
         try:
@@ -621,6 +671,10 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         old_seq = _pin_seq(skill_dir / PIN_NAME)
         if old_seq is not None and new_seq < old_seq and not force:
             raise ValueError(f"downgrade refused: installed release pin seq {old_seq} > {new_seq} (--force to override)")
+    # finding 1 chain: the bytes copied into ~/.claude become the hooks that guard every session, so each one must be
+    # the pinned release (checked before anything is staged; a tampered checkout installs nothing)
+    check_source_against_pin(pin_data, _source_files(skill_src, router_src, policy_src, agents_src),
+                             str(new_pin) if new_pin is not None else "(none)")
     # Pinned vault roots (P1): the hooks run the Vault router only inside these. Kept from the previous install; this
     # checkout is added only when the installer runs FROM a checkout (never for a --source-root staging tree, which
     # is a temporary directory); --pin-root adds more (e.g. a vault worktree). Every root must really be a vault.
@@ -824,6 +878,9 @@ def main(argv=None) -> int:
     except LockBusy as exc:
         print(f"skipped: {exc}" if quiet else f"not installed: {exc}", file=sys.stdout if quiet else sys.stderr)
         return 0 if quiet else 1
+    except SourcePinMismatch as exc:
+        print(f"not installed: {exc}", file=sys.stderr)
+        return 2
     except ValueError as exc:
         print(f"not installed: {exc}", file=sys.stderr)
         return 1
