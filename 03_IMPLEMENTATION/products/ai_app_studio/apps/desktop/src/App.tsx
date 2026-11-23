@@ -4,7 +4,6 @@ import {
   type PlanRecord,
   type ProjectRef,
   type Template,
-  exportProject,
   createProject,
   deleteProject,
   errorText,
@@ -32,8 +31,9 @@ import { CaptureThumb } from "./components/Captures";
 import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
-import { ExportControls } from "./components/ExportControls";
 import { ProjectPicker } from "./components/ProjectPicker";
+import { ExportPanel } from "./components/ExportPanel";
+import { exportArtifact, openExportFolder, ownerBuildStatus, startOwnerBuild } from "./lib/exportApi";
 import { RunControls } from "./components/RunControls";
 import { elapsed, Timeline } from "./components/Timeline";
 
@@ -407,11 +407,16 @@ export function App() {
               profile={runnerProfile}
               onProfile={onRunnerProfile}
               renderExport={(pid) => (
-                <ExportControls
+                <ExportPanel
                   key={pid}
                   projectId={pid}
-                  run={(p, t, apr) => exportProject(session, p, t, apr)}
-                  approve={(id) => decideApproval(session, id, "approve")}
+                  api={{
+                    exportArtifact: (p, t, apr) => exportArtifact(session, p, t, apr),
+                    approve: (id) => decideApproval(session, id, "approve"),
+                    startBuild: (p, t) => startOwnerBuild(session, p, t),
+                    buildStatus: (p) => ownerBuildStatus(session, p),
+                    openFolder: (p) => openExportFolder(session, p),
+                  }}
                 />
               )}
             />

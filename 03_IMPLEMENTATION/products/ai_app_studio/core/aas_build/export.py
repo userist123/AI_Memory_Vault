@@ -70,6 +70,14 @@ class ExportBlocked(StudioError):
     http_status = 422
 
 
+class BuildRequired(Unavailable):
+    """Owner report 2026-11-23 ("Nu merge sa o export APK"): the APK is missing, or was built from an older revision
+    than the app the owner sees, or no longer matches its recorded build. The UI builds it (owner build route) and asks
+    again; the export never ships a stale APK."""
+    code = "build_required"
+    http_status = 409
+
+
 @dataclass
 class Artifact:
     project_id: str
@@ -239,13 +247,21 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
     else:
         apk = service.apk_path(studio.settings, project_id)
         if not apk.is_file() or apk.is_symlink():
-            raise Unavailable("no APK has been built for this project (app_build target android)")
+            raise BuildRequired("no APK has been built for this project (app_build target android)",
+                                target="android", revision=revision)
+        rec_a = recorded_build(studio, project_id, "android")
+        built_rev = (rec_a[1] if rec_a else {}).get("revision")
+        if isinstance(built_rev, int) and built_rev != revision:
+            raise BuildRequired(f"the APK was built from revision {built_rev} but the app is at revision {revision}: "
+                                "build the APK again (app_build target android)", target="android",
+                                revision=revision, builtRevision=built_rev)
         if apk.stat().st_size > MAX_BYTES:
             raise ValidationFailed("the APK is over the export limit")
         data = apk.read_bytes()
-        recorded = recorded_apk_sha(studio, project_id)
+        recorded = rec_a[0] if rec_a else None
         if recorded is None or hashlib.sha256(data).hexdigest() != recorded:
-            raise Unavailable("the APK does not match a recorded build of this project: rebuild (app_build android)")
+            raise BuildRequired("the APK does not match a recorded build of this project: rebuild (app_build android)",
+                                target="android", revision=revision)
         names = ["app-debug.apk"]
     sha = hashlib.sha256(data).hexdigest()
     return Artifact(project_id, target, data, sha, revision, slug, names)
@@ -330,6 +346,15 @@ def request(studio: Any, actor: Actor, art: Artifact) -> dict[str, Any]:
     except Exception:  # noqa: BLE001 - the timeline never breaks the request
         activity._note_dropped(studio)  # noqa: SLF001
     return {"approvalId": res["approvalId"], "status": "pending"}
+
+
+def project_folder(studio: Any, project_id: str, dest_root: Path | None = None) -> Path:
+    """``<export root>/<name>-<id16>``: where ``write`` puts this project's exports (computed, never from a request)."""
+    if not isinstance(project_id, str) or not _PID.match(project_id):
+        raise ValidationFailed("invalid project id")
+    project = studio.get_project(Actor("system", "export", "system"), project_id, with_components=False)
+    root = Path(dest_root) if dest_root is not None else export_root(studio)
+    return root / f"{_slug(str(project.get('name', '')))}-{project_id[4:]}"
 
 
 def status_of(studio: Any, approval_id: str) -> str:
