@@ -1,0 +1,282 @@
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { type ApprovalRecord, type PlanRecord, decideApproval, decidePlan, fetchApprovals } from "./lib/api";
+import { DEMO_PROJECT, runDemo } from "./lib/demo";
+import { LiveClient } from "./lib/live";
+import { loadSession, previewOrigin, type Session } from "./lib/session";
+import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from "./lib/store";
+import { ApprovalRegion } from "./components/ApprovalRegion";
+import { DeviceFrame } from "./components/DeviceFrames";
+import { DiffViewer } from "./components/DiffViewer";
+import { EmulatorMirror } from "./components/EmulatorMirror";
+import { elapsed, Timeline } from "./components/Timeline";
+
+const FOLLOW_PAUSE_MS = 10_000;
+type RightTab = DeviceKind | "mirror";
+
+function useNow(ms = 500): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), ms);
+    return () => clearInterval(t);
+  }, [ms]);
+  return now;
+}
+
+function fmtTokens(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
+function CostPill({ cost }: { cost: State["cost"] }) {
+  const over = cost.budgetUsd !== null && cost.costUsd > cost.budgetUsd;
+  return (
+    <span className={`pill cost${over ? " over" : ""}`} data-testid="cost-pill" title="tokens in / out, cost vs run budget">
+      {fmtTokens(cost.inputTokens)} in · {fmtTokens(cost.outputTokens)} out · ${cost.costUsd.toFixed(2)}
+      {cost.budgetUsd !== null ? ` / $${cost.budgetUsd.toFixed(2)}` : ""}
+    </span>
+  );
+}
+
+async function loadMirrorFixture(): Promise<ArrayBuffer> {
+  const { MIRROR_FIXTURE_B64 } = await import("./fixtures/mirrorFixture");
+  const bin = atob(MIRROR_FIXTURE_B64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
+export function App() {
+  const params = useMemo(() => new URLSearchParams(window.location.search), []);
+  const demo = params.get("demo") === "1";
+  const speed = Math.min(20, Math.max(0.25, Number(params.get("speed")) || 1));
+  const store = useMemo(() => createStore(), []);
+  const state = useSyncExternalStore(store.subscribe, store.get);
+  const now = useNow();
+
+  const [session, setSession] = useState<Session | null>(null);
+  const [sessionError, setSessionError] = useState("");
+  const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
+  const [plans, setPlans] = useState<PlanRecord[]>([]);
+  const [approvalError, setApprovalError] = useState("");
+  const [follow, setFollow] = useState(true);
+  const [pausedUntil, setPausedUntil] = useState(0);
+  const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [rightTab, setRightTab] = useState<RightTab>("phone");
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [buildFocused, setBuildFocused] = useState(false);
+  const [mirrorStream, setMirrorStream] = useState<ArrayBuffer | null>(null);
+  const [demoRun, setDemoRun] = useState(0);
+  const buildRef = useRef<HTMLDivElement>(null);
+
+  // ---- session + live stream (or demo) ----
+  useEffect(() => {
+    if (demo) return;
+    let client: LiveClient | null = null;
+    let cancelled = false;
+    loadSession()
+      .then((s) => {
+        if (cancelled) return;
+        if (!s) {
+          setSessionError("No backend session. Open the studio from the desktop app, or use ?demo=1.");
+          return;
+        }
+        setSession(s);
+        client = new LiveClient(s, store, { gapDetection: params.get("gapDetection") !== "0" });
+        client.start();
+      })
+      .catch(() => setSessionError("The backend could not be started."));
+    return () => {
+      cancelled = true;
+      client?.stop();
+    };
+  }, [demo, store, params]);
+
+  useEffect(() => {
+    if (!demo) return;
+    store.dispatch({ type: "reset" });
+    setApprovals([]);
+    setPlans([]);
+    const h = runDemo(store, setApprovals, speed, setPlans);
+    void loadMirrorFixture().then(setMirrorStream);
+    return () => h.stop();
+  }, [demo, store, speed, demoRun]);
+
+  // ---- approvals: refetched from server records; events only signal ----
+  useEffect(() => {
+    if (!session) return;
+    let live = true;
+    fetchApprovals(session)
+      .then((r) => {
+        if (!live) return;
+        setApprovals(r.approvals);
+        setPlans(r.plans);
+        setApprovalError("");
+      })
+      .catch(() => live && setApprovalError("Approvals could not be loaded."));
+    return () => {
+      live = false;
+    };
+  }, [session, state.approvalsVersion]);
+
+  // ---- follow the AI ----
+  const followActive = follow && now >= pausedUntil;
+  const focus = state.focus;
+  useEffect(() => {
+    if (!focus || !follow || Date.now() < pausedUntil) return;
+    setBuildFocused(focus.panel === "build");
+    if (focus.panel === "diff" && focus.file) setActiveFile(focus.file);
+    if (focus.panel === "device" && focus.device) setRightTab(focus.device);
+    if (focus.panel === "mirror") setRightTab("mirror");
+    if (focus.panel === "build") buildRef.current?.scrollIntoView?.({ block: "nearest" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.seq]);
+
+  const ownerInput = useCallback((e: { target: EventTarget | null }) => {
+    if (e.target instanceof Element && e.target.closest("[data-follow-toggle]")) return;
+    setPausedUntil(Date.now() + FOLLOW_PAUSE_MS);
+  }, []);
+  // a target that has no diff yet (e.g. package.json during deps_install) falls back to the newest file
+  const shownFile = pickShownFile(activeFile, state.files, state.fileOrder);
+
+  const previewSrc = (d: DeviceKind): string | null => {
+    if (demo || !session || !state.previewProjectId) return null;
+    void d;
+    return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}`;
+  };
+
+  const onDecide = (id: string, d: "approve" | "deny") => {
+    if (demo) {
+      setApprovals((a) => a.filter((r) => r.id !== id));
+      return;
+    }
+    if (session) void decideApproval(session, id, d).catch(() => setApprovalError("Decision failed."));
+  };
+  const onPlanApprove = (id: string) => {
+    if (demo) setPlans((p) => p.filter((x) => x.id !== id));
+    else if (session) void decidePlan(session, id, "approve").catch(() => setApprovalError("Decision failed."));
+  };
+  const onPlanEdit = (id: string, note: string) => {
+    if (demo) setPlans((p) => p.filter((x) => x.id !== id));
+    else if (session) void decidePlan(session, id, "edit", note).catch(() => setApprovalError("Decision failed."));
+  };
+
+  const runLabel =
+    state.runStatus === "running"
+      ? `running ${elapsed(state.startedAt, null, now)}`
+      : state.runStatus === "idle"
+        ? "idle"
+        : `${state.runStatus} in ${elapsed(state.startedAt, state.endedAt, now)}`;
+  const lastGap = state.gaps[state.gaps.length - 1];
+
+  return (
+    <div className="app" onPointerDownCapture={ownerInput} onKeyDownCapture={ownerInput}>
+      <header className="topbar">
+        <span className="brand">AI App Studio</span>
+        <span className="run-title">{state.runTitle || (demo ? "Demo run" : "No active run")}</span>
+        <span className={`status ${state.runStatus}`} data-testid="run-status">
+          <span className="led" aria-hidden="true" />
+          {runLabel}
+        </span>
+        <span className="spacer" />
+        {lastGap ? (
+          <span className="pill gap" data-testid="gap-indicator" title={`${state.gaps.length} gap(s) in the stream`}>
+            gap {lastGap.from}–{lastGap.to} · {lastGap.reason}
+          </span>
+        ) : null}
+        {state.protocolError !== null ? (
+          <span className="pill gap" data-testid="protocol-error" title="the server must negotiate the aas.v1 subprotocol">
+            refused socket: subprotocol {state.protocolError ? `"${state.protocolError}"` : "missing"}
+          </span>
+        ) : null}
+        {state.dropped > 0 ? (
+          <span className="pill gap" data-testid="dropped-indicator">
+            {state.dropped} frame(s) rejected
+          </span>
+        ) : null}
+        <CostPill cost={state.cost} />
+        <span className={`conn ${state.connection}`} data-testid="connection">
+          {state.connection}
+        </span>
+        {demo ? (
+          <button className="btn small" onClick={() => setDemoRun((n) => n + 1)}>
+            Replay demo
+          </button>
+        ) : null}
+        <label
+          className={`follow${followActive ? " on" : follow ? " paused" : ""}`}
+          data-testid="follow-toggle"
+          data-follow-toggle=""
+        >
+          <input
+            type="checkbox"
+            checked={follow}
+            onChange={(e) => {
+              setFollow(e.target.checked);
+              setPausedUntil(0);
+            }}
+          />
+          Follow the AI
+          {follow && !followActive ? <small> paused {Math.ceil((pausedUntil - now) / 1000)}s</small> : null}
+        </label>
+      </header>
+
+      <aside className="left">
+        <div className="left-scroll" ref={buildRef}>
+          {sessionError ? <p className="banner">{sessionError}</p> : null}
+          <Timeline
+            state={state}
+            now={now}
+            buildOpen={buildOpen}
+            setBuildOpen={setBuildOpen}
+            buildFocused={buildFocused && followActive}
+            onOpenFile={(p) => setActiveFile(p)}
+          />
+        </div>
+        <ApprovalRegion
+          records={approvals}
+          plans={plans}
+          error={approvalError}
+          onDecide={onDecide}
+          onPlanApprove={onPlanApprove}
+          onPlanEdit={onPlanEdit}
+        />
+      </aside>
+
+      <main className="center">
+        <DiffViewer files={state.files} order={state.fileOrder} active={shownFile} onSelect={setActiveFile} />
+      </main>
+
+      <section className="right" aria-label="Device preview">
+        <nav className="tabs">
+          {(Object.keys(DEVICES) as DeviceKind[]).map((d) => (
+            <button key={d} className={`tab${rightTab === d ? " active" : ""}`} onClick={() => setRightTab(d)}>
+              {DEVICES[d].label}
+            </button>
+          ))}
+          <button className={`tab${rightTab === "mirror" ? " active" : ""}`} onClick={() => setRightTab("mirror")}>
+            Emulator
+          </button>
+          <span className="spacer" />
+          <span className="tag" data-testid="revision">
+            rev {state.revision}
+          </span>
+        </nav>
+        {(Object.keys(DEVICES) as DeviceKind[]).map((d) =>
+          rightTab === d ? (
+            <DeviceFrame
+              key={d}
+              device={d}
+              src={previewSrc(d)}
+              demoRevision={demo && state.revision > 0 ? state.revision : null}
+              taps={state.taps.filter((t) => t.target === d)}
+              now={now}
+            />
+          ) : null,
+        )}
+        <div className={rightTab === "mirror" ? "mirror-wrap" : "mirror-wrap hidden"}>
+          <EmulatorMirror stream={mirrorStream} taps={state.taps.filter((t) => t.target === "mirror")} now={now} />
+        </div>
+        {demo ? <p className="muted foot">Demo project p-{DEMO_PROJECT}: replayed fixture, no backend.</p> : null}
+      </section>
+    </div>
+  );
+}
