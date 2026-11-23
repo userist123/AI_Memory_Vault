@@ -64,6 +64,36 @@ def test_build_lock_is_cross_process_and_refuses_delete(client) -> None:  # type
     assert client.request("DELETE", f"/api/v1/projects/{pid}", headers=AUTH).status_code == 428
 
 
+
+def test_delete_holds_the_build_lock_and_maps_a_race_to_409(client, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]  # noqa: F811
+    """S9c review 2 F3: a build that starts in another process after the probe (probe saw nothing) makes the delete
+    fail with 409, not run next to the build; while the delete runs, it holds the build lock itself."""
+    st = client.app.state.studio
+    pid = client.post("/api/v1/projects", json={"name": "p"}, headers=AUTH).json()["id"]
+    p = _hold(st.settings.data_dir, pid)
+    try:
+        monkeypatch.setattr(service, "building_project", lambda settings=None: None)  # the race: probe passed
+        r = client.request("DELETE", f"/api/v1/projects/{pid}", headers=AUTH)
+        assert r.status_code == 409, r.text
+        assert "build" in r.text
+    finally:
+        _release(p)
+        monkeypatch.undo()
+    r = client.request("DELETE", f"/api/v1/projects/{pid}", headers=AUTH)
+    assert r.status_code == 428, r.text
+    apr = r.json()["details"]["approvalId"]
+    assert client.post(f"/api/v1/approvals/{apr}/decide", json={"decision": "approve"}, headers=AUTH).status_code == 200
+    seen: dict[str, Any] = {}
+    real = st.delete_project
+
+    def spy(*a: Any, **kw: Any) -> Any:
+        seen["building"] = service.building_project(st.settings)
+        return real(*a, **kw)
+    monkeypatch.setattr(st, "delete_project", spy)
+    r = client.request("DELETE", f"/api/v1/projects/{pid}", json={"approvalId": apr}, headers=AUTH)
+    assert r.status_code == 200, r.text
+    assert seen["building"] == pid  # a build could not start while the files were moved to the trash
+
 def test_lock_released_when_the_holder_dies(tmp_path: Path) -> None:
     s = SimpleNamespace(data_dir=tmp_path)
     p = _hold(tmp_path, "prj_" + "a" * 16)

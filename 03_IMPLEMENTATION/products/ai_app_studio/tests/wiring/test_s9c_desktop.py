@@ -31,6 +31,8 @@ def droot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, studio) -> Path:  # t
     (root / "vendor" / "tauri-2.12.7" / "src" / "lib.rs").write_text("pub fn a() {}", encoding="utf-8")
     monkeypatch.setenv("AAS_DESKTOP_ROOT", str(root))
     desktop.secure_dir(root)  # owner-only root (S9c review M2/M3), then the studio-held vendor manifest
+    real = desktop.read_acl  # real ACL of the root and below; the temp dir's parents (e.g. D:\w) are not under test
+    monkeypatch.setattr(desktop, "read_acl", lambda p: real(p) if Path(p).is_relative_to(root) else (desktop.current_sid(), []))
     desktop.record_vendor(studio.settings, root / "vendor")
     return root
 

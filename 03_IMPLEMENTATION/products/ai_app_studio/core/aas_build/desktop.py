@@ -155,7 +155,9 @@ def dist_zip(root: Path) -> bytes:
 
 # ---- S9c review: owner-only root, cargo config planting, vendored crates manifest, path remap ----
 _WRITE_ANY = 0x2 | 0x4 | 0x10 | 0x40 | 0x100 | 0x10000 | 0x40000 | 0x80000 | 0x40000000 | 0x10000000
-_REPLACE = 0x40 | 0x40000 | 0x80000 | 0x10000000  # delete-child / write-dac / write-owner / generic-all: swap the dir
+_REPLACE = 0x40 | 0x10000 | 0x40000 | 0x80000 | 0x10000000  # delete-child / DELETE / write-dac / write-owner / generic-all:
+# swap the dir (DELETE on a parent = rename it away with the root inside, then plant another one; S9c review 2 F1)
+_PARENT_UNSAFE = _REPLACE | 0x2 | 0x4  # + add-file / add-subdirectory: plant a .cargo config in a parent (N3)
 _INHERIT_ONLY = 0x08
 _ALWAYS_TRUSTED = {"S-1-5-18", "S-1-5-32-544", "S-1-3-0", "S-1-3-4",
                    "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"}  # SYSTEM, Administrators, CREATOR OWNER, OWNER RIGHTS, TrustedInstaller
@@ -246,7 +248,9 @@ def assert_root_trusted(root: Path, *, reader: Callable[[Path], tuple[str, list[
                         me: str | None = None) -> None:
     """The desktop root (holds vendor/target/cargo-home) must be writable only by the current user, SYSTEM and
     Administrators: root itself (incl. inherit-only aces: they reach the children) and every parent up to, not
-    including, the drive root (delete-child / write-dac / write-owner would let another account swap the root).
+    including, the drive root (delete-child / DELETE / write-dac / write-owner would let another account swap the root;
+    so D:\w, where Authenticated Users have modify, is refused: use an owner-only dir under the drive root); add-file /
+    add-subdirectory on a parent is refused too (a planted ``.cargo`` config there would be merged by cargo).
     No-op off Windows unless a ``reader`` is given."""
     if reader is None:
         if os.name != "nt":
@@ -271,7 +275,7 @@ def assert_root_trusted(root: Path, *, reader: Callable[[Path], tuple[str, list[
             if i == 0 and mask & _WRITE_ANY:
                 raise BuildError(f"the desktop build root is writable by another principal ({sid} on {d}): "
                                  "restrict it to the owner, SYSTEM and Administrators (python -m aas_build.desktop secure)")
-            if i > 0 and not flags & _INHERIT_ONLY and mask & _REPLACE:
+            if i > 0 and not flags & _INHERIT_ONLY and mask & _PARENT_UNSAFE:
                 raise BuildError(f"a parent of the desktop build root is writable by another principal ({sid} on {d}): "
                                  "it could be replaced; use an owner-only location")
 
@@ -320,16 +324,20 @@ def write_cargo_home(cargo_home: Path) -> None:
         encoding="utf-8")
 
 
-def _prefix_pairs(root: Path, vendor: Path, build_dir: Path) -> list[tuple[str, str]]:
-    # general first: rustc applies the last matching mapping
+def _prefix_pairs(root: Path, vendor: Path) -> list[tuple[str, str]]:
+    # general first: rustc applies the last matching mapping. No per-build entry (S9c review 2 F2): the build dir sits
+    # under root (-> /aas-desktop/builds/<id>), so the rustflags, part of cargo's fingerprint, stay the same per build.
     return [(str(Path.home()), "~"), (str(root), "/aas-desktop"), (str(root / "target"), "/target"),
-            (str(vendor), "/vendor"), (str(build_dir), "/src")]
+            (str(vendor), "/vendor")]
 
 
 def cargo_args(root: Path, vendor: Path, build_dir: Path) -> list[str]:
-    """``--config k=v`` overrides (highest cargo precedence): no rustc wrapper, host path prefixes remapped."""
+    """``--config k=v`` overrides (highest cargo precedence): no rustc wrapper, host path prefixes remapped. The build
+    dir must be under ``root`` (covered by its mapping); the exe leak scan still checks it."""
+    if not Path(build_dir).is_relative_to(Path(root)):
+        raise BuildError("the build dir is not under the desktop root: its path would not be remapped")
     flags: list[str] = []
-    for src, dst in _prefix_pairs(Path(root), Path(vendor), Path(build_dir)):
+    for src, dst in _prefix_pairs(Path(root), Path(vendor)):
         if "'" in src or "\n" in src:
             raise BuildError("a build path contains a character not allowed in the cargo config")
         for form in dict.fromkeys((src, src.replace("\\", "/"))):

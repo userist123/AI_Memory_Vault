@@ -204,6 +204,18 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     def read_file(pid: str, path: str = Query(max_length=200)) -> dict[str, Any]:
         return studio.read_file(OWNER, pid, path)
 
+    @contextlib.contextmanager
+    def _delete_build_lock(pid: str) -> Any:
+        lock = build_service.build_lock(settings, pid)
+        try:
+            lock.__enter__()
+        except build_service.Unavailable as e:  # a build (any project, any process) started after the probe
+            raise runner_mod.RunInProgress("a build is in progress: wait for it", projectId=pid) from e
+        try:
+            yield
+        finally:
+            lock.__exit__(None, None, None)
+
     @app.delete(f"{API}/projects/{{pid}}")
     def delete_project(pid: str, b: ProjectDelete | None = None) -> dict[str, Any]:
         """B4, owner only, two steps: without ``approvalId`` an approval request is created and 428 returned; the owner
@@ -215,14 +227,15 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             raise runner_mod.RunInProgress("a run of this project is in progress: stop it first", projectId=pid)
         if build_service.building_project(settings) in (pid, "unknown"):  # any process: also an external MCP server (M1)
             raise runner_mod.RunInProgress("a build of this project is in progress: wait for it", projectId=pid)
-        studio.get_project(OWNER, pid, with_components=False)  # NotFound
-        if b is None or not b.approvalId:
-            apr = studio.request_approval(OWNER, "project.delete", {"projectId": pid}, project_id=pid)
-            raise ApprovalRequired("deleting a project needs the owner's approval", approvalId=apr["approvalId"])
-        res = studio.delete_project(OWNER, pid, approval_id=b.approvalId)
-        shutil.rmtree(build_service.preview_base(settings, pid), ignore_errors=True)
-        capture.forget_project(settings, pid)  # index + the PNGs no other project references
-        return res
+        with _delete_build_lock(pid):  # S9c review 2 F3: no build may start while the files move
+            studio.get_project(OWNER, pid, with_components=False)  # NotFound
+            if b is None or not b.approvalId:
+                apr = studio.request_approval(OWNER, "project.delete", {"projectId": pid}, project_id=pid)
+                raise ApprovalRequired("deleting a project needs the owner's approval", approvalId=apr["approvalId"])
+            res = studio.delete_project(OWNER, pid, approval_id=b.approvalId)
+            shutil.rmtree(build_service.preview_base(settings, pid), ignore_errors=True)
+            capture.forget_project(settings, pid)  # index + the PNGs no other project references
+            return res
 
     @app.post(f"{API}/projects/{{pid}}/export")
     def export_project(pid: str, b: ExportReq) -> dict[str, Any]:

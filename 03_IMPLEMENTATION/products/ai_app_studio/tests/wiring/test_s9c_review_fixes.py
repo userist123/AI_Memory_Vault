@@ -101,6 +101,43 @@ def test_planted_cargo_config_in_a_parent_dir_refuses_the_build(studio, droot: P
     service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO)  # empty .cargo dirs are harmless
 
 
+def test_root_checks_are_repeated_right_before_cargo_runs(studio, droot: Path, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
+    """N3: a .cargo config planted (or an ACL loosened) during the long vendor hashing is caught before the spawn."""
+    pid = built(studio)
+    real_verify = desktop.verify_vendor
+    ran: list[int] = []
+
+    def plant(settings: Any, vendor: Path) -> None:
+        real_verify(settings, vendor)
+        (droot / ".cargo").mkdir(exist_ok=True)
+        (droot / ".cargo" / "config.toml").write_text("[build]\nrustc-wrapper='evil.exe'\n", encoding="utf-8")
+    monkeypatch.setattr(desktop, "verify_vendor", plant)
+    with pytest.raises((Unavailable, service.BuildFailed), match=r"\.cargo"):
+        service.build_desktop(studio, pid, run_build=lambda **kw: ran.append(1), cargo=CARGO)
+    assert ran == []
+    (droot / ".cargo" / "config.toml").unlink()
+    calls: list[str] = []
+    real_trust = desktop.assert_root_trusted
+
+    def loosen(settings: Any, vendor: Path) -> None:
+        real_verify(settings, vendor)
+        calls.append("verify")
+    monkeypatch.setattr(desktop, "verify_vendor", loosen)
+    monkeypatch.setattr(desktop, "assert_root_trusted",
+                        lambda root, **kw: (calls.append("acl"), real_trust(root, **kw))[1])
+    service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO)
+    assert "acl" in calls[calls.index("verify"):]  # the ACL is checked again after the vendor hashing
+
+
+def test_low_space_on_the_data_drive_points_to_aas_desktop_root(studio, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
+    """N4: AAS_DESKTOP_ROOT unset and < 10 GB free on the data drive -> a clear message, not a failure mid-build."""
+    pid = built(studio)
+    monkeypatch.delenv("AAS_DESKTOP_ROOT", raising=False)
+    monkeypatch.setattr(service, "_desktop_drive_free", lambda path: 9 * 10**9)
+    with pytest.raises(Unavailable, match="AAS_DESKTOP_ROOT"):
+        service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO, free_bytes=lambda: 100 * 2**30)
+
+
 def test_cargo_overrides_pin_wrapper_and_no_linker(tmp_path: Path) -> None:
     root = tmp_path / "desk"
     args = desktop.cargo_args(root, root / "vendor", root / "builds" / "dabc")
@@ -151,8 +188,42 @@ def test_acl_check_covers_the_parent_chain(tmp_path: Path) -> None:
     rd = _fake_acl(ME, {root: [(ME, FULL, 0)], root.parent: [(ME, FULL, 0), (USERS, FULL, 0)]})
     with pytest.raises(BuildError, match="writable"):
         desktop.assert_root_trusted(root, reader=rd, me=ME)  # a parent others can rename/replace the root through
-    rd2 = _fake_acl(ME, {root: [(ME, FULL, 0)], root.parent: [(ME, FULL, 0), (USERS, MODIFY, 0)]})
-    desktop.assert_root_trusted(root, reader=rd2, me=ME)  # create-only rights on a parent do not swap the root
+    for create in (0x2, 0x4):  # N3: add-file / add-subdirectory on a parent (plant a .cargo config there) is untrusted
+        rd2 = _fake_acl(ME, {root: [(ME, FULL, 0)], root.parent: [(ME, FULL, 0), (USERS, 0x1200A9 | create, 0)]})
+        with pytest.raises(BuildError, match="parent"):
+            desktop.assert_root_trusted(root, reader=rd2, me=ME)
+    rd3 = _fake_acl(ME, {root: [(ME, FULL, 0)], root.parent: [(ME, FULL, 0), (USERS, 0x1200A9, 0)]})
+    desktop.assert_root_trusted(root, reader=rd3, me=ME)  # read/execute on a parent is fine
+
+
+AUTH_USERS = "S-1-5-11"
+
+
+def test_acl_check_refuses_a_parent_others_can_modify(tmp_path: Path) -> None:
+    r"""S9c review 2 F1: MODIFY (incl. DELETE) on a parent lets another account rename the root away and plant its own
+    (e.g. D:\w grants Authenticated Users modify, so D:\w\_aas_desktop is refused)."""
+    root = tmp_path / "w" / "_aas_desktop"
+    root.mkdir(parents=True)
+    owner_only = [(ME, FULL, 0), (SYSTEM, FULL, 0), (ADMINS, FULL, 0)]
+    for mask in (MODIFY, 0x10000):  # modify, and DELETE alone
+        rd = _fake_acl(ME, {root: owner_only, root.parent: [*owner_only, (AUTH_USERS, mask, 0x10)]})
+        with pytest.raises(BuildError, match="parent"):
+            desktop.assert_root_trusted(root, reader=rd, me=ME)
+    io_only = _fake_acl(ME, {root: owner_only, root.parent: [*owner_only, (AUTH_USERS, MODIFY, 0x08 | 0x03)]})
+    desktop.assert_root_trusted(root, reader=io_only, me=ME)  # inherit-only on the parent: root has no inheritance
+
+
+def test_acl_check_accepts_an_owner_only_root_under_the_drive_root(tmp_path: Path) -> None:
+    r"""D:\aas-desktop: the only checked dir is the root itself (the drive root is excluded)."""
+    anchor = Path(tmp_path.anchor)
+    root = anchor / "aas-desktop"
+    seen: list[Path] = []
+
+    def reader(p: Path):  # type: ignore[no-untyped-def]
+        seen.append(Path(p))
+        return ME, [(ME, FULL, 0x03), (SYSTEM, FULL, 0x03), (ADMINS, FULL, 0x03), (USERS, 0x1200A9, 0x03)]
+    desktop.assert_root_trusted(root, reader=reader, me=ME)
+    assert seen == ([root] if root.exists() else [])
 
 
 def test_service_refuses_an_untrusted_root(studio, droot: Path, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
@@ -171,7 +242,8 @@ def test_real_acl_secure_dir_then_check(tmp_path: Path) -> None:
     with pytest.raises(BuildError, match="writable"):
         desktop.assert_root_trusted(d)
     desktop.secure_dir(d)
-    desktop.assert_root_trusted(d)
+    real = desktop.read_acl  # the real ACL of d; the test machine's temp parents are out of scope here (fake-ACL tests)
+    desktop.assert_root_trusted(d, reader=lambda p: real(p) if Path(p) == d else (desktop.current_sid(), []))
 
 
 # ---------------------------------------------------------------- M3: vendored crates tamper check
@@ -209,8 +281,24 @@ def test_remap_flags_cover_vendor_build_and_home(tmp_path: Path) -> None:
     args = desktop.cargo_args(root, root / "vendor", root / "builds" / "dabc")
     flags = [a for a in args if a.startswith("build.rustflags=")][0]
     assert flags.count("--remap-path-prefix=") >= 3
-    assert f"{root / 'vendor'}=/vendor" in flags and f"{root / 'builds' / 'dabc'}=/src" in flags
+    assert f"{root / 'vendor'}=/vendor" in flags and f"{root}=/aas-desktop" in flags
+    assert "builds" not in flags and "/src" not in flags  # the build dir is covered by root -> /aas-desktop (F2)
     assert f"{Path.home()}=~" in flags
+
+
+def test_two_builds_get_identical_rustflags(tmp_path: Path) -> None:
+    """S9c review 2 F2: no per-build remap, so the rustflags (part of cargo's fingerprint) never change across builds."""
+    root = tmp_path / "desk"
+    a = desktop.cargo_args(root, root / "vendor", root / "builds" / "d0000000000000001")
+    b = desktop.cargo_args(root, root / "vendor", root / "builds" / "d0000000000000002")
+    assert a == b
+    assert root / "builds" / "d1" in desktop.leak_prefixes(root, root / "vendor", root / "builds" / "d1")  # scan kept
+
+
+def test_a_build_dir_outside_the_root_is_refused(tmp_path: Path) -> None:
+    root = tmp_path / "desk"
+    with pytest.raises(BuildError, match="build dir"):
+        desktop.cargo_args(root, root / "vendor", tmp_path / "elsewhere" / "d1")
 
 
 def test_leak_scan_finds_host_paths_in_ascii_and_utf16(tmp_path: Path) -> None:

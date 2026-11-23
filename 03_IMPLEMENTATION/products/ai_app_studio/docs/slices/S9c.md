@@ -66,7 +66,7 @@ planted key; MCP app_build desktop plan-gated then called; real build (skipped u
 `tests/security/test_mcp_app.py` catalogue: target enums gain `desktop`. vitest `s9c_export_desktop.test.ts`.
 
 ## Real build
-Blank template (index.html only), `AAS_DESKTOP_ROOT=D:w_aas_desktop`, toolchain cargo 1.94.0, MSVC: first build
+Blank template (index.html only), `AAS_DESKTOP_ROOT=D:\w\_aas_desktop` (moved to `D:\aas-desktop` in review 2), toolchain cargo 1.94.0, MSVC: first build
 **220 s** (all ~430 vendored crates, LTO, `opt-level s`), exe **3,143,168 bytes** (3.0 MiB, PE, unsigned);
 second build with the shared target dir **58 s** (only the app crate + LTO). Succeeded with `--offline`, the
 vendored source and the dead proxy, i.e. no network was needed. The exe sha256 differs between builds (build-dir path
@@ -122,7 +122,8 @@ against the first implementation attempt until each fix landed); `test_s9c_deskt
   (`<root>/cargo-home`) gets a studio-written `config.toml` each build. `assert_root_trusted` (ctypes
   GetNamedSecurityInfo, no new dependency) refuses a root whose owner is not the user/SYSTEM/Administrators, that has
   any non-trusted allow ACE with write rights (inherit-only ones included: they reach the children), or whose parents
-  (up to, not including, the drive root) give others delete-child / write-dac / write-owner / full control. Fresh
+  (up to, not including, the drive root) give others delete-child / DELETE / write-dac / write-owner / full control /
+  add-file / add-subdirectory (review 2 F1, N3). Fresh
   roots are created owner-only with `python -m aas_build.desktop secure`. Residual: a `[target.*]` linker or
   `[env]` set in a config that cannot be reached by `--config` is covered only by the refusal above.
 - **M3 vendored crates.** vendor/ and target/ live under the owner-only root. `record_vendor` hashes every file of the
@@ -145,3 +146,21 @@ against the first implementation attempt until each fix landed); `test_s9c_deskt
   (flags changed -> full rebuild): 100 s, exe 3,140,608 bytes; the exe has no `_aas_desktop`, `C:\Users`, or the
   account name (ascii and utf-16), `host_path_leaks` = []. `rustc-wrapper=""` accepted by cargo 1.94. Manifest
   hashing of the 23k-file vendor tree: 6.4 min cold once, ~21 s warm per build.
+
+## Review 2 fixes (2026-11-23)
+- **F1 parent DELETE.** `_REPLACE` includes DELETE (0x10000): a parent where another account may delete (e.g. `D:\w`,
+  Authenticated Users modify) lets it rename the root away and plant its own, so it is refused. Dev root moved from
+  `D:\w\_aas_desktop` (now refused) to **`D:\aas-desktop`** (created with `python -m aas_build.desktop secure`:
+  inheritance removed, only the owner, SYSTEM, Administrators); vendor/ (23,188 files) and target/ moved with
+  `robocopy /MOVE`, manifest re-recorded: same tree sha256 `21b324fb...3b1e` as before the move (verified at the old
+  path first). Use `AAS_DESKTOP_ROOT=D:\aas-desktop`.
+- **N3.** Add-file / add-subdirectory for another principal on any parent is untrusted too (a planted `.cargo` config);
+  the parent `.cargo` refusal and the root ACL check run again right before the cargo spawn (after the slow vendor
+  hashing).
+- **N4.** `AAS_DESKTOP_ROOT` unset and < 10 GB free on the data drive: the desktop build is refused with a message to set
+  `AAS_DESKTOP_ROOT` to an owner-only folder on another drive.
+- **F2.** No per-build `build_dir -> /src` remap: the build dir sits under root (`/aas-desktop/builds/<id>`), so the
+  rustflags (part of cargo's fingerprint) are identical across builds; a build dir outside root is refused; the exe
+  leak scan still checks the build dir.
+- **F3.** `DELETE /projects/<id>` holds the build lock from the probe through `capture.forget_project`; a build that
+  started after the probe (any process) -> 409 `RunInProgress`.

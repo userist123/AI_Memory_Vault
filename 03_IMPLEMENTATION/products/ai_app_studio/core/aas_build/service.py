@@ -40,6 +40,7 @@ _ID16 = re.compile(r"^[0-9a-f]{16}$")
 _SITE = re.compile(r"^site-[0-9]{10,16}$")
 _LOCK = threading.Lock()
 _BUILDING: dict[str, str] = {}  # "project" -> project id of the build holding _LOCK (S9a review: delete is refused)
+DESKTOP_MIN_FREE_DEFAULT_ROOT = 10 * 10 ** 9  # N4: target/ alone is ~2 GB; below this on the data drive, say where to move
 MIN_FREE_BYTES = 5 * 1024 ** 3  # B4: a build (Docker layers, node_modules copy, Gradle) never starts below this
 BUILD_ACTOR = Actor("system", "build", "system")  # only when a caller passes no actor; still policy-checked + audited
 
@@ -427,6 +428,13 @@ def build_desktop(studio: Any, project_id: str, *, run_id: str | None = None,
         studio, project_id, run_id=run_id, run_build=run_build, cargo=cargo, free_bytes=free_bytes))
 
 
+def _desktop_drive_free(path: Path) -> int:
+    p = Path(path)
+    while not p.exists() and p != p.parent:
+        p = p.parent
+    return shutil.disk_usage(p).free
+
+
 def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.DesktopResult],
                    cargo: str | None, free_bytes: Callable[[], int] | None) -> dict[str, Any]:
     if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
@@ -438,6 +446,10 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
         raise Unavailable(str(e)) from e
     if free_bytes is None and root.exists() and shutil.disk_usage(root).free < MIN_FREE_BYTES:
         raise Unavailable("builds are disabled: less than 5 GiB free on the desktop build drive")
+    if not os.environ.get("AAS_DESKTOP_ROOT") and _desktop_drive_free(root) < DESKTOP_MIN_FREE_DEFAULT_ROOT:
+        raise Unavailable("desktop builds need 10 GB free for the default desktop root (<data>/desktop): set "
+                          "AAS_DESKTOP_ROOT to an owner-only folder on another drive (e.g. D:\\aas-desktop; create it "
+                          "with `python -m aas_build.desktop secure`)")
     held = ExitStack()
     held.enter_context(build_lock(studio.settings, project_id))
     t0 = time.monotonic()
@@ -475,6 +487,8 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
             zdata = desktop.dist_zip(build_root / "dist")
             desktop.write_cargo_home(root / "cargo-home")
             stage.mkdir(parents=True)
+            desktop.refuse_planted_cargo_config(build_root)  # N3: again right before the spawn (vendor hashing is
+            desktop.assert_root_trusted(root)  # slow: a config planted or an ACL loosened meanwhile is caught here)
             res = run_build(cargo=cargo, wrapper=wrapper, target_dir=root / "target", cargo_home=root / "cargo-home",
                             tmp=root / "tmp", dest=stage / "app-desktop.exe",
                             cargo_args=desktop.cargo_args(root, vendor, build_root))
