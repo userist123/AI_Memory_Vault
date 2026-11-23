@@ -210,3 +210,17 @@ pre, code { font-family: var(--mono); }
 .project-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .project-delete-confirm p { margin: 0; max-width: 40ch; }
 .project-picker > .warn { position: absolute; top: calc(100% + 6px); left: 0; z-index: 29; margin: 0; padding: 6px 10px; background: var(--raised); border-radius: 6px; max-width: 48ch; }
+/* W1: style preset picker (Proiect nou) and preview theme switcher */
+.preset-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.preset-picker legend { font-size: 12px; color: var(--muted); padding: 0 0 4px; }
+.project-form .preset-option { flex-direction: row; align-items: center; gap: 6px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--text); }
+.preset-option.on { border-color: var(--accent); }
+.preset-option input { margin: 0; }
+.preset-swatch { display: inline-flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); flex: none; }
+.preset-swatch span { width: 8px; height: 16px; }
+.preset-label { font-size: 12px; white-space: nowrap; }
+.theme-switcher { display: inline-flex; align-items: center; gap: 2px; margin-right: 6px; }
+.theme-switcher .btn.on { border-color: var(--accent); color: var(--text); }
+.theme-switcher select { font-size: 12px; max-width: 14ch; }
+.theme-split { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; flex: 1; min-height: 0; }
+.theme-split > .frame-stage { min-width: 0; }

@@ -26,6 +26,17 @@ def files_of(template: str) -> dict[str, str]:
     return {p: f["content"] for p, f in AppKind().initial_settings(template)["files"].items()}
 
 
+def app_source(template: str) -> str:
+    """W1: screens are built from the kit catalogue, so the a11y markers live in App.tsx or the src/ui components."""
+    files = files_of(template)
+    return "\n".join(c for p, c in files.items() if p == "src/App.tsx" or (p.startswith("src/ui/") and p.endswith(".tsx")))
+
+
+def app_css(template: str) -> str:
+    files = files_of(template)
+    return files["src/app.css"] + files["src/ui/globals.css"]
+
+
 def test_three_templates_are_offered() -> None:
     assert AppKind().templates == frozenset({"blank", "tabs", "list-detail"})
     with pytest.raises(ValidationFailed):
@@ -42,21 +53,23 @@ def test_template_files_pass_the_allow_list(template: str) -> None:
 
 
 def test_tabs_template_is_an_accessible_tablist() -> None:
-    app = files_of("tabs")["src/App.tsx"]
+    app = app_source("tabs")
     for marker in ('role="tablist"', 'role="tab"', 'role="tabpanel"', "aria-selected", "aria-controls",
                    "aria-labelledby", "ArrowRight", "ArrowLeft", "tabIndex"):
         assert marker in app, marker
-    css = files_of("tabs")["src/app.css"]
-    assert "@media (min-width" in css  # mobile-first: base styles are the phone layout
+    assert "<TabBar" in files_of("tabs")["src/App.tsx"]
+    css = app_css("tabs")
+    assert "@media (min-width" in files_of("tabs")["src/app.css"]  # mobile-first: base styles are the phone layout
     assert ":focus-visible" in css
 
 
 def test_list_detail_template_is_accessible_and_mobile_first() -> None:
-    app = files_of("list-detail")["src/App.tsx"]
+    app = app_source("list-detail")
     for marker in ("aria-current", "<button", "Back", "<h2", "focus()", "<ul", "aria-label"):
         assert marker in app, marker
-    css = files_of("list-detail")["src/app.css"]
-    assert "@media (min-width" in css and ":focus-visible" in css
+    assert "<ListItem" in files_of("list-detail")["src/App.tsx"]
+    css = app_css("list-detail")
+    assert "@media (min-width" in files_of("list-detail")["src/app.css"] and ":focus-visible" in css
 
 
 @pytest.mark.parametrize("template", ["tabs", "list-detail"])

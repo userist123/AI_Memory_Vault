@@ -1,6 +1,7 @@
 /** REST client for http://127.0.0.1:17875/api/v1 (Bearer token). Responses are size-capped and validated. */
 import type { Session } from "./session";
 import { clean, inspect, inspectList, SHORT_CAP } from "./sanitize";
+import { DEFAULT_PRESET, isPreset, type PresetId } from "../components/PresetPicker";
 
 const MAX_BODY = 1024 * 1024;
 const MAX_ERROR_BODY = 16 * 1024;
@@ -265,9 +266,11 @@ export async function deleteProject(s: Session, projectId: string, approvalId?: 
 export const TEMPLATES = ["blank", "tabs", "list-detail"] as const;
 export type Template = (typeof TEMPLATES)[number];
 
-export async function createProject(s: Session, name: string, template: Template = "blank"): Promise<string> {
+export async function createProject(s: Session, name: string, template: Template = "blank", preset?: PresetId): Promise<string> {
   const t: Template = TEMPLATES.includes(template) ? template : "blank";
-  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify(t === "blank" ? { name: name.slice(0, 64) } : { name: name.slice(0, 64), template: t }) });
+  // W1: a non-default style preset travels as "<template>:<preset>" (app_kind validates both against its lists)
+  const tp = isPreset(preset) && preset !== DEFAULT_PRESET ? `${t}:${preset}` : t;
+  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify(tp === "blank" ? { name: name.slice(0, 64) } : { name: name.slice(0, 64), template: tp }) });
   const id = body && typeof body === "object" ? (body as { id?: unknown }).id : undefined;
   if (typeof id !== "string" || !PROJECT_RE.test(id)) throw new Error("bad project id");
   return id;

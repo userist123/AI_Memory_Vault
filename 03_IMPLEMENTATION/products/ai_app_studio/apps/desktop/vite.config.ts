@@ -24,6 +24,8 @@ export function previewCsp(): string {
 
 export default defineConfig({
   plugins: [react()],
+  // W1: the kit catalogue (kit/template/src/ui, no node_modules of its own) is unit-tested with this package's React
+  resolve: { dedupe: ["react", "react-dom"] },
   clearScreen: false,
   server: { host: "127.0.0.1", port: 1421, strictPort: true, fs: { allow: [here, `${here}../../tests/ui`] } },
   preview: {

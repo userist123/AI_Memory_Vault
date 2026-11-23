@@ -14,29 +14,7 @@ from .errors import ValidationFailed
 from .project_kind import Publication
 from .workspace import Workspace
 
-_MAIN_TSX = """import { createRoot } from "react-dom/client";
-import App from "./App";
-
-createRoot(document.getElementById("root")!).render(<App />);
-"""
-
-_APP_TSX = """export default function App() {
-  return (
-    <main>
-      <h1>Hello from AI App Studio</h1>
-      <img src="/icon.svg" alt="" width={64} height={64} />
-    </main>
-  );
-}
-"""
-
-_ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
-  <path d="M20 44 32 18l12 26" fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
-</svg>
-"""
-
-BLANK_FILES = {"src/main.tsx": _MAIN_TSX, "src/App.tsx": _APP_TSX, "public/icon.svg": _ICON_SVG}
+BLANK_FILES = app_templates.files_for("blank")  # kit/template/src: catalogue + tokens + the default preset
 TEMPLATE_FILES: dict[str, dict[str, str]] = {"blank": BLANK_FILES, **app_templates.TEMPLATES}  # S9b: tabs, list-detail
 
 
@@ -49,9 +27,14 @@ class AppKind:
     file_roots = ("src", "public")  # committed to the project's git repo with model/project.json (F3)
 
     def initial_settings(self, template: str) -> dict[str, Any]:
-        if template not in self.templates:
-            raise ValidationFailed(f"unknown template {template!r}", available=sorted(self.templates))
-        return {"files": {p: {"content": c, "language": appfiles.language_of(p)} for p, c in TEMPLATE_FILES[template].items()}}
+        """``template`` or ``template:preset`` (W1: the style preset chosen at project creation, kept in the project's
+        template field and in src/ui/preset.ts)."""
+        parsed = app_templates.parse_template_id(template)
+        if parsed is None or parsed[0] not in self.templates:
+            raise ValidationFailed(f"unknown template {str(template)[:40]!r}", available=sorted(self.templates),
+                                   presets=list(app_templates.PRESETS))
+        files = app_templates.files_for(*parsed)
+        return {"files": {p: {"content": c, "language": appfiles.language_of(p)} for p, c in files.items()}}
 
     def validate(self, path: str, content: str | None = None) -> dict[str, Any]:
         appfiles.validate_path(path)

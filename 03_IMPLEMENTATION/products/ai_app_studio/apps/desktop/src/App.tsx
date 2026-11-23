@@ -29,7 +29,6 @@ import { LiveClient } from "./lib/live";
 import { loadSession, previewOrigin, type Session } from "./lib/session";
 import { createStore, DEVICES, type DeviceKind, pickShownFile, type State } from "./lib/store";
 import { ApprovalRegion } from "./components/ApprovalRegion";
-import { DeviceFrame } from "./components/DeviceFrames";
 import { CaptureThumb } from "./components/Captures";
 import { createCaptureLoader } from "./lib/captures";
 import { DiffViewer } from "./components/DiffViewer";
@@ -41,6 +40,8 @@ import { RunControls } from "./components/RunControls";
 import { ChatPanel } from "./components/ChatPanel";
 import { fetchChat, sendChat } from "./lib/chatApi";
 import { elapsed, Timeline } from "./components/Timeline";
+import { DEFAULT_PREVIEW_THEME, ThemedPreview, ThemeSwitcher, type PreviewTheme } from "./components/ThemeSwitcher";
+import type { PresetId } from "./components/PresetPicker";
 
 const FOLLOW_PAUSE_MS = 10_000;
 const PROJECT_ID_RE = /^prj_[0-9a-f]{16}$/;
@@ -95,6 +96,7 @@ export function App() {
   const [follow, setFollow] = useState(true);
   const [pausedUntil, setPausedUntil] = useState(0);
   const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<PreviewTheme>(DEFAULT_PREVIEW_THEME);
   const [rightTab, setRightTab] = useState<RightTab>("phone");
   const [buildOpen, setBuildOpen] = useState(false);
   const [buildFocused, setBuildFocused] = useState(false);
@@ -235,9 +237,9 @@ export function App() {
     setActiveFile(null);
     setSelectedProject(id);
   };
-  const onCreateProject = async (name: string, template: Template) => {
+  const onCreateProject = async (name: string, template: Template, preset?: PresetId) => {
     if (!session) throw new Error("no backend session");
-    const id = await createProject(session, name, template);
+    const id = await createProject(session, name, template, preset);
     setProjects(await listProjects(session));
     if (!running) store.dispatch({ type: "reset" });
     setActiveFile(null);
@@ -511,13 +513,15 @@ export function App() {
             Emulator
           </button>
           <span className="spacer" />
+          <ThemeSwitcher value={previewTheme} onChange={setPreviewTheme} />
           <span className="tag" data-testid="revision">
             rev {state.revision}
           </span>
         </nav>
         {(Object.keys(DEVICES) as DeviceKind[]).map((d) =>
           rightTab === d ? (
-            <DeviceFrame
+            <ThemedPreview
+              theme={previewTheme}
               key={d}
               device={d}
               src={previewSrc(d)}

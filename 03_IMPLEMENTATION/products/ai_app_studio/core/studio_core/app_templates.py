@@ -1,17 +1,18 @@
-"""App templates (S9b): `tabs` and `list-detail`, React + TypeScript, mobile-first, accessible.
+"""App templates (S9b, W1): `blank`, `tabs` and `list-detail`, React + TypeScript, mobile-first, accessible, built from
+the kit design system (kit/DESIGN.md): semantic tokens (src/ui/globals.css), the component catalogue (src/ui/*.tsx)
+and one of six style presets chosen at project creation (template id ``<template>:<preset>``).
 
-Every file is inside the write allow-list (src/** and public/**, appfiles). Styles are mobile-first (base rules =
-phone layout, `@media (min-width: ...)` widens), focus is always visible, touch targets are >= 44 px, colours keep
-WCAG AA contrast in light and dark mode. `blank` stays in app_kind.py.
+The sources live in the studio kit (kit/template/**) and are read from there, so the kit files, the Docker kit build
+and new projects never drift apart. Every file is inside the write allow-list (src/** and public/**, appfiles).
 """
 from __future__ import annotations
 
-MAIN_TSX = """import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./app.css";
+import re
+from pathlib import Path
 
-createRoot(document.getElementById("root")!).render(<App />);
-"""
+KIT_TEMPLATE = Path(__file__).resolve().parents[2] / "kit" / "template"
+_SRC = KIT_TEMPLATE / "src"
+_UI = _SRC / "ui"
 
 ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <rect width="64" height="64" rx="14" fill="#2563eb"/>
@@ -19,195 +20,85 @@ ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width=
 </svg>
 """
 
-BASE_CSS = """:root {
-  color-scheme: light dark;
-  --bg: #ffffff;
-  --fg: #111827;
-  --muted: #4b5563;
-  --line: #d1d5db;
-  --accent: #1d4ed8;
-  --accent-fg: #ffffff;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
+# Style presets (token sets in kit/template/src/ui/globals.css). theme: "system" follows the device, "dark" starts dark.
+PRESETS: dict[str, dict[str, str]] = {
+    "clean": {"label": "Clean", "theme": "system"},
+    "material": {"label": "Material tonal", "theme": "system"},
+    "dark-pro": {"label": "Dark pro", "theme": "dark"},
+    "warm": {"label": "Warm editorial", "theme": "system"},
+    "playful": {"label": "Playful", "theme": "system"},
+    "minimal": {"label": "Minimal mono", "theme": "system"},
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #0f172a; --fg: #f1f5f9; --muted: #cbd5e1; --line: #334155; --accent: #93c5fd; --accent-fg: #0f172a; }
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); }
-button { font: inherit; color: inherit; min-height: 44px; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-"""
+DEFAULT_PRESET = "clean"
 
-TABS_APP = """import { useRef, useState, type KeyboardEvent } from "react";
+# kit/DESIGN.md "The 7 rules" (same text, test-enforced). Data for the runner system prompt: style rules only.
+DESIGN_RULES: tuple[tuple[str, str], ...] = (
+    ("type-scale", "Typography: at most 2 font families (var(--font-body) and var(--font-display)) and only the type "
+                   "scale --text-xs to --text-2xl; no ad-hoc font sizes."),
+    ("grid", "Spacing: a 4/8 px grid only (var(--space-1) to var(--space-8)); no arbitrary margins or paddings."),
+    ("color-tokens", "Colour: only the semantic tokens var(--color-*) from src/ui/globals.css, never raw hex values in "
+                     "components or screens; text keeps WCAG AA contrast (4.5:1, 3:1 for large text and UI parts)."),
+    ("dark-mode", "Dark mode: tonal, not inverted; it comes from the same tokens (data-theme=\"dark\" on html), so never "
+                  "hard-code light-only colours."),
+    ("touch-targets", "Touch: every interactive element is at least 44x44 px (var(--touch)) and keeps a visible "
+                      ":focus-visible ring."),
+    ("safe-areas", "Safe areas: the studio kit page already sets viewport-fit=cover; pad fixed headers, tab bars, sheets and full-screen "
+                   "pages with var(--safe-top), var(--safe-bottom), var(--safe-left) and var(--safe-right)."),
+    ("states", "States: every screen that loads or lists data has a loading state (Skeleton), an empty state "
+               "(EmptyState) and an error state (EmptyState tone=\"error\" with a retry action); actions give feedback "
+               "within 200 ms (pressed and hover micro-interactions, Toast), and motion respects prefers-reduced-motion."),
+)
 
-type Tab = { id: string; label: string; title: string; body: string };
+TEMPLATE_NAMES = ("blank", "tabs", "list-detail")
+_ID = re.compile(r"^[a-z][a-z-]{0,30}$")
 
-const TABS: Tab[] = [
-  { id: "home", label: "Home", title: "Welcome", body: "Start here. Replace this text with your app's home screen." },
-  { id: "search", label: "Search", title: "Search", body: "Put a search field and results here." },
-  { id: "profile", label: "Profile", title: "Profile", body: "Show the user's settings and details here." },
-];
 
-export default function App() {
-  const [active, setActive] = useState(0);
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
-  const select = (i: number) => {
-    const next = (i + TABS.length) % TABS.length;
-    setActive(next);
-    refs.current[next]?.focus();
-  };
 
-  const onKey = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "ArrowRight") select(active + 1);
-    else if (e.key === "ArrowLeft") select(active - 1);
-    else if (e.key === "Home") select(0);
-    else if (e.key === "End") select(TABS.length - 1);
-    else return;
-    e.preventDefault();
-  };
+def preset_ts(preset: str) -> str:
+    """src/ui/preset.ts of a project: the per-project preset choice."""
+    if preset not in PRESETS:
+        raise KeyError(preset)
+    ids = " | ".join(f'"{p}"' for p in PRESETS)
+    return ("// Style preset chosen in the studio at project creation (kit/DESIGN.md). Written by the studio; keep the "
+            "names.\n"
+            f"export type PresetId = {ids};\n"
+            'export type ThemeChoice = "system" | "dark";\n'
+            f'export const PRESET: PresetId = "{preset}";\n'
+            f'export const DEFAULT_THEME: ThemeChoice = "{PRESETS[preset]["theme"]}";\n')
 
-  const tab = TABS[active];
-  return (
-    <div className="shell">
-      <main
-        className="panel"
-        role="tabpanel"
-        id={`panel-${tab.id}`}
-        aria-labelledby={`tab-${tab.id}`}
-        tabIndex={0}
-      >
-        <h1>{tab.title}</h1>
-        <p>{tab.body}</p>
-      </main>
-      <nav className="tabbar" aria-label="Main">
-        <div role="tablist" aria-label="Sections">
-          {TABS.map((t, i) => (
-            <button
-              key={t.id}
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
-              id={`tab-${t.id}`}
-              role="tab"
-              type="button"
-              aria-selected={i === active}
-              aria-controls={`panel-${t.id}`}
-              tabIndex={i === active ? 0 : -1}
-              onClick={() => setActive(i)}
-              onKeyDown={onKey}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </nav>
-    </div>
-  );
-}
-"""
 
-TABS_CSS = BASE_CSS + """
-.shell { min-height: 100dvh; display: flex; flex-direction: column; }
-.panel { flex: 1; padding: 1rem; }
-.panel h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
-.tabbar { position: sticky; bottom: 0; border-top: 1px solid var(--line); background: var(--bg);
-  padding-bottom: env(safe-area-inset-bottom); }
-.tabbar [role="tablist"] { display: grid; grid-template-columns: repeat(3, 1fr); }
-.tabbar button { border: 0; background: none; padding: 0.75rem 0.25rem; color: var(--muted); }
-.tabbar button[aria-selected="true"] { color: var(--accent); font-weight: 600; box-shadow: inset 0 3px 0 var(--accent); }
-@media (min-width: 768px) {
-  .shell { flex-direction: column-reverse; }
-  .tabbar { position: static; border-top: 0; border-bottom: 1px solid var(--line); }
-  .tabbar [role="tablist"] { display: flex; gap: 0.5rem; padding: 0 1rem; }
-  .tabbar button { padding: 0.75rem 1rem; }
-  .tabbar button[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
-  .panel { max-width: 48rem; margin: 0 auto; width: 100%; padding: 2rem 1rem; }
-}
-"""
+def _ui_files(preset: str) -> dict[str, str]:
+    files = {f"src/ui/{p.name}": _read(p) for p in sorted(_UI.iterdir())
+             if p.is_file() and p.suffix in (".ts", ".tsx", ".css") and p.name != "preset.ts"}
+    files["src/ui/preset.ts"] = preset_ts(preset)
+    return files
 
-LIST_DETAIL_APP = """import { useEffect, useRef, useState } from "react";
 
-type Item = { id: string; title: string; summary: string; body: string };
+def _app_files(template: str) -> dict[str, str]:
+    root = _SRC if template == "blank" else KIT_TEMPLATE / template
+    return {"src/main.tsx": _read(_SRC / "main.tsx"), "src/App.tsx": _read(root / "App.tsx"),
+            "src/app.css": _read(root / "app.css"), "public/icon.svg": ICON_SVG}
 
-const ITEMS: Item[] = [
-  { id: "1", title: "First item", summary: "A short summary", body: "Details of the first item go here." },
-  { id: "2", title: "Second item", summary: "Another summary", body: "Details of the second item go here." },
-  { id: "3", title: "Third item", summary: "One more", body: "Details of the third item go here." },
-];
 
-export default function App() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
-  const item = ITEMS.find((i) => i.id === selected) ?? null;
+def parse_template_id(value: object) -> tuple[str, str] | None:
+    """``"tabs"`` -> ("tabs", default preset); ``"tabs:warm"`` -> ("tabs", "warm"); anything else -> None."""
+    if not isinstance(value, str):
+        return None
+    template, sep, preset = value.partition(":")
+    if not sep:
+        preset = DEFAULT_PRESET
+    if not _ID.fullmatch(template) or not _ID.fullmatch(preset) or template not in TEMPLATE_NAMES or preset not in PRESETS:
+        return None
+    return template, preset
 
-  useEffect(() => {
-    if (item) heading.current?.focus(); // move focus to the detail for keyboard and screen-reader users
-  }, [item]);
 
-  return (
-    <div className={item ? "layout has-detail" : "layout"}>
-      <nav className="list" aria-label="Items">
-        <h1>Items</h1>
-        <ul>
-          {ITEMS.map((i) => (
-            <li key={i.id}>
-              <button type="button" aria-current={i.id === selected ? "true" : undefined} onClick={() => setSelected(i.id)}>
-                <span className="title">{i.title}</span>
-                <span className="summary">{i.summary}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <main className="detail" aria-label="Details">
-        {item ? (
-          <article>
-            <button type="button" className="back" onClick={() => setSelected(null)}>
-              Back
-            </button>
-            <h2 ref={heading} tabIndex={-1}>
-              {item.title}
-            </h2>
-            <p>{item.body}</p>
-          </article>
-        ) : (
-          <p className="empty">Choose an item to see its details.</p>
-        )}
-      </main>
-    </div>
-  );
-}
-"""
+def files_for(template: str, preset: str = DEFAULT_PRESET) -> dict[str, str]:
+    if template not in TEMPLATE_NAMES or preset not in PRESETS:
+        raise KeyError(f"{template}:{preset}")
+    return {**_app_files(template), **_ui_files(preset)}
 
-LIST_DETAIL_CSS = BASE_CSS + """
-.layout { min-height: 100dvh; }
-.list h1 { font-size: 1.5rem; margin: 0; padding: 1rem; }
-.list ul { list-style: none; margin: 0; padding: 0; }
-.list button { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left;
-  border: 0; border-bottom: 1px solid var(--line); background: none; padding: 0.75rem 1rem; }
-.list button[aria-current="true"] { background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.summary { color: var(--muted); font-size: 0.9rem; }
-.detail { padding: 1rem; }
-.detail h2 { margin-top: 0.5rem; }
-.back { border: 1px solid var(--line); border-radius: 8px; background: none; padding: 0 1rem; }
-.empty { color: var(--muted); }
-/* phone: one pane at a time */
-.layout .detail { display: none; }
-.layout.has-detail .list { display: none; }
-.layout.has-detail .detail { display: block; }
-@media (min-width: 768px) {
-  .layout { display: grid; grid-template-columns: 20rem 1fr; }
-  .layout .list, .layout.has-detail .list { display: block; border-right: 1px solid var(--line); }
-  .layout .detail { display: block; padding: 2rem; }
-  .back { display: none; }
-}
-"""
 
-TEMPLATES: dict[str, dict[str, str]] = {
-    "tabs": {"src/main.tsx": MAIN_TSX, "src/App.tsx": TABS_APP, "src/app.css": TABS_CSS, "public/icon.svg": ICON_SVG},
-    "list-detail": {"src/main.tsx": MAIN_TSX, "src/App.tsx": LIST_DETAIL_APP, "src/app.css": LIST_DETAIL_CSS,
-                    "public/icon.svg": ICON_SVG},
-}
+TEMPLATES: dict[str, dict[str, str]] = {t: files_for(t) for t in TEMPLATE_NAMES if t != "blank"}
