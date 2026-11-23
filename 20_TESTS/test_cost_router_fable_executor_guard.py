@@ -111,7 +111,8 @@ ALLOWED = [
     "pytest", "pytest -q", "pytest tests/test_x.py -q", "pytest tests/test_x.py::test_a -k \"not slow\"",
     "python -m pytest tests -q", "python -m pytest -x -p no:cacheprovider", "py -3 -m pytest -q",
     "python scripts/run.py", "python3 scripts/run.py --flag value", "python -I scripts/run.py", "py scripts/run.py",
-    "pytest --basetemp=tmp/pt", "dotnet build", "dotnet test", "dotnet test src/App.Tests/App.Tests.csproj",
+    "pytest --basetemp=tmp/pt", "dotnet build --no-restore", "dotnet test --no-restore",
+    "dotnet test src/App.Tests/App.Tests.csproj --no-restore",
     "npm test", "npm run test", "npm run build", "npm run lint", "pnpm test", "yarn test", "yarn run lint",
     "npm test -- --watch=false", "node scripts/run.js", "node --test tests", "git status", "git status --short",
     "git diff", "git diff --stat HEAD~1", "git log --oneline -5", "git log --format=%h", "git show HEAD",
@@ -367,3 +368,97 @@ def test_i_heavy_task_without_the_ladder_is_still_denied(tmp_path):
     fe._install_trust(home)
     fe._state(home, task_class="implement")
     fe._denied(fe._spawn(home), "condition (d)")
+
+
+# ---- M12 review fixes (findings 2-6): pytest plugins, protected paths, git abbreviations, dotnet, bare paths ------
+
+FINDING2_PYTEST = [
+    "pytest --pastebin=all", "pytest --pastebin failed", "python -m pytest --pastebin=all", "pytest --paste=all",
+    "pytest -p pytest_network", "pytest -pnetwork", "pytest -p=network", "python -m pytest -p xdist", "pytest -vp x",
+    "py.test -p x", "pytest -o addopts=--pastebin=all", "pytest -oaddopts=-pnet", "pytest -o ADDOPTS=x",
+    "pytest --override-ini addopts=x", "pytest --override-ini=addopts=x", "pytest --override-ini=required_plugins=x",
+    "pytest -o required_plugins=x", "pytest --overr=addopts=x", "python -m pytest -o addopts=-p",
+]
+
+
+@pytest.mark.parametrize("cmd", FINDING2_PYTEST)
+def test_finding2_pytest_plugin_and_ini_overrides_are_denied(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason and "X2" in reason, (cmd, reason)
+
+
+def test_finding2_plugin_disable_and_harmless_ini_override_stay_allowed(wt):
+    for cmd in ("pytest -p no:cacheprovider", "python -m pytest -q -p no:randomly", "pytest -o cache_dir=tmp/c",
+                "pytest -k \"not slow\" -q"):
+        assert _bash(cmd, wt) is None, cmd
+
+
+FINDING3_PROTECTED = [
+    ".claude/settings.json", ".claude/settings.local.json", ".CLAUDE/agents/x.md", ".claude/skills/x/SKILL.md",
+    ".agents/skills/x/SKILL.md", "CLAUDE.md", "claude.MD", "CLAUDE.md.", "AGENTS.md", "agents.md", ".mcp.json",
+    ".MCP.JSON", ".github/workflows/ci.yml", ".GitHub/Workflows/x.yaml", ".gitattributes", ".gitmodules",
+    ".gitconfig", "scripts/../CLAUDE.md", "sub/.claude/settings.json", "sub/CLAUDE.md",
+]
+
+
+@pytest.mark.parametrize("rel", FINDING3_PROTECTED)
+def test_finding3_agent_config_paths_are_denied(wt, rel):
+    reason = _path(rel, wt)
+    assert reason and "X6" in reason, (rel, reason)
+    assert _path(wt / rel, wt), rel
+
+
+def test_finding3_protected_check_runs_after_realpath(wt):
+    (wt / ".claude").mkdir()
+    (wt / "docs").mkdir()
+    assert _path(wt / "docs" / ".." / ".claude" / "x.json", wt)
+    assert _path("docs/claude.md.txt", wt) is None  # only the exact names
+    assert _path(".github/README.md", wt) is None
+    assert _path(".gitignore", wt) is None
+
+
+FINDING4_GIT = [
+    "git commit --amen -m x", "git commit --am -m x", "git commit --amend=x", "git push --forc", "git branch --del x",
+    "git diff --ext", "git diff --ext-d", "git log --outp=../x", "git log --out=../x", "git log --ou=x",
+    "git show --textc HEAD", "git diff --conf x", "git log --exe x", "git log --upload-p x", "git log --rec x",
+    "git log --mir", "git add --forc x", "git commit --force-with x", "git diff --config-e x", "git log --har",
+    "git diff --open-files", "git diff --AMEND",
+]
+
+
+@pytest.mark.parametrize("cmd", FINDING4_GIT)
+def test_finding4_git_long_option_abbreviations_are_denied(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason and "X1" in reason, (cmd, reason)
+
+
+def test_finding4_ordinary_git_options_stay_allowed(wt):
+    for cmd in ("git log --oneline -5", "git log --format=%h", "git diff --stat", "git status --short",
+                "git branch --show-current", "git diff --name-only", "git log --author=x", "git diff --cached"):
+        assert _bash(cmd, wt) is None, cmd
+
+
+@pytest.mark.parametrize("cmd", ["dotnet build", "dotnet test", "dotnet test src/A.csproj", "dotnet restore",
+                                 "dotnet restore --no-restore", "dotnet build --no-restor",
+                                 "dotnet test --no-build"])
+def test_finding5_dotnet_needs_no_restore(wt, cmd):
+    reason = _bash(cmd, wt)
+    assert reason and "X2" in reason, (cmd, reason)
+
+
+def test_finding5_dotnet_with_no_restore_is_allowed(wt):
+    for cmd in ("dotnet build --no-restore", "dotnet test --no-restore", "dotnet test src/A.csproj --no-restore -v q"):
+        assert _bash(cmd, wt) is None, cmd
+
+
+@pytest.mark.skipif(os.name != "nt", reason="junctions are a Windows feature")
+def test_finding6_bare_word_paths_are_resolved(wt, tmp_path):
+    import _winapi
+    (tmp_path / "outside" / "test_x.py").write_text("def test_a():\n    pass\n", encoding="utf-8")
+    _winapi.CreateJunction(str(tmp_path / "outside"), str(wt / "jout"))
+    for cmd in ("pytest jout", "python -m pytest jout", "pytest jout -q", "pytest --rootdir=jout",
+                "pytest --basetemp jout", "python scripts/run.py jout", "pytest jout::test_a"):
+        reason = _bash(cmd, wt)
+        assert reason and "X4" in reason, (cmd, reason)
+    assert _bash("pytest tests", wt) is None
+    assert _bash("pytest nonexistent_marker_word", wt) is None

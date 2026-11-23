@@ -283,8 +283,18 @@ _EX_PY = re.compile(r"^(?:python(?:3(?:\.\d{1,2})?)?|py)$")
 _EX_PY_FLAGS = re.compile(r"^-[IBuEsSOq]+$")
 _EX_PY_X = frozenset({"utf8", "utf8=1", "utf8=0", "dev"})
 _EX_GIT_READ = frozenset({"status", "diff", "log", "show", "blame", "rev-parse", "ls-files"})
-_EX_GIT_BAD_FLAG = re.compile(r"^(?:--(?:output|ext-diff|textconv|exec|upload-pack|receive-pack|config|amend|"
-                              r"open-files-in-pager)(?:=|$)|-O)")
+_EX_GIT_BAD_FLAG = re.compile(r"^-O")
+# Finding 4: git accepts any unambiguous prefix of a long option (`--amen` is `--amend`), so a `--x` argument is denied
+# when x (>= 2 characters, before any `=`; `--am` is unambiguous for commit) is a prefix of one of these.
+_EX_GIT_BAD_LONG = ("output", "ext-diff", "textconv", "exec", "upload-pack", "receive-pack", "config", "config-env",
+                    "amend", "open-files-in-pager", "force", "force-with-lease", "force-if-includes", "hard",
+                    "delete", "mirror")
+# Finding 2: pytest network/plugin loading. `-p no:<name>` only disables a plugin and stays allowed.
+_EX_PYTEST_PLUGIN_OFF = re.compile(r"^no:[A-Za-z0-9_.\-]+$")
+# Finding 3: agent configuration a write must never touch (compared per path part, case-insensitively, after realpath)
+_EX_PROTECTED_DIRS = frozenset({".claude", ".agents"})
+_EX_PROTECTED_FILES = frozenset({"claude.md", "claude.local.md", "agents.md", ".mcp.json", ".gitattributes",
+                                 ".gitmodules", ".gitconfig"})
 _EX_BRANCH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")
 _EX_BRANCH_LIST = frozenset({"--show-current", "--list", "-a", "-v", "-vv", "-r", "-av", "-avv", "-l"})
 _EX_PKG_FORMS = (("test",), ("run", "test"), ("run", "build"), ("run", "lint"))
@@ -462,9 +472,16 @@ def executor_path_problem(raw, cwd) -> str | None:
     if not _ex_within(lexical, root):
         return _ex_deny("X6", f"{raw!r} reaches the worktree only through a link")
     lex_rel, real_rel = os.path.relpath(lexical, root), os.path.relpath(real, root)
-    for part in re.split(r"[\\/]", real_rel) + re.split(r"[\\/]", lex_rel):
-        if part.rstrip(". ").lower() == ".git":
+    for rel in (real_rel, lex_rel):
+        parts = [x.rstrip(". ").lower() for x in re.split(r"[\\/]", rel)]
+        if ".git" in parts:
             return _ex_deny("X6", f"{raw!r} is inside .git")
+        hit = next((x for x in parts if x in _EX_PROTECTED_DIRS), None) or (
+            parts[-1] if parts[-1] in _EX_PROTECTED_FILES else None)
+        if hit is None and parts[:2] == [".github", "workflows"]:
+            hit = ".github/workflows"
+        if hit:  # finding 3: agent configuration (hooks, settings, instructions, MCP servers, CI) is never written
+            return _ex_deny("X6", f"{raw!r} is agent or repository configuration ({hit})")
     cur = root
     parts = [x for x in re.split(r"[\\/]", lex_rel) if x and x != "."]
     for n, part in enumerate(parts):
@@ -481,18 +498,66 @@ def executor_path_problem(raw, cwd) -> str | None:
     return None
 
 
-def _ex_path_args(words, cwd: str, root: str, rule: str = "X4"):
-    """Every path-like argument (or --opt=value) of an executing program must stay inside the worktree."""
+def _ex_path_args(words, cwd: str, root: str, rule: str = "X4", bare: bool = False):
+    """Every path-like argument (or --opt=value) of an executing program must stay inside the worktree. With `bare`
+    (pytest, python; finding 6) a plain word that names an existing entry relative to cwd is resolved too, so a
+    junction or symlink inside the worktree cannot hand the program a directory outside it."""
     for w in words:
         pieces = w.split("=")  # --opt=value and ini overrides such as `-o cache_dir=../x`: every piece is checked
         for val in ([w] if len(pieces) == 1 else pieces[1:]) + ([pieces[0]] if len(pieces) > 1 else []):
             val = val.split("::", 1)[0]  # pytest node id
-            if not val or not ("/" in val or "\\" in val or val.startswith((".", "~")) or re.match(r"^[A-Za-z]:", val)):
+            if not val:
+                continue
+            pathish = "/" in val or "\\" in val or val.startswith((".", "~")) or re.match(r"^[A-Za-z]:", val)
+            if not pathish and not (bare and not val.startswith("-") and os.path.lexists(os.path.join(cwd, val))):
                 continue
             got = _ex_resolve(val, cwd, root)
             if isinstance(got, str):
                 return _ex_deny(rule, got)
     return None
+
+
+def _ex_long_prefix_any(arg: str, options, min_len: int = 3) -> bool:
+    """`arg` (before any `=`) is `--<option>` or an abbreviation of it with at least `min_len` characters."""
+    if not arg.startswith("--"):
+        return False
+    name = arg[2:].split("=", 1)[0].lower()
+    return len(name) >= min_len and any(opt.startswith(name) for opt in options)
+
+
+def _ex_pytest(args, cwd: str, root: str):
+    """Finding 2: no --pastebin (network), no plugin loading (-p <name>, also bundled into short flags), no ini
+    override that touches addopts or plugins; then every path argument stays inside the worktree."""
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if _ex_long_prefix_any(a, ("pastebin",)):
+            return _ex_deny("X2", f"pytest {a!r} uploads test output to a paste service")
+        ini = None
+        if _ex_long_prefix_any(a, ("override-ini",), 4):
+            if "=" in a:
+                ini = a.split("=", 1)[1]
+            else:
+                ini = args[i + 1] if i + 1 < len(args) else ""
+                i += 1
+        elif a.startswith("-") and not a.startswith("--"):
+            flags = a[1:]
+            if flags.startswith("o"):
+                ini = flags[1:].lstrip("=")
+                if not flags[1:]:
+                    ini = args[i + 1] if i + 1 < len(args) else ""
+                    i += 1
+            elif "p" in flags:
+                if flags == "p" and i + 1 < len(args) and _EX_PYTEST_PLUGIN_OFF.match(args[i + 1]):
+                    i += 2
+                    continue
+                return _ex_deny("X2", f"pytest {a!r} loads a plugin (only `-p no:<name>` is allowed)")
+        if ini is not None:
+            key = ini.split("=", 1)[0].strip().lower()
+            if not key or "addopts" in key or "plugin" in key:
+                return _ex_deny("X2", f"pytest ini override {ini!r} touches addopts or plugins")
+        i += 1
+    return _ex_path_args(args, cwd, root, bare=True)
 
 
 def _ex_git(args, cwd: str, root: str):
@@ -512,7 +577,7 @@ def _ex_git(args, cwd: str, root: str):
     if i >= len(args):
         return _ex_deny("X1", "bare git")
     sub, rest = args[i].lower(), args[i + 1:]
-    bad = next((a for a in rest if _EX_GIT_BAD_FLAG.match(a)), None)
+    bad = next((a for a in rest if _EX_GIT_BAD_FLAG.match(a) or _ex_long_prefix_any(a, _EX_GIT_BAD_LONG, 2)), None)
     if bad:
         return _ex_deny("X1", f"git flag {bad!r} runs a program, writes a file or rewrites history")
     if sub in _EX_GIT_READ or sub in ("add", "commit"):
@@ -544,14 +609,14 @@ def _ex_python(prog: str, args, cwd: str, root: str):
         return _ex_deny("X5", "an interactive interpreter (no script)")
     if args[i] == "-m":
         if i + 1 < len(args) and args[i + 1] == "pytest":
-            return _ex_path_args(args[i + 2:], cwd, root)
+            return _ex_pytest(args[i + 2:], cwd, root)
         return _ex_deny("X2", "python -m is allowed only for pytest")
     if args[i].startswith("-"):
         return _ex_deny("X5", f"interpreter option {args[i]!r} (-c, stdin and the like are wrappers)")
     got = _ex_resolve(args[i], cwd, root)
     if isinstance(got, str):
         return _ex_deny("X4", "script " + got)
-    return _ex_path_args(args[i + 1:], cwd, root)
+    return _ex_path_args(args[i + 1:], cwd, root, bare=True)
 
 
 def _ex_node(args, cwd: str, root: str):
@@ -609,12 +674,15 @@ def executor_bash_problem(cmd, cwd) -> str | None:
     if _EX_PY.match(prog):
         return _ex_python(prog, args, cwd, root)
     if prog in ("pytest", "py.test"):
-        return _ex_path_args(args, cwd, root)
+        return _ex_pytest(args, cwd, root)
     if prog == "node":
         return _ex_node(args, cwd, root)
     if prog == "dotnet":
         if args[:1] not in (["build"], ["test"]):
-            return _ex_deny("X3", "dotnet is allowed only for build and test")
+            rule = "X2" if args[:1] == ["restore"] else "X3"  # finding 5: a restore downloads packages
+            return _ex_deny(rule, "dotnet is allowed only for build and test (with --no-restore)")
+        if "--no-restore" not in args[1:]:  # finding 5: an implicit restore downloads packages and runs their targets
+            return _ex_deny("X2", "dotnet build/test is allowed only with --no-restore")
         return _ex_path_args(args[1:], cwd, root)
     for form in _EX_PKG_FORMS:  # npm / pnpm / yarn
         n = len(form)
