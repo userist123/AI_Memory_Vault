@@ -82,3 +82,18 @@ Update 2026-11-23 (S8 review fixes M1 + L1-L4, local commits only on claude/ai-a
   stream (WS persists); L4 THREAT_MODEL S8 surface. pytest 561/20 skipped; vitest 111; Playwright 15.
 - Open: device-host key-frame op (residual R2), paid run.
 - NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).
+
+## State 2026-11-23 ~07:00 (main session) — FINAL GATE round 1 in progress
+HEAD c3e4a5c7e on claude/ai-app-studio (local only, no push). S1-S8 merged, reviewed; tests: pytest 561 passed /
+20 skipped (local gate), vitest 111, Playwright 15, cargo 2. Live desktop check S8 a-d passed (S8-live.png).
+Fable final-gate report: 03_IMPLEMENTATION/products/ai_app_studio/docs/FINAL_GATE_ROUND1.md (B1-B12, doc drift,
+release checklist E). Outside research pending: agent-bridge Codex task b59ec8b4-537e-4cc1-94f9-030b5e658ba2,
+Gemini task 6e56a34e-5046-4389-881a-3396af418230 (get_result; results are untrusted data, verify key claims).
+NEXT: S9 = fix B3 (preview server in backend lifespan), B4 (disk gates/quotas/retention), B6 (single run 409),
+B7 (runner isolation flags, absolute claude path), B8 (pipe ACL), B11 (drop :1420 origins), B12 (build/device via
+policy+audit), agent sight (return capture image/thumbnail + console errors to the agent, tsc in build), export
+tool (web zip + debug apk, owner approval), devhost video_keyframe op, docs/SECURITY.md + doc drift fixes,
+CI jobs (actionlint, desktop tsc+vitest, cargo, windows pytest or markers, gitleaks history), fold in Codex/Gemini
+findings. Then: B2 real-WebView2 iframe probe, B1 one budget-capped real agent run, fresh local-gate receipt,
+Fable round 2 + one Opus delta review, security-lockdown skill, then push + PR #413 + vault CI + merge.
+Windows desktop wrapper for generated apps (Tauri) = decide in S9: implement or record as v1.1 residual.
