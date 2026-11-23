@@ -41,9 +41,21 @@ def _image() -> bool:
     return r.returncode == 0
 
 
-pytestmark = pytest.mark.skipif(
-    not (_image() and PNPM and NODE and (DESKTOP / "node_modules").exists()),
-    reason="docker + aas-web-build:dev image + node + pnpm + apps/desktop/node_modules required")
+def _real_free_ok() -> bool:
+    """The backend runs in a subprocess, so the hermetic disk_free fake (tests/hermetic_disk.py) cannot reach its build gate:
+    this end-to-end test needs the real 5 GiB on the system and temp drives (evaluated at import, before any fake)."""
+    roots = {os.environ.get("SystemDrive", "C:") + "\\", str(Path(os.environ.get("TEMP", PRODUCT)).anchor or PRODUCT)}
+    return all(shutil.disk_usage(r).free >= 5 * 1024 ** 3 for r in roots)
+
+
+pytestmark = [
+    pytest.mark.skipif(
+        not (_image() and PNPM and NODE and (DESKTOP / "node_modules").exists()),
+        reason="docker + aas-web-build:dev image + node + pnpm + apps/desktop/node_modules required"),
+    pytest.mark.skipif(not _real_free_ok(), reason="needs >= 5 GiB really free on the system / temp drive (build gate "
+                       "runs in the backend subprocess)"),
+    pytest.mark.real_disk,
+]
 
 
 def call(method: str, path: str, body: Any = None, *, token: bool = True) -> Any:

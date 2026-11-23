@@ -34,10 +34,12 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-p tests.hermetic_disk"  # hermetic free-disk probes (tests/hermetic_disk.py)
 pythonpath = ["core", "."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "browser: needs Playwright Chromium",
     "windows: needs a real Windows desktop session",
+    "real_disk: read the real free disk space (no hermetic disk_free fake)",
 ]

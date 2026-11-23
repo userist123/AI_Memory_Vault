@@ -450,14 +450,16 @@ allow/deny; `policy.modify`, `secrets.read`, `credentials.read`, `registry.modif
 
 **MCP catalogue as built (supersedes the 30-tool list and CHECKPOINT "30 tools"): 15 tools.**
 `project_list`, `project_inspect`, `code_list_files`, `code_read_file`, `code_write_file`, `code_delete_file`,
-`activity_list`, `plan_submit`, `app_build {web|android}`, `preview_capture {phone|tablet|desktop}`,
-`device_start {phone|tablet}`, `device_install`, `device_tap`, `device_screenshot`, `app_export {web|android}`.
+`activity_list`, `plan_submit`, `app_build {web|android|desktop}`, `preview_capture {phone|tablet|desktop}`,
+`device_start {phone|tablet}`, `device_install`, `device_tap`, `device_screenshot`,
+`app_export {web|android|desktop}`.
 All inputs are closed (`additionalProperties: false`), project ids pattern-checked, a runner grant pins every call
 to the run's project, external MCP is off by default (PX1). Results: a JSON text block; `preview_capture` and
 `device_screenshot` add an `<<UNTRUSTED DATA: ...>>` text block (console errors / note) and an MCP image block
-(downscaled to <= 1280 px, <= 768 KiB, PNG or JPEG) whose sha256 is reported next to the stored full-size PNG's.
-Not built: `deps_request_add`, `qa_run`, `preview_interact`, `device_swipe` / `device_text`, `app_build windows`
-(S9c).
+(downscaled to <= 1280 px, <= 512 KiB after base64 encoding, PNG or JPEG; the runner caps one stream-json line at
+2 MiB) whose sha256 is reported next to the stored full-size PNG's.
+Not built: `deps_request_add`, `qa_run`, `preview_interact`, `device_swipe` / `device_text`. The Windows desktop
+target is built (S9c, `target desktop`, below).
 
 **Build stages as built (supersedes 3.3-3.4).** No install stage, no `aas-store-<lockSha>` volume, no
 `kit_versions`: the web-build image bakes the kit's `node_modules` at image build; `aas-build-web` refuses any
@@ -506,7 +508,7 @@ only (`-Dev`): Vite on 127.0.0.1:1421 and `AAS_DEV_ORIGINS`.
 |---|---|---|
 | gitleaks | ubuntu | product dir with the repo `.gitleaks.toml` |
 | gitleaks-history | ubuntu | every commit that touched the product (fetch-depth 0) |
-| actionlint | ubuntu | actionlint-py 1.7.12.25 on this workflow |
+| actionlint | ubuntu | actionlint 1.7.12 release binary (sha256-verified download) on this workflow |
 | zizmor | ubuntu | zizmor 1.33.0 `--min-severity low` |
 | osv-scanner | ubuntu | uv.lock, both pnpm-lock.yaml, Cargo.lock |
 | vendored | ubuntu | check_vendored, CI mode (gen_vendored --check needs the upstream repo: owner PC) |
@@ -523,7 +525,8 @@ copied byte-for-byte + studio-written `tauri.conf.json` (identifier `dev.aiappst
 `capabilities []`, `frontendDist ../dist`, studio WebView2 args) + `.cargo/config.toml` (vendored source, offline);
 dist = the preview site re-validated by the web output reader. `cargo build --release --offline --locked` on the
 host (toolchain cargo.exe, minimal env, dead proxy, studio CARGO_HOME/target/tmp under `AAS_DESKTOP_ROOT` or
-`<data>/desktop`), exe read after exit -> `<preview>/<project>/app-desktop.exe` + `app-desktop.dist.zip`;
+`<data>/desktop`), exe read after exit -> one pair `<preview>/<project>/desktop/d<hex16>/{app-desktop.exe, app-desktop.dist.zip}`
+(written in a staging dir, put in place by one directory rename; S9c review M1);
 build.finished `{target desktop, artifactSha256, sizeBytes}`. `app_export target desktop` / REST / UI "Export
 desktop (exe)": exe sha must match the recorded build; scan = raw exe + every embedded dist file; approval bound
 to the sha256. MCP catalogue unchanged (15 tools; target enums gain `desktop`). No NSIS, no signing, no launch

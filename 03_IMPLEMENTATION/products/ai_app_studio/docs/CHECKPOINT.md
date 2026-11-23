@@ -1,5 +1,15 @@
 # Checkpoint — 2026-11-23 00:20 (session <owner-user>-d8, /loop active)
 
+## Current state (2026-11-23, final fix slice; local commits on claude/ai-app-studio, nothing pushed)
+- Final gate round 2: docs/FINAL_GATE_ROUND2.md. B1 PASS (auto-memory fix), B2 PASS (residual: IPC scripts injected
+  in iframe on Windows; blocked by CSP + ACL), B7 PASS (tests/runner/test_b7_isolation_probe.py, real CLI).
+- Fixed in this slice: N1 (agent image <= 512 KiB base64, runner line cap 2 MiB), F2 (UI project title sanitised,
+  real server error shown), F3 (app revisions commit src/ + public/), audit O6 (API security headers), O7 (generic
+  422), O8 (50 approvals per agent run); O9 Rust advisories accepted. Suite hermetic for free disk
+  (tests/hermetic_disk.py, `-p tests.hermetic_disk`; gate tests set low/high values).
+- Remaining: image rebuilds (C: >= 10 GB), fresh live local gate, installed-mode e2e or a v1 = repo-mode decision,
+  first CI run (needs a push).
+
 Task: AI App Studio — app builder for phone/tablet/desktop; the owner must SEE live on the Windows desktop
 what the AI is doing (see DESIGN_DRAFT.md, last section).
 Location: AI Memory Vault, 03_IMPLEMENTATION/products/ai_app_studio, branch claude/ai-app-studio (worktree D:/w/ai-app-studio). Fork base in AI Website Studio: 25b3eab.

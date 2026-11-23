@@ -4,7 +4,7 @@ Local AI app builder for phone, tablet and desktop. An AI agent builds web and A
 inside a policy-gated studio, and the owner watches live on the Windows desktop what the AI is doing:
 preview frames, the Android emulator window and an activity feed.
 
-**Status:** implemented through slice S9b (local commits, not pushed): web + debug APK builds, live preview and emulator mirror, built-in runner, agent sight, approved export, templates. Not release-clean yet: real agent run (B1), WebView2 iframe probe (B2), image rebuilds and final gate round 2 open (docs/CHECKPOINT.md).
+**Status:** implemented through slice S9c plus the final fix slice (local commits, not pushed): web + debug APK + Windows desktop exe builds, live preview and emulator mirror, built-in runner, agent sight, approved export, templates. Final gate round 2: B1 real agent run and B2 WebView2 iframe probe PASS, B7 runner isolation probe PASS (docs/FINAL_GATE_ROUND2.md). Not release-clean yet: image rebuilds (C: >= 10 GB), a fresh live local gate, installed-mode e2e (or a v1 = repo-mode decision) and the first CI run.
 
 Build the installer: `scripts/build_runtime.ps1`, then in `apps/desktop` `pnpm tauri build --config src-tauri/tauri.release.conf.json` (unsigned NSIS, docs/SECURITY.md).
 

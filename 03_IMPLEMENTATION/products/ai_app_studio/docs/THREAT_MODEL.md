@@ -190,7 +190,8 @@ backend `VideoHub` -> owner WS `/api/v1/device/video?projectId=` -> UI worker (W
 
 ## As built (2026-11-23)
 Supersedes the tables above where they differ (FINAL_GATE_ROUND1 section C, checklist E1). Residual list:
-docs/SECURITY.md section 2. Code state: S9b.
+docs/SECURITY.md section 2. Code state: S9c + B1/B2 live checks + final fix slice (B7 probe, audit lows O6-O8,
+N1, F2, F3; 2026-11-23). Final gate: docs/FINAL_GATE_ROUND2.md.
 
 **Surface added since v2.** (a) Per-run named pipe for the emulator mirror (S8 surface above; S9a: native pipe with
 a logon-SID DACL, `PIPE_REJECT_REMOTE_CLIENTS`, first instance; S9a review: handle ownership moves to the
@@ -198,7 +199,18 @@ connection, a full pipe no longer stops the listener). (b) Dev mode (`run_studio
 127.0.0.1:1421 and `AAS_DEV_ORIGINS`; the production origin list has no :1420/:1421 (B11). (c) Runner profile: the
 CLI runs with the owner's USERPROFILE/APPDATA/HOME/PATH (residual "Runner profile (B7)"). (d) Agent sight (S9b):
 preview/emulator images and console text go back to the agent as untrusted data (T5). (e) Export (S9b): artifacts
-leave the studio into the owner's export folder (T7).
+leave the studio into the owner's export folder (T7). (f) Host build (S9c): `app_build target desktop` runs
+`cargo build --release --offline --locked` on the Windows host, not in a container: build scripts and proc-macros of
+~430 vendored crates run with the owner's rights (residual "Host-build trust"). Controls: plan gate + build lock +
+5 GiB gate, vendored sources verified by cargo checksums and the studio vendor-tree manifest, cargo config planting
+refused and `--config` pins (no rustc wrapper), minimal env with a dead proxy, studio CARGO_HOME/target/tmp under an
+owner-only desktop root (ACL checked), exe + dist zip bound as one pair, host path leak scan, unsigned exe export
+bound to its sha256 (owner approval). (g) Installed runtime (S9b): the NSIS install carries `runtime.zip` (python,
+locked deps, Chromium headless shell, app sources); the shell checks it against the sha256 in `runtime.version`
+before extracting (catches damage, not a deliberate swap of both files: residual "Runtime integrity"); installer
+unsigned (residual). Installed-mode end-to-end has not run yet (FINAL_GATE_ROUND2 remaining items).
+(h) B7 probe: owner hooks, plugins, skills and agents under the user config do not load under the runner flags
+(tests/runner/test_b7_isolation_probe.py, real CLI, positive control).
 
 **T5 addendum (agent sight).** Images and console text are produced by code the agent wrote (or an app on the
 emulator): prompt-injection material. Controls: console lines sanitised (escapes, invisible/bidi characters),
