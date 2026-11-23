@@ -1,5 +1,18 @@
 # Checkpoint — 2026-11-23 00:20 (session <owner-user>-d8, /loop active)
 
+## "Wow" wave W1-W6 (2026-11-23, DONE; pushed 2a388aa6c, PR #413 CI 58 pass / 1 skipped)
+- W1 design system + presets, W2 QA gates + auto-polish, W3 flow tests + state switcher, W4 click-to-edit inspector,
+  W5 brand kit + Android polish, W6 regression baselines; merged and integrated (inspector tokens = W1, flow_results
+  for W6, one QA panel). Opus review 2 rounds + live-fix delta review; live owner check found B1 (key collision) and
+  B2 (selection ping-pong) - fixed and re-verified live without overrides.
+- Owner data: activity purge of run-less project.inspect events redone with the corrected tool (gaps kept, marker
+  kept, audit row); 3 backups in the data dir, deleted by curatenie after 30 days.
+- Full suite: 1142 passed / 31 skipped (live probes), vitest 278, tsc 0, check_vendored OK, privacy guard clean.
+- Residuals (SECURITY.md): masked area <=15% can hide a change; flow tests run in host Chromium (dead proxy +
+  same-origin route + CSP); launchable activity keeps the generic package name (cosmetic).
+- Next: the owner merges PR #413. Deferred: S10 import of the owner's MemoryVault Android app; old apps opt in to
+  the design system / states by chat ("treci pe sistemul de design", "adaugă stările").
+
 ## Runner profile modes (2026-11-23, owner decision: the builder loads the owner's Claude setup)
 - `runner.profile` = "full" (default) | "isolated" (old B7 behaviour). core/aas_runner/profile.py (setting, deny-list,
   check_init_full, full settings), claude.py (argv/env per profile), mcp_denylist.default.json, REST
