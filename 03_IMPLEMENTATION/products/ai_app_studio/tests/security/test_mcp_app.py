@@ -162,6 +162,7 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             # P5f (gate ON by default): writes need an approved plan of this session first
             assert body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",
                                                               "content": "export {}\n"}))["error"] == "plan_required"
+            assert body(await s.call_tool("brand_kit", {"projectId": pid, "caption": "x"}))["error"] == "plan_required"
             sub = body(await s.call_tool("plan_submit", {"projectId": pid, "title": "t", "steps": ["s"]}))
             plans.decide(studio, OWNER, sub["result"]["planId"], "approve", content_hash=sub["result"]["contentSha256"])
             w = body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",

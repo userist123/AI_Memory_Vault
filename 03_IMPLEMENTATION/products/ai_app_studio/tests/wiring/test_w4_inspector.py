@@ -108,6 +108,22 @@ def test_ambiguous_text_is_refused() -> None:
         ir.plan_text_edit(files(**{"src/B.tsx": other}), d, "x")
 
 
+def test_code_expression_with_angle_brackets_is_not_a_jsx_text_match() -> None:
+    code = ("export function f(count: number, Habits: number) {\n  return count > Habits < 3 ? 1 : 0;\n}\n")
+    f = files(**{"src/util.tsx": code})
+    path, out = ir.plan_text_edit(f, ir.Descriptor.model_validate(desc()), "My habits")
+    assert path == "src/App.tsx" and "count > Habits < 3" not in out and "My habits" in out
+    only_code = {"src/util.tsx": code}  # the only "match" is a comparison: nothing to edit
+    with pytest.raises(NotFound):
+        ir.plan_text_edit(only_code, ir.Descriptor.model_validate(desc()), "x")
+
+
+def test_jsx_text_after_an_opening_tag_with_arrow_attributes_still_matches() -> None:
+    src = 'export const A = () => <button onClick={() => go()} className="b">Habits</button>;\n'
+    path, out = ir.plan_text_edit({"src/A.tsx": src}, ir.Descriptor.model_validate(desc(tag="button")), "Done")
+    assert out.endswith('>Done</button>;\n')
+
+
 def test_tag_breaks_a_tie() -> None:
     other = "export const B = () => <section><h2>Habits</h2></section>;\n"
     path, out = ir.plan_text_edit(files(**{"src/B.tsx": other}), ir.Descriptor.model_validate(desc(tag="h2")), "Mine")
@@ -228,6 +244,14 @@ def test_rest_text_edit_is_revisioned_audited_and_rebuilds(client: TestClient) -
     d = desc(text="Hello from AI App Studio", path="main>h1", classes=[])
     body = {"baseRevision": rev, "element": d, "op": "text", "to": "Salut"}
     assert client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body).status_code == 401  # owner token only
+    # step 1 (no confirm): a dry run naming the file and line, nothing written
+    dry = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body, headers=AUTH)
+    assert dry.status_code == 200, dry.text
+    assert dry.json()["dryRun"] is True and dry.json()["path"] == "src/App.tsx" and dry.json()["line"] >= 1
+    assert "<h1>Hello from AI App Studio</h1>" in st.read_file(OWNER, pid, "src/App.tsx")["content"]
+    assert st.get_revision(pid) == rev
+    # step 2: the owner confirmed
+    body = {**body, "confirm": True}
     r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body, headers=AUTH)
     assert r.status_code == 200, r.text
     j = r.json()
@@ -306,3 +330,16 @@ def test_crop_clamps_to_the_frame() -> None:
 
 def test_conflict_types() -> None:
     assert issubclass(ir.AmbiguousEdit, ConflictError) and ir.AmbiguousEdit.code == "inspector_ambiguous"
+
+
+def test_rest_ambiguous_text_is_a_409_even_in_the_dry_run(client: TestClient) -> None:
+    st = client.app.state.studio
+    pid = client.post("/api/v1/projects", json={"name": "Notes"}, headers=AUTH).json()["id"]
+    rev = st.get_revision(pid)
+    st.write_file(OWNER, pid, rev, "src/Twin.tsx", "export const T = () => <h1>Hello from AI App Studio</h1>;\n")
+    body = {"baseRevision": st.get_revision(pid), "op": "text", "to": "Salut",
+            "element": desc(text="Hello from AI App Studio", path="main>h1", classes=[])}
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body, headers=AUTH)
+    assert r.status_code == 409 and r.json()["error"] == "inspector_ambiguous", r.text
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json={**body, "confirm": True}, headers=AUTH)
+    assert r.status_code == 409

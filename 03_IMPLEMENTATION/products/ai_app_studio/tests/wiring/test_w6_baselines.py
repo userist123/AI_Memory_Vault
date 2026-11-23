@@ -151,14 +151,55 @@ def test_approve_then_identical_small_large_and_masked(built) -> None:  # type: 
     assert any("/settings (desktop)" in w for w in res["lastCheck"]["warnings"])
     # the baselines never move on a check
     assert [b["sha256"] for b in res["baselines"]] == [b["sha256"] for b in st["baselines"]]
-    # a volatile region marked in the page is masked
-    s.extra = {"/@tablet": [((300, 10, 500, 40), (200, 0, 0))]}
+    # a volatile region recorded at owner approval is masked (current-page masks are never trusted)
+    s.extra = {}
     s.masks = {"tablet": [[290, 5, 220, 40]]}
+    baselines.approve(studio, OWNER, pid, routes=["/", "/settings"], snap=s, free_bytes=BIG)
+    s.extra = {"/@tablet": [((300, 10, 500, 40), (200, 0, 0))]}
     res = baselines.check(studio, pid, snap=s, free_bytes=BIG)
     assert res["status"] == "same", res["lastCheck"]["results"]
+    row = next(r for r in res["lastCheck"]["results"] if r["key"] == "/@tablet")
+    assert row["maskedPct"] > 0 and row["maskedPct"] < baselines.MAX_MASK_PCT
+    assert next(b for b in res["baselines"] if (b["route"], b["frame"]) == ("/", "tablet"))["maskedPct"] == row["maskedPct"]
     # old current/diff PNGs are collected: only referenced files stay
     files = {p.stem for p in baselines.project_dir(studio.settings, pid).glob("*.png")}
     assert files == baselines._referenced(baselines.load_state(studio.settings, pid))  # noqa: SLF001
+
+
+def test_masks_added_after_approval_cannot_blind_the_check(built) -> None:  # type: ignore[no-untyped-def]
+    studio, pid = built
+    s = Screens()
+    baselines.approve(studio, OWNER, pid, routes=["/"], snap=s, free_bytes=BIG)
+    # the agent wraps everything in data-aas-volatile and changes the screen
+    s.extra = {"/@phone": [((0, 0, 390, 600), (10, 10, 10))]}
+    s.masks = {"phone": [[0, 0, 390, 844]], "tablet": [[0, 0, 768, 1024]], "desktop": [[0, 0, 1440, 900]]}
+    res = baselines.check(studio, pid, snap=s, free_bytes=BIG)
+    row = next(r for r in res["lastCheck"]["results"] if r["key"] == "/@phone")
+    assert res["status"] == "changed" and row["status"] == "changed" and row["maskedPct"] == 0
+
+
+def test_oversized_masks_are_refused_at_approval(built) -> None:  # type: ignore[no-untyped-def]
+    studio, pid = built
+    s = Screens()
+    s.masks = {"phone": [[0, 0, 390, 300]]}  # ~35 % of the phone frame
+    with pytest.raises(ValidationFailed, match="15"):
+        baselines.approve(studio, OWNER, pid, routes=["/"], snap=s, free_bytes=BIG)
+    assert baselines.status(studio, pid)["baselines"] == []
+    s.masks = {"phone": [[0, 0, 390, 100]]}  # ~12 %: fine
+    st = baselines.approve(studio, OWNER, pid, routes=["/"], snap=s, free_bytes=BIG)
+    assert 10 < next(b for b in st["baselines"] if b["frame"] == "phone")["maskedPct"] <= 15
+
+
+def test_stored_mask_share_above_the_cap_counts_as_changed(built) -> None:  # type: ignore[no-untyped-def]
+    studio, pid = built
+    s = Screens()
+    baselines.approve(studio, OWNER, pid, routes=["/"], snap=s, free_bytes=BIG)
+    st = baselines.load_state(studio.settings, pid)
+    st["baselines"]["/@phone"]["masks"] = [[0, 0, 390, 844]]  # a tampered / legacy state file
+    baselines._write_json(baselines._state_path(studio.settings, pid), st)  # noqa: SLF001
+    res = baselines.check(studio, pid, snap=s, free_bytes=BIG)
+    row = next(r for r in res["lastCheck"]["results"] if r["key"] == "/@phone")
+    assert row["status"] == "changed" and row["maskedPct"] > baselines.MAX_MASK_PCT
 
 
 def test_threshold_is_owner_tunable(built) -> None:  # type: ignore[no-untyped-def]
@@ -336,3 +377,31 @@ def test_real_browser_approve_edit_and_diff(studio) -> None:  # type: ignore[no-
     assert res["status"] == "changed" and all(r["status"] == "changed" for r in rows), rows
     assert all(0.1 < r["changedPct"] < 5 for r in rows), rows
     assert not res["lastCheck"]["warnings"]
+
+
+@pytest.mark.browser
+@pytest.mark.skipif(not _chromium_available(), reason="Playwright Chromium not installed")
+def test_masks_are_measured_in_an_isolated_world() -> None:
+    import http.server
+    import threading
+
+    html = (b"<!doctype html><title>x</title><script>document.querySelectorAll = () => [];"
+            b"Element.prototype.getBoundingClientRect = () => ({x: 0, y: 0, width: 1, height: 1});</script>"
+            b"<body><div data-aas-volatile style='position:absolute;left:10px;top:20px;width:100px;height:30px'>t</div>")
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(html)
+
+        def log_message(self, *a: Any) -> None:
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        _, masks = baselines._snap(f"http://127.0.0.1:{srv.server_port}/", ["desktop"])  # noqa: SLF001
+    finally:
+        srv.shutdown()
+    assert masks["desktop"] == [[10, 20, 100, 30]], masks

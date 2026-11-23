@@ -47,7 +47,7 @@ def valid_session_id(value: Any) -> bool:
 
 # ---------------------------------------------------------------- session id per project
 def get_session(studio: Any, project_id: str) -> str | None:
-    if not _PID.match(project_id or ""):
+    if not _PID.fullmatch(project_id or ""):
         return None
     with studio.session() as s:
         row = s.get(AppSetting, SESSION_PREFIX + project_id)
@@ -56,7 +56,7 @@ def get_session(studio: Any, project_id: str) -> str | None:
 
 
 def set_session(studio: Any, project_id: str, session_id: str) -> bool:
-    if not _PID.match(project_id or "") or not valid_session_id(session_id):
+    if not _PID.fullmatch(project_id or "") or not valid_session_id(session_id):
         return False
     with studio.session() as s:
         row = s.get(AppSetting, SESSION_PREFIX + project_id)
@@ -69,7 +69,7 @@ def set_session(studio: Any, project_id: str, session_id: str) -> bool:
 
 
 def clear_session(studio: Any, project_id: str) -> None:
-    if not _PID.match(project_id or ""):
+    if not _PID.fullmatch(project_id or ""):
         return
     with studio.session() as s:
         row = s.get(AppSetting, SESSION_PREFIX + project_id)
@@ -79,7 +79,7 @@ def clear_session(studio: Any, project_id: str) -> None:
 
 def chat_cwd(runner_root: Path, project_id: str) -> Path:
     """The fixed cwd of the project's chat runs (the CLI looks a session up by cwd). Recreated EMPTY at every start."""
-    if not _PID.match(project_id or ""):
+    if not _PID.fullmatch(project_id or ""):
         raise ValueError("invalid project id")
     d = runner_root / "chat" / project_id
     if d.is_symlink() or d.is_file():
@@ -94,7 +94,7 @@ def chat_cwd(runner_root: Path, project_id: str) -> Path:
 def history(studio: Any, project_id: str, limit: int = MAX_TURNS) -> list[dict[str, Any]]:
     """Turns of ``project_id``, oldest first: {runId, prompt, reply, status, reason, mode, costUsd, planIds, ts,
     chat}. ``chat`` is False for a run started from the run panel (its prompt was not recorded)."""
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         return []
     with studio.session() as s:
         q = (select(ActivityEvent).where(ActivityEvent.project_id == project_id, ActivityEvent.kind.in_(_KINDS),

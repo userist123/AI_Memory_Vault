@@ -257,13 +257,13 @@ class DeviceService:
     def install(self, project_id: str, *, launch: bool = False) -> dict[str, Any]:
         """Install the project's debug APK (the device host accepts only dev.aiappstudio.p<16 hex>); with ``launch``
         the installed package must be exactly the project's package id and is then started."""
-        pid = project_id if isinstance(project_id, str) and _PID.match(project_id) else None
+        pid = project_id if isinstance(project_id, str) and _PID.fullmatch(project_id) else None
         return self._op("device.install", {"projectId": str(project_id)[:40], "launch": bool(launch)},
                         lambda: self._install(project_id, launch=launch), project_id=pid)
 
     def _install(self, project_id: str, *, launch: bool) -> dict[str, Any]:
         s = self._need()
-        if not isinstance(project_id, str) or not _PID.match(project_id):
+        if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
             raise ValidationFailed("invalid project id")
         apk = self.studio.settings.data_dir / "preview" / project_id / "app-debug.apk"
         if not apk.is_file() or apk.is_symlink():

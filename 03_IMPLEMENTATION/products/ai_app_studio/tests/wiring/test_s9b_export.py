@@ -252,3 +252,41 @@ def test_p5c_a_used_approval_cannot_export_again(studio, tmp_path: Path) -> None
     with pytest.raises(ApprovalRequired):
         export.export(studio, OWNER, pid, "web", approval_id=apr, dest_root=tmp_path / "again")
     assert not (tmp_path / "again").exists()
+
+
+# ---------------------------------------------------------------- Opus round 1: store screenshots are bound to the approval
+def _shots(studio: Any, pid: str, marker: bytes) -> None:
+    from aas_build import brand
+    d = brand.BrandStore(studio.settings.data_dir).shots_dir(pid)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "store-phone.png").write_bytes(b"\x89PNG\r\n\x1a\n" + marker)
+
+
+def test_regenerated_store_screenshot_after_approval_refuses_the_export(studio, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+    pid = built(studio)
+    record_apk(studio, pid, apk_bytes())
+    _shots(studio, pid, b"one")
+    with pytest.raises(ApprovalRequired) as ei:
+        export.export(studio, OWNER, pid, "android", dest_root=tmp_path)
+    apr = ei.value.details["approvalId"]
+    approve(studio, apr)
+    _shots(studio, pid, b"two")  # regenerated (or swapped) after the owner approved
+    with pytest.raises(ApprovalRequired):
+        export.export(studio, OWNER, pid, "android", approval_id=apr, dest_root=tmp_path)
+    assert not list(tmp_path.rglob("*-rev*.apk"))
+
+
+def test_screenshot_swapped_between_prepare_and_copy_is_a_409(studio, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+    from studio_core.errors import ConflictError
+    pid = built(studio)
+    record_apk(studio, pid, apk_bytes())
+    _shots(studio, pid, b"one")
+    art = export.prepare(studio, pid, "android")
+    assert "storeShots" in art.params and art.params["storeShots"]["store-phone.png"]
+    req = export.request(studio, OWNER, art)
+    approve(studio, req["approvalId"])
+    _shots(studio, pid, b"swapped")
+    with pytest.raises(ConflictError) as ei:
+        export.write(studio, OWNER, art, req["approvalId"], tmp_path)
+    assert ei.value.http_status == 409
+    assert not list(tmp_path.rglob("*-rev*.apk"))

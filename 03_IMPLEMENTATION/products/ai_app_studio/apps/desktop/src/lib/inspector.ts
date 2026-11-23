@@ -49,6 +49,10 @@ export interface InspectorOptions {
   revision: number;
   families: Families;
 }
+export interface EditPreview {
+  path: string;
+  line: number;
+}
 export interface EditResult {
   path: string;
   revision: number;
@@ -179,6 +183,26 @@ export async function fetchInspectorOptions(s: Session, projectId: string): Prom
 
 export type EditOp = { op: "text"; to: string } | { op: "class"; from: string; to: string };
 
+/** Step 1 of an edit: the server locates the target and answers file:line without writing anything. */
+export async function inspectorPreview(
+  s: Session,
+  projectId: string,
+  baseRevision: number,
+  element: Descriptor,
+  edit: EditOp,
+): Promise<EditPreview> {
+  if (!PROJECT_RE.test(projectId)) throw new Error("bad project id");
+  const b = plainObject(
+    await call(s, `/projects/${projectId}/inspector/edit`, {
+      method: "POST",
+      body: JSON.stringify({ baseRevision, element, ...edit }),
+    }),
+  ) ?? {};
+  const line = typeof b.line === "number" && Number.isInteger(b.line) && b.line > 0 ? b.line : 1;
+  return { path: clean(b.path, 200), line };
+}
+
+/** Step 2: the owner confirmed the shown file:line; the same body with confirm:true writes. */
 export async function inspectorEdit(
   s: Session,
   projectId: string,
@@ -190,7 +214,7 @@ export async function inspectorEdit(
   const b = plainObject(
     await call(s, `/projects/${projectId}/inspector/edit`, {
       method: "POST",
-      body: JSON.stringify({ baseRevision, element, ...edit }),
+      body: JSON.stringify({ baseRevision, element, ...edit, confirm: true }),
     }),
   ) ?? {};
   return {

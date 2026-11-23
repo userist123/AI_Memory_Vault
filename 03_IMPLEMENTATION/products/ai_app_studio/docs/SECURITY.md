@@ -93,6 +93,35 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 
 **v1 launch mode (decision 2026-11-23, owner rule "decide safe, record"):** v1 is launched from the repo/runtime with `scripts/run_studio.ps1` (Tauri window + backend). The NSIS installer is **experimental, unsigned** until an installed-mode e2e passes.
 
+### W2-W6 surfaces (flows, inspector, baselines, brand kit; added 2026-11-23, Opus review round 1)
+- **Flow tests (W3).** A flow test is data, not code: `tests/flows/<name>.spec.ts` is parsed by a closed-subset parser
+  (a fixed statement list, no imports, no free expressions, no `eval`/`Function`/template evaluation); anything outside the
+  subset is refused at write time and at run time. It is executed by the studio's own interpreter in the HOST Chromium
+  (never `node` / the spec file itself), launched with a dead proxy for every non-loopback request, a same-origin route
+  filter (every other request aborted) and a CSP on the preview origin. Results are server-shaped `qa.result` events (suite
+  `flows`), screenshots go to the content-addressed capture store.
+- **Inspector (W4).** Owner-only REST (`/inspector`, `/inspector/edit`, `/inspector/capture`), behind the boundary
+  middleware. The preview posts a descriptor `{v:1, kind:"select", ...}`; the UI accepts it only from the exact preview
+  origin of the current project and only from that iframe's window (source check), and the backend validates it again with a
+  strict schema (`extra=forbid`, length caps, control/bidi characters refused). A class swap is limited to the W1 design
+  system allow-list (one family per swap). Text edits replace only JSX text children (the `>` that closes a JSX tag up to the
+  next tag start; a `a > x <` in a code expression is not a match) or a whole string literal equal to the visible text;
+  0 or more than 1 location -> refused (404 / 409 `inspector_ambiguous`). Two steps: without `confirm` the server answers a
+  dry run `{dryRun, path, line}` and writes nothing; the panel shows "Va edita <file>:<line>" and only the owner's
+  Confirm sends the same body with `confirm: true` (revisioned `write_file`, audited, rebuild).
+- **Baselines (W6).** Only the owner approves or resets baselines. Volatile regions (`data-aas-volatile`) are measured in a
+  CDP isolated world (the page cannot patch `querySelectorAll` / `getBoundingClientRect` for the measurement), recorded
+  ONLY at owner approval and capped at 15 % of the frame (more -> approval refused). At compare time only the approved masks
+  are used (the current page's masks are ignored, so an agent cannot add masks after approval); a stored mask share above
+  15 % counts as changed. `maskedPct` is reported in the status result.
+- **Brand kit (W5).** Glyphs come from a manifest-checked bundled set (name pattern + manifest membership + hash); the
+  generated resources are mounted `:ro` into the Android build container; `brand_kit` is plan-gated for agents. Store
+  screenshots and the caption text are bound to the export approval (their sha256 values are part of the approved
+  parameters; the export re-verifies them and answers 409 / re-approval if they differ).
+- **Residual (flows).** Flow tests run in the host Chromium, not in the offline container: the dead proxy, same-origin
+  route filter and CSP are the controls, and a Chromium escape would run as the owner (same class as R-EXT for the
+  capture path).
+
 ## 2. Accepted residuals (FINAL_GATE_ROUND1 E7, updated at S9a and at release, 2026-11-23)
 | Id | Residual | Why accepted / next step |
 |---|---|---|

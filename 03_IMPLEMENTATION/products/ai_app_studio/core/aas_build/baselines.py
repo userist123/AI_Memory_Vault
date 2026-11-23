@@ -43,6 +43,7 @@ from . import capture
 SCHEMA = 1
 MAX_ROUTES = 8
 MAX_MASKS = 50
+MAX_MASK_PCT = 15.0           # masked share of the frame, owner approval refuses more (a mask hides regressions)
 MAX_BYTES = 200 * 1024 * 1024
 MAX_PIXELS = 4096 * 4096
 PIXEL_TOLERANCE = 24          # 0..255, per channel after the blur
@@ -92,6 +93,19 @@ def clean_masks(raw: Any, width: int, height: int) -> list[Rect]:
     return out
 
 
+def mask_pct(masks: Any, width: int, height: int) -> float:
+    """Share (0..100) of the frame covered by the union of the (cleaned) masks."""
+    from PIL import Image, ImageDraw
+    rects = clean_masks([list(m) for m in masks] if isinstance(masks, list | tuple) else [], width, height)
+    if not rects or width * height <= 0:
+        return 0.0
+    layer = Image.new("L", (width, height), 0)
+    d = ImageDraw.Draw(layer)
+    for x, y, mw, mh in rects:
+        d.rectangle((x, y, x + mw - 1, y + mh - 1), fill=255)
+    return round(100.0 * layer.histogram()[255] / (width * height), 2)
+
+
 def diff_images(base_png: bytes, cur_png: bytes, masks: list[Rect] | None = None,
                 *, tolerance: int = PIXEL_TOLERANCE) -> dict[str, Any]:
     """{changedPct, changedPixels, comparedPixels, bbox [x,y,w,h]|None, sizeChanged, diffPng}."""
@@ -139,7 +153,7 @@ def _now() -> str:
 
 
 def _check_pid(project_id: Any) -> str:
-    if not isinstance(project_id, str) or not capture._PID.match(project_id):  # noqa: SLF001
+    if not isinstance(project_id, str) or not capture._PID.fullmatch(project_id):  # noqa: SLF001
         raise ValidationFailed("invalid project id")
     return project_id
 
@@ -289,8 +303,9 @@ def _snap(url: str, frames: list[str]) -> tuple[dict[str, bytes], dict[str, list
                     page = ctx.new_page()
                     page.goto(url, wait_until="load", timeout=capture.NAV_TIMEOUT_MS)
                     page.wait_for_timeout(capture.SETTLE_MS)
-                    try:
-                        masks[frame] = page.evaluate(VOLATILE_JS)
+                    try:  # an isolated world: the page's own scripts cannot patch what we measure with
+                        from .qa import _eval_isolated
+                        masks[frame] = _eval_isolated(ctx, page, [f"({VOLATILE_JS})()"])[0]
                     except Exception:  # noqa: BLE001 - no masks is a valid (stricter) comparison
                         masks[frame] = []
                     shots[frame] = page.screenshot(full_page=False, type="png", animations="disabled", caret="hide")
@@ -364,9 +379,18 @@ def approve(studio: Any, actor: Any, project_id: str, *, frames: list[str] | Non
         for route in st["routes"]:
             shots = _shoot_route(studio, pid, route, frames, snap, None, free_bytes)
             for frame, (png, masks) in shots.items():
+                fw, fh = capture.FRAMES[frame]
+                pct = mask_pct(masks, fw, fh)
+                if pct > MAX_MASK_PCT:
+                    raise ValidationFailed(f"{route} ({frame}): the volatile regions cover {pct}% of the screen; "
+                                           f"at most {MAX_MASK_PCT:g}% may be masked, so the screen cannot be approved "
+                                           "as it is (remove data-aas-volatile from large areas)")
+            for frame, (png, masks) in shots.items():
                 sha = _store_png(studio.settings, pid, png, free_bytes)
                 st["baselines"][key_of(route, frame)] = {"route": route, "frame": frame, "sha256": sha,
-                                                          "masks": [list(m) for m in masks], "revision": revision,
+                                                          "masks": [list(m) for m in clean_masks(masks, *capture.FRAMES[frame])],
+                                                          "maskedPct": mask_pct(masks, *capture.FRAMES[frame]),
+                                                          "revision": revision,
                                                           "approvedAt": _now()}
                 approved.append(key_of(route, frame))
         st["baselines"] = {k: v for k, v in st["baselines"].items() if v["route"] in st["routes"]}
@@ -432,11 +456,14 @@ def check(studio: Any, project_id: str, *, intended_routes: list[str] | None = N
                 if bp is None:
                     row.update(status="baseline_missing", changedPct=None)
                 else:
-                    allm = clean_masks(b.get("masks"), *capture.FRAMES[frame]) + masks
+                    # only the masks the owner approved; whatever the page claims now is ignored
+                    allm = clean_masks(b.get("masks"), *capture.FRAMES[frame])
+                    mpct = mask_pct(allm, *capture.FRAMES[frame])
                     d = diff_images(bp.read_bytes(), png, allm)
                     row.update(changedPct=d["changedPct"], bbox=d["bbox"], sizeChanged=d["sizeChanged"],
-                               maskedRegions=len(allm),
-                               status="changed" if d["changedPct"] > st["thresholdPct"] or d["sizeChanged"] else "same")
+                               maskedRegions=len(allm), maskedPct=mpct,
+                               status="changed" if d["changedPct"] > st["thresholdPct"] or d["sizeChanged"]
+                               or mpct > MAX_MASK_PCT else "same")
                     if d["changedPixels"]:
                         row["diffSha256"] = _store_png(studio.settings, pid, d["diffPng"], free_bytes)
                 results.append(row)
@@ -454,6 +481,8 @@ def check(studio: Any, project_id: str, *, intended_routes: list[str] | None = N
 def status(studio: Any, project_id: str) -> dict[str, Any]:
     pid = _check_pid(project_id)
     st = load_state(studio.settings, pid)
+    for v in st["baselines"].values():
+        v["maskedPct"] = mask_pct(v.get("masks"), *capture.FRAMES[v["frame"]])
     return {"projectId": pid, "routes": st["routes"], "thresholdPct": st["thresholdPct"],
             "baselines": sorted(st["baselines"].values(), key=lambda v: (v["route"], list(capture.FRAMES).index(v["frame"]))),
             "lastCheck": st["lastCheck"]}

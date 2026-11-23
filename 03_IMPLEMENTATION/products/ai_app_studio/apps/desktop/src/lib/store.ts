@@ -73,6 +73,12 @@ export interface Focus {
   seq: number;
 }
 
+export interface QaEntry {
+  passed: number;
+  failed: number;
+  summary: string;
+}
+
 export interface State {
   lastSeq: number;
   runId: string;
@@ -101,7 +107,9 @@ export interface State {
   streamDropped: number;
   /** subprotocol the server negotiated when it was not `aas.v1` ("" = none); cleared on a good open */
   protocolError: string | null;
-  qa: { passed: number; failed: number; summary: string } | null;
+  qa: QaEntry | null;
+  /** latest qa.result per suite ("flows", ...): each panel reads its own suite, so one suite never hides another */
+  qaSuites: Record<string, QaEntry>;
   approvalsVersion: number;
   /** bumped by every event that changes a chat turn: ChatPanel refetches the server's turns on it (never renders events) */
   chatVersion: number;
@@ -134,6 +142,7 @@ export const initialState: State = {
   streamDropped: 0,
   protocolError: null,
   qa: null,
+  qaSuites: {},
   approvalsVersion: 0,
   chatVersion: 0,
   agentText: "",
@@ -477,6 +486,9 @@ function applyEvent(s0: State, e: ActivityEvent): State {
         failed: P.num(e, "failed") ?? 0,
         summary: P.text(e, "summary", 500),
       };
+      const suite = /^[a-z0-9_-]{1,40}$/.test(P.short(e, "suite")) ? P.short(e, "suite") : "unknown";
+      // computed key in an object literal defines an own property (a "__proto__" suite never reaches the setter)
+      s.qaSuites = { ...s.qaSuites, [suite]: s.qa };
       break;
     }
     case "approval.requested":

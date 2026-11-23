@@ -257,3 +257,15 @@ accepted residuals for v1 (docs/SECURITY.md section 2). (d) v1 = `scripts/run_st
 experimental and unsigned.
 
 **Runner profile (owner decision 2026-11-23).** The owner made the B7 isolation selectable: profile `full` (default) loads the owner's CLAUDE.md, home auto-memory, hooks, plugins, skills, agents and user MCP servers into the builder; `isolated` keeps the M4/P5e/B7 controls exactly as before. Full keeps M4 for the project (empty run dir, no project setting source, studio-only writes) and adds: built-ins only Read/Grep/Glob/Skill/Task, a validated name-based MCP deny-list (fail closed), claude.ai connectors off, an init check that aborts on any denied tool. New residuals (owner memory next to untrusted content, read access to owner files, owner hooks, name-based deny-list) are in docs/SECURITY.md section 2. Probes: tests/runner/test_runner_profile.py, tests/runner/test_profile_real_cli.py.
+
+## W2-W6 surfaces (added 2026-11-23, Opus review round 1)
+Assets: the owner's source files (inspector writes), the approved baselines, the export approval, the host browser.
+Attacker: the agent (and page content it controls); the owner is trusted.
+| Path | Control | Probe |
+|---|---|---|
+| Flow spec runs arbitrary code | closed-subset parser (statement whitelist), own interpreter, host Chromium with dead proxy + same-origin route + CSP | tests/wiring/test_w3_flows.py |
+| Forged inspector descriptor / foreign frame | exact preview-origin + iframe-source check in the UI, strict schema again in the backend, owner-only REST, allow-listed classes, text only into JSX text / whole literal, ambiguous or missing match refused, dry run + owner confirm (file:line) before the write | tests/wiring/test_w4_inspector.py, tests/ui/unit/w4_inspector.test.ts |
+| Agent blinds regression checks with masks | masks measured in an isolated world, recorded only at owner approval, 15 % cap (approval refused above it; above it at compare = changed), current masks never used | tests/wiring/test_w6_baselines.py |
+| Brand kit input escapes / swaps store images | manifest-checked glyphs, `:ro` mount, `brand_kit` plan-gated, store screenshots + caption sha256 bound into the export approval and re-verified before the copy (409) | tests/wiring/test_w5_brand.py, tests/wiring/test_s9b_export.py, tests/security/test_mcp_app.py |
+
+Residual: flow tests run in the host Chromium, not in the offline container (see docs/SECURITY.md).

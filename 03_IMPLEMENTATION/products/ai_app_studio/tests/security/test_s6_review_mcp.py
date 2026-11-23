@@ -119,7 +119,8 @@ async def test_p5f_write_refused_without_plan_allowed_after_owner_approval(studi
     async with session(studio, **grant_env(studio, RUN_A, a)) as s:
         for name, args in (("code_write_file", {"projectId": a, "baseRevision": rev, "path": "src/X.tsx", "content": "x"}),
                            ("code_delete_file", {"projectId": a, "baseRevision": rev, "path": "src/App.tsx"}),
-                           ("app_build", {"projectId": a, "target": "web"})):
+                           ("app_build", {"projectId": a, "target": "web"}),
+                           ("brand_kit", {"projectId": a, "caption": "x"})):
             res = body(await s.call_tool(name, args))
             assert res["ok"] is False and res["error"] == "plan_required", (name, res)
         assert studio.get_revision(a) == rev

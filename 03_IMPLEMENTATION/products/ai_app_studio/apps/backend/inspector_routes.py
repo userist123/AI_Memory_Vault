@@ -10,6 +10,8 @@ POST /api/v1/projects/{pid}/inspector/edit     -> {baseRevision, element, op: "t
                                                   {baseRevision, element, op: "class", from, to}
      The change is located in src/** (unique visible-text match, or a className token, tie-broken by the element's
      tag and classes; ambiguous -> 409 inspector_ambiguous, missing -> 404) and written through the normal revisioned
+     Two steps: without ``confirm`` a dry run answers {dryRun, path, line} and writes nothing; the UI shows
+     "Will edit <file>:<line>" and only the owner's confirmation sends the same body with ``confirm: true``.
      ``Studio.write_file`` operation as the owner (policy + tool_executions + audit row), then a web rebuild starts.
 POST /api/v1/projects/{pid}/inspector/capture  -> {device, element}: a preview capture of that frame (the unchanged
      capture.capture path), cropped to the element's rect (+ padding), stored content-addressed like every capture.
@@ -109,6 +111,7 @@ class EditReq(Strict):
     op: Literal["text", "class"]
     from_: str | None = Field(default=None, alias="from", max_length=64)
     to: str = Field(max_length=MAX_TEXT)
+    confirm: bool = False  # False: dry run (names file:line, writes nothing); True: the owner confirmed that target
 
     @model_validator(mode="after")
     def _shape(self) -> EditReq:
@@ -136,6 +139,15 @@ def _opening_tag_before(content: str, pos: int) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
+# the ``>`` that ends a JSX tag: an opening tag (attributes may hold one level of {braces}, e.g. an arrow function),
+# a closing tag, a self-closing tag or a fragment. A ``>`` of a comparison or an arrow is never one.
+_TAG_END = re.compile(r"(?:<[A-Za-z][\w.:-]*(?:\s(?:[^<>{}]|\{[^{}]*\})*)?|</[A-Za-z][\w.:-]*\s*|<)>$")
+
+
+def _closes_jsx_tag(content: str, gt: int) -> bool:
+    return gt >= 0 and _TAG_END.search(content[max(0, gt - 600):gt + 1]) is not None
+
+
 # a string literal used as an import source, a class name, a key or another non-visible attribute is not text
 _NOT_TEXT_BEFORE = re.compile(r"(?:\bimport\s*|\bfrom\s*|\brequire\(\s*|\b(?:className|class|style|key|id|type|href|src|"
                               r"role|name|htmlFor|data-[\w-]+|aria-[\w-]+)\s*=\s*\{?\s*)$")
@@ -148,12 +160,13 @@ def _text_matches(files: dict[str, str], text: str) -> list[tuple[str, int, int,
     if not words:
         return []
     flex = r"\s+".join(re.escape(w) for w in words)
-    jsx = re.compile(r"(?<=>)(\s*)(" + flex + r")(\s*)(?=<|\{)")
+    jsx = re.compile(r"(?<=>)(\s*)(" + flex + r")(\s*)(?=<(?=[A-Za-z/>])|\{)")
     lit = re.compile(r"([\"'`])(" + re.escape(text) + r")\1")
     out: list[tuple[str, int, int, str]] = []
     for path, content in _sources(files):
         if path.endswith((".tsx", ".jsx")):  # .ts/.js have no JSX text, only literals
-            out += [(path, m.start(2), m.end(2), "jsx") for m in jsx.finditer(content)]
+            out += [(path, m.start(2), m.end(2), "jsx") for m in jsx.finditer(content)
+                    if _closes_jsx_tag(content, m.start(1) - 1)]
         for m in lit.finditer(content):
             if _NOT_TEXT_BEFORE.search(content[max(0, m.start() - 40):m.start()]):
                 continue
@@ -264,8 +277,16 @@ def crop_box(r: Rect, width: int, height: int) -> tuple[int, int, int, int]:
 
 
 # ---------------------------------------------------------------- routes
+def _first_diff_line(old: str, new: str) -> int:
+    """1-based line of the first difference between the current and the edited file."""
+    for i, (a, b) in enumerate(zip(old.splitlines(), new.splitlines(), strict=False), 1):
+        if a != b:
+            return i
+    return 1
+
+
 def _pid(pid: str) -> str:
-    if not _PID.match(pid):
+    if not _PID.fullmatch(pid):
         raise ValidationFailed("invalid project id")
     return pid
 
@@ -291,13 +312,16 @@ def register(app: FastAPI, studio: Any, owner: Actor, runner: Any) -> None:
             path, content = plan_text_edit(files, b.element, b.to)
         else:
             path, content = plan_class_swap(files, b.element, b.from_ or "", b.to)
+        if not b.confirm:  # step 1: where the edit would land; the UI shows it and asks the owner
+            return {"dryRun": True, "path": path, "line": _first_diff_line(files[path], content), "op": b.op}
         res = studio.write_file(owner, pid, b.baseRevision, path, content)  # revision check + policy + audit
         rebuild = "busy"
         try:
             rebuild = app.state.owner_builds.start(pid, "web").get("state", "building")
         except (StudioError, Unavailable):
             rebuild = "busy"  # a build or run started meanwhile: the change is saved, the owner can rebuild
-        return {"path": path, "revision": res["revision"], "rebuild": rebuild}
+        return {"path": path, "line": _first_diff_line(files[path], content), "revision": res["revision"],
+                "rebuild": rebuild}
 
     @app.post(f"{API}/projects/{{pid}}/inspector/capture")
     def inspector_capture(pid: str, b: CaptureReq) -> dict[str, Any]:

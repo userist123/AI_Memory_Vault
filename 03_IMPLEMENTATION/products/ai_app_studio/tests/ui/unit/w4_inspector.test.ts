@@ -129,13 +129,14 @@ const OPTS = { revision: 7, families: { color: ["bg-primary", "bg-accent", "text
 async function mountPanel(sel: InspectorSelection = SEL) {
   const loadOptions = vi.fn(async () => OPTS);
   const edit = vi.fn(async () => ({ path: "src/App.tsx", revision: 8, rebuild: "building" }));
+  const preview = vi.fn(async () => ({ path: "src/App.tsx", line: 12 }));
   const capture = vi.fn(async () => "a".repeat(64));
   const onAttach = vi.fn();
   let r!: ReturnType<typeof render>;
   await act(async () => {
-    r = render(createElement(InspectorPanel, { selection: sel, loadOptions, edit, capture, onAttach, onClose: vi.fn() }));
+    r = render(createElement(InspectorPanel, { selection: sel, loadOptions, preview, edit, capture, onAttach, onClose: vi.fn() }));
   });
-  return { ...r, loadOptions, edit, capture, onAttach };
+  return { ...r, loadOptions, preview, edit, capture, onAttach };
 }
 
 describe("InspectorPanel", () => {
@@ -148,10 +149,17 @@ describe("InspectorPanel", () => {
 
   it("saves the text with the options revision and swaps a class within its family", async () => {
     const el = { ...SEL.element, classes: ["btn", "bg-primary", "p-2"] };
-    const { getByTestId, edit } = await mountPanel({ ...SEL, element: el });
+    const { getByTestId, edit, preview } = await mountPanel({ ...SEL, element: el });
     fireEvent.change(getByTestId("inspector-text"), { target: { value: "My habits" } });
     await act(async () => {
       fireEvent.click(getByTestId("inspector-save-text"));
+    });
+    // step 1: only the dry run; the owner sees the target file:line and confirms before anything is written
+    expect(preview).toHaveBeenCalledWith(PID, 7, expect.objectContaining({ element: el }), { op: "text", to: "My habits" });
+    expect(edit).not.toHaveBeenCalled();
+    expect(getByTestId("inspector-target").textContent).toContain("src/App.tsx:12");
+    await act(async () => {
+      fireEvent.click(getByTestId("inspector-confirm"));
     });
     expect(edit).toHaveBeenCalledWith(PID, 7, expect.objectContaining({ element: el }), { op: "text", to: "My habits" });
     expect(getByTestId("inspector-status").textContent).toContain("rev 8");
@@ -162,17 +170,32 @@ describe("InspectorPanel", () => {
     await act(async () => {
       fireEvent.click(getByTestId("inspector-apply-p-2"));
     });
+    await act(async () => {
+      fireEvent.click(getByTestId("inspector-confirm"));
+    });
     expect(edit).toHaveBeenLastCalledWith(PID, 8, expect.anything(), { op: "class", from: "p-2", to: "p-4" });
   });
 
   it("shows a clear message for an ambiguous edit", async () => {
-    const { getByTestId, edit } = await mountPanel();
-    edit.mockRejectedValueOnce(Object.assign(new Error("x"), { status: 409, serverMessage: "inspector_ambiguous: twice" }));
+    const { getByTestId, preview } = await mountPanel();
+    preview.mockRejectedValueOnce(Object.assign(new Error("x"), { status: 409, serverMessage: "inspector_ambiguous: twice" }));
     fireEvent.change(getByTestId("inspector-text"), { target: { value: "Other" } });
     await act(async () => {
       fireEvent.click(getByTestId("inspector-save-text"));
     });
     expect(getByTestId("inspector-error").textContent).toContain("mai multe ori");
+  });
+
+  it("cancelling the confirmation writes nothing", async () => {
+    const { getByTestId, edit, preview } = await mountPanel();
+    fireEvent.change(getByTestId("inspector-text"), { target: { value: "Other" } });
+    await act(async () => {
+      fireEvent.click(getByTestId("inspector-save-text"));
+    });
+    expect(preview).toHaveBeenCalledTimes(1);
+    fireEvent.click(getByTestId("inspector-cancel"));
+    expect(() => getByTestId("inspector-target")).toThrow();
+    expect(edit).not.toHaveBeenCalled();
   });
 
   it("attaches the descriptor + cropped capture to the chat", async () => {

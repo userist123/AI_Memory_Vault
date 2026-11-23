@@ -33,7 +33,7 @@ from sqlalchemy import select
 from studio_core import activity, audit
 from studio_core.aas_models import ActivityEvent, AppSetting
 from studio_core.db import Approval
-from studio_core.errors import ApprovalRequired, PolicyDenied, StudioError, Unavailable, ValidationFailed
+from studio_core.errors import ApprovalRequired, ConflictError, PolicyDenied, StudioError, Unavailable, ValidationFailed
 from studio_core.ids import utcnow
 from studio_core.policy import Actor
 from studio_core.services import request_hash
@@ -88,10 +88,14 @@ class Artifact:
     name: str
     files: list[str] = field(default_factory=list)
     embedded: bytes = b""  # desktop: deterministic zip of the dist embedded in the exe (scan input only)
+    store_shots: dict[str, Any] = field(default_factory=dict)  # android: sha256 of each store screenshot + caption
 
     @property
     def params(self) -> dict[str, Any]:
-        return {"projectId": self.project_id, "target": self.target, "sha256": self.sha256}
+        p: dict[str, Any] = {"projectId": self.project_id, "target": self.target, "sha256": self.sha256}
+        if self.store_shots:  # bound into the approval hash: regenerated/swapped screenshots need a new approval
+            p["storeShots"] = dict(self.store_shots)
+        return p
 
 
 # ---------------------------------------------------------------- folder setting
@@ -203,7 +207,7 @@ def recorded_build(studio: Any, project_id: str, target: str) -> tuple[str, dict
 
 
 def prepare(studio: Any, project_id: str, target: str) -> Artifact:
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
     if target not in TARGETS:
         raise ValidationFailed("target must be web, android or desktop")
@@ -264,7 +268,14 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
                                 target="android", revision=revision)
         names = ["app-debug.apk"]
     sha = hashlib.sha256(data).hexdigest()
-    return Artifact(project_id, target, data, sha, revision, slug, names)
+    shots_fp: dict[str, Any] = {}
+    if target == "android":
+        try:
+            from . import store_shots
+            shots_fp = store_shots.fingerprint(studio.settings, project_id)
+        except (OSError, ValueError):
+            shots_fp = {}
+    return Artifact(project_id, target, data, sha, revision, slug, names, store_shots=shots_fp)
 
 
 # ---------------------------------------------------------------- scan
@@ -350,7 +361,7 @@ def request(studio: Any, actor: Actor, art: Artifact) -> dict[str, Any]:
 
 def project_folder(studio: Any, project_id: str, dest_root: Path | None = None) -> Path:
     """``<export root>/<name>-<id16>``: where ``write`` puts this project's exports (computed, never from a request)."""
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
     project = studio.get_project(Actor("system", "export", "system"), project_id, with_components=False)
     root = Path(dest_root) if dest_root is not None else export_root(studio)
@@ -379,6 +390,10 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
     _safe_dir(root / f"{art.name}-{art.project_id[4:]}")  # S9b review L2: no link in the chain BEFORE any mkdir
 
     def _do(ctx: Any) -> dict[str, Any]:
+        if art.target == "android":  # nothing is written if the approved screenshots are no longer the stored ones
+            from . import store_shots
+            if store_shots.fingerprint(studio.settings, art.project_id) != art.store_shots:
+                raise ConflictError("the store screenshots changed after the owner approved the export: approve again")
         folder = root / f"{art.name}-{art.project_id[4:]}"
         _safe_dir(folder)
         folder.mkdir(parents=True, exist_ok=True)
@@ -396,7 +411,7 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
         if art.target == "android":  # W5: framed store screenshots (if the owner/agent made them) travel with the APK
             try:
                 from . import store_shots
-                shots = store_shots.copy_for_export(studio.settings, art.project_id, folder)
+                shots = store_shots.copy_for_export(studio.settings, art.project_id, folder, art.store_shots)
             except (OSError, ValueError):
                 shots = []
         ctx.verification = "verified"

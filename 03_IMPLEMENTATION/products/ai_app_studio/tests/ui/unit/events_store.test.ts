@@ -179,3 +179,24 @@ describe("preview reload nonce", () => {
     expect(s.previewNonce).toBe(before + 1); // a diff alone never reloads the preview
   });
 });
+
+describe("qa.result is kept per suite (Opus review round 1)", () => {
+  const FLOWS = "flows rev 3: 1/2 passed\nx login [shot ab12cd34ef56]: boom";
+  it("two suites coexist and each keeps its latest result", () => {
+    const s = play(
+      ev("qa.result", { suite: "flows", passed: 1, failed: 1, summary: FLOWS }),
+      ev("qa.result", { suite: "gates", passed: 4, failed: 0, summary: "axe: ok" }),
+    );
+    expect(s.qaSuites["flows"]?.summary).toBe(FLOWS);
+    expect(s.qaSuites["gates"]?.summary).toBe("axe: ok");
+    const s2 = reducer(s, { type: "event", event: ev("qa.result", { suite: "flows", passed: 2, failed: 0, summary: "flows rev 4: 2/2 passed" }) });
+    expect(s2.qaSuites["flows"]?.passed).toBe(2);
+    expect(s2.qaSuites["gates"]?.summary).toBe("axe: ok");
+    expect(s2.qa?.summary).toBe("flows rev 4: 2/2 passed"); // the timeline line is still the latest event
+  });
+  it("a hostile suite name cannot touch the prototype", () => {
+    const s = play(ev("qa.result", { suite: "__proto__", passed: 1, failed: 0, summary: "x" }));
+    expect(({} as Record<string, unknown>)["passed"]).toBeUndefined();
+    expect(Object.keys(s.qaSuites).length).toBe(1);
+  });
+});

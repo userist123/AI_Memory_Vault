@@ -122,7 +122,7 @@ def _register_and_prune(settings: Any, project_id: str, added: list[tuple[str, i
 def forget_project(settings: Any, project_id: str) -> int:
     """Project delete: drop the project's index and unlink its PNGs that no other project's index references.
     Returns the number of PNGs removed."""
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         return 0
     idx = _index_dir(settings)
     path = _contained(idx, f"{project_id}.json")
@@ -213,7 +213,7 @@ def capture(studio: Any, project_id: str, frames: list[str] | None = None, *, ru
     """Capture ``frames``; returns {revision, url, captures: [{frame, sha256, width, height, bytes}], console: [...]}.
     ``shoot`` returns the PNGs per frame, or (PNGs, raw console lines). With ``probe`` it is called as
     ``shoot(url, frames, probe)`` and returns (PNGs, console, {frame: probe result}); the result gains ``probe``."""
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
     frames = list(frames or FRAMES)
     if not frames or any(f not in FRAMES for f in frames) or len(set(frames)) != len(frames):

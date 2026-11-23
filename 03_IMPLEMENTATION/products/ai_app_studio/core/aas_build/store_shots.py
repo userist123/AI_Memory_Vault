@@ -9,6 +9,7 @@ approval flow of the export itself is unchanged (the PNGs are extras, never exec
 
 from __future__ import annotations
 
+import hashlib
 import io
 import os
 import re
@@ -17,6 +18,8 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
+
+from studio_core.errors import ConflictError
 
 from . import brand
 
@@ -132,19 +135,47 @@ def generate(studio: Any, project_id: str, *, caption: str | None = None,
     return {"revision": cap["revision"], "screenshots": out}
 
 
-def copy_for_export(settings: Any, project_id: str, dest: Path) -> list[str]:
-    """Copy the stored store images (plain PNG files only) into ``dest``/store-screenshots; names returned."""
+def _store_files(src: Path) -> list[Path]:
+    if not src.is_dir() or src.is_symlink():
+        return []
+    return [f for f in sorted(src.glob("store-*.png"))
+            if not f.is_symlink() and f.is_file() and f.stat().st_size <= 8 * 1024 * 1024]
+
+
+def fingerprint(settings: Any, project_id: str) -> dict[str, Any]:
+    """sha256 of every exportable store screenshot plus of the caption text: bound into the export approval."""
+    store = brand.BrandStore(settings.data_dir)
+    out: dict[str, Any] = {}
+    for f in _store_files(store.shots_dir(project_id)):
+        data = f.read_bytes()
+        if data.startswith(_PNG):
+            out[f.name] = hashlib.sha256(data).hexdigest()
+    if not out:
+        return {}
+    try:
+        caption = store.config(project_id).caption
+    except Exception:  # noqa: BLE001 - an unreadable brand config binds as "no caption"
+        caption = ""
+    out["caption"] = hashlib.sha256(caption.encode("utf-8")).hexdigest()
+    return out
+
+
+def copy_for_export(settings: Any, project_id: str, dest: Path, expected: dict[str, Any] | None = None) -> list[str]:
+    """Copy the stored store images (plain PNG files only) into ``dest``/store-screenshots; names returned.
+    With ``expected`` (the approved fingerprint) any difference raises ConflictError: re-approval needed."""
+    if expected is not None and fingerprint(settings, project_id) != expected:
+        raise ConflictError("the store screenshots changed after the owner approved the export: approve again")
     src = brand.BrandStore(settings.data_dir).shots_dir(project_id)
     names: list[str] = []
     if not src.is_dir() or src.is_symlink():
         return names
     target = Path(dest) / "store-screenshots"
-    for f in sorted(src.glob("store-*.png")):
-        if f.is_symlink() or not f.is_file() or f.stat().st_size > 8 * 1024 * 1024:
-            continue
+    for f in _store_files(src):
         data = f.read_bytes()
         if not data.startswith(_PNG):
             continue
+        if expected is not None and hashlib.sha256(data).hexdigest() != expected.get(f.name):
+            raise ConflictError("the store screenshots changed after the owner approved the export: approve again")
         target.mkdir(parents=True, exist_ok=True)
         tmp = target / f".{f.name}.{os.getpid()}.partial"
         tmp.write_bytes(data)

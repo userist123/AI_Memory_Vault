@@ -42,7 +42,7 @@ class QaRunReq(BaseModel):
 
 
 def _pid(pid: str) -> str:
-    if not _PID.match(pid):
+    if not _PID.fullmatch(pid):
         raise ValidationFailed("invalid project id")
     return pid
 

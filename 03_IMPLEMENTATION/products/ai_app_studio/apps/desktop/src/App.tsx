@@ -51,6 +51,7 @@ import {
   fetchInspectorOptions,
   inspectorCapture,
   inspectorEdit,
+  inspectorPreview,
   type ChatAttachment,
   type EditOp,
   type InspectorSelection,
@@ -384,6 +385,10 @@ export function App() {
     if (!session) return Promise.reject(new Error("no session"));
     return inspectorEdit(session, pid, rev, sel.element, op);
   }, [session]);
+  const inspectorDryRun = useCallback((pid: string, rev: number, sel: InspectorSelection, op: EditOp) => {
+    if (!session) return Promise.reject(new Error("no session"));
+    return inspectorPreview(session, pid, rev, sel.element, op);
+  }, [session]);
   const inspectorShot = useCallback((sel: InspectorSelection) => {
     if (!session) return Promise.resolve(null);
     return inspectorCapture(session, sel.projectId, sel.device, sel.element);
@@ -522,6 +527,7 @@ export function App() {
             <InspectorPanel
               selection={inspected}
               loadOptions={inspectorOptions}
+              preview={inspectorDryRun}
               edit={inspectorSave}
               capture={inspectorShot}
               onAttach={setChatAttachment}
@@ -610,7 +616,7 @@ export function App() {
             </aside>
           ) : null;
         })}
-        <QaResultsPanel gates={!demo && session ? qaGates : null} qa={state.qa} captures={state.captures} load={captureLoader?.load ?? null} />
+        <QaResultsPanel gates={!demo && session ? qaGates : null} qa={state.qaSuites["flows"] ?? null} captures={state.captures} load={captureLoader?.load ?? null} />
         <div className={rightTab === "mirror" ? "mirror-wrap" : "mirror-wrap hidden"}>
           <EmulatorMirror
             stream={mirrorLive ? null : mirrorStream}

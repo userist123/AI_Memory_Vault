@@ -70,7 +70,7 @@ def product_name(name: str) -> str:
 
 
 def tauri_conf(project_id: str, name: str) -> dict[str, Any]:
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise BuildError("invalid project id")
     title = product_name(name)
     return {

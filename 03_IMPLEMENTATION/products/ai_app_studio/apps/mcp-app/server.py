@@ -42,7 +42,7 @@ SCHEMA_VERSION = "aas.mcp/1"
 WRITE_TOOLS = frozenset({"code_write_file", "code_delete_file", "plan_submit", "app_build", "brand_kit", "device_start",
                          "device_install", "device_tap", "device_screenshot", "app_export", "flow_test_write"})
 # P5f: these need an approved plan of the current run (runner) / of this session (external MCP) while the gate is ON
-PLAN_GATED = frozenset({"code_write_file", "code_delete_file", "app_build", "flow_test_write"})
+PLAN_GATED = frozenset({"code_write_file", "code_delete_file", "app_build", "flow_test_write", "brand_kit"})
 PLAN_WAIT_DEFAULT = 900.0
 _SESSION_PLANS: set[str] = set()  # plans submitted through THIS server process (external MCP sessions)
 PROJECT_ID_PATTERN = r"^prj_[0-9a-f]{16}$"

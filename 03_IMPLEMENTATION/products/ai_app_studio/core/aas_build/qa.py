@@ -324,7 +324,7 @@ def current_site(settings: Any, project_id: str) -> str:
 
 
 def latest(settings: Any, project_id: str) -> dict[str, Any] | None:
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         return None
     p = capture._contained(qa_dir(settings), f"{project_id}.json")  # noqa: SLF001
     try:
@@ -350,7 +350,7 @@ def run(studio: Any, project_id: str, *, run_id: str | None = None, frames: list
         capture_fn: Any = None, axe_src: str | None = None) -> dict[str, Any]:
     """Run the gates on the current web build; stores and returns the result
     {schema, projectId, revision, site, ranAt, passed, counts, issues, truncated, axeVersion, frames: {frame: sha256}}."""
-    if not isinstance(project_id, str) or not _PID.match(project_id):
+    if not isinstance(project_id, str) or not _PID.fullmatch(project_id):
         raise ValidationFailed("invalid project id")
     frames = list(frames or capture.FRAMES)
     site = current_site(studio.settings, project_id)

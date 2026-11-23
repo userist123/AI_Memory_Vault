@@ -88,7 +88,7 @@ Complete catalogue; every schema is `additionalProperties:false`; `projectId` = 
 | device_key | key enum[BACK,HOME,ENTER,APP_SWITCH,DEL] |
 | device_screenshot | (none) |
 | device_stop | (none) |
-| qa_run | projectId, suite enum[unit,e2e,a11y] |
+| qa_run | projectId, vision bool (built, W2: axe + layout gates on the built web app; see the as-built catalogue) |
 | export_request | projectId, target enum[web-zip,apk-debug] |
 | export_run | projectId, target, approvalId |
 No shell/exec/approve/decide/deploy/secret/config/computer_* tool, no free URL, no host path, no raw adb or
@@ -451,17 +451,18 @@ allow/deny; `policy.modify`, `secrets.read`, `credentials.read`, `registry.modif
 `shell.execute` deny/deny; unknown -> deny. Plans are decided on the owner route `/plans/<id>/decide`
 (content-hash bound), not through a policy row.
 
-**MCP catalogue as built (supersedes the 30-tool list and CHECKPOINT "30 tools"): 15 tools.**
+**MCP catalogue as built (supersedes the 30-tool list and CHECKPOINT "30 tools"): 20 tools.**
 `project_list`, `project_inspect`, `code_list_files`, `code_read_file`, `code_write_file`, `code_delete_file`,
 `activity_list`, `plan_submit`, `app_build {web|android|desktop}`, `preview_capture {phone|tablet|desktop}`,
 `device_start {phone|tablet}`, `device_install`, `device_tap`, `device_screenshot`,
-`app_export {web|android|desktop}`.
+`app_export {web|android|desktop}`, `brand_kit` (W5, plan-gated), `qa_run` (W2), `flow_test_write` (W3, plan-gated),
+`flow_test_run` (W3), `baseline_status` (W6, compare only).
 All inputs are closed (`additionalProperties: false`), project ids pattern-checked, a runner grant pins every call
 to the run's project, external MCP is off by default (PX1). Results: a JSON text block; `preview_capture` and
 `device_screenshot` add an `<<UNTRUSTED DATA: ...>>` text block (console errors / note) and an MCP image block
 (downscaled to <= 1280 px, <= 512 KiB after base64 encoding, PNG or JPEG; the runner caps one stream-json line at
 2 MiB) whose sha256 is reported next to the stored full-size PNG's.
-Not built: `deps_request_add`, `qa_run`, `preview_interact`, `device_swipe` / `device_text`. The Windows desktop
+Not built: `deps_request_add`, `preview_interact`, `device_swipe` / `device_text`. The Windows desktop
 target is built (S9c, `target desktop`, below).
 
 **Build stages as built (supersedes 3.3-3.4).** No install stage, no `aas-store-<lockSha>` volume, no
@@ -532,5 +533,5 @@ host (toolchain cargo.exe, minimal env, dead proxy, studio CARGO_HOME/target/tmp
 (written in a staging dir, put in place by one directory rename; S9c review M1);
 build.finished `{target desktop, artifactSha256, sizeBytes}`. `app_export target desktop` / REST / UI "Export
 desktop (exe)": exe sha must match the recorded build; scan = raw exe + every embedded dist file; approval bound
-to the sha256. MCP catalogue unchanged (15 tools; target enums gain `desktop`). No NSIS, no signing, no launch
+to the sha256. MCP catalogue at that stage unchanged (15 tools; target enums gain `desktop`; 20 after W2-W6). No NSIS, no signing, no launch
 button (open).

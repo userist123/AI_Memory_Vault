@@ -5,6 +5,7 @@ import {
   MAX_TEXT,
   type ChatAttachment,
   type EditOp,
+  type EditPreview,
   type EditResult,
   type InspectorOptions,
   type InspectorSelection,
@@ -42,6 +43,9 @@ function errorText(e: unknown): string {
 export function InspectorPanel(props: {
   selection: InspectorSelection;
   loadOptions: (projectId: string) => Promise<InspectorOptions>;
+  /** step 1: dry run, names the file:line the edit would change (nothing is written) */
+  preview: (projectId: string, baseRevision: number, sel: InspectorSelection, op: EditOp) => Promise<EditPreview>;
+  /** step 2: only after the owner confirmed the shown target */
   edit: (projectId: string, baseRevision: number, sel: InspectorSelection, op: EditOp) => Promise<EditResult>;
   capture: (sel: InspectorSelection) => Promise<string | null>;
   onAttach: (a: ChatAttachment) => void;
@@ -55,11 +59,13 @@ export function InspectorPanel(props: {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState<{ op: EditOp; target: EditPreview } | null>(null);
 
   useEffect(() => {
     let live = true;
     setText(el.text);
     setSwaps({});
+    setPending(null);
     setStatus("");
     setError("");
     loadOptions(selection.projectId)
@@ -70,11 +76,25 @@ export function InspectorPanel(props: {
     };
   }, [selection, el.text, loadOptions]);
 
+  const ask = (op: EditOp) => {
+    if (busy || !opts) return;
+    setBusy(true);
+    setError("");
+    setStatus("");
+    setPending(null);
+    props
+      .preview(selection.projectId, opts.revision, selection, op)
+      .then((target) => setPending({ op, target }))
+      .catch((e: unknown) => setError(errorText(e)))
+      .finally(() => setBusy(false));
+  };
+
   const run = (op: EditOp) => {
     if (busy || !opts) return;
     setBusy(true);
     setError("");
     setStatus("");
+    setPending(null);
     props
       .edit(selection.projectId, opts.revision, selection, op)
       .then((r) => {
@@ -137,7 +157,7 @@ export function InspectorPanel(props: {
             className="btn primary"
             data-testid="inspector-save-text"
             disabled={busy || !opts || !text.trim() || text === el.text}
-            onClick={() => run({ op: "text", to: text })}
+            onClick={() => ask({ op: "text", to: text })}
           >
             Salvează textul
           </button>
@@ -169,13 +189,24 @@ export function InspectorPanel(props: {
               className="btn"
               data-testid={`inspector-apply-${c}`}
               disabled={busy || pick === c}
-              onClick={() => run({ op: "class", from: c, to: pick })}
+              onClick={() => ask({ op: "class", from: c, to: pick })}
             >
               Aplică
             </button>
           </div>
         );
       })}
+      {pending ? (
+        <div className="row" data-testid="inspector-confirm-box">
+          <span data-testid="inspector-target">{`Va edita ${pending.target.path}:${pending.target.line}`}</span>
+          <button className="btn primary" data-testid="inspector-confirm" disabled={busy} onClick={() => run(pending.op)}>
+            Confirmă
+          </button>
+          <button className="btn" data-testid="inspector-cancel" disabled={busy} onClick={() => setPending(null)}>
+            Anulează
+          </button>
+        </div>
+      ) : null}
       <div className="row">
         <button className="btn" data-testid="inspector-attach" disabled={busy} onClick={attach}>
           Trimite în chat
