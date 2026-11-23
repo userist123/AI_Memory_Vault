@@ -124,7 +124,7 @@ class Runner:
     def __init__(self, studio: Any, *, cli: list[str], model: str = "sonnet", max_turns: int = 40,
                  max_budget_usd: float = 2.0, extra_env: Mapping[str, str] | None = None,
                  max_seconds: int = MAX_RUN_SECONDS, plan_timeout: float = PLAN_TIMEOUT_SECONDS,
-                 device_grace: float = DEVICE_GRACE_SECONDS) -> None:
+                 device_grace: float = DEVICE_GRACE_SECONDS, purge_stale: bool = True) -> None:
         self.studio, self.cli, self.model = studio, list(cli), model
         self.max_turns, self.max_budget_usd, self.extra_env = max_turns, max_budget_usd, dict(extra_env or {})
         self.max_seconds = max_seconds
@@ -133,19 +133,26 @@ class Runner:
         self.root = studio.settings.data_dir / "runner"
         self._runs: dict[str, _Run] = {}
         self._lock = threading.Lock()
-        self._purge_stale()
+        if purge_stale:  # the backend passes False and calls purge_stale() itself once its API port is bound
+            self.purge_stale()
 
-    def _purge_stale(self) -> None:
+    def purge_stale(self) -> None:
         """R-A: a backend that crashed mid-run leaves its grant row and ``<runId>.mcp.json`` (with the secret) behind.
-        One Runner per backend process: at start no run of this process exists yet, so everything left is stale."""
-        run_grants.purge_all(self.studio)
+        S7 review L2: call this only once this process owns the API port (a second backend that fails to bind must not
+        touch the first one's grants), and never for a run of this process that is still alive."""
+        with self._lock:
+            live = {rid for rid, r in self._runs.items() if r.thread is not None and r.thread.is_alive()}
+        run_grants.purge_all(self.studio, keep=live)
         if self.root.is_dir():
             for f in self.root.glob("run_*.mcp.json"):
-                f.unlink(missing_ok=True)
+                if f.name[: -len(".mcp.json")] not in live:
+                    f.unlink(missing_ok=True)
             for sub in ("runs", "tmp"):
                 d = self.root / sub
                 if d.is_dir() and not d.is_symlink():
                     for child in d.iterdir():
+                        if child.name in live:
+                            continue
                         if child.is_dir() and not child.is_symlink():
                             shutil.rmtree(child, ignore_errors=True)
                         else:

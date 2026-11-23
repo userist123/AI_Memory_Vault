@@ -132,6 +132,9 @@ def test_install_and_launch_only_the_projects_package(studio) -> None:  # type: 
     apk = service.apk_path(studio.settings, pid)
     apk.parent.mkdir(parents=True)
     apk.write_bytes(b"PK\x03\x04apk")
+    sha = hashlib.sha256(b"PK\x03\x04apk").hexdigest()
+    activity.record(studio, "build.finished", project_id=pid, run_id="run_x", source="build", artifact_sha256=sha,
+                    payload={"target": "android", "status": "ok", "artifactSha256": sha})
     d, h = _device(studio, "dev.aiappstudio.p" + pid[4:])
     d.start("phone")
     res = d.install(pid, launch=True)

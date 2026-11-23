@@ -417,9 +417,21 @@ def build_genkey_argv(*, docker: str, build_id: str, keys_out: Path, image: str)
 
 def ensure_keystore(*, docker: str, image: str, keys_dir: Path) -> tuple[Path, str]:
     """The studio debug keystore (generated once per install inside the build image, never the owner's
-    Android debug key) and its certificate sha256. Returns (keystore path, signer sha256)."""
+    Android debug key) and its certificate sha256. Returns (keystore path, signer sha256).
+
+    S7 review L4: the pair is committed with a pending marker, so a crash can never leave a keystore without its record:
+    record -> ``<signer>.pending`` (atomic), keystore (atomic), pending -> record (atomic). A pending record whose
+    keystore arrived is finished on the next start; a pending record without a keystore is dropped and regenerated."""
     keystore, signer_file = keys_dir / KEYSTORE_NAME, keys_dir / SIGNER_NAME
+    pending = keys_dir / (SIGNER_NAME + ".pending")
     _studio_keystore(keystore)
+    if pending.is_file() and not pending.is_symlink():
+        if keystore.is_file() and not keystore.is_symlink() and not signer_file.exists():
+            if not re.fullmatch(r"[0-9a-f]{64}", pending.read_text(encoding="ascii", errors="replace").strip()):
+                raise BuildError("the studio keystore certificate record is damaged")
+            os.replace(pending, signer_file)  # the crash happened between the keystore and the final record
+        elif not keystore.exists() and not keystore.is_symlink():
+            pending.unlink()  # the crash happened before the keystore was placed: nothing was signed with it
     if keystore.is_file() and not keystore.is_symlink() and signer_file.is_file():
         sha = signer_file.read_text(encoding="ascii", errors="replace").strip()
         if re.fullmatch(r"[0-9a-f]{64}", sha):
@@ -439,8 +451,11 @@ def ensure_keystore(*, docker: str, image: str, keys_dir: Path) -> tuple[Path, s
         made = stage / KEYSTORE_NAME
         if r.returncode != 0 or not m or not made.is_file() or made.is_symlink():
             raise BuildError("studio keystore generation failed: " + r.stderr.decode("utf-8", "replace")[-300:])
+        staged = stage / SIGNER_NAME
+        staged.write_text(m.group(1) + "\n", encoding="ascii")
+        os.replace(staged, pending)  # record first, marked pending
         os.replace(made, keystore)
-        signer_file.write_text(m.group(1) + "\n", encoding="ascii")
+        os.replace(pending, signer_file)
         return keystore, m.group(1)
     finally:
         shutil.rmtree(stage, ignore_errors=True)

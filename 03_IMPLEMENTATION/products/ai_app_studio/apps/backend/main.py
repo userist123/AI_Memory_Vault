@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import sys
 from pathlib import Path
 from collections.abc import AsyncIterator
@@ -108,7 +109,8 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     activity.register_secret(token)
     register_app_kind()
     studio = Studio(settings, kind="app")
-    runner = Runner(studio, cli=runner_cli or [shutil.which("claude") or "claude"], extra_env=runner_extra_env)
+    runner = Runner(studio, cli=runner_cli or [shutil.which("claude") or "claude"], extra_env=runner_extra_env,
+                    purge_stale=False)  # main() purges once the API port is bound (S7 review L2)
 
     @contextlib.asynccontextmanager
     async def lifespan(a: FastAPI) -> AsyncIterator[None]:
@@ -273,6 +275,38 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     return app
 
 
+def bind_api_socket(port: int) -> socket.socket:
+    """Bind the loopback API port exclusively (raises OSError when another process owns it)."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        if os.name == "nt":
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)  # SO_REUSEADDR on Windows shares the port
+        else:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((HOST, port))
+        s.listen(2048)
+    except OSError:
+        s.close()
+        raise
+    return s
+
+
+def serve(app: FastAPI, port: int) -> None:
+    """Bind first, purge the stale runner grants second (only a process that owns the port is the single instance),
+    then serve on the bound socket."""
+    import uvicorn
+    try:
+        sock = bind_api_socket(port)
+    except OSError as e:
+        sys.exit(f"API port {port} is not available (is another studio backend running?): {e}")
+    try:
+        app.state.runner.purge_stale()
+        cfg = uvicorn.Config(app, host=HOST, port=port, log_level="warning", server_header=False, proxy_headers=False)
+        uvicorn.Server(cfg).run(sockets=[sock])
+    finally:
+        sock.close()
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="python -m apps.backend")
     g = ap.add_mutually_exclusive_group(required=True)
@@ -294,10 +328,8 @@ def main(argv: list[str] | None = None) -> None:
     else:
         token = settings.api_token()
         print("WARNING: dev token file mode - any local process of this user can read the token", file=sys.stderr)
-    import uvicorn
     dev_origins = parse_dev_origins(os.environ.get("AAS_DEV_ORIGINS", ""))
-    uvicorn.run(create_app(settings, token, runner_cli=runner_cli, dev_origins=dev_origins), host=HOST, port=settings.api_port, log_level="warning",
-                server_header=False, proxy_headers=False)
+    serve(create_app(settings, token, runner_cli=runner_cli, dev_origins=dev_origins), settings.api_port)
 
 
 if __name__ == "__main__":

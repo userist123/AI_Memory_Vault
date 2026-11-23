@@ -19,14 +19,16 @@ import hashlib
 import os
 import re
 import shutil
+import tempfile
 import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import select
 from studio_core import activity, audit
-from studio_core.aas_models import AppSetting
+from studio_core.aas_models import ActivityEvent, AppSetting
 from studio_core.errors import PolicyDenied, Unavailable, ValidationFailed
 from studio_core.ids import utcnow
 from studio_core.policy import Actor
@@ -196,9 +198,17 @@ class DeviceService:
         apk = self.studio.settings.data_dir / "preview" / project_id / "app-debug.apk"
         if not apk.is_file() or apk.is_symlink():
             raise Unavailable("no APK has been built for this project (call app_build with target android first)")
-        sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+        data = apk.read_bytes()
+        sha = hashlib.sha256(data).hexdigest()
+        recorded = self._recorded_apk_sha(project_id)
+        if recorded is None:
+            self._rec("device.log", text="install refused: no recorded build for this APK")
+            raise Unavailable("the APK has no recorded build (build.finished) for this project: rebuild with app_build target android")
+        if sha != recorded:
+            self._rec("device.log", text=f"install refused: APK sha256 {sha[:12]} != recorded build {recorded[:12]}")
+            raise Unavailable("the APK on disk does not match the sha256 recorded by its build: rebuild with app_build target android")
+        rep = self._install_verified(s, data, sha)
         self._rec("device.log", text=f"install {apk.name} sha256 {sha[:12]}")
-        rep = s.install(apk)
         if not launch:
             return rep
         pkg = PKG_PREFIX + project_id[4:]
@@ -210,6 +220,37 @@ class DeviceService:
         lr = s.launch(pkg)
         self._rec("device.log", text=f"launch {pkg} {'ok' if lr.get('ok') else 'failed'}")
         return {"install": rep, "launch": lr, "packageId": pkg, "apkSha256": sha}
+
+    def _recorded_apk_sha(self, project_id: str) -> str | None:
+        """sha256 of the project's most recent successful android build (the ``build.finished`` event), else None."""
+        with self.studio.session() as db:
+            q = (select(ActivityEvent).where(ActivityEvent.project_id == project_id, ActivityEvent.kind == "build.finished",
+                                             ActivityEvent.artifact_sha256.is_not(None))
+                 .order_by(ActivityEvent.seq.desc()).limit(50))
+            for e in db.execute(q).scalars():
+                pl = e.payload or {}
+                if pl.get("target") == "android" and pl.get("status") == "ok":
+                    return e.artifact_sha256
+        return None
+
+    def _install_verified(self, session: Any, data: bytes, sha: str) -> dict[str, Any]:
+        """Install from a private copy of the exact bytes that were hashed; the copy is re-hashed before use."""
+        stage = Path(tempfile.mkdtemp(prefix="aas-apk-", dir=self._stage_root()))
+        try:
+            copy = stage / "app-debug.apk"
+            fd = os.open(copy, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+            if hashlib.sha256(copy.read_bytes()).hexdigest() != sha:
+                raise Unavailable("the staged APK copy does not match its sha256")
+            return session.install(copy)
+        finally:
+            shutil.rmtree(stage, ignore_errors=True)
+
+    def _stage_root(self) -> Path:
+        root = self.studio.settings.data_dir / "device" / "stage"
+        root.mkdir(parents=True, exist_ok=True)
+        return root
 
     def stop(self) -> dict[str, Any]:
         with self._lock:

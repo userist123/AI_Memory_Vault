@@ -71,22 +71,17 @@ COPY --from=template /out /opt/aas/android-template
 ENV GRADLE_USER_HOME=/tmp/gradle-home ANDROID_USER_HOME=/tmp/android-user HOME=/tmp/home \
     GRADLE_OPTS="-Xmx256m -Dorg.gradle.native=false"
 
-# ---- 5. resolve: one online build writes verification-metadata.xml and fills the dependency cache -----------------
+# ---- 5. resolve: one online build FILLS the dependency cache, verified against the COMMITTED metadata ---------------
+# S7 review M2: gradle/verification-metadata.xml is committed (template/gradle/, copied in by the template stage) and the
+# resolve build runs --dependency-verification strict: an artifact that is missing from the file or whose sha256 differs
+# fails the image build. Nothing is generated at build time any more (no trust-on-first-use per build). To change the
+# dependency set, regenerate the file by hand (gradle --write-verification-metadata sha256), review the diff, commit it.
 FROM base AS resolve
-RUN set -eu; cp -R /opt/aas/android-template /tmp/r && mkdir -p /tmp/home && cd /tmp/r/android \
- && keytool -genkeypair -noprompt -storetype PKCS12 -keystore /tmp/resolve.keystore -storepass android -keypass android \
-      -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 2 -dname "CN=resolve" >/dev/null 2>&1 \
- && gradle --no-daemon --console=plain --write-verification-metadata sha256 -PaasKeystore=/tmp/resolve.keystore assembleDebug \
- && test -f app/build/outputs/apk/debug/app-debug.apk \
- && mkdir -p /opt/gradle-ro /opt/meta && cp gradle/verification-metadata.xml /opt/meta/ \
- && cp -R /tmp/gradle-home/caches/modules-2 /opt/gradle-ro/modules-2 \
- && find /opt/gradle-ro \( -name '*.lock' -o -name 'gc.properties' \) -delete \
- && test "$(ls /opt/android-sdk/build-tools)" = "36.0.0" && test "$(ls /opt/android-sdk/platforms)" = "android-36"
+RUN set -eu; cp -R /opt/aas/android-template /tmp/r && mkdir -p /tmp/home && cd /tmp/r/android  && test -s gradle/verification-metadata.xml && grep -q '<sha256 value=' gradle/verification-metadata.xml  && keytool -genkeypair -noprompt -storetype PKCS12 -keystore /tmp/resolve.keystore -storepass android -keypass android       -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 2 -dname "CN=resolve" >/dev/null 2>&1  && gradle --no-daemon --console=plain --dependency-verification strict -PaasKeystore=/tmp/resolve.keystore assembleDebug  && test -f app/build/outputs/apk/debug/app-debug.apk  && mkdir -p /opt/gradle-ro  && cp -R /tmp/gradle-home/caches/modules-2 /opt/gradle-ro/modules-2  && find /opt/gradle-ro \( -name '*.lock' -o -name 'gc.properties' \) -delete  && test "$(ls /opt/android-sdk/build-tools)" = "36.0.0" && test "$(ls /opt/android-sdk/platforms)" = "android-36"
 
 # ---- 6. final ------------------------------------------------------------------------------------------------------
 FROM base
 COPY --from=resolve /opt/gradle-ro /opt/gradle-ro
-COPY --from=resolve /opt/meta/verification-metadata.xml /opt/aas/android-template/android/gradle/verification-metadata.xml
 COPY --from=aas aas-build-android /usr/local/bin/aas-build-android
 RUN sed -i 's/\r$//' /usr/local/bin/aas-build-android && chmod 0755 /usr/local/bin/aas-build-android \
  && find /opt/aas/android-template -type f \( -name '*.gradle' -o -name '*.properties' \) -exec sed -i 's/\r$//' {} + \

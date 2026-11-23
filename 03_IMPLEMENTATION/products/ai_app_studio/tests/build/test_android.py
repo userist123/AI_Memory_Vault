@@ -154,6 +154,29 @@ def test_ensure_keystore_never_replaces_an_unrecorded_keystore(tmp_path: Path) -
     assert (keys / "aas-debug.keystore").read_bytes() == b"x"
 
 
+# ---------------------------------------------------------------- committed verification metadata (S7 review M2)
+ANDROID_IMAGE = Path(__file__).resolve().parents[2] / "images" / "android-build"
+
+
+def test_committed_verification_metadata_pins_every_artifact_with_sha256() -> None:
+    import xml.etree.ElementTree as ET
+    ns = "{https://schema.gradle.org/dependency-verification}"
+    root = ET.parse(ANDROID_IMAGE / "template" / "gradle" / "verification-metadata.xml").getroot()
+    arts = list(root.iter(ns + "artifact"))
+    assert len(arts) > 300
+    for a in arts:
+        digests = [s.get("value", "") for s in a.findall(ns + "sha256")]
+        assert digests and all(len(d) == 64 and set(d) <= set("0123456789abcdef") for d in digests), a.get("name")
+
+
+def test_dockerfile_verifies_against_the_committed_file_and_never_generates_it() -> None:
+    df = (ANDROID_IMAGE / "Dockerfile").read_text(encoding="utf-8")
+    assert "--write-verification-metadata" not in df.replace("regenerate the file by hand (gradle --write-verification-metadata", "")
+    resolve = df[df.index("AS resolve"):df.index("# ---- 6. final")]
+    assert "--dependency-verification strict" in resolve and "verification-metadata.xml" in resolve
+    assert "COPY --from=aas template/ /out/android/" in df  # the committed file travels with the template
+
+
 # ---------------------------------------------------------------- real Docker probes
 IMAGE_ID = _image_id()
 docker_only = pytest.mark.skipif(IMAGE_ID is None, reason="docker or aas-android-build:dev image not available")
@@ -225,6 +248,16 @@ def test_pb7b_tampered_verification_metadata_fails(keys: tuple[Path, str], tmp_p
     assert "Dependency verification failed" in (bad.stdout + bad.stderr)
     ok = _probe(keys, tmp_path / "pos", PREP + GRADLE)  # [+] the same command on the untouched copy succeeds
     assert ok.returncode == 0, (ok.stdout + ok.stderr)[-2000:]
+
+
+@docker_only
+def test_pb7b_artifact_missing_from_the_metadata_fails(keys: tuple[Path, str], tmp_path: Path) -> None:
+    # S7 review M2: strict verification refuses an artifact that has no entry (the image build relies on exactly this)
+    drop = ("python3 -c \"import re,pathlib;p=pathlib.Path('gradle/verification-metadata.xml');s=p.read_text();"
+            "p.write_text(re.sub(r'<artifact name=.*?</artifact>', '', s, count=1, flags=re.S))\"; ")
+    bad = _probe(keys, tmp_path, PREP + drop + GRADLE)
+    assert bad.returncode != 0, bad.stdout[-2000:]
+    assert "Dependency verification failed" in (bad.stdout + bad.stderr)
 
 
 @docker_only

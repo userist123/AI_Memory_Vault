@@ -109,11 +109,12 @@ def test_main_binds_loopback_only_and_reads_token_from_stdin(monkeypatch: pytest
 
     import uvicorn
     seen: dict[str, object] = {}
-    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: seen.update(kw))
+    monkeypatch.setattr(uvicorn.Server, "run", lambda self, sockets=None: seen.update(  # S7 L2: serve on a pre-bound socket
+        host=self.config.host, port=self.config.port, bound=sockets[0].getsockname()))  # type: ignore[index]
     monkeypatch.setenv("AAS_DATA_DIR", str(tmp_path / "d"))
     monkeypatch.setattr(sys, "stdin", io.StringIO(TOKEN + "\n"))
     backend.main(["--token-stdin"])
-    assert seen["host"] == "127.0.0.1" and seen["port"] == 17875
+    assert seen["host"] == "127.0.0.1" and seen["port"] == 17875 and seen["bound"] == ("127.0.0.1", 17875)
     monkeypatch.setattr(sys, "stdin", io.StringIO("short\n"))
     with pytest.raises(SystemExit):
         backend.main(["--token-stdin"])

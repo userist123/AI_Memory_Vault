@@ -14,6 +14,7 @@ import hmac
 import json
 import re
 import secrets
+from collections.abc import Iterable
 from typing import Any
 
 from sqlalchemy import delete, func, select
@@ -96,10 +97,14 @@ def revoke(studio: Any, run_id: str) -> None:
         s.execute(delete(AppSetting).where(AppSetting.key == PREFIX + run_id))
 
 
-def purge_all(studio: Any) -> int:
-    """Delete every grant (R-A): called when the Runner starts, so no grant of a crashed earlier process survives."""
+def purge_all(studio: Any, keep: Iterable[str] = ()) -> int:
+    """Delete every grant (R-A) except those of the ``keep`` run ids (runs that are still alive)."""
+    keys = [PREFIX + k for k in keep]
     with studio.session() as s:
-        res = s.execute(delete(AppSetting).where(AppSetting.key.like(PREFIX + "%")))
+        q = delete(AppSetting).where(AppSetting.key.like(PREFIX + "%"))
+        if keys:
+            q = q.where(AppSetting.key.not_in(keys))
+        res = s.execute(q)
         return int(res.rowcount or 0)
 
 
