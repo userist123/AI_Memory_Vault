@@ -5,7 +5,8 @@
 
 .DESCRIPTION
   Steps (messages in Romanian, for the owner):
-    1. tools on PATH: uv, node, pnpm, cargo (optional: without it the Chromium window is used), docker, claude, wsl;
+    1. tools on PATH: uv, node, pnpm, cargo (optional: without it the Chromium window is used), docker, claude (the Android emulator
+       host is set up separately by the owner, see docs/GHID_UTILIZARE.md; PM3a: studio code never touches it);
     2. uv sync --frozen (Python backend);
     3. pnpm install --frozen-lockfile (desktop UI);
     4. cargo build in apps/desktop/src-tauri (dev build of the studio window: it loads the vite dev server);
@@ -43,7 +44,7 @@ Write-Host 'AI App Studio - pregătire (o singură dată)' -ForegroundColor Cyan
 
 # 1. tools
 $uv = Find-Tool 'uv'; $node = Find-Tool 'node'; $pnpm = Find-Tool 'pnpm.cmd'; $cargo = Find-Tool 'cargo'
-$docker = Find-Tool 'docker'; $claude = Find-Tool 'claude'; $wsl = Find-Tool 'wsl'
+$docker = Find-Tool 'docker'; $claude = Find-Tool 'claude'
 if (-not $pnpm -and $node) {
   $corepack = Find-Tool 'corepack.cmd'
   if ($corepack -and (Invoke-Step $corepack @('enable', 'pnpm') $Desktop) -eq 0) { $pnpm = Find-Tool 'pnpm.cmd' }
@@ -54,7 +55,6 @@ if (-not $pnpm) { Add-Result 'pnpm' 'LIPSĂ' 'instalează: npm install -g pnpm@1
 if (-not $cargo) { Add-Result 'cargo (Rust)' 'ATENȚIE' 'fără Rust studioul se deschide într-o fereastră Chromium; pentru fereastra proprie: winget install --id Rustlang.Rustup -e' }
 if (-not $docker) { Add-Result 'Docker Desktop' 'LIPSĂ' 'instalează Docker Desktop (winget install --id Docker.DockerDesktop -e); fără el nu se pot construi aplicații' }
 if (-not $claude) { Add-Result 'Claude CLI' 'LIPSĂ' 'instalează Claude Code (claude.ai/install), apoi rulează claude o dată ca să te autentifici' }
-if (-not $wsl) { Add-Result 'WSL' 'ATENȚIE' 'doar pentru emulatorul Android: wsl --install, apoi wsl\install.ps1' }
 
 # 2. Python backend
 if ($uv) {
