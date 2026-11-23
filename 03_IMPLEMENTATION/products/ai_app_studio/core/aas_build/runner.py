@@ -15,6 +15,7 @@ import re
 import shutil
 import stat
 import subprocess
+import threading
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -23,6 +24,8 @@ from pathlib import Path
 ENTRYPOINT = "/usr/local/bin/aas-build-web"
 CONTAINER_PREFIX = "aas-b-"
 BUILD_TIMEOUT_S = 600
+LOG_CAP_BYTES = 1024 * 1024
+FSIZE_ULIMIT = 64 * 1024 * 1024  # per-file write cap inside the container (RLIMIT_FSIZE)
 ALLOWED_EXT = frozenset({"html", "js", "css", "map", "json", "png", "jpg", "jpeg", "webp", "svg", "ico", "woff2", "txt"})
 CONTROL_NAMES = frozenset({".claude", ".mcp.json", "claude.md", "agents.md"})
 
@@ -74,10 +77,10 @@ def build_web_argv(*, docker: str, build_id: str, ctx: Path, out: Path, image: s
     return [
         docker, "run", "--rm", "--name", CONTAINER_PREFIX + build_id,
         "--network", "none",
-        "--read-only", "--tmpfs", "/tmp:rw,exec,nosuid,nodev,size=1g",  # noqa: S108 - container path; exec needed for native vite/rolldown binaries
+        "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=1g",  # noqa: S108 - container path; vite runs from the image's /opt/aas/kit/node_modules
         "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
         "--user", "1000:1000", "--cpus", cpus, "--memory", memory,
-        "--pids-limit", "512",
+        "--pids-limit", "512", "--ulimit", f"fsize={FSIZE_ULIMIT}:{FSIZE_ULIMIT}",
         "-e", "HOME=/tmp/home", "-e", "CI=1",
         "-v", f"{_check_dir(ctx, 'ctx')}:/src:ro",
         "-v", f"{_check_dir(out, 'out')}:/out:rw",
@@ -92,32 +95,120 @@ def _env() -> dict[str, str]:
 
 
 def docker_container_exists(docker: str, name: str) -> bool:
+    """True = exists. False ONLY when the daemon answered "No such container/object"; any other failure raises (fail closed)."""
     if not os.path.isabs(docker) or not re.fullmatch(CONTAINER_PREFIX + r"[a-z0-9-]{8,40}", name):
         raise BuildError("invalid docker path or container name")
     r = subprocess.run([docker, "container", "inspect", name], capture_output=True, timeout=60, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
-    return r.returncode == 0
+    if r.returncode == 0:
+        return True
+    err = (r.stderr or b"").lower()
+    if b"no such container" in err or b"no such object" in err:  # daemon wording differs by version
+        return False
+    raise BuildError("cannot determine whether the build container is gone (daemon error); failing closed")
 
 
 def _docker_kill(docker: str, name: str) -> None:
     subprocess.run([docker, "kill", name], capture_output=True, timeout=60, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
 
 
+def _tree_size(root: Path) -> int:
+    """Bytes under root without following links (used by the /out watchdog)."""
+    total = 0
+    stack = [str(root)]
+    while stack:
+        try:
+            with os.scandir(stack.pop()) as it:
+                for e in it:
+                    try:
+                        if e.is_dir(follow_symlinks=False):
+                            stack.append(e.path)
+                        else:
+                            total += e.stat(follow_symlinks=False).st_size
+                    except OSError:
+                        continue
+        except OSError:
+            continue
+    return total
+
+
+@dataclass
+class _RunOutcome:
+    returncode: int
+    tail: str
+    over_cap: bool = False
+    timed_out: bool = False
+
+
+def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: int, kill: Callable[[], None],
+                log_cap: int = LOG_CAP_BYTES, poll: float = 0.2) -> _RunOutcome:
+    """Run argv (no shell); keep only the last `log_cap` bytes of stdout/stderr; kill the container if /out outgrows its cap."""
+    proc = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=_env())  # noqa: S603
+    bufs = [bytearray(), bytearray()]
+
+    def pump(stream, buf: bytearray) -> None:  # type: ignore[no-untyped-def]
+        read = getattr(stream, "read1", stream.read)
+        while True:
+            chunk = read(65536)
+            if not chunk:
+                return
+            buf += chunk
+            if len(buf) > log_cap:
+                del buf[: len(buf) - log_cap]
+
+    threads = [threading.Thread(target=pump, args=(proc.stdout, bufs[0]), daemon=True),
+               threading.Thread(target=pump, args=(proc.stderr, bufs[1]), daemon=True)]
+    over = threading.Event()
+    done = threading.Event()
+
+    def watchdog() -> None:
+        while not done.wait(poll):
+            if _tree_size(out) > max_out_bytes:
+                over.set()
+                kill()
+                return
+
+    wd = threading.Thread(target=watchdog, daemon=True)
+    for t in (*threads, wd):
+        t.start()
+    timed_out = False
+    try:
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        kill()
+        proc.kill()
+        proc.wait(timeout=30)
+    finally:
+        done.set()
+    for t in threads:
+        t.join(timeout=10)
+    wd.join(timeout=5)
+    # keep the end of BOTH streams (stdout first, stderr last so error text stays at the very end)
+    tail = bytes(bufs[0]).decode("utf-8", "replace")[-1999:] + "\n" + bytes(bufs[1]).decode("utf-8", "replace")[-2000:]
+    return _RunOutcome(proc.returncode if proc.returncode is not None else -1, tail, over.is_set(), timed_out)
+
+
 def run_web_build(*, docker: str, build_id: str, ctx: Path, out: Path, image: str, dest: Path,
                   container_exists: Callable[[str], bool] | None = None, limits: BuildLimits | None = None,
-                  timeout: int = BUILD_TIMEOUT_S) -> BuildResult:
+                  timeout: int = BUILD_TIMEOUT_S, poll: float = 0.2) -> BuildResult:
+    """Run the offline build and collect output. On ANY failure the out dir is deleted and nothing is left in dest."""
+    limits = limits or BuildLimits()
     argv = build_web_argv(docker=docker, build_id=build_id, ctx=ctx, out=out, image=image)
     name = CONTAINER_PREFIX + build_id
     try:
-        proc = subprocess.run(argv, capture_output=True, timeout=timeout, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
-    except subprocess.TimeoutExpired as e:
-        _docker_kill(docker, name)
-        raise BuildError(f"build timed out after {timeout}s") from e
-    tail = (proc.stdout + b"\n" + proc.stderr).decode("utf-8", "replace")[-4000:]
-    if proc.returncode != 0:
-        raise BuildError(f"build container exit code {proc.returncode}: {tail[-600:]}")
-    exists = container_exists or (lambda n: docker_container_exists(docker, n))
-    res = collect_output(out, dest, container_exists=exists, container_name=name, limits=limits)
-    res.log_tail = tail
+        o = _run_capped(argv, timeout=timeout, out=out, max_out_bytes=limits.max_total_bytes, kill=lambda: _docker_kill(docker, name), poll=poll)
+        if o.over_cap:
+            raise BuildError(f"output size over {limits.max_total_bytes} bytes during the build; container killed")
+        if o.timed_out:
+            raise BuildError(f"build timed out after {timeout}s")
+        if o.returncode != 0:
+            raise BuildError(f"build container exit code {o.returncode}: {o.tail[-600:]}")
+        exists = container_exists or (lambda n: docker_container_exists(docker, n))
+        res = collect_output(out, dest, container_exists=exists, container_name=name, limits=limits)
+    except BaseException:
+        shutil.rmtree(out, ignore_errors=True)
+        raise
+    res.log_tail = o.tail
     return res
 
 

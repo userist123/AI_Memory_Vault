@@ -19,6 +19,8 @@ from urllib.parse import unquote
 BIND_HOST = "127.0.0.1"
 DEFAULT_PORT = 17880
 MAX_SERVE = 50 * 1024 * 1024
+IDLE_TIMEOUT_S = 10.0
+MAX_CONNECTIONS = 32
 
 CSP = (
     "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; "
@@ -72,13 +74,36 @@ def _safe_file(root: Path, rel_segments: list[str]) -> Path | None:
     return cur
 
 
+class _BoundedServer(ThreadingHTTPServer):
+    """ThreadingHTTPServer with a cap on concurrent connections; extra connections are closed immediately."""
+
+    daemon_threads = True
+
+    def __init__(self, addr, handler, max_connections: int) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(addr, handler)
+        self._slots = threading.BoundedSemaphore(max_connections)
+
+    def process_request(self, request, client_address) -> None:  # type: ignore[no-untyped-def]
+        if not self._slots.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        super().process_request(request, client_address)
+
+    def process_request_thread(self, request, client_address) -> None:  # type: ignore[no-untyped-def]
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
+
+
 class PreviewServer:
-    def __init__(self, site_root_for: Callable[[str], Path | None], host: str = BIND_HOST, port: int = DEFAULT_PORT) -> None:
+    def __init__(self, site_root_for: Callable[[str], Path | None], host: str = BIND_HOST, port: int = DEFAULT_PORT,
+                 idle_timeout: float = IDLE_TIMEOUT_S, max_connections: int = MAX_CONNECTIONS) -> None:
         if host != BIND_HOST:
             raise ValueError("preview server binds to 127.0.0.1 only")
         self._site_root_for = site_root_for
-        self.httpd = ThreadingHTTPServer((host, port), self._make_handler())
-        self.httpd.daemon_threads = True
+        self._idle_timeout = idle_timeout
+        self.httpd = _BoundedServer((host, port), self._make_handler(), max_connections)
         self.host, self.port = str(self.httpd.server_address[0]), int(self.httpd.server_address[1])
         self._thread: threading.Thread | None = None
 
@@ -103,6 +128,10 @@ class PreviewServer:
             server_version = "AASPreview/1"
             sys_version = ""
             protocol_version = "HTTP/1.1"
+            # http.server answers a malformed request line in HTTP/0.9 style (no status line, no headers); answering as
+            # HTTP/1.1 keeps the security headers on every error. HTTP/0.9 requests are refused in parse_request.
+            default_request_version = "HTTP/1.1"
+            timeout = server._idle_timeout  # per-connection socket timeout: slow/idle clients are dropped
 
             def log_message(self, *_a: object) -> None:
                 return
@@ -120,12 +149,23 @@ class PreviewServer:
                     self.wfile.write(body)
 
             def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:  # type: ignore[override]
-                self._send(code, (message or "error").encode("ascii", "replace"))
+                # generic body: never reflect the (attacker-controlled) request line back
+                self._send(code, b"bad request" if code == 400 else b"error")
+
+            def parse_request(self) -> bool:
+                if not super().parse_request():
+                    return False
+                if len(self.requestline.split()) != 3:  # HTTP/0.9 simple request ("GET /")
+                    self.send_error(400)
+                    return False
+                return True
 
             def do_HEAD(self) -> None:  # noqa: N802
                 self.do_GET()
 
             def do_GET(self) -> None:  # noqa: N802
+                if len(self.headers.get_all("Host") or []) > 1:
+                    return self._send(400, b"bad request")  # duplicate Host header
                 m = _HOST_RE.match(self.headers.get("Host", ""))
                 if not m or int(m.group(2)) != server.port:
                     return self._send(421, b"misdirected request")  # DNS-rebinding / wrong-origin guard
@@ -133,9 +173,12 @@ class PreviewServer:
                 if root is None:
                     return self._send(404, b"not found")
                 target = self.path.split("?", 1)[0].split("#", 1)[0]
-                if not target.startswith("/") or "%00" in target.lower():
+                if not target.startswith("/") or "%00" in target.lower() or not target.isascii():
                     return self._send(400, b"bad request")
-                path = unquote(target, errors="strict") if target.isascii() else ""
+                try:
+                    path = unquote(target, errors="strict")
+                except UnicodeDecodeError:
+                    return self._send(400, b"bad request")  # invalid UTF-8 percent-encoding (/%ff, /%c0%af)
                 if path == "/":
                     segments = ["index.html"]
                 else:

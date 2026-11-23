@@ -25,9 +25,10 @@ def test_argv_is_hardened_and_offline() -> None:
     a = _argv()
     assert isinstance(a, list) and all(isinstance(x, str) for x in a)
     joined = " ".join(a)
-    for needed in ("--network none", "--read-only", "--cap-drop ALL", "--security-opt no-new-privileges", "--user 1000:1000", "--pids-limit 512", "--memory 2g"):
+    for needed in ("--network none", "--read-only", "--cap-drop ALL", "--security-opt no-new-privileges", "--user 1000:1000", "--pids-limit 512", "--memory 2g", "--ulimit fsize="):
         assert needed in joined, needed
-    assert any(x.startswith("--tmpfs") for x in a)
+    tmpfs = [a[i + 1] for i, x in enumerate(a) if x == "--tmpfs"]
+    assert len(tmpfs) == 1 and "noexec" in tmpfs[0] and "nosuid" in tmpfs[0] and "nodev" in tmpfs[0] and "exec," not in tmpfs[0].replace("noexec", "")
     assert a[0].endswith("docker.exe") and a[1] == "run" and "--rm" in a
     assert a[-1] == "/usr/local/bin/aas-build-web" and a[-2] == IMAGE
 
@@ -70,37 +71,118 @@ def test_argv_requires_absolute_docker_and_dirs() -> None:
         _argv(out=Path("D:/x/o,ut"))  # a comma would let a -v/--mount option smuggle extra fields
 
 
-def test_run_uses_no_shell(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, out_dir: Path) -> None:
-    seen: dict = {}
+class FakePopen:
+    """Stand-in for subprocess.Popen: emits canned stdout/stderr, optionally blocks in wait() until killed."""
 
-    class R:
-        returncode = 0
-        stdout = b""
-        stderr = b""
+    instances: list = []
 
-    def fake_run(argv, **kw):  # type: ignore[no-untyped-def]
-        seen["argv"], seen["kw"] = argv, kw
-        return R()
+    def __init__(self, argv, **kw):  # type: ignore[no-untyped-def]
+        import io
+        import threading
 
-    monkeypatch.setattr(runner.subprocess, "run", fake_run)
-    runner.run_web_build(docker="C:/d/docker.exe", build_id="b0123456789abcdef", ctx=tmp_path, out=out_dir, image=IMAGE,
-                         dest=tmp_path / "site", container_exists=lambda n: False)
-    assert isinstance(seen["argv"], list)
-    assert seen["kw"].get("shell", False) is False
-    assert seen["kw"].get("timeout")
+        type(self).instances.append(self)
+        self.argv, self.kw = argv, kw
+        self.stdout = io.BytesIO(type(self).out_bytes)
+        self.stderr = io.BytesIO(type(self).err_bytes)
+        self.returncode = None
+        self._killed = threading.Event()
+
+    out_bytes = b""
+    err_bytes = b""
+    exit_code = 0
+    block = False
+
+    def wait(self, timeout=None):  # type: ignore[no-untyped-def]
+        if type(self).block and not self._killed.wait(timeout or 30):
+            raise runner.subprocess.TimeoutExpired(self.argv, timeout)
+        self.returncode = 137 if self._killed.is_set() else type(self).exit_code
+        return self.returncode
+
+    def kill(self) -> None:
+        self._killed.set()
 
 
-def test_nonzero_exit_fails_build(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, out_dir: Path) -> None:
-    class R:
-        returncode = 1
-        stdout = b""
-        stderr = b"vite: boom"
+@pytest.fixture()
+def fake_popen(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    class F(FakePopen):
+        instances: list = []
 
-    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: R())
-    with pytest.raises(BuildError, match="exit"):
-        runner.run_web_build(docker="C:/d/docker.exe", build_id="b0123456789abcdef", ctx=tmp_path, out=out_dir, image=IMAGE,
-                             dest=tmp_path / "site", container_exists=lambda n: False)
+    monkeypatch.setattr(runner.subprocess, "Popen", F)
+    monkeypatch.setattr(runner, "_docker_kill", lambda docker, name: [i.kill() for i in F.instances])
+    return F
+
+
+def _build(tmp_path: Path, out: Path, **kw):  # type: ignore[no-untyped-def]
+    return runner.run_web_build(docker="C:/d/docker.exe", build_id="b0123456789abcdef", ctx=tmp_path, out=out, image=IMAGE,
+                                dest=tmp_path / "site", container_exists=lambda n: False, **kw)
+
+
+def test_run_uses_no_shell(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    _build(tmp_path, out_dir)
+    p = fake_popen.instances[0]
+    assert isinstance(p.argv, list) and p.kw.get("shell", False) is False
+    assert "--network" in p.argv and p.argv[p.argv.index("--network") + 1] == "none"
+
+
+def test_nonzero_exit_fails_build_and_deletes_out(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    fake_popen.exit_code, fake_popen.err_bytes = 1, b"vite: boom"
+    with pytest.raises(BuildError, match="exit code 1"):
+        _build(tmp_path, out_dir)
     assert not (tmp_path / "site").exists()  # nothing copied
+    assert not out_dir.exists()  # out dir deleted on failure
+
+
+def test_collect_failure_deletes_out_dir(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    (out_dir / "dist" / "evil.exe").write_bytes(b"x")
+    with pytest.raises(BuildError, match="extension"):
+        _build(tmp_path, out_dir)
+    assert not out_dir.exists()
+
+
+def test_captured_logs_are_capped(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    fake_popen.out_bytes = b"A" * (5 * 1024 * 1024) + b"END-OF-STDOUT"
+    fake_popen.err_bytes = b"B" * (3 * 1024 * 1024)
+    res = _build(tmp_path, out_dir)
+    assert len(res.log_tail) <= 4000 and "END-OF-STDOUT" in res.log_tail  # only the tail survives, memory stays bounded
+    assert runner.LOG_CAP_BYTES == 1024 * 1024
+
+
+def test_out_growth_during_build_kills_container(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    fake_popen.block = True  # the "container" keeps running until the watchdog kills it
+    (out_dir / "dist" / "big.txt").write_bytes(b"x" * 5000)
+    with pytest.raises(BuildError, match="during the build"):
+        _build(tmp_path, out_dir, limits=BuildLimits(max_files=10, max_total_bytes=1000, max_file_bytes=1000), poll=0.05)
+    assert not out_dir.exists()
+
+
+def test_timeout_kills_and_fails(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    fake_popen.block = True
+    with pytest.raises(BuildError, match="timed out"):
+        _build(tmp_path, out_dir, timeout=1)
+
+
+# ---- container-gone check fails closed (review item 4) -----------------------------------------------------------------
+class _R:
+    def __init__(self, code: int, err: bytes) -> None:
+        self.returncode, self.stderr, self.stdout = code, err, b""
+
+
+@pytest.mark.parametrize("code,err,expected", [
+    (0, b"", True),
+    (1, b"Error response from daemon: No such container: aas-b-x", False),
+    (1, b"Error: No such object: aas-b-x", False),
+])
+def test_container_exists_answers(monkeypatch: pytest.MonkeyPatch, code: int, err: bytes, expected: bool) -> None:
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _R(code, err))
+    assert runner.docker_container_exists("C:/d/docker.exe", "aas-b-b0123456789abcdef") is expected
+
+
+@pytest.mark.parametrize("err", [b"", b"error during connect: daemon is not running", b"permission denied", b"context deadline exceeded"])
+def test_container_exists_daemon_errors_fail_closed(monkeypatch: pytest.MonkeyPatch, err: bytes) -> None:
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _R(1, err))
+    with pytest.raises(BuildError, match="failing closed"):
+        runner.docker_container_exists("C:/d/docker.exe", "aas-b-b0123456789abcdef")
+
 
 
 # ---- output reader --------------------------------------------------------------------------------------------------
@@ -138,7 +220,7 @@ def test_p8b_links_in_output_fail_the_build(kind: str, out_dir: Path, canary: Pa
         naive = [p.read_bytes() for p in out_dir.rglob("*") if p.is_file()]
         assert b"SECRET-CANARY" in b"".join(naive)
     dest = tmp_path / "site" / "r"
-    with pytest.raises(BuildError):
+    with pytest.raises(BuildError, match="link|reparse"):
         runner.collect_output(out_dir, dest, **NOEXIST)
     assert not dest.exists() or not any(dest.rglob("*"))
     assert canary.read_text(encoding="utf-8") == "SECRET-CANARY"
@@ -147,7 +229,7 @@ def test_p8b_links_in_output_fail_the_build(kind: str, out_dir: Path, canary: Pa
 def test_symlink_to_directory_refused(out_dir: Path, tmp_path: Path) -> None:
     if not make_link(out_dir / "dist" / "dlink", tmp_path, "symlink"):
         pytest.skip("cannot create symlink")
-    with pytest.raises(BuildError):
+    with pytest.raises(BuildError, match="link or reparse"):
         runner.collect_output(out_dir, tmp_path / "s", **NOEXIST)
 
 

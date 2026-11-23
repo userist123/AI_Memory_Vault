@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import http.client
+import socket
+import time
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -147,3 +149,100 @@ def test_default_port_and_bind() -> None:
     assert ps.DEFAULT_PORT == 17880 and ps.BIND_HOST == "127.0.0.1"
     with pytest.raises(ValueError):
         PreviewServer(lambda p: None, host="0.0.0.0", port=0)  # noqa: S104 - must be refused
+
+
+# ---- raw-socket probes (malformed input, slow clients, connection flood) ---------------------------------------------
+
+def raw(s: PreviewServer, data: bytes, timeout: float = 5.0) -> tuple[int, dict[str, str], bytes]:
+    with socket.create_connection(("127.0.0.1", s.port), timeout=timeout) as c:
+        c.sendall(data)
+        buf = b""
+        while True:
+            try:
+                chunk = c.recv(65536)
+            except (ConnectionResetError, ConnectionAbortedError, TimeoutError):
+                break
+            if not chunk:
+                break
+            buf += chunk
+    head, _, body = buf.partition(b"\r\n\r\n")
+    lines = head.decode("iso-8859-1").split("\r\n")
+    status = int(lines[0].split(" ")[1]) if lines[0].startswith("HTTP/") else 0
+    hdrs = {k.strip().lower(): v.strip() for k, _, v in (ln.partition(":") for ln in lines[1:]) if k}
+    return status, hdrs, body
+
+
+def _host(s: PreviewServer) -> bytes:
+    return f"p-{PID_A}.localhost:{s.port}".encode()
+
+
+@pytest.mark.parametrize("path", [b"/%ff", b"/%c0%af", b"/assets/%c0%afapp.js", b"/%e2%82", b"/\xc3\xa9.html", b"/\xff"])
+def test_invalid_percent_utf8_and_non_ascii_paths_are_400_with_headers(server: PreviewServer, path: bytes) -> None:
+    st, h, _ = raw(server, b"GET " + path + b" HTTP/1.1\r\nHost: " + _host(server) + b"\r\n\r\n")
+    assert st == 400, (path, st)
+    assert REQUIRED <= set(h), REQUIRED - set(h)
+
+
+def test_duplicate_host_header_is_400(server: PreviewServer) -> None:
+    other = f"p-{PID_B}.localhost:{server.port}".encode()
+    for second in (_host(server), other):
+        st, h, _ = raw(server, b"GET / HTTP/1.1\r\nHost: " + _host(server) + b"\r\nHost: " + second + b"\r\n\r\n")
+        assert st == 400 and REQUIRED <= set(h)
+    st, _, body = raw(server, b"GET / HTTP/1.1\r\nHost: " + _host(server) + b"\r\n\r\n")  # [+] single Host still works
+    assert st == 200 and body == b"<html>A</html>"
+
+
+@pytest.mark.parametrize("line", [b"GARBAGE", b"GET / HTTP/1.1 extra", b"GET / HTTP/x.y", b"POST /", b"GET /", b"GET / XTTP/1.1"])
+def test_malformed_request_line_is_400_with_headers(server: PreviewServer, line: bytes) -> None:
+    st, h, _ = raw(server, line + b"\r\nHost: " + _host(server) + b"\r\n\r\n")
+    assert st == 400, (line, st)
+    assert REQUIRED <= set(h), REQUIRED - set(h)
+
+
+def test_idle_connection_is_dropped(sites: dict[str, Path]) -> None:
+    from aas_build import preview_server as ps
+
+    assert ps.IDLE_TIMEOUT_S == 10.0
+    s = PreviewServer(lambda pid: sites.get(pid), port=0, idle_timeout=0.5).start()
+    try:
+        with socket.create_connection(("127.0.0.1", s.port), timeout=5) as c:
+            c.sendall(b"GET / HTTP/1.1\r\n")  # slowloris: never finish the headers
+            t0 = time.monotonic()
+            try:
+                data = c.recv(1024)
+            except (ConnectionResetError, ConnectionAbortedError):
+                data = b""
+            elapsed = time.monotonic() - t0
+        assert data == b"" and elapsed < 4, (data, elapsed)  # the server closed the socket, well before the client's 5 s
+    finally:
+        s.stop()
+
+
+def test_connection_cap_refuses_extra_and_frees_slots(sites: dict[str, Path]) -> None:
+    from aas_build import preview_server as ps
+
+    assert ps.MAX_CONNECTIONS == 32
+    s = PreviewServer(lambda pid: sites.get(pid), port=0, idle_timeout=5, max_connections=2).start()
+    held: list[socket.socket] = []
+    try:
+        for _ in range(2):
+            c = socket.create_connection(("127.0.0.1", s.port), timeout=5)
+            c.sendall(b"GET / HTTP/1.1\r\n")  # occupy a slot without completing the request
+            held.append(c)
+        time.sleep(0.5)
+        st, _, _ = raw(s, b"GET / HTTP/1.1\r\nHost: " + _host(s) + b"\r\n\r\n", timeout=3)
+        assert st == 0  # third connection closed without any response
+        for c in held:
+            c.close()
+        held.clear()
+        deadline = time.monotonic() + 5
+        while True:  # [+] slots come back once the held connections end
+            st, _, body = raw(s, b"GET / HTTP/1.1\r\nHost: " + _host(s) + b"\r\n\r\n", timeout=3)
+            if st == 200 or time.monotonic() > deadline:
+                break
+            time.sleep(0.1)
+        assert st == 200 and body == b"<html>A</html>"
+    finally:
+        for c in held:
+            c.close()
+        s.stop()

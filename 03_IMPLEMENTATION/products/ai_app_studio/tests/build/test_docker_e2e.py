@@ -6,6 +6,7 @@ Covers P1b (canary writes), P2c/P7a (no network in build), P8b (link created ins
 """
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import uuid
@@ -72,9 +73,13 @@ export default defineConfig({ plugins: [react()], base: './' });
 
 
 def test_build_time_network_attempt_fails(tmp_path: Path) -> None:  # P7a / P2c
-    with pytest.raises(BuildError, match="exit code"):
+    with pytest.raises(BuildError, match="exit code") as ei:
         build(tmp_path, make_ctx(tmp_path, NET_CONFIG))
+    msg = str(ei.value)
+    assert "NETWORK-REACHED" not in msg
+    assert re.search(r"fetch failed|EAI_AGAIN|ENOTFOUND|ENETUNREACH|getaddrinfo", msg), msg  # the DNS/fetch failure, not another error
     assert not (tmp_path / "site").exists()
+    assert not (tmp_path / "out").exists()
 
 
 def test_network_probes_fail_in_build_network_and_succeed_on_bridge(tmp_path: Path) -> None:
@@ -115,7 +120,7 @@ def test_p1b_canary_writes_outside_out_are_denied(tmp_path: Path) -> None:
 LINK_CONFIG = """import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import fs from 'node:fs';
-// test-only (P8b): create a symlink and a hardlink in /out/dist pointing at paths outside it
+// test-only (P8b): create a symlink in /out/dist pointing outside it
 export default defineConfig({
   plugins: [react(), { name: 'links', closeBundle() {
     fs.symlinkSync('/etc/passwd', '/out/dist/leak.txt');
@@ -124,18 +129,86 @@ export default defineConfig({
 });
 """
 
+HARDLINK_CONFIG = """import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import fs from 'node:fs';
+// test-only (P8b): hardlink a file outside /out (fails cross-device) and a second name inside /out/dist
+export default defineConfig({
+  plugins: [react(), { name: 'links', closeBundle() {
+    try { fs.linkSync('/tmp/w/index.html', '/out/dist/outside.txt'); console.log('OUTSIDE-HARDLINK-MADE'); }
+    catch (e) { console.log('outside hardlink denied ' + e.code); }
+    fs.writeFileSync('/out/dist/a.txt', 'a');
+    fs.linkSync('/out/dist/a.txt', '/out/dist/b.txt');
+  } }],
+  base: './',
+});
+"""
+
+
+def _refusal(msg: str, reader_text: str) -> None:
+    # the bind mount refused to create the link (container exit != 0 with the errno) OR the host reader refused it
+    assert reader_text in msg or re.search(r"exit code \d+: .*(EPERM|ENOTSUP|EOPNOTSUPP|EXDEV|EACCES|EIO)", msg, re.S), msg
+
 
 def test_p8b_symlink_created_in_container_is_refused(tmp_path: Path) -> None:
     with pytest.raises(BuildError) as ei:
         build(tmp_path, make_ctx(tmp_path, LINK_CONFIG))
-    # either the bind mount refused the link (container exit != 0) or the reader refused it; nothing was copied
-    assert "exit code" in str(ei.value) or "link" in str(ei.value) or "reparse" in str(ei.value) or "non-regular" in str(ei.value)
-    assert not (tmp_path / "site" / "r1").exists()
-    print("P8b outcome:", str(ei.value)[:160].replace("\n", " "))
+    _refusal(str(ei.value), "link or reparse point in output refused")
+    assert not (tmp_path / "site" / "r1").exists() and not (tmp_path / "out").exists()
+    print("P8b symlink outcome:", str(ei.value)[:160].replace("\n", " "))
+
+
+def test_p8b_hardlink_created_in_container_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(BuildError) as ei:
+        build(tmp_path, make_ctx(tmp_path, HARDLINK_CONFIG))
+    _refusal(str(ei.value), "hardlinked file in output refused")
+    assert "OUTSIDE-HARDLINK-MADE" not in str(ei.value)
+    assert not (tmp_path / "site" / "r1").exists() and not (tmp_path / "out").exists()
+    print("P8b hardlink outcome:", str(ei.value)[:160].replace("\n", " "))
 
 
 def test_lockfile_mismatch_refused(tmp_path: Path) -> None:
     ctx = make_ctx(tmp_path)
     (ctx / "pnpm-lock.yaml").write_text((ctx / "pnpm-lock.yaml").read_text(encoding="utf-8") + "\n# edited\n", encoding="utf-8")
-    with pytest.raises(BuildError, match="exit code 3"):
+    with pytest.raises(BuildError, match="exit code 3") as ei:
         build(tmp_path, ctx)
+    assert "unapproved lockfile" in str(ei.value)
+    assert not (tmp_path / "site").exists() and not (tmp_path / "out").exists()
+
+
+WRITER_CONFIG = """import { defineConfig } from 'vite';
+import fs from 'node:fs';
+// test-only: write 300 MB into /out/dist (60 MB files, under the 64 MB fsize ulimit), then linger so only the watchdog ends it
+fs.mkdirSync('/out/dist', { recursive: true });
+const mb = Buffer.alloc(1024 * 1024, 120);
+for (let f = 0; f < 5; f++) {
+  const fd = fs.openSync(`/out/dist/big${f}.txt`, 'w');
+  for (let i = 0; i < 60; i++) fs.writeSync(fd, mb);
+  fs.closeSync(fd);
+}
+console.log('WROTE-300MB');
+await new Promise((r) => setTimeout(r, 120000));
+export default defineConfig({ base: './' });
+"""
+
+
+def test_out_writer_over_cap_is_killed_and_out_removed(tmp_path: Path) -> None:
+    with pytest.raises(BuildError, match="during the build; container killed"):
+        build(tmp_path, make_ctx(tmp_path, WRITER_CONFIG))
+    assert not (tmp_path / "out").exists()
+    assert not (tmp_path / "site").exists()
+
+
+def test_tmp_is_noexec_with_production_flags(tmp_path: Path) -> None:
+    ctx, out = tmp_path / "ctx", tmp_path / "out"
+    ctx.mkdir()
+    out.mkdir()
+    argv = runner.build_web_argv(docker=DOCKER, build_id="t" + uuid.uuid4().hex[:15], ctx=ctx, out=out, image=IMAGE_ID or "")
+    assert argv[-1] == runner.ENTRYPOINT
+    script = "cp /bin/busybox /tmp/bb && chmod 0755 /tmp/bb && /tmp/bb true; echo tmpexec=$?; /bin/busybox true; echo binexec=$?"
+    i = argv.index(IMAGE_ID or "")
+    probe = [*argv[:i], "--entrypoint", "sh", argv[i], "-c", script]  # same flags as a real build, only the command differs
+    r = subprocess.run(probe, capture_output=True, text=True, timeout=180)  # noqa: S603
+    assert "binexec=0" in r.stdout, (r.stdout, r.stderr)  # [+] positive control: exec from the image works
+    assert "tmpexec=0" not in r.stdout and "tmpexec=126" in r.stdout, (r.stdout, r.stderr)
+    assert "Permission denied" in r.stderr, r.stderr
