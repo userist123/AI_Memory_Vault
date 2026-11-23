@@ -25,7 +25,8 @@ TDD: `tests/wiring/test_s9c_desktop.py` (collection error: no `aas_build.desktop
   reach `wrapper/` (sibling dir).
 - **Vendored crates.** `cargo vendor --locked --versioned-dirs <desktop root>/vendor` once (network only for that
   step, from `images/desktop-wrapper`; 432 crates, 564 MB). Cargo verifies every vendored crate against the
-  checksum in the committed `Cargo.lock` (`.cargo-checksum.json`) - no other trust in the directory.
+  checksum in the committed `Cargo.lock` (`.cargo-checksum.json`): this detects damage only, not tampering by an
+  account that can write the dir (see "S9c review fixes": owner-only root + studio-held hash manifest).
   Desktop root = `AAS_DESKTOP_ROOT` (absolute) or `<data root>/desktop` with `vendor/`, `target/` (shared: the
   ~430 dependencies compile once), `cargo-home/` (empty, studio-owned: the owner's `~/.cargo` config and
   credentials are not read), `tmp/`. A missing vendor dir -> `Unavailable` with the one-time step.
@@ -104,3 +105,43 @@ the approval, markers not escaped, console in the JSON body), `tests/unit/test_s
   name) fixed; actionlint 0, zizmor 0 locally.
 - **L5** sight: `<<`/`>>` inside untrusted lines are broken up (`< <`), so data cannot fake the end/start marker;
   `preview_capture` keeps console lines only in the UNTRUSTED block (`consoleLines` count in the JSON body).
+
+## S9c review fixes (own commit, sent by the main session)
+TDD: `tests/wiring/test_s9c_review_fixes.py` written first (fixture error: no `desktop.secure_dir`; then 14 failed
+against the first implementation attempt until each fix landed); `test_s9c_desktop.py` adapted to the new layout.
+- **M1 pair binding.** A build writes `app-desktop.exe` + `app-desktop.dist.zip` into a fresh staging dir
+  `<preview>/<project>/.desktop-<hex>/`, hashes both, and puts them in place with ONE directory rename to
+  `<preview>/<project>/desktop/<buildId>/`. `build.finished` records `artifactSha256` (exe), `distSha256`, `buildId`
+  (activity schema gained `distSha256`, `buildId`); older pairs are pruned only after the record exists. Export reads
+  the pair named by the latest successful record and checks exe sha256 AND zip sha256 against that same record before
+  scanning. Tests: the second build's rename fails -> BuildFailed, export still ships the whole first pair; no
+  previous build -> export refuses; a different valid zip beside the unchanged exe -> refused.
+- **M2 cargo config planting / root ACL.** Build refused (`Unavailable`) when any parent of the build dir has
+  `.cargo/config(.toml)` (or a `.cargo` link/file). cargo runs with `--config build.rustc-wrapper=""`,
+  `build.rustc-workspace-wrapper=""`, `build.rustflags=[remap...]` (highest precedence), no linker override; CARGO_HOME
+  (`<root>/cargo-home`) gets a studio-written `config.toml` each build. `assert_root_trusted` (ctypes
+  GetNamedSecurityInfo, no new dependency) refuses a root whose owner is not the user/SYSTEM/Administrators, that has
+  any non-trusted allow ACE with write rights (inherit-only ones included: they reach the children), or whose parents
+  (up to, not including, the drive root) give others delete-child / write-dac / write-owner / full control. Fresh
+  roots are created owner-only with `python -m aas_build.desktop secure`. Residual: a `[target.*]` linker or
+  `[env]` set in a config that cannot be reached by `--config` is covered only by the refusal above.
+- **M3 vendored crates.** vendor/ and target/ live under the owner-only root. `record_vendor` hashes every file of the
+  vendor tree (sha256, no links) into `<data>/desktop-vendor.manifest.json` (outside the vendor dir) right after
+  `cargo vendor` (`python -m aas_build.desktop record-vendor`); every build re-hashes the tree and refuses a changed,
+  added or removed file or a missing manifest. Wording corrected: Cargo's `.cargo-checksum.json` check detects
+  *damage* only (it sits in the same writable dir as the crate), tampering by a writer is detected by the
+  studio-held manifest, and is prevented by the owner-only ACL. Dev dir `D:\w\_aas_desktop`: ACL reset to
+  `Administrators`, `SYSTEM`, `<owner>` full control with inheritance removed (`icacls /reset` +
+  `/inheritance:r` + `/grant:r`, children reset to inherit); manifest recorded after that.
+- **L1 path remap.** `--remap-path-prefix` for home -> `~`, root -> `/aas-desktop`, target -> `/target`, vendor ->
+  `/vendor`, build dir -> `/src` (both slash forms). After the build the exe is scanned for the vendor/build/root/home
+  prefixes (ascii + utf-16, case-insensitive); a hit fails the build closed (unit tests with fake exes).
+- **L2 build probe.** `building_project` no longer takes the OS lock (a probe that locked, even briefly, made a build
+  starting at that moment fail with "already running"): on Windows it reads the lock byte through a second handle (a
+  read of a byte locked by another process fails), on POSIX it checks the pid in `build.holder` (`<pid>:<project>`).
+  The holder file replace/unlink retries while a probe has it open. Tests: the probe never calls the lock; a
+  hammering probe thread never makes 150 consecutive `build_lock` acquisitions fail.
+- **Real check (2026-11-23).** `AAS_DESKTOP_ROOT=D:\w\_aas_desktop`, blank template, studio `--config` overrides
+  (flags changed -> full rebuild): 100 s, exe 3,140,608 bytes; the exe has no `_aas_desktop`, `C:\Users`, or the
+  account name (ascii and utf-16), `host_path_leaks` = []. `rustc-wrapper=""` accepted by cargo 1.94. Manifest
+  hashing of the 23k-file vendor tree: 6.4 min cold once, ~21 s warm per build.

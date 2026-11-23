@@ -25,10 +25,13 @@ SEEN: dict[str, Any] = {}
 
 
 @pytest.fixture
-def droot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+def droot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, studio) -> Path:  # type: ignore[no-untyped-def]
     root = tmp_path / "desk"
-    (root / "vendor" / "tauri-2.12.7").mkdir(parents=True)
+    (root / "vendor" / "tauri-2.12.7" / "src").mkdir(parents=True)
+    (root / "vendor" / "tauri-2.12.7" / "src" / "lib.rs").write_text("pub fn a() {}", encoding="utf-8")
     monkeypatch.setenv("AAS_DESKTOP_ROOT", str(root))
+    desktop.secure_dir(root)  # owner-only root (S9c review M2/M3), then the studio-held vendor manifest
+    desktop.record_vendor(studio.settings, root / "vendor")
     return root
 
 
@@ -188,7 +191,7 @@ def test_artifact_hash_event_and_sidecar(studio, droot: Path) -> None:  # type: 
     sha = hashlib.sha256(FAKE_EXE).hexdigest()
     assert res["exeSha256"] == sha and res["sizeBytes"] == len(FAKE_EXE)
     assert res["appId"] == "dev.aiappstudio.p" + pid[4:]
-    assert service.desktop_path(studio.settings, pid).read_bytes() == FAKE_EXE
+    assert service.desktop_path(studio.settings, pid, res["buildId"]).read_bytes() == FAKE_EXE
     ev = [e for e in activity.list_events(studio, limit=200) if e["kind"] == "build.finished"][-1]
     assert ev["payload"]["target"] == "desktop" and ev["payload"]["artifactSha256"] == sha
     started = [e for e in activity.list_events(studio, limit=200) if e["kind"] == "build.started"][-1]
@@ -200,7 +203,8 @@ def test_failed_build_records_events_and_keeps_no_exe(studio, droot: Path) -> No
     pid = built(studio)
     with pytest.raises(service.BuildFailed):
         service.build_desktop(studio, pid, run_build=fake_build(fail="linker error"), cargo=CARGO)
-    assert not service.desktop_path(studio.settings, pid).exists()
+    ddir = service.preview_base(studio.settings, pid) / "desktop"
+    assert not ddir.exists() or not any(ddir.iterdir())  # no exe / zip of a failed build
     ev = [e for e in activity.list_events(studio, limit=200) if e["kind"] == "build.finished"][-1]
     assert ev["payload"]["status"] == "failed" and ev["payload"]["target"] == "desktop"
 
@@ -223,12 +227,12 @@ def test_desktop_export_approval_bound_to_sha_and_scan(studio, droot: Path, tmp_
     pid = built(studio)
     with pytest.raises(Unavailable):
         export.prepare(studio, pid, "desktop")
-    service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO)
+    built_res = service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO)
     res = two_step(studio, pid, "desktop", tmp_path / "exp")
     assert res["path"].endswith(".exe") and res["sha256"] == hashlib.sha256(FAKE_EXE).hexdigest()
     assert Path(res["path"]).read_bytes() == FAKE_EXE
     # an exe swapped after the build no longer matches the recorded sha256
-    service.desktop_path(studio.settings, pid).write_bytes(FAKE_EXE + b"x")
+    service.desktop_path(studio.settings, pid, built_res["buildId"]).write_bytes(FAKE_EXE + b"x")
     with pytest.raises(Unavailable, match="recorded"):
         export.prepare(studio, pid, "desktop")
 

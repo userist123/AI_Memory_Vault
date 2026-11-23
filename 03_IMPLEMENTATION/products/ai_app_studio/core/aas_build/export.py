@@ -181,6 +181,19 @@ def recorded_apk_sha(studio: Any, project_id: str, target: str = "android") -> s
     return None
 
 
+def recorded_build(studio: Any, project_id: str, target: str) -> tuple[str, dict[str, Any]] | None:
+    """(artifact sha256, payload) of the latest successful ``build.finished`` of ``target``."""
+    with studio.session() as db:
+        q = (select(ActivityEvent).where(ActivityEvent.project_id == project_id, ActivityEvent.kind == "build.finished",
+                                         ActivityEvent.artifact_sha256.is_not(None))
+             .order_by(ActivityEvent.seq.desc()).limit(50))
+        for e in db.execute(q).scalars():
+            pl = e.payload or {}
+            if pl.get("target") == target and pl.get("status") == "ok":
+                return str(e.artifact_sha256), dict(pl)
+    return None
+
+
 def prepare(studio: Any, project_id: str, target: str) -> Artifact:
     if not isinstance(project_id, str) or not _PID.match(project_id):
         raise ValidationFailed("invalid project id")
@@ -199,19 +212,29 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
         data = _zip(files)
         names = [n for n, _ in files]
     elif target == "desktop":
-        exe = service.desktop_path(studio.settings, project_id)
-        zpath = service.desktop_dist_path(studio.settings, project_id)
+        # S9c review M1: the exe and the zip of its embedded dist must be the pair of ONE successful build record
+        rec = recorded_build(studio, project_id, "desktop")
+        bid = str((rec[1] if rec else {}).get("buildId", ""))
+        zsha = str((rec[1] if rec else {}).get("distSha256", ""))
+        try:
+            exe = service.desktop_path(studio.settings, project_id, bid)
+            zpath = service.desktop_dist_path(studio.settings, project_id, bid)
+        except Unavailable:
+            exe = zpath = None  # type: ignore[assignment]
+        if rec is None or exe is None:
+            raise Unavailable("no desktop exe has been built for this project (app_build target desktop)")
         for f in (exe, zpath):
             if not f.is_file() or f.is_symlink() or os.lstat(f).st_nlink > 1:
                 raise Unavailable("no desktop exe has been built for this project (app_build target desktop)")
         if exe.stat().st_size + zpath.stat().st_size > MAX_BYTES:
             raise ValidationFailed("the desktop exe is over the export limit")
         data = exe.read_bytes()
-        recorded = recorded_apk_sha(studio, project_id, "desktop")
-        if recorded is None or hashlib.sha256(data).hexdigest() != recorded:
-            raise Unavailable("the exe does not match a recorded build of this project: rebuild (app_build desktop)")
-        art = Artifact(project_id, target, data, hashlib.sha256(data).hexdigest(), revision, slug, ["app.exe"])
-        art.embedded = zpath.read_bytes()  # the dist the exe embeds (brotli inside the exe): scanned file by file
+        embedded = zpath.read_bytes()
+        if hashlib.sha256(data).hexdigest() != rec[0] or hashlib.sha256(embedded).hexdigest() != zsha:
+            raise Unavailable("the exe and its embedded-dist zip do not match one recorded build of this project: "
+                              "rebuild (app_build desktop)")
+        art = Artifact(project_id, target, data, rec[0], revision, slug, ["app.exe"])
+        art.embedded = embedded  # the dist the exe embeds (brotli inside the exe): scanned file by file
         return art
     else:
         apk = service.apk_path(studio.settings, project_id)

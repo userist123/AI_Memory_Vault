@@ -11,6 +11,7 @@ runs inside ``Studio.operation`` (policy ``app.build``, tool_executions + audit 
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shutil
@@ -107,6 +108,18 @@ def _os_unlock(fd: int) -> None:
         pass
 
 
+def _retry(fn: Callable[[], Any]) -> None:
+    """A concurrent probe may have the holder file open for a moment (Windows refuses rename/delete then)."""
+    for i in range(100):
+        try:
+            fn()
+            return
+        except PermissionError:
+            if i == 99:
+                raise
+            time.sleep(0.01)
+
+
 @contextmanager
 def build_lock(settings: Any, project_id: str) -> Iterator[None]:
     """S9b review M1: ONE build at a time across processes (backend, built-in runner MCP child, external MCP server).
@@ -119,17 +132,22 @@ def build_lock(settings: Any, project_id: str) -> Iterator[None]:
         lock.parent.mkdir(parents=True, exist_ok=True)
         fd = os.open(lock, os.O_RDWR | os.O_CREAT | getattr(os, "O_BINARY", 0), 0o600)
         try:
+            if os.fstat(fd).st_size == 0:
+                try:
+                    os.write(fd, b"L")  # the probe reads this byte (a read of a locked byte fails: no lock needed)
+                except OSError:
+                    pass
             if not _try_os_lock(fd):
                 raise Unavailable("a build is already running (another studio process)")
             try:
                 tmp = holder.with_name(f"build.holder.{os.getpid()}.tmp")
-                tmp.write_text(project_id[:40], encoding="utf-8")
-                os.replace(tmp, holder)
+                tmp.write_text(f"{os.getpid()}:{project_id[:40]}", encoding="utf-8")
+                _retry(lambda: os.replace(tmp, holder))
                 _BUILDING["project"] = project_id
                 yield
             finally:
                 _BUILDING.pop("project", None)
-                holder.unlink(missing_ok=True)
+                _retry(lambda: holder.unlink(missing_ok=True))
                 _os_unlock(fd)
         finally:
             os.close(fd)
@@ -137,24 +155,43 @@ def build_lock(settings: Any, project_id: str) -> Iterator[None]:
         _LOCK.release()
 
 
+def _lock_is_held(fd: int, holder: Path) -> bool:
+    """Is the build lock held by another handle/process? WITHOUT taking it (S9c review L2: a probe that locks, even
+    briefly, makes a build that starts at that moment fail with "already running"). Windows: the holder's byte-range
+    lock makes a read of that byte fail. POSIX (flock is advisory): the holder file names ``<pid>`` and the pid must be
+    alive."""
+    if os.name == "nt":
+        os.lseek(fd, 0, os.SEEK_SET)
+        try:
+            os.read(fd, 1)
+        except OSError:
+            return True
+        return False
+    try:
+        pid = int(holder.read_text(encoding="utf-8").split(":", 1)[0])
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
 def building_project(settings: Any | None = None) -> str | None:
     """Project whose build (web, android or desktop; any process incl. an external MCP server) holds the build lock,
-    else None. Without ``settings`` only this process is checked."""
+    else None. Without ``settings`` only this process is checked. Never takes the lock."""
     if _BUILDING.get("project"):
         return _BUILDING["project"]
     if settings is None:
         return None
     lock, holder = _lock_files(settings)
     try:
-        fd = os.open(lock, os.O_RDWR | getattr(os, "O_BINARY", 0))
+        fd = os.open(lock, os.O_RDONLY | getattr(os, "O_BINARY", 0))
     except OSError:
         return None
     try:
-        if _try_os_lock(fd):
-            _os_unlock(fd)
+        if not _lock_is_held(fd, holder):
             return None
         try:
-            name = holder.read_text(encoding="utf-8")[:40].strip()
+            name = holder.read_text(encoding="utf-8").split(":", 1)[-1][:40].strip()
         except OSError:
             return "unknown"
         return name if re.fullmatch(r"prj_[0-9a-f]{16}", name) else "unknown"
@@ -350,14 +387,33 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
 
 
 # ---- Windows desktop (S9c) ---------------------------------------------------------------------------------------------
-def desktop_path(settings: Settings, project_id: str) -> Path:
-    """The project's current unsigned desktop exe (export target ``desktop``)."""
-    return preview_base(settings, project_id) / "app-desktop.exe"
+_BUILD_ID = re.compile(r"^d[0-9a-f]{16}$")
 
 
-def desktop_dist_path(settings: Settings, project_id: str) -> Path:
-    """Deterministic zip of the exact dist embedded in ``desktop_path`` (scanned on export)."""
-    return preview_base(settings, project_id) / "app-desktop.dist.zip"
+def desktop_dir(settings: Settings, project_id: str, build_id: str) -> Path:
+    """One finished desktop build = one dir holding the exe AND the zip of the dist it embeds (written together in a
+    staging dir, put in place by ONE directory rename; S9c review M1)."""
+    if not isinstance(build_id, str) or not _BUILD_ID.match(build_id):
+        raise Unavailable("invalid desktop build id")
+    return preview_base(settings, project_id) / "desktop" / build_id
+
+
+def desktop_path(settings: Settings, project_id: str, build_id: str) -> Path:
+    """The unsigned desktop exe of build ``build_id`` (export target ``desktop``)."""
+    return desktop_dir(settings, project_id, build_id) / "app-desktop.exe"
+
+
+def desktop_dist_path(settings: Settings, project_id: str, build_id: str) -> Path:
+    """Deterministic zip of the exact dist embedded in that build's exe (scanned on export)."""
+    return desktop_dir(settings, project_id, build_id) / "app-desktop.dist.zip"
+
+
+def _sha_file(p: Path) -> str:
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def build_desktop(studio: Any, project_id: str, *, run_id: str | None = None,
@@ -396,25 +452,44 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
             raise Unavailable(f"the vendored crate dir is missing ({vendor}): run the one-time cargo vendor step "
                               "(docs/slices/S9c.md)")
         try:
+            desktop.assert_root_trusted(root)  # S9c review M2: owner-only root chain
+            desktop.refuse_planted_cargo_config(build_root)  # M2: cargo merges .cargo/config of every parent
+            for d in ("target", "cargo-home", "tmp", "builds"):
+                if (root / d).is_symlink():
+                    raise runner.BuildError(f"{d} in the desktop root is a link")
+            desktop.verify_vendor(studio.settings, vendor)  # M3: per-file hashes from the studio-held manifest
+        except runner.BuildError as e:
+            raise Unavailable(str(e)) from e
+        try:
             cargo = cargo or runner.resolve_cargo()
         except runner.BuildError as e:
             raise Unavailable(str(e)) from e
         project = studio.get_project(Actor("system", "build", "system"), project_id, with_components=False)
         _rec(studio, "build.started", project_id, run_id, target="desktop", revision=revision)
-        dest = desktop_path(studio.settings, project_id)
-        stage = dest.parent / f".app-desktop.{uuid.uuid4().hex[:8]}.exe"
+        build_id = "d" + uuid.uuid4().hex[:16]
+        base = preview_base(studio.settings, project_id)
+        stage = base / f".desktop-{uuid.uuid4().hex[:8]}"
+        final = desktop_dir(studio.settings, project_id, build_id)
         try:
             wrapper = desktop.materialise(build_root, site, project_id, str(project.get("name", "")), vendor)
             zdata = desktop.dist_zip(build_root / "dist")
+            desktop.write_cargo_home(root / "cargo-home")
+            stage.mkdir(parents=True)
             res = run_build(cargo=cargo, wrapper=wrapper, target_dir=root / "target", cargo_home=root / "cargo-home",
-                            tmp=root / "tmp", dest=stage)
-            zip_path = desktop_dist_path(studio.settings, project_id)
-            ztmp = zip_path.with_name(zip_path.name + ".partial")
-            ztmp.write_bytes(zdata)
-            os.replace(ztmp, zip_path)
-            os.replace(stage, dest)
+                            tmp=root / "tmp", dest=stage / "app-desktop.exe",
+                            cargo_args=desktop.cargo_args(root, vendor, build_root))
+            (stage / "app-desktop.dist.zip").write_bytes(zdata)
+            exe_sha, dist_sha = _sha_file(stage / "app-desktop.exe"), hashlib.sha256(zdata).hexdigest()
+            if exe_sha != res.sha256:
+                raise runner.BuildError("the staged exe changed after the build")
+            leaks = desktop.host_path_leaks((stage / "app-desktop.exe").read_bytes(),
+                                            desktop.leak_prefixes(root, vendor, build_root))
+            if leaks:
+                raise runner.BuildError(f"the exe contains a host path ({leaks[0][:60]}): refusing to keep it")
+            final.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(stage, final)  # the pair is put in place by one rename: both files or neither
         except (runner.BuildError, OSError, StudioError) as e:
-            stage.unlink(missing_ok=True)
+            shutil.rmtree(stage, ignore_errors=True)
             msg = str(e)[:1000]
             _rec(studio, "build.error", project_id, run_id, code="build_failed", message=msg)
             _rec(studio, "build.finished", project_id, run_id, target="desktop", status="failed", revision=revision,
@@ -425,12 +500,17 @@ def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_buil
         dur = int((time.monotonic() - t0) * 1000)
         try:
             activity.record(studio, "build.finished", project_id=project_id, run_id=run_id, source="build",
-                            artifact_sha256=res.sha256,
+                            artifact_sha256=exe_sha,
                             payload={"target": "desktop", "status": "ok", "revision": revision, "durationMs": dur,
-                                     "artifactSha256": res.sha256, "sizeBytes": res.size})
+                                     "artifactSha256": exe_sha, "distSha256": dist_sha, "buildId": build_id,
+                                     "sizeBytes": res.size})
+            for old in (base / "desktop").iterdir():  # only after the record exists: older pairs are no longer current
+                if old.name != build_id:
+                    shutil.rmtree(old, ignore_errors=True)
         except Exception:  # noqa: BLE001
             activity._note_dropped(studio)  # noqa: SLF001
-        return {"ok": True, "target": "desktop", "revision": revision, "exeSha256": res.sha256, "sizeBytes": res.size,
+        return {"ok": True, "target": "desktop", "revision": revision, "exeSha256": exe_sha, "distSha256": dist_sha,
+                "buildId": build_id, "sizeBytes": res.size,
                 "appId": desktop.app_id(project_id), "signed": False, "durationMs": dur}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)

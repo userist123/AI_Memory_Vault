@@ -119,3 +119,7 @@ Update 2026-11-23 (S9c done + S9b review fixes, local commits only on claude/ai-
 - S9b review fixes M1 (cross-process build lock), L1-L5 (export hard link + link chain, runtime bundle hashes/sha
   verify, CI gitleaks tests + hash-pinned lint tools, untrusted marker escaping).
 - NEXT = image rebuilds when C: >= 10 GB, B1 real run, B2 WebView2 probe, final gate round 2.
+
+Update 2026-11-23 (S9c review fixes M1-M3, L1-L2, local commit on claude/ai-app-studio):
+- Exe+dist zip bound per build record, cargo config planting + owner-only root ACL refusals, vendor manifest, path remap, non-stealing
+  build probe. Dev dir D:/w/_aas_desktop ACL tightened. Details: ai_app_studio/docs/slices/S9c.md. NEXT unchanged (B1/B2, final gate round 2).

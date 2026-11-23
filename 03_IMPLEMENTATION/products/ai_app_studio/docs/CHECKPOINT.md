@@ -223,3 +223,10 @@ Update 2026-11-23 (S9c done + S9b review fixes, local commits on claude/ai-app-s
 - NEXT = image rebuilds when C: >= 10 GB (aas-web-build tsc, aas-android-build Gradle 8.14.8), B1 one budget-capped real
   agent run, B2 real-WebView2 iframe probe, final gate round 2 (fable-consultant -> Codex/Gemini -> security-lockdown ->
   push + PR #413).
+
+Update 2026-11-23 (S9c review fixes M1-M3, L1-L2, local commit): see docs/slices/S9c.md "S9c review fixes".
+- Exe + embedded-dist zip are one pair (per-build dir, both sha256 in build.finished, export verifies both); cargo config
+  planting refused + `--config` pins (no rustc wrapper) + studio CARGO_HOME config; owner-only desktop root (ACL check,
+  `python -m aas_build.desktop secure`); vendor tree manifest (`record-vendor`) checked before each build; path remap +
+  leak scan; build probe no longer takes the lock. Dev dir D:\w\_aas_desktop ACL tightened, manifest recorded.
+- One-time steps for a new machine: `cargo vendor`, then `python -m aas_build.desktop secure` and `record-vendor`.

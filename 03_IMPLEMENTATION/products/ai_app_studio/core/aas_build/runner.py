@@ -17,7 +17,7 @@ import stat
 import subprocess
 import threading
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -583,11 +583,12 @@ class DesktopResult:
     log_tail: str = ""
 
 
-def build_desktop_argv(*, cargo: str) -> list[str]:
-    """Fixed argv; cwd = the studio-materialised wrapper dir (its .cargo/config.toml pins the vendored source)."""
+def build_desktop_argv(*, cargo: str, extra: Sequence[str] = ()) -> list[str]:
+    """Fixed argv + studio-computed ``--config`` overrides (``extra``); cwd = the studio-materialised wrapper dir (its
+    .cargo/config.toml pins the vendored source)."""
     if not isinstance(cargo, str) or not os.path.isabs(cargo):
         raise BuildError("cargo executable must be an absolute path")
-    return [cargo, "build", "--release", "--offline", "--locked", "--quiet", "--color", "never"]
+    return [cargo, "build", "--release", "--offline", "--locked", "--quiet", "--color", "never", *extra]
 
 
 def desktop_env(*, cargo: str, cargo_home: Path, target_dir: Path, tmp: Path) -> dict[str, str]:
@@ -664,9 +665,10 @@ def collect_exe(exe: Path, dest: Path, *, max_bytes: int = EXE_MAX_BYTES) -> tup
 
 
 def run_desktop_build(*, cargo: str, wrapper: Path, target_dir: Path, cargo_home: Path, tmp: Path, dest: Path,
-                      timeout: int = DESKTOP_TIMEOUT_S) -> DesktopResult:
+                      timeout: int = DESKTOP_TIMEOUT_S,
+                      cargo_args: Sequence[str] = ()) -> DesktopResult:
     """``cargo build --release --offline --locked`` in the wrapper dir; on failure nothing is written to ``dest``."""
-    argv = build_desktop_argv(cargo=cargo)
+    argv = build_desktop_argv(cargo=cargo, extra=cargo_args)
     for d in (target_dir, cargo_home, tmp):
         d.mkdir(parents=True, exist_ok=True)
     exe = target_dir / "release" / EXE_NAME
