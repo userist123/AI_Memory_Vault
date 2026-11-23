@@ -44,9 +44,9 @@
       "upstream_path": "core/studio_core/services.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "8af4717ebbcf2efff2cd47bd05522c2d489ef38e2d81fe5acc95795aa6c36d24",
-      "local_sha256": "12027aec8fc956d5a7b061a6cf2c9b332b61d275af8b8951c92de3a13c12ae73",
+      "local_sha256": "a71068a286cb30d3cebb1e978afb34c6bded4b9bdcddbd2a8923ab156e2f7c8a",
       "patched": true,
-      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create passes the id of the project it created), _git_model adds the project kind to the git snapshot, and get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings."
+      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create passes the id of the project it created), _git_model adds the project kind to the git snapshot, and get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings; F3: _git_roots() passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat."
     },
     {
       "path": "core/studio_core/db.py",
@@ -98,9 +98,9 @@
       "upstream_path": "core/studio_core/gitrepo.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "96686e6c296344f1ca001c3b72b7b7edb00318aa061e4b61481147338f97e741",
-      "local_sha256": "96686e6c296344f1ca001c3b72b7b7edb00318aa061e4b61481147338f97e741",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "109fe31fb20d57497fdabe63796f8acb2ce7bf24bc9a6cee7355f1baca7fe250",
+      "patched": true,
+      "patch_reason": "F3: commit_revision and diff_stat take the kind's file roots (paths=, default ('site',) as upstream); roots are plain top-level names (validated); only roots that exist or are tracked are staged, because a pathspec that matches nothing made `git add` fail and an app project (src/, public/, no site/) was never committed."
     },
     {
       "path": "core/studio_core/alembic/env.py",

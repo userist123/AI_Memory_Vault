@@ -132,6 +132,10 @@ class Studio:
     def kind(self) -> ProjectKind:
         return project_kind.resolve(self.kind_name)
 
+    def _git_roots(self) -> tuple[str, ...]:
+        """The kind's version-controlled file roots (``file_roots``; a kind without one keeps ``site``)."""
+        return tuple(getattr(self.kind, "file_roots", ("site",)))
+
     # ------------------------------------------------------------------ infrastructure
     @contextmanager
     def session(self) -> Iterator[Session]:
@@ -340,7 +344,7 @@ class Studio:
         if self.settings.git_enabled:
             from . import gitrepo
             ctx.git = gitrepo.commit_revision(self.workspace(p.id).root, self._git_model(p, snap), p.revision, summary,
-                                              ctx.actor.label, ctx.operation_id)
+                                              ctx.actor.label, ctx.operation_id, paths=self._git_roots())
         # verification: re-read revision row inside the same transaction
         current = s.execute(select(Project.revision).where(Project.id == p.id)).scalar_one()
         ctx.verification = "verified" if current == ctx.base_revision + 1 else "failed"  # type: ignore[operator]
@@ -591,7 +595,7 @@ class Studio:
 
         def _do(ctx: OpContext) -> dict[str, Any]:
             ctx.verification = "read"
-            return gitrepo.diff_stat(self.workspace(project_id).root, a, b)
+            return gitrepo.diff_stat(self.workspace(project_id).root, a, b, paths=self._git_roots())
         return self.operation(actor, "project.git_diff", "project.read", {"projectId": project_id, "a": a, "b": b}, _do,
                               project_id=project_id)
 

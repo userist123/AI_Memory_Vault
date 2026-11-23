@@ -57,7 +57,7 @@ _ENV_KEEP = ("SYSTEMROOT", "WINDIR", "SYSTEMDRIVE", "PATH", "PATHEXT", "COMSPEC"
              "LOCALAPPDATA", "HOME")
 _ENV_EXTRA_ALLOWED = ("CLAUDE_CONFIG_DIR",)
 MAX_RUN_SECONDS = 1800
-MAX_LINE_BYTES = 1024 * 1024  # one stream-json line; longer = abort
+MAX_LINE_BYTES = 2 * 1024 * 1024  # one stream-json line (fits a 512 KiB base64 agent image); longer = abort
 PLAN_TIMEOUT_SECONDS = 900.0  # how long a run may wait for the owner's plan decision
 DEVICE_GRACE_SECONDS = 30.0
 SYSTEM_ACTOR = Actor("system", "runner", "system")

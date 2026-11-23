@@ -57,7 +57,8 @@ FILES: list[tuple[str, str, str]] = [
      "project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, "
      "Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create "
      "passes the id of the project it created), _git_model adds the project kind to the git snapshot, and "
-     "get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings."),
+     "get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings; F3: _git_roots() "
+     "passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat."),
     ("core/studio_core/db.py", "core/studio_core/db.py",
      "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
      "(activity_events, app_settings) live in aas_models.py, not here."),
@@ -69,7 +70,10 @@ FILES: list[tuple[str, str, str]] = [
      "17880. S9 (B11): the vite dev origins localhost:1420 / 127.0.0.1:1420 are removed from allowed_origins (dev "
      "UIs only via AAS_DEV_ORIGINS with run_studio.ps1 -Dev)."),
     ("core/studio_core/migrations.py", "core/studio_core/migrations.py", ""),
-    ("core/studio_core/gitrepo.py", "core/studio_core/gitrepo.py", ""),
+    ("core/studio_core/gitrepo.py", "core/studio_core/gitrepo.py",
+     "F3: commit_revision and diff_stat take the kind's file roots (paths=, default ('site',) as upstream); roots "
+     "are plain top-level names (validated); only roots that exist or are tracked are staged, because a pathspec "
+     "that matches nothing made `git add` fail and an app project (src/, public/, no site/) was never committed."),
     ("core/studio_core/alembic/env.py", "core/studio_core/alembic/env.py", ""),
     ("core/studio_core/alembic/script.py.mako", "core/studio_core/alembic/script.py.mako", ""),
     ("core/studio_core/alembic/versions/0001_initial_schema.py",

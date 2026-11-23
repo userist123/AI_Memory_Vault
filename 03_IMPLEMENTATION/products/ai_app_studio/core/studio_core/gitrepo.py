@@ -51,8 +51,27 @@ def ensure_repo(root: Path) -> None:
     (root / ".gitignore").write_text(IGNORE, encoding="utf-8")
 
 
+def _roots(paths: tuple[str, ...]) -> tuple[str, ...]:
+    """Workspace-relative top-level roots a kind keeps under version control (plain names only)."""
+    out = tuple(p for p in paths if isinstance(p, str) and p and p not in (".", "..") and "/" not in p
+                and "\\" not in p and ":" not in p and not p.startswith("."))
+    if len(out) != len(paths):
+        raise ValidationFailed("invalid git file root", roots=list(paths))
+    return out
+
+
+def _stage(root: Path, paths: tuple[str, ...]) -> None:
+    # a pathspec that matches nothing makes `git add` fail: stage only the roots that exist on disk or are tracked
+    # (a root deleted since the last commit must still record the deletion)
+    tracked = {line.split("/", 1)[0] for line in _git(root, "ls-files", "--", *paths).stdout.splitlines()}
+    present = [p for p in (".gitignore", "model", *paths) if (root / p).exists() or p in tracked]
+    if present:
+        _git(root, "add", "-A", "--", *present)
+
+
 def commit_revision(root: Path, model: dict[str, Any], revision: int, summary: str, actor: str,
-                    operation_id: str) -> dict[str, Any]:
+                    operation_id: str, paths: tuple[str, ...] = ("site",)) -> dict[str, Any]:
+    """Commit ``model/project.json`` and the kind's file roots ``paths`` (default: the website's ``site``)."""
     if git_exe() is None:
         return {"ok": False, "reason": "git not installed"}
     try:
@@ -61,7 +80,7 @@ def commit_revision(root: Path, model: dict[str, Any], revision: int, summary: s
         tmp = root / "model" / "project.json.tmp"
         tmp.write_text(json.dumps(model, indent=1, sort_keys=True, default=str), encoding="utf-8")
         os.replace(tmp, root / "model" / "project.json")
-        _git(root, "add", "-A", "--", ".gitignore", "model", "site")
+        _stage(root, _roots(tuple(paths)))
         who = actor.replace("<", "").replace(">", "")[:80]
         msg = f"rev {revision}: {summary[:200]}\n\nRevision: {revision}\nOperation: {operation_id}\nActor: {who}\n"
         _git(root, "-c", "user.name=AI Website Studio", "-c", "user.email=studio@localhost", "commit", "-q",
@@ -101,10 +120,10 @@ def model_at(root: Path, commit: str) -> dict[str, Any]:
     return json.loads(r.stdout)
 
 
-def diff_stat(root: Path, a: str, b: str) -> dict[str, Any]:
+def diff_stat(root: Path, a: str, b: str, paths: tuple[str, ...] = ("site",)) -> dict[str, Any]:
     _check_commit(a)
     _check_commit(b)
-    r = _git(root, "diff", "--numstat", a, b, "--", "model", "site")
+    r = _git(root, "diff", "--numstat", a, b, "--", "model", *_roots(tuple(paths)))
     files = []
     for line in r.stdout.splitlines():
         add, rem, path = (line.split("\t") + ["", "", ""])[:3]

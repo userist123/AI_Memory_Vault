@@ -78,6 +78,29 @@ def test_line_just_under_the_limit_is_read_control(studio, fake_cli, tmp_path: P
     assert events(studio, "agent.text")
 
 
+def test_line_cap_is_bounded_and_fits_a_max_size_agent_image() -> None:
+    from aas_build import sight
+    assert rc.MAX_LINE_BYTES == 2 * 1024 * 1024
+    assert sight.MAX_AGENT_BYTES * 2 < rc.MAX_LINE_BYTES  # an image line (plus JSON overhead) never hits the cap
+
+
+def test_max_size_image_tool_result_line_is_read(studio, fake_cli, tmp_path: Path) -> None:
+    from aas_build import sight
+    pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    r = rc.Runner(studio, cli=fake_cli)
+    use = {"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "id": "toolu_img", "name": "mcp__ai-app-studio__preview_capture", "input": {}}]}}
+    img = {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_img",
+           "content": [{"type": "text", "text": "capture"},
+                       {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                                    "data": "A" * sight.MAX_AGENT_BYTES}}]}]}}
+    line = json.dumps(img)
+    assert len(line.encode()) > 1024 * 1024 // 2
+    run = r.start(pid, scenario(tmp_path, events=[use, img, RESULT]))
+    assert r.wait(run, 30) == "success"
+    assert events(studio, "run.finished")[-1]["payload"]["status"] == "success"
+
+
 # ---------------------------------------------------------------- 3: stale flush never splits a token
 def _delta(t: str) -> dict:
     return {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0,

@@ -62,6 +62,15 @@ def test_agent_image_small_stays_png_noise_falls_back_to_capped_jpeg() -> None:
     assert base64.b64decode(noisy["data"]).startswith(b"\xff\xd8")
 
 
+def test_agent_image_cap_is_512_kib_after_base64_encoding() -> None:
+    # N1: the encoded image must fit in one runner stream-json line with room to spare
+    assert sight.MAX_AGENT_BYTES == 512 * 1024
+    noisy = sight.agent_image(png_of(1280, 1280, noise=True))
+    assert len(noisy["data"]) <= sight.MAX_AGENT_BYTES
+    small = sight.agent_image(png_of(1000, 1000, noise=True), max_bytes=200 * 1024)
+    assert len(small["data"]) <= 200 * 1024
+
+
 @pytest.mark.parametrize("bad", [b"", b"GIF89a....", b"\x89PNG\r\n\x1a\n" + b"x" * 40, "huge"])
 def test_agent_image_fails_closed(bad: Any) -> None:
     data = huge_header_png(20000, 20000) if bad == "huge" else bad

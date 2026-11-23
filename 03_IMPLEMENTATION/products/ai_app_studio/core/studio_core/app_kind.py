@@ -46,6 +46,7 @@ class AppKind:
     max_total_bytes = appfiles.MAX_TOTAL_BYTES
     max_file_bytes = appfiles.MAX_FILE_BYTES
     templates = frozenset(TEMPLATE_FILES)
+    file_roots = ("src", "public")  # committed to the project's git repo with model/project.json (F3)
 
     def initial_settings(self, template: str) -> dict[str, Any]:
         if template not in self.templates:
@@ -77,7 +78,7 @@ class AppKind:
         for path, f in files.items():
             ws.write_text(path, f["content"])
         wanted = set(files)
-        for root in ("src", "public"):
+        for root in self.file_roots:
             for rel in ws.iter_files(root):
                 if rel not in wanted:
                     ws.resolve(rel).unlink(missing_ok=True)
