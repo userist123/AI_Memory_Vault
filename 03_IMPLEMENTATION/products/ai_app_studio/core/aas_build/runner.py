@@ -72,9 +72,9 @@ def _check_dir(p: Path, what: str) -> str:
 def build_web_argv(*, docker: str, build_id: str, ctx: Path, out: Path, image: str, cpus: str = "2", memory: str = "2g") -> list[str]:
     if not os.path.isabs(docker):
         raise BuildError("docker executable must be an absolute path")
-    if not _BUILD_ID_RE.match(build_id):
+    if not _BUILD_ID_RE.fullmatch(build_id):
         raise BuildError("invalid build id")
-    if not _IMAGE_RE.match(image):
+    if not _IMAGE_RE.fullmatch(image):
         raise BuildError("image must be pinned by sha256 digest or image id")
     if not re.fullmatch(r"[0-9]{1,2}(\.[0-9])?", cpus) or not re.fullmatch(r"[0-9]{1,2}[mg]", memory):
         raise BuildError("invalid resource limit")
@@ -160,7 +160,7 @@ def resolve_image(docker: str, tag: str = "aas-web-build:dev") -> str:
     r = subprocess.run([docker, "image", "inspect", tag, "--format", "{{.Id}}"], capture_output=True, timeout=60,  # noqa: S603
                        check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)
     out = r.stdout.decode("utf-8", "replace").strip()
-    if r.returncode != 0 or not _IMAGE_RE.match(out):
+    if r.returncode != 0 or not _IMAGE_RE.fullmatch(out):
         err = (r.stderr or b"").decode("utf-8", "replace").lower()
         if any(s in err for s in ("error during connect", "cannot connect to the docker daemon", "dockerdesktoplinuxengine",
                                   "docker_engine", "is the docker daemon running")):
@@ -338,7 +338,7 @@ def _scan(root: Path, limits: BuildLimits) -> list[tuple[str, os.stat_result]]:
         for e in entries:
             name = e.name
             r = f"{rel}/{name}" if rel else name
-            if not _SEGMENT_RE.match(name) or name.endswith(".") or name.casefold() in CONTROL_NAMES:
+            if not _SEGMENT_RE.fullmatch(name) or name.endswith(".") or name.casefold() in CONTROL_NAMES:
                 raise BuildError(f"output name not allowed: {r!r}")
             st = os.lstat(e.path)
             if _is_link_like(st):
@@ -465,11 +465,11 @@ def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path
     pinned build-tools (android.aapt2FromMavenOverride) and native integration is off (org.gradle.native=false)."""
     if not os.path.isabs(docker):
         raise BuildError("docker executable must be an absolute path")
-    if not _BUILD_ID_RE.match(build_id):
+    if not _BUILD_ID_RE.fullmatch(build_id):
         raise BuildError("invalid build id")
-    if not _IMAGE_RE.match(image):
+    if not _IMAGE_RE.fullmatch(image):
         raise BuildError("image must be pinned by sha256 digest or image id")
-    if not isinstance(app_id, str) or not _APP_ID_RE.match(app_id):
+    if not isinstance(app_id, str) or not _APP_ID_RE.fullmatch(app_id):
         raise BuildError("application id is not a studio package id")
     _studio_keystore(keystore)
     # W5: the brand kit (icons/splash/strings/version) is mounted read-only like /dist; the script allow-lists its files
@@ -488,7 +488,7 @@ def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path
 
 
 def build_genkey_argv(*, docker: str, build_id: str, keys_out: Path, image: str) -> list[str]:
-    if not os.path.isabs(docker) or not _BUILD_ID_RE.match(build_id) or not _IMAGE_RE.match(image):
+    if not os.path.isabs(docker) or not _BUILD_ID_RE.fullmatch(build_id) or not _IMAGE_RE.fullmatch(image):
         raise BuildError("invalid docker path, build id or image")
     return [docker, "run", "--rm", "--name", CONTAINER_PREFIX + build_id, *_hardening("1", "512m", 1024 * 1024, 128),
             "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",  # noqa: S108 - container path

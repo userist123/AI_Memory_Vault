@@ -77,7 +77,7 @@ _registry: dict[str, ProjectKind] = {}
 def register(kind: ProjectKind) -> ProjectKind:
     if not isinstance(kind, ProjectKind):
         raise TypeError("object does not implement ProjectKind")
-    if not isinstance(kind.name, str) or not _NAME_RE.match(kind.name):
+    if not isinstance(kind.name, str) or not _NAME_RE.fullmatch(kind.name):
         raise ValueError(f"invalid project kind name {kind.name!r}")
     with _lock:
         existing = _registry.get(kind.name)
@@ -121,7 +121,7 @@ class NullKind:
         return {}
 
     def validate(self, path: str, content: str | None = None) -> dict[str, Any]:
-        if not isinstance(path, str) or not self._PATH.match(path):
+        if not isinstance(path, str) or not self._PATH.fullmatch(path):
             raise ValidationFailed("file path must look like 'notes/a.txt' (lowercase, max 4 folders)")
         if content is None:
             return {}

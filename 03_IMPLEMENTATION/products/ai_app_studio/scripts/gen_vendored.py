@@ -61,11 +61,14 @@ FILES: list[tuple[str, str, str]] = [
      "passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat; O8: request_approval "
      "refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records "
      "(a runner:<run_id> label over the whole run; any other agent label, e.g. the external-MCP one, within a rolling "
-     "APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever)."),
+     "APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever); R2: Studio.workspace validates the project id "
+     "with re.fullmatch (a trailing newline no longer passes `$`)."),
     ("core/studio_core/db.py", "core/studio_core/db.py",
      "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
      "(activity_events, app_settings) live in aas_models.py, not here."),
-    ("core/studio_core/ids.py", "core/studio_core/ids.py", ""),
+    ("core/studio_core/ids.py", "core/studio_core/ids.py",
+     "R2: is_valid_id / is_valid_slug use re.fullmatch instead of re.match, so a trailing newline (which `$` "
+     "accepts) is rejected; no other change."),
     ("core/studio_core/errors.py", "core/studio_core/errors.py", ""),
     ("core/studio_core/config.py", "core/studio_core/config.py",
      "AAS identity: only AAS_* env vars are read (AAS_DATA_DIR, AAS_API_PORT, AAS_PREVIEW_PORT, AAS_AGENT_ID, "

@@ -164,7 +164,7 @@ def parse_denylist(obj: Any) -> DenyList:
     lists: dict[str, list[str]] = {}
     for key, rx in (("servers", _SERVER_RE), ("tools", _TOOL_RE), ("substrings", _SUB_RE)):
         v = obj.get(key, [])
-        if not isinstance(v, list) or len(v) > MAX_ENTRIES or not all(isinstance(x, str) and rx.match(x) for x in v):
+        if not isinstance(v, list) or len(v) > MAX_ENTRIES or not all(isinstance(x, str) and rx.fullmatch(x) for x in v):
             raise DenyListInvalid(f"deny-list '{key}' has an invalid entry")
         lists[key] = v
     for s in lists["servers"]:
@@ -293,7 +293,7 @@ def owner_mcp_servers(env: dict[str, str], deny: DenyList) -> dict[str, dict[str
         return {}
     out: dict[str, dict[str, Any]] = {}
     for name, cfg in servers.items():
-        if (isinstance(name, str) and isinstance(cfg, dict) and _OWNER_SERVER_NAME_RE.match(name)
+        if (isinstance(name, str) and isinstance(cfg, dict) and _OWNER_SERVER_NAME_RE.fullmatch(name)
                 and _canon(name) != SERVER and not deny.denies_server(name)):
             out[name] = cfg
     return out

@@ -53,7 +53,7 @@ def _recomputed(a: Approval) -> str:
 def _intact(a: Approval) -> bool:
     """The stored hash still matches the stored plan text (a later edit of the row breaks it)."""
     stored = str((a.params or {}).get("contentSha256", ""))
-    return bool(_HASH_RE.match(stored)) and hmac.compare_digest(stored, _recomputed(a))
+    return bool(_HASH_RE.fullmatch(stored)) and hmac.compare_digest(stored, _recomputed(a))
 
 
 def _bound(a: Approval) -> bool:

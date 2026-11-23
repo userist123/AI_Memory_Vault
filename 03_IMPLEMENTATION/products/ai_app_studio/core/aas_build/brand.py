@@ -55,7 +55,7 @@ class BrandError(Exception):
 
 # ---- colours ----------------------------------------------------------------------------------------------------------
 def check_hex(value: str) -> str:
-    if not isinstance(value, str) or not _HEX.match(value):
+    if not isinstance(value, str) or not _HEX.fullmatch(value):
         raise BrandError(f"colour must be #RRGGBB: {value!r}")
     return value.upper()
 
@@ -323,7 +323,7 @@ _GLYPH_CACHE: dict[str, list[Polyline]] = {}
 
 def load_glyph(name: str) -> list[Polyline]:
     """Polylines (24-unit box, stroke 2) of a bundled glyph; the file must match MANIFEST.json."""
-    if not isinstance(name, str) or not _GLYPH.match(name):
+    if not isinstance(name, str) or not _GLYPH.fullmatch(name):
         raise BrandError("invalid glyph name")
     if name in _GLYPH_CACHE:
         return _GLYPH_CACHE[name]

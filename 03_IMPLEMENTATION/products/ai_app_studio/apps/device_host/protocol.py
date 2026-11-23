@@ -32,7 +32,7 @@ def _coord(v: Any) -> int:
 
 
 def _b64(v: Any) -> str:
-    if not isinstance(v, str) or len(v) > MAX_B64 or len(v) % 4 or not B64_RE.match(v):
+    if not isinstance(v, str) or len(v) > MAX_B64 or len(v) % 4 or not B64_RE.fullmatch(v):
         raise ProtocolError("bad base64")
     try:
         base64.b64decode(v, validate=True)
@@ -48,13 +48,13 @@ def _check_ms(v: Any) -> int:
 
 
 def _check_text(v: Any) -> str:
-    if not isinstance(v, str) or not TEXT_RE.match(v):
+    if not isinstance(v, str) or not TEXT_RE.fullmatch(v):
         raise ProtocolError("bad text")
     return v
 
 
 def _check_pkg(v: Any) -> str:
-    if not isinstance(v, str) or not PKG_RE.match(v):
+    if not isinstance(v, str) or not PKG_RE.fullmatch(v):
         raise ProtocolError("package not allowed")
     return v
 
@@ -66,7 +66,7 @@ def _check_size(v: Any) -> str:
 
 
 def _check_sha(v: Any) -> str:
-    if not isinstance(v, str) or not SHA_RE.match(v):
+    if not isinstance(v, str) or not SHA_RE.fullmatch(v):
         raise ProtocolError("bad sha256")
     return v
 
@@ -119,8 +119,8 @@ def _short_str(v: Any, n: int = 400) -> bool:
 
 
 EVENT_KINDS = {"booted", "modal", "exit", "log", "preflight"}
-_REPLY_OPTIONAL = {"err": _short_str, "pkg": lambda v: isinstance(v, str) and bool(PKG_RE.match(v)), "size": lambda v: _is_int(v) or (isinstance(v, list) and len(v) == 2),
-                   "sha256": lambda v: isinstance(v, str) and bool(SHA_RE.match(v)),
+_REPLY_OPTIONAL = {"err": _short_str, "pkg": lambda v: isinstance(v, str) and bool(PKG_RE.fullmatch(v)), "size": lambda v: _is_int(v) or (isinstance(v, list) and len(v) == 2),
+                   "sha256": lambda v: isinstance(v, str) and bool(SHA_RE.fullmatch(v)),
                    "chunks": _is_int, "dropped": _is_int, "phase": lambda v: v in ("begin", "chunk", "done"),
                    "got": _is_int, "msg": _short_str, "ms": _is_int}
 

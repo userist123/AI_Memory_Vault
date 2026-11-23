@@ -67,7 +67,7 @@ def _disk_gate(settings: Settings, free_bytes: Callable[[], int] | None) -> None
 
 def _audited(studio: Any, actor: Actor | None, project_id: str, target: str, fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
     """B12: every build goes through Studio.operation (policy ``app.build`` + tool_executions + audit row)."""
-    pid = project_id if isinstance(project_id, str) and re.match(r"^prj_[0-9a-f]{16}$", project_id) else None
+    pid = project_id if isinstance(project_id, str) and re.fullmatch(r"^prj_[0-9a-f]{16}$", project_id) else None
     return studio.operation(actor or BUILD_ACTOR, "app.build", "app.build", {"projectId": str(project_id)[:40],
                             "target": target}, lambda _ctx: fn(), project_id=pid)
 
@@ -208,14 +208,14 @@ def preview_base(settings: Settings, project_id: str) -> Path:
 def site_root_for(settings: Settings) -> Callable[[str], Path | None]:
     """The preview server's resolver: ``<id16>`` (host label) -> the current built site, or None."""
     def resolve(id16: str) -> Path | None:
-        if not isinstance(id16, str) or not _ID16.match(id16):
+        if not isinstance(id16, str) or not _ID16.fullmatch(id16):
             return None
         base = preview_base(settings, "prj_" + id16)
         try:
             name = (base / "current").read_text(encoding="utf-8")[:40].strip()
         except OSError:
             return None
-        if not _SITE.match(name):
+        if not _SITE.fullmatch(name):
             return None
         site = base / name
         return site if site.is_dir() and not site.is_symlink() else None
@@ -249,7 +249,7 @@ def _rec(studio: Any, kind: str, project_id: str, run_id: str | None, **payload:
 
 
 def _prune(base: Path, keep: str) -> None:
-    sites = sorted((p for p in base.iterdir() if p.is_dir() and _SITE.match(p.name)), key=lambda p: p.name)
+    sites = sorted((p for p in base.iterdir() if p.is_dir() and _SITE.fullmatch(p.name)), key=lambda p: p.name)
     for p in sites[:-KEEP_SITES]:
         if p.name != keep:
             shutil.rmtree(p, ignore_errors=True)
@@ -265,7 +265,7 @@ def build_web(studio: Any, project_id: str, *, run_id: str | None = None,
 
 def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.BuildResult],
                docker: str | None, image: str | None, free_bytes: Callable[[], int] | None) -> dict[str, Any]:
-    if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+    if not re.fullmatch(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
     _disk_gate(studio.settings, free_bytes)
     held = ExitStack()
@@ -341,7 +341,7 @@ def build_android(studio: Any, project_id: str, *, run_id: str | None = None,
 def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.AndroidResult],
                    ensure_keys: Callable[..., tuple[Path, str]], docker: str | None, image: str | None,
                    free_bytes: Callable[[], int] | None) -> dict[str, Any]:
-    if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+    if not re.fullmatch(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
     _disk_gate(studio.settings, free_bytes)
     held = ExitStack()
@@ -428,7 +428,7 @@ _BUILD_ID = re.compile(r"^d[0-9a-f]{16}$")
 def desktop_dir(settings: Settings, project_id: str, build_id: str) -> Path:
     """One finished desktop build = one dir holding the exe AND the zip of the dist it embeds (written together in a
     staging dir, put in place by ONE directory rename; S9c review M1)."""
-    if not isinstance(build_id, str) or not _BUILD_ID.match(build_id):
+    if not isinstance(build_id, str) or not _BUILD_ID.fullmatch(build_id):
         raise Unavailable("invalid desktop build id")
     return preview_base(settings, project_id) / "desktop" / build_id
 
@@ -471,7 +471,7 @@ def _desktop_drive_free(path: Path) -> int:
 
 def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.DesktopResult],
                    cargo: str | None, free_bytes: Callable[[], int] | None) -> dict[str, Any]:
-    if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+    if not re.fullmatch(r"^prj_[0-9a-f]{16}$", project_id):
         raise BuildFailed("invalid project id")
     _disk_gate(studio.settings, free_bytes)
     try:

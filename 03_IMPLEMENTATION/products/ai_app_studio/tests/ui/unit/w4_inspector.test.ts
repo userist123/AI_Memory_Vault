@@ -7,6 +7,8 @@ import { ChatPanel } from "../../../apps/desktop/src/components/ChatPanel";
 import { parseChat } from "../../../apps/desktop/src/lib/chatApi";
 import {
   attachmentContext,
+  inspectorEdit,
+  inspectorPreview,
   parseSelectMessage,
   previewOriginOf,
   projectIdFromOrigin,
@@ -124,12 +126,13 @@ describe("InspectorOverlay", () => {
 });
 
 const SEL: InspectorSelection = { projectId: PID, device: "phone", element: desc() as InspectorSelection["element"] };
+const TOKEN = "c".repeat(64);
 const OPTS = { revision: 7, families: { color: ["bg-primary", "bg-accent", "text-primary"], spacing: ["p-2", "p-4", "m-2"] } };
 
 async function mountPanel(sel: InspectorSelection = SEL) {
   const loadOptions = vi.fn(async () => OPTS);
   const edit = vi.fn(async () => ({ path: "src/App.tsx", revision: 8, rebuild: "building" }));
-  const preview = vi.fn(async () => ({ path: "src/App.tsx", line: 12 }));
+  const preview = vi.fn(async () => ({ path: "src/App.tsx", line: 12, planToken: TOKEN }));
   const capture = vi.fn(async () => "a".repeat(64));
   const onAttach = vi.fn();
   let r!: ReturnType<typeof render>;
@@ -161,7 +164,7 @@ describe("InspectorPanel", () => {
     await act(async () => {
       fireEvent.click(getByTestId("inspector-confirm"));
     });
-    expect(edit).toHaveBeenCalledWith(PID, 7, expect.objectContaining({ element: el }), { op: "text", to: "My habits" });
+    expect(edit).toHaveBeenCalledWith(PID, 7, expect.objectContaining({ element: el }), { op: "text", to: "My habits" }, TOKEN);
     expect(getByTestId("inspector-status").textContent).toContain("rev 8");
     const sel = getByTestId("inspector-swap-p-2") as HTMLSelectElement;
     expect(Array.from(sel.options).map((o) => o.value)).toEqual(["p-2", "p-4"]); // same prefix only
@@ -173,7 +176,7 @@ describe("InspectorPanel", () => {
     await act(async () => {
       fireEvent.click(getByTestId("inspector-confirm"));
     });
-    expect(edit).toHaveBeenLastCalledWith(PID, 8, expect.anything(), { op: "class", from: "p-2", to: "p-4" });
+    expect(edit).toHaveBeenLastCalledWith(PID, 8, expect.anything(), { op: "class", from: "p-2", to: "p-4" }, TOKEN);
   });
 
   it("shows a clear message for an ambiguous edit", async () => {
@@ -209,6 +212,36 @@ describe("InspectorPanel", () => {
     expect(a.captureSha).toBe("a".repeat(64));
     expect(a.context).toContain('text: "Habits"');
     expect(a.context).toContain("untrusted page data");
+  });
+});
+
+describe("inspector REST: the confirm is bound to the dry run (planToken)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const session = { apiBase: "http://127.0.0.1:17875", wsUrl: "ws://127.0.0.1:17875/ws", token: "t".repeat(40), previewPort: 17880 };
+
+  function mockJson(body: unknown) {
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+    }));
+    return calls;
+  }
+
+  it("the dry run returns the server's planToken and drops a malformed one", async () => {
+    mockJson({ dryRun: true, path: "src/App.tsx", line: 3, op: "text", planToken: TOKEN });
+    const el = desc() as InspectorSelection["element"];
+    expect(await inspectorPreview(session, PID, 7, el, { op: "text", to: "x" })).toEqual({ path: "src/App.tsx", line: 3, planToken: TOKEN });
+    mockJson({ dryRun: true, path: "src/App.tsx", line: 3, op: "text", planToken: "<script>" });
+    expect((await inspectorPreview(session, PID, 7, el, { op: "text", to: "x" })).planToken).toBe("");
+  });
+
+  it("the confirm sends the planToken with the same body", async () => {
+    const calls = mockJson({ path: "src/App.tsx", line: 3, revision: 8, rebuild: "building" });
+    const el = desc() as InspectorSelection["element"];
+    await inspectorEdit(session, PID, 7, el, { op: "text", to: "x" }, TOKEN);
+    const sent = JSON.parse(String(calls[0]!.init.body)) as Record<string, unknown>;
+    expect(sent).toEqual({ baseRevision: 7, element: el, op: "text", to: "x", confirm: true, planToken: TOKEN });
   });
 });
 

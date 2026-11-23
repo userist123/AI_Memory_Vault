@@ -10,16 +10,21 @@ POST /api/v1/projects/{pid}/inspector/edit     -> {baseRevision, element, op: "t
                                                   {baseRevision, element, op: "class", from, to}
      The change is located in src/** (unique visible-text match, or a className token, tie-broken by the element's
      tag and classes; ambiguous -> 409 inspector_ambiguous, missing -> 404) and written through the normal revisioned
-     Two steps: without ``confirm`` a dry run answers {dryRun, path, line} and writes nothing; the UI shows
-     "Will edit <file>:<line>" and only the owner's confirmation sends the same body with ``confirm: true``.
+     Two steps: without ``confirm`` a dry run answers {dryRun, path, line, planToken} and writes nothing; the UI
+     shows "Will edit <file>:<line>" and only the owner's confirmation sends the same body with ``confirm: true`` and
+     that ``planToken`` (sha256 of path|line|baseRevision|op|old|new); a missing or different token -> 409
+     inspector_plan_mismatch, nothing written.
      ``Studio.write_file`` operation as the owner (policy + tool_executions + audit row), then a web rebuild starts.
 POST /api/v1/projects/{pid}/inspector/capture  -> {device, element}: a preview capture of that frame (the unchanged
      capture.capture path), cropped to the element's rect (+ padding), stored content-addressed like every capture.
 """
 from __future__ import annotations
 
+import bisect
 import hashlib
+import hmac
 import io
+import json
 import os
 import re
 from typing import Any, Literal
@@ -63,6 +68,12 @@ class AmbiguousEdit(ConflictError):
     code = "inspector_ambiguous"
 
 
+class PlanMismatch(ConflictError):
+    """The confirmed edit is not the one the dry run showed the owner (missing or different ``planToken``)."""
+
+    code = "inspector_plan_mismatch"
+
+
 class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -100,7 +111,7 @@ class Descriptor(Strict):
     @field_validator("classes")
     @classmethod
     def _classes(cls, v: list[str]) -> list[str]:
-        if any(not isinstance(c, str) or not _CLASS.match(c) for c in v):
+        if any(not isinstance(c, str) or not _CLASS.fullmatch(c) for c in v):
             raise ValueError("invalid class name")
         return v
 
@@ -112,6 +123,7 @@ class EditReq(Strict):
     from_: str | None = Field(default=None, alias="from", max_length=64)
     to: str = Field(max_length=MAX_TEXT)
     confirm: bool = False  # False: dry run (names file:line, writes nothing); True: the owner confirmed that target
+    planToken: str | None = Field(default=None, max_length=64)  # noqa: N815 - the dry run's token; confirm needs it
 
     @model_validator(mode="after")
     def _shape(self) -> EditReq:
@@ -153,6 +165,77 @@ _NOT_TEXT_BEFORE = re.compile(r"(?:\bimport\s*|\bfrom\s*|\brequire\(\s*|\b(?:cla
                               r"role|name|htmlFor|data-[\w-]+|aria-[\w-]+)\s*=\s*\{?\s*)$")
 
 
+# a ``(`` after these words groups an expression; after any other identifier, ``)`` or ``]`` it opens a call
+_NOT_CALLEE = frozenset({"if", "for", "while", "switch", "catch", "return", "typeof", "void", "delete", "await",
+                         "yield", "case", "in", "of", "new", "throw", "else", "do", "instanceof"})
+
+
+def _comment_spans(content: str) -> list[tuple[int, int]]:
+    """[start, end) of every ``//`` and ``/* */`` comment, skipping string and template literals. A plain lexer: a
+    regex literal or a JSX text holding a quote may confuse it, which only ever hides (never adds) an edit target."""
+    spans: list[tuple[int, int]] = []
+    i, n = 0, len(content)
+    while i < n:
+        c = content[i]
+        if c == "/" and content.startswith("//", i):
+            j = content.find("\n", i)
+            j = n if j < 0 else j
+            spans.append((i, j))
+            i = j
+        elif c == "/" and content.startswith("/*", i):
+            j = content.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            spans.append((i, j))
+            i = j
+        elif c in "\"'`":
+            i += 1
+            while i < n and content[i] != c and not (c != "`" and content[i] == "\n"):
+                i += 2 if content[i] == "\\" else 1
+            i += 1
+        else:
+            i += 1
+    return spans
+
+
+def _in_comment(spans: list[tuple[int, int]], pos: int) -> bool:
+    k = bisect.bisect_right(spans, (pos, 1 << 62)) - 1
+    return k >= 0 and spans[k][0] <= pos < spans[k][1]
+
+
+def _opens_call(content: str, paren: int) -> bool:
+    """The ``(`` at ``paren`` opens a call's argument list (``f(``, ``a.b(``, ``f()(``, ``x[0](``)."""
+    j = paren - 1
+    while j >= 0 and content[j].isspace():
+        j -= 1
+    if j < 0:
+        return False
+    if content[j] in ")]":
+        return True
+    m = re.search(r"[\w$]+$", content[max(0, j - 40):j + 1])
+    return m is not None and m.group(0) not in _NOT_CALLEE and not m.group(0)[0].isdigit()
+
+
+def _is_call_argument(content: str, start: int) -> bool:
+    """The literal at ``start`` is directly preceded by ``(`` or ``,`` of a call's argument list."""
+    j = start - 1
+    while j >= 0 and content[j].isspace():
+        j -= 1
+    if j < 0 or content[j] not in "(,":
+        return False
+    if content[j] == "(":
+        return _opens_call(content, j)
+    depth = 0  # a comma: find the bracket that encloses it
+    for k in range(j - 1, max(-1, j - 2000), -1):
+        ch = content[k]
+        if ch in ")]}":
+            depth += 1
+        elif ch in "([{":
+            if depth == 0:
+                return ch == "(" and _opens_call(content, k)
+            depth -= 1
+    return False
+
+
 def _text_matches(files: dict[str, str], text: str) -> list[tuple[str, int, int, str]]:
     """Every (path, start, end, kind) where ``text`` is written in the source: as JSX text (any whitespace between
     the words) or as a whole string literal. kind is "jsx" or the quote character."""
@@ -167,8 +250,14 @@ def _text_matches(files: dict[str, str], text: str) -> list[tuple[str, int, int,
         if path.endswith((".tsx", ".jsx")):  # .ts/.js have no JSX text, only literals
             out += [(path, m.start(2), m.end(2), "jsx") for m in jsx.finditer(content)
                     if _closes_jsx_tag(content, m.start(1) - 1)]
+        spans: list[tuple[int, int]] | None = None
         for m in lit.finditer(content):
             if _NOT_TEXT_BEFORE.search(content[max(0, m.start() - 40):m.start()]):
+                continue
+            if _is_call_argument(content, m.start()):  # navigate("X"), db.exec("X"): code, not visible text
+                continue
+            spans = _comment_spans(content) if spans is None else spans
+            if _in_comment(spans, m.start()):
                 continue
             if m.group(1) == "`" and "${" in m.group(2):
                 continue
@@ -285,6 +374,13 @@ def _first_diff_line(old: str, new: str) -> int:
     return 1
 
 
+def plan_token(path: str, line: int, base_revision: int, op: str, old: str, new: str) -> str:
+    """sha256 over the dry run the owner saw: path | line | baseRevision | op | old | new (JSON-encoded, so no field
+    can bleed into the next). ``old`` is the located text (whitespace-normalised) or the class token replaced."""
+    raw = json.dumps([path, line, base_revision, op, old, new])
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def _pid(pid: str) -> str:
     if not _PID.fullmatch(pid):
         raise ValidationFailed("invalid project id")
@@ -312,15 +408,21 @@ def register(app: FastAPI, studio: Any, owner: Actor, runner: Any) -> None:
             path, content = plan_text_edit(files, b.element, b.to)
         else:
             path, content = plan_class_swap(files, b.element, b.from_ or "", b.to)
+        line = _first_diff_line(files[path], content)
+        old = " ".join(b.element.text.split()) if b.op == "text" else (b.from_ or "")
+        token = plan_token(path, line, b.baseRevision, b.op, old, b.to)
         if not b.confirm:  # step 1: where the edit would land; the UI shows it and asks the owner
-            return {"dryRun": True, "path": path, "line": _first_diff_line(files[path], content), "op": b.op}
+            return {"dryRun": True, "path": path, "line": line, "op": b.op, "planToken": token}
+        if not isinstance(b.planToken, str) or not hmac.compare_digest(b.planToken.encode("utf-8"), token.encode()):
+            # step 2 must confirm exactly the plan of step 1 (same file, line, revision and change)
+            raise PlanMismatch("the confirmed edit differs from the one shown: preview it again", projectId=pid)
         res = studio.write_file(owner, pid, b.baseRevision, path, content)  # revision check + policy + audit
         rebuild = "busy"
         try:
             rebuild = app.state.owner_builds.start(pid, "web").get("state", "building")
         except (StudioError, Unavailable):
             rebuild = "busy"  # a build or run started meanwhile: the change is saved, the owner can rebuild
-        return {"path": path, "line": _first_diff_line(files[path], content), "revision": res["revision"],
+        return {"path": path, "line": line, "revision": res["revision"],
                 "rebuild": rebuild}
 
     @app.post(f"{API}/projects/{{pid}}/inspector/capture")

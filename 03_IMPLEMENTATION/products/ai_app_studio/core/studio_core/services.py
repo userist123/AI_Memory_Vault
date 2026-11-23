@@ -164,7 +164,7 @@ class Studio:
                 audit.write_anchor(s2, self.settings.data_dir / "audit" / "anchor.json")
 
     def workspace(self, project_id: str, *, create: bool = True) -> Workspace:
-        if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+        if not re.fullmatch(r"^prj_[0-9a-f]{16}$", project_id):
             raise ValidationFailed("invalid project id", projectId=project_id)
         return Workspace(self.settings.projects_dir / project_id, create=create)
 

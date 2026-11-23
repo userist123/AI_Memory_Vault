@@ -46,7 +46,7 @@ export function InspectorPanel(props: {
   /** step 1: dry run, names the file:line the edit would change (nothing is written) */
   preview: (projectId: string, baseRevision: number, sel: InspectorSelection, op: EditOp) => Promise<EditPreview>;
   /** step 2: only after the owner confirmed the shown target */
-  edit: (projectId: string, baseRevision: number, sel: InspectorSelection, op: EditOp) => Promise<EditResult>;
+  edit: (projectId: string, baseRevision: number, sel: InspectorSelection, op: EditOp, planToken: string) => Promise<EditResult>;
   capture: (sel: InspectorSelection) => Promise<string | null>;
   onAttach: (a: ChatAttachment) => void;
   onClose: () => void;
@@ -89,14 +89,14 @@ export function InspectorPanel(props: {
       .finally(() => setBusy(false));
   };
 
-  const run = (op: EditOp) => {
+  const run = (op: EditOp, planToken: string) => {
     if (busy || !opts) return;
     setBusy(true);
     setError("");
     setStatus("");
     setPending(null);
     props
-      .edit(selection.projectId, opts.revision, selection, op)
+      .edit(selection.projectId, opts.revision, selection, op, planToken)
       .then((r) => {
         setOpts({ ...opts, revision: r.revision });
         setStatus(
@@ -199,7 +199,7 @@ export function InspectorPanel(props: {
       {pending ? (
         <div className="row" data-testid="inspector-confirm-box">
           <span data-testid="inspector-target">{`Va edita ${pending.target.path}:${pending.target.line}`}</span>
-          <button className="btn primary" data-testid="inspector-confirm" disabled={busy} onClick={() => run(pending.op)}>
+          <button className="btn primary" data-testid="inspector-confirm" disabled={busy} onClick={() => run(pending.op, pending.target.planToken)}>
             Confirmă
           </button>
           <button className="btn" data-testid="inspector-cancel" disabled={busy} onClick={() => setPending(null)}>

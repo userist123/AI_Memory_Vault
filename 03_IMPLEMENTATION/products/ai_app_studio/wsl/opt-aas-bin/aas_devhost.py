@@ -946,17 +946,17 @@ class Host:
             return self._ok_rc(self.input.run(("input", "swipe", *a, str(ms)), timeout=20))
         if op == "text":
             t = req["t"]
-            if not isinstance(t, str) or not TEXT_RE.match(t):
+            if not isinstance(t, str) or not TEXT_RE.fullmatch(t):
                 raise ValueError("bad text")
             return self._ok_rc(self.input.run(("input", "text", t.replace(" ", "%s")), timeout=20))
         if op == "launch":
             pkg = req["pkg"]
-            if not isinstance(pkg, str) or not PKG_RE.match(pkg):
+            if not isinstance(pkg, str) or not PKG_RE.fullmatch(pkg):
                 raise ValueError("bad pkg")
             return self._ok_rc(self.shell("monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"))
         if op == "uninstall":
             pkg = req["pkg"]
-            if not isinstance(pkg, str) or not PKG_RE.match(pkg):
+            if not isinstance(pkg, str) or not PKG_RE.fullmatch(pkg):
                 raise ValueError("bad pkg")
             rc, txt = self.shell("pm", "uninstall", pkg, timeout=60)
             return {"ok": rc == 0 and "Success" in txt, "msg": txt[-200:]}
@@ -983,7 +983,7 @@ class Host:
             return {"ok": True, "dropped": self.out.dropped}
         if op == "install":
             sha, size = req["sha256"], _int(req["size"], 1, APK_MAX)
-            if not isinstance(sha, str) or not SHA_RE.match(sha):
+            if not isinstance(sha, str) or not SHA_RE.fullmatch(sha):
                 raise ValueError("bad sha")
             self._install_abort()
             path = os.path.join(self.state, "run", sha + ".apk")
@@ -1011,7 +1011,7 @@ class Host:
             self.install = None
             try:
                 pkg = apk_package(inst["path"])
-                if pkg is None or not PKG_RE.match(pkg):
+                if pkg is None or not PKG_RE.fullmatch(pkg):
                     return {"ok": False, "phase": "done", "err": "package not allowed"}
                 # between builds: drop the previous build and its data, then install (DESIGN 2.2)
                 self.shell("pm", "uninstall", pkg, timeout=60)
@@ -1023,10 +1023,10 @@ class Host:
                 after = self._packages()
                 if after is None:
                     return {"ok": False, "phase": "done", "err": "package list failed"}
-                bad = sorted(p for p in after - before if not PKG_RE.match(p))
+                bad = sorted(p for p in after - before if not PKG_RE.fullmatch(p))
                 if bad:
                     for p in bad:
-                        if PKG_RE.match(p) is None and re.match(r"^[A-Za-z0-9_.]{1,200}$", p):
+                        if PKG_RE.fullmatch(p) is None and re.fullmatch(r"^[A-Za-z0-9_.]{1,200}$", p):
                             self.shell("pm", "uninstall", p, timeout=60)
                     return {"ok": False, "phase": "done", "err": "unexpected package installed"}
             finally:

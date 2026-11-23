@@ -123,7 +123,7 @@ class PreviewServer:
             raise ValueError("preview server binds to 127.0.0.1 only")
         extra = list(extra_frame_ancestors)
         for o in extra:  # S6: exact loopback UI origins of the vite dev/preview servers only (dev + tests)
-            if not _DEV_ANCESTOR_RE.match(o):
+            if not _DEV_ANCESTOR_RE.fullmatch(o):
                 raise ValueError(f"frame ancestor {o!r} is not http://127.0.0.1:<port> or http://localhost:<port>")
         self._headers = tuple(
             (k, v + "".join(f" {o}" for o in extra) if k == "Content-Security-Policy" else v) for k, v in SECURITY_HEADERS)
@@ -192,7 +192,7 @@ class PreviewServer:
             def do_GET(self) -> None:  # noqa: N802
                 if len(self.headers.get_all("Host") or []) > 1:
                     return self._send(400, b"bad request")  # duplicate Host header
-                m = _HOST_RE.match(self.headers.get("Host", ""))
+                m = _HOST_RE.fullmatch(self.headers.get("Host", ""))
                 if not m or int(m.group(2)) != server.port:
                     return self._send(421, b"misdirected request")  # DNS-rebinding / wrong-origin guard
                 root = server._site_root_for(m.group(1))
@@ -209,7 +209,7 @@ class PreviewServer:
                     segments = ["index.html"]
                 else:
                     segments = path[1:].split("/")
-                    if not path or "\\" in path or ":" in path or "\0" in path or any(not _SEGMENT_RE.match(s) or s.endswith(".") for s in segments):
+                    if not path or "\\" in path or ":" in path or "\0" in path or any(not _SEGMENT_RE.fullmatch(s) or s.endswith(".") for s in segments):
                         return self._send(404, b"not found")  # empty segment, dotfile, '..', ADS, backslash, drive letter
                 f = _safe_file(Path(root), segments)
                 if f is None:

@@ -32,7 +32,7 @@ def _digest(secret: str) -> str:
 
 def issue(studio: Any, run_id: str, project_id: str) -> str:
     """Create a grant; returns the secret (the caller hands it to the MCP child's env, nothing else)."""
-    if not _RUN_RE.match(run_id):
+    if not _RUN_RE.fullmatch(run_id):
         raise ValueError("invalid run id")
     secret = secrets.token_urlsafe(32)
     with studio.session() as s:
@@ -42,7 +42,7 @@ def issue(studio: Any, run_id: str, project_id: str) -> str:
 
 
 def _row(studio: Any, run_id: str) -> dict[str, str] | None:
-    if not isinstance(run_id, str) or not _RUN_RE.match(run_id):
+    if not isinstance(run_id, str) or not _RUN_RE.fullmatch(run_id):
         return None
     with studio.session() as s:
         row = s.get(AppSetting, PREFIX + run_id)
@@ -69,7 +69,7 @@ def project_of(studio: Any, run_id: str) -> str | None:
 
 def attach_plan(studio: Any, run_id: str, plan_id: str) -> bool:
     """The owner approved ``plan_id`` for this run: the live grant carries it from now on (P5f). No grant -> no-op."""
-    if not isinstance(run_id, str) or not _RUN_RE.match(run_id):
+    if not isinstance(run_id, str) or not _RUN_RE.fullmatch(run_id):
         return False
     with studio.session() as s:
         row = s.get(AppSetting, PREFIX + run_id)

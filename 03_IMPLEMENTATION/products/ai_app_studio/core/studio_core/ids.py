@@ -13,11 +13,11 @@ def new_id(prefix: str) -> str:
 
 
 def is_valid_id(value: str) -> bool:
-    return bool(_ID_RE.match(value))
+    return bool(_ID_RE.fullmatch(value))
 
 
 def is_valid_slug(value: str) -> bool:
-    return bool(_SLUG_RE.match(value))
+    return bool(_SLUG_RE.fullmatch(value))
 
 
 def utcnow() -> datetime:

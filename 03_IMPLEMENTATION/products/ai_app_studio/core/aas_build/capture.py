@@ -94,7 +94,7 @@ def _read_index(path: Path) -> list[dict[str, Any]]:
         return []
     if not isinstance(data, list):
         return []
-    return [e for e in data if isinstance(e, dict) and _SHA.match(str(e.get("sha", ""))) and isinstance(e.get("bytes"), int)]
+    return [e for e in data if isinstance(e, dict) and _SHA.fullmatch(str(e.get("sha", ""))) and isinstance(e.get("bytes"), int)]
 
 
 def _register_and_prune(settings: Any, project_id: str, added: list[tuple[str, int]]) -> None:
@@ -145,7 +145,7 @@ def captures_dir(settings: Any) -> Path:
 
 def capture_file(settings: Any, sha256: str) -> Path | None:
     """The stored PNG for a digest, or None (bad id, missing, link)."""
-    if not isinstance(sha256, str) or not _SHA.match(sha256):
+    if not isinstance(sha256, str) or not _SHA.fullmatch(sha256):
         return None
     p = _contained(captures_dir(settings), f"{sha256}.png")
     return p if p.is_file() and not p.is_symlink() else None

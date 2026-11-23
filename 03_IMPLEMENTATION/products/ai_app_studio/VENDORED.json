@@ -44,9 +44,9 @@
       "upstream_path": "core/studio_core/services.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "8af4717ebbcf2efff2cd47bd05522c2d489ef38e2d81fe5acc95795aa6c36d24",
-      "local_sha256": "d21c3780a40a40c28d93cada8fdd88ba429e8f53ebdde994ca2fc6fac6ee0daa",
+      "local_sha256": "489d60f6850ea9c6c9e660f455734974a47fdacb983dc1f402041776c05ee929",
       "patched": true,
-      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create passes the id of the project it created), _git_model adds the project kind to the git snapshot, and get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings; F3: _git_roots() passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat; O8: request_approval refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records (a runner:<run_id> label over the whole run; any other agent label, e.g. the external-MCP one, within a rolling APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever)."
+      "patch_reason": "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; Studio(kind=...) resolves project_kind on use; _render -> kind.build; create_project takes settings from kind.initial_settings (no template components); export_project archives kind.publish() root/exclude and verifies kind.publish().required (an empty requirement is never verified); write_file/delete_file validate via kind.validate and kind.max_files/max_total_bytes, delete_file resolves the kind inside the audited operation; read_file does its own NotFound lookup; removed website methods add/update/remove/move_component, set_theme, set_animations, _insert_component, _get_component; _apply_components rejects models that carry components instead of re-validating them with component_model; S2: projects get kind=self.kind.name and project_to_dict reports it, write_file refuses a path that differs from an existing file only by case, Studio.operation also records a tool.call activity event (activity.record_operation, never raises; project.create passes the id of the project it created), _git_model adds the project kind to the git snapshot, and get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings; F3: _git_roots() passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat; O8: request_approval refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records (a runner:<run_id> label over the whole run; any other agent label, e.g. the external-MCP one, within a rolling APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever); R2: Studio.workspace validates the project id with re.fullmatch (a trailing newline no longer passes `$`)."
     },
     {
       "path": "core/studio_core/db.py",
@@ -62,9 +62,9 @@
       "upstream_path": "core/studio_core/ids.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "b0c0a8b573b5e11346640bf97c242a7a41032e3fb5d7059fd5735f5a3c276530",
-      "local_sha256": "b0c0a8b573b5e11346640bf97c242a7a41032e3fb5d7059fd5735f5a3c276530",
-      "patched": false,
-      "patch_reason": ""
+      "local_sha256": "fcdb910c8fd55c37ecd5f1840ac434c5abf4c2be442c8adcef7b3e2ed61d86c5",
+      "patched": true,
+      "patch_reason": "R2: is_valid_id / is_valid_slug use re.fullmatch instead of re.match, so a trailing newline (which `$` accepts) is rejected; no other change."
     },
     {
       "path": "core/studio_core/errors.py",

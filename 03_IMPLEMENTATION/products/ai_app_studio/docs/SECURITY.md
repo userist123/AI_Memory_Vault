@@ -107,8 +107,11 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
   system allow-list (one family per swap). Text edits replace only JSX text children (the `>` that closes a JSX tag up to the
   next tag start; a `a > x <` in a code expression is not a match) or a whole string literal equal to the visible text;
   0 or more than 1 location -> refused (404 / 409 `inspector_ambiguous`). Two steps: without `confirm` the server answers a
-  dry run `{dryRun, path, line}` and writes nothing; the panel shows "Va edita <file>:<line>" and only the owner's
-  Confirm sends the same body with `confirm: true` (revisioned `write_file`, audited, rebuild).
+  dry run `{dryRun, path, line, planToken}` and writes nothing; the panel shows "Va edita <file>:<line>" and only the
+  owner's Confirm sends the same body with `confirm: true` and that `planToken` (sha256 of path | line | baseRevision |
+  op | old | new, recomputed by the server; missing or different -> 409 `inspector_plan_mismatch`, nothing written), then
+  a revisioned `write_file`, audited, rebuild. A string literal that is a call argument (`navigate("X")`,
+  `db.exec("a", "X")`) or sits inside a `//` / `/* */` comment is never a text target.
 - **Baselines (W6).** Only the owner approves or resets baselines. Volatile regions (`data-aas-volatile`) are measured in a
   CDP isolated world (the page cannot patch `querySelectorAll` / `getBoundingClientRect` for the measurement), recorded
   ONLY at owner approval and capped at 15 % of the frame (more -> approval refused). At compare time only the approved masks
@@ -118,6 +121,13 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
   generated resources are mounted `:ro` into the Android build container; `brand_kit` is plan-gated for agents. Store
   screenshots and the caption text are bound to the export approval (their sha256 values are part of the approved
   parameters; the export re-verifies them and answers 409 / re-approval if they differ).
+- **Residual (baselines, masks).** Up to 15 % of a frame may be masked as volatile by design: a regression that lies
+  entirely inside an approved mask is not detected by the pixel compare (the owner sees the mask share as `maskedPct` and
+  approves the masks; above 15 % the approval is refused and a stored share above it counts as changed).
+- **Residual (export, store screenshots).** The APK export copies the approved APK first and then the store screenshots,
+  re-checking each against the approved fingerprint; if a screenshot changes mid-copy the export stops with 409 and the
+  already copied approved APK (and any screenshots copied before the change) stay in the export folder. Nothing unapproved
+  is ever written; the owner re-approves and exports again.
 - **Residual (flows).** Flow tests run in the host Chromium, not in the offline container: the dead proxy, same-origin
   route filter and CSP are the controls, and a Chromium escape would run as the owner (same class as R-EXT for the
   capture path).

@@ -250,16 +250,19 @@ def test_rest_text_edit_is_revisioned_audited_and_rebuilds(client: TestClient) -
     assert dry.json()["dryRun"] is True and dry.json()["path"] == "src/App.tsx" and dry.json()["line"] >= 1
     assert "<h1>Hello from AI App Studio</h1>" in st.read_file(OWNER, pid, "src/App.tsx")["content"]
     assert st.get_revision(pid) == rev
-    # step 2: the owner confirmed
-    body = {**body, "confirm": True}
+    # step 2: the owner confirmed (bound to the dry run by its planToken)
+    body = {**body, "confirm": True, "planToken": dry.json()["planToken"]}
     r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body, headers=AUTH)
     assert r.status_code == 200, r.text
     j = r.json()
     assert j["path"] == "src/App.tsx" and j["revision"] > rev and j["rebuild"] in ("building", "ok")
     assert "<h1>Salut</h1>" in st.read_file(OWNER, pid, "src/App.tsx")["content"]
     assert _wait(client.app.state.owner_builds, pid)["state"] == "ok"
-    # stale base revision -> 409 revision_conflict, nothing written
-    r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json={**body, "element": desc(text="Salut", classes=[])},
+    # stale base revision -> 409 revision_conflict, nothing written (the dry run itself does not check the revision)
+    stale = {**body, "element": desc(text="Salut", classes=[])}
+    stale.pop("confirm"), stale.pop("planToken")
+    tok = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=stale, headers=AUTH).json()["planToken"]
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json={**stale, "confirm": True, "planToken": tok},
                     headers=AUTH)
     assert r.status_code == 409 and r.json()["error"] == "revision_conflict"
     with st.session() as s:  # the edit is an owner write_file operation in the audit trail
@@ -343,3 +346,83 @@ def test_rest_ambiguous_text_is_a_409_even_in_the_dry_run(client: TestClient) ->
     assert r.status_code == 409 and r.json()["error"] == "inspector_ambiguous", r.text
     r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json={**body, "confirm": True}, headers=AUTH)
     assert r.status_code == 409
+
+
+# ---------------------------------------------------------------- R2: call arguments and comments are not text
+@pytest.mark.parametrize("code", [
+    'export const go = () => navigate("Habits");\n',
+    'export const q = (db: any) => db.exec("Habits");\n',
+    'export const q = (db: any) => db.exec("select", "Habits");\n',
+    'export const t = () => track( "Habits" );\n',
+    'export const n = 1; // the "Habits" screen\n',
+    '/* show "Habits" here */\nexport const n = 1;\n',
+    '/**\n * Renders:\n *   "Habits"\n */\nexport const n = 1;\n',
+    'export const A = () => <div>{/* "Habits" */}</div>;\n',
+])
+def test_call_arguments_and_comments_are_never_text_targets(code: str) -> None:
+    with pytest.raises(NotFound):
+        ir.plan_text_edit({"src/x.tsx": code}, ir.Descriptor.model_validate(desc(tag="p", classes=[])), "Mine")
+
+
+@pytest.mark.parametrize(("code", "expect"), [
+    ('export const ITEMS = ["Drink", "Habits"];\n', 'export const ITEMS = ["Drink", "Mine"];\n'),
+    ('export const T = { title: "Habits" };\n', 'export const T = { title: "Mine" };\n'),
+    ('export const A = (on: boolean) => <p>{on ? "Habits" : "x"}</p>;\n',
+     'export const A = (on: boolean) => <p>{on ? "Mine" : "x"}</p>;\n'),
+    ('export const U = "http://example.test"; export const T = "Habits";\n',
+     'export const U = "http://example.test"; export const T = "Mine";\n'),
+    ('/* a */ export const T = "Habits"; /* b */\n', '/* a */ export const T = "Mine"; /* b */\n'),
+    ('export const G = "src/**/*.ts";\nexport const T = "Habits";\n',
+     'export const G = "src/**/*.ts";\nexport const T = "Mine";\n'),
+    ('export const A = () => (\n  <p>{"Habits"}</p>\n);\n', 'export const A = () => (\n  <p>{"Mine"}</p>\n);\n'),
+])
+def test_literals_outside_calls_and_comments_stay_editable(code: str, expect: str) -> None:
+    _, out = ir.plan_text_edit({"src/x.tsx": code}, ir.Descriptor.model_validate(desc(tag="p", classes=[])), "Mine")
+    assert out == expect
+
+
+# ---------------------------------------------------------------- R2: the confirm is bound to the dry-run plan
+def _dry_and_body(client: TestClient) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    fake_builds(client.app.state.owner_builds)
+    pid = client.post("/api/v1/projects", json={"name": "Notes"}, headers=AUTH).json()["id"]
+    rev = client.get(f"/api/v1/projects/{pid}/inspector", headers=AUTH).json()["revision"]
+    body = {"baseRevision": rev, "element": desc(text="Hello from AI App Studio", classes=[]), "op": "text",
+            "to": "Salut"}
+    dry = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=body, headers=AUTH)
+    assert dry.status_code == 200, dry.text
+    return pid, body, dry.json()
+
+
+def test_dry_run_returns_a_plan_token_over_path_line_revision_old_new(client: TestClient) -> None:
+    import hashlib
+    import json
+    _, body, dry = _dry_and_body(client)
+    want = hashlib.sha256(json.dumps([dry["path"], dry["line"], body["baseRevision"], "text",
+                                      "Hello from AI App Studio", "Salut"]).encode("utf-8")).hexdigest()
+    assert dry["planToken"] == want
+
+
+@pytest.mark.parametrize("token", [None, "", "0" * 64, "zz", "é" * 64])
+def test_confirm_without_the_matching_plan_token_is_409_and_writes_nothing(client: TestClient,
+                                                                         token: str | None) -> None:
+    st = client.app.state.studio
+    pid, body, _ = _dry_and_body(client)
+    rev = st.get_revision(pid)
+    sent = {**body, "confirm": True} if token is None else {**body, "confirm": True, "planToken": token}
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit", json=sent, headers=AUTH)
+    assert r.status_code == 409 and r.json()["error"] == "inspector_plan_mismatch", r.text
+    assert st.get_revision(pid) == rev
+
+
+def test_confirm_of_a_different_edit_than_the_dry_run_is_409(client: TestClient) -> None:
+    st = client.app.state.studio
+    pid, body, dry = _dry_and_body(client)
+    rev = st.get_revision(pid)
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit",
+                    json={**body, "to": "Altceva", "confirm": True, "planToken": dry["planToken"]}, headers=AUTH)
+    assert r.status_code == 409 and r.json()["error"] == "inspector_plan_mismatch", r.text
+    assert st.get_revision(pid) == rev
+    r = client.post(f"/api/v1/projects/{pid}/inspector/edit",
+                    json={**body, "confirm": True, "planToken": dry["planToken"]}, headers=AUTH)
+    assert r.status_code == 200, r.text
+    assert "<h1>Salut</h1>" in st.read_file(OWNER, pid, "src/App.tsx")["content"]

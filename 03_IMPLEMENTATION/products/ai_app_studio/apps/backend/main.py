@@ -139,7 +139,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     starts/stops with the API (lifespan), so the packaged shell needs no second process; main() passes True,
     tests opt in."""
     for o in dev_origins or []:
-        if not _DEV_ORIGIN.match(o):
+        if not _DEV_ORIGIN.fullmatch(o):
             raise ValueError(f"dev origin {o!r} is not http://127.0.0.1:<port> or http://localhost:<port>")
     if dev_origins:
         settings = dataclasses.replace(settings, allowed_origins=(*settings.allowed_origins, *dev_origins))

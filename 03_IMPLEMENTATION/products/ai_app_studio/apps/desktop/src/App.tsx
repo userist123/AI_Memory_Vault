@@ -381,9 +381,9 @@ export function App() {
     if (!session) return Promise.reject(new Error("no session"));
     return fetchInspectorOptions(session, pid);
   }, [session]);
-  const inspectorSave = useCallback((pid: string, rev: number, sel: InspectorSelection, op: EditOp) => {
+  const inspectorSave = useCallback((pid: string, rev: number, sel: InspectorSelection, op: EditOp, planToken: string) => {
     if (!session) return Promise.reject(new Error("no session"));
-    return inspectorEdit(session, pid, rev, sel.element, op);
+    return inspectorEdit(session, pid, rev, sel.element, op, planToken);
   }, [session]);
   const inspectorDryRun = useCallback((pid: string, rev: number, sel: InspectorSelection, op: EditOp) => {
     if (!session) return Promise.reject(new Error("no session"));

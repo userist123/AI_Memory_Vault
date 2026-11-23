@@ -191,14 +191,14 @@ def load_state(settings: Any, pid: str) -> dict[str, Any]:
     if not isinstance(st, dict) or st.get("schema") != SCHEMA:
         return _empty_state()
     base = _empty_state()
-    routes = [r for r in st.get("routes", []) if isinstance(r, str) and ROUTE_RE.match(r)][:MAX_ROUTES]
+    routes = [r for r in st.get("routes", []) if isinstance(r, str) and ROUTE_RE.fullmatch(r)][:MAX_ROUTES]
     base["routes"] = routes or ["/"]
     t = st.get("thresholdPct")
     if isinstance(t, int | float) and not isinstance(t, bool) and MIN_THRESHOLD_PCT <= t <= MAX_THRESHOLD_PCT:
         base["thresholdPct"] = float(t)
     bl = st.get("baselines")
     if isinstance(bl, dict):
-        base["baselines"] = {k: v for k, v in bl.items() if isinstance(v, dict) and _SHA.match(str(v.get("sha256", "")))
+        base["baselines"] = {k: v for k, v in bl.items() if isinstance(v, dict) and _SHA.fullmatch(str(v.get("sha256", "")))
                              and v.get("frame") in capture.FRAMES and isinstance(v.get("route"), str)}
     if isinstance(st.get("lastCheck"), dict):
         base["lastCheck"] = st["lastCheck"]
@@ -213,7 +213,7 @@ def _referenced(st: dict[str, Any]) -> set[str]:
     shas = {v["sha256"] for v in st["baselines"].values()}
     for r in (st.get("lastCheck") or {}).get("results", []):
         for k in ("currentSha256", "diffSha256"):
-            if isinstance(r, dict) and isinstance(r.get(k), str) and _SHA.match(r[k]):
+            if isinstance(r, dict) and isinstance(r.get(k), str) and _SHA.fullmatch(r[k]):
                 shas.add(r[k])
     return shas
 
@@ -251,7 +251,7 @@ def _store_png(settings: Any, pid: str, png: bytes, free_bytes: Callable[[], int
 
 def baseline_file(settings: Any, project_id: str, sha256: str) -> Path | None:
     """A stored baseline / current / diff PNG of the project, or None (bad id, missing, link)."""
-    if not isinstance(sha256, str) or not _SHA.match(sha256):
+    if not isinstance(sha256, str) or not _SHA.fullmatch(sha256):
         return None
     try:
         p = capture._contained(project_dir(settings, project_id), f"{sha256}.png")  # noqa: SLF001
@@ -319,7 +319,7 @@ def _snap(url: str, frames: list[str]) -> tuple[dict[str, bytes], dict[str, list
 
 def _shoot_route(studio: Any, pid: str, route: str, frames: list[str], snap: Snap, run_id: str | None,
                  free_bytes: Callable[[], int] | None) -> dict[str, tuple[bytes, list[Rect]]]:
-    if not ROUTE_RE.match(route) or "//" in route or ".." in route:
+    if not ROUTE_RE.fullmatch(route) or "//" in route or ".." in route:
         raise ValidationFailed("invalid route")
     url = f"http://p-{pid[4:]}.localhost:{studio.settings.preview_port}{route}"
     box: dict[str, Any] = {}
@@ -345,7 +345,7 @@ def _routes_arg(routes: Any) -> list[str] | None:
     if not isinstance(routes, list) or not 1 <= len(routes) <= MAX_ROUTES or len(set(routes)) != len(routes):
         raise ValidationFailed(f"routes: 1..{MAX_ROUTES} distinct paths")
     for r in routes:
-        if not isinstance(r, str) or not ROUTE_RE.match(r) or "//" in r or ".." in r:
+        if not isinstance(r, str) or not ROUTE_RE.fullmatch(r) or "//" in r or ".." in r:
             raise ValidationFailed("invalid route")
     return list(routes)
 
@@ -502,7 +502,7 @@ def validate_checklist(data: Any) -> dict[str, Any]:
         if not isinstance(f, dict) or set(f) - {"id", "title", "statements"}:
             raise ValidationFailed("a flow is {id, title, statements}")
         fid, title, stm = f.get("id"), f.get("title"), f.get("statements")
-        if not isinstance(fid, str) or not FLOW_ID_RE.match(fid) or fid in seen:
+        if not isinstance(fid, str) or not FLOW_ID_RE.fullmatch(fid) or fid in seen:
             raise ValidationFailed("flow id: lowercase letters, digits, - or _, unique, at most 40")
         if not isinstance(title, str) or not 1 <= len(title.strip()) <= MAX_TITLE_CHARS:
             raise ValidationFailed(f"flow title: 1..{MAX_TITLE_CHARS} characters")
@@ -519,7 +519,7 @@ def _flow_results(settings: Any, pid: str) -> dict[str, dict[str, Any]]:
     raw = _read_json(capture._contained(Path(settings.data_dir) / "flow_results", f"{pid}.json"))  # noqa: SLF001
     res: dict[str, dict[str, Any]] = {}
     for r in (raw.get("results") if isinstance(raw, dict) and isinstance(raw.get("results"), list) else [])[:200]:
-        if isinstance(r, dict) and isinstance(r.get("flow"), str) and FLOW_ID_RE.match(r["flow"]) \
+        if isinstance(r, dict) and isinstance(r.get("flow"), str) and FLOW_ID_RE.fullmatch(r["flow"]) \
                 and r.get("status") in FLOW_STATUSES:
             res[r["flow"]] = {"status": r["status"], "at": str(r.get("at", ""))[:40],
                               "message": str(r.get("message", ""))[:300]}

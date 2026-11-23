@@ -19,6 +19,7 @@ const PATH_RE = /^[\x20-\x7e]*$/;
 const BAD_CHARS = /[\u0000-\u001f\u007f\u2028\u2029\u202a-\u202e\u2066-\u2069]/;
 const PREVIEW_ORIGIN = /^http:\/\/p-([0-9a-f]{16})\.localhost:[0-9]{2,5}$/;
 const PROJECT_RE = /^prj_[0-9a-f]{16}$/;
+const TOKEN_RE = /^[0-9a-f]{64}$/;
 const MAX_BODY = 256 * 1024;
 
 export interface Rect {
@@ -52,6 +53,8 @@ export interface InspectorOptions {
 export interface EditPreview {
   path: string;
   line: number;
+  /** sha256 the server binds the confirm to (path|line|baseRevision|op|old|new); "" when malformed */
+  planToken: string;
 }
 export interface EditResult {
   path: string;
@@ -199,22 +202,25 @@ export async function inspectorPreview(
     }),
   ) ?? {};
   const line = typeof b.line === "number" && Number.isInteger(b.line) && b.line > 0 ? b.line : 1;
-  return { path: clean(b.path, 200), line };
+  const planToken = typeof b.planToken === "string" && TOKEN_RE.test(b.planToken) ? b.planToken : "";
+  return { path: clean(b.path, 200), line, planToken };
 }
 
-/** Step 2: the owner confirmed the shown file:line; the same body with confirm:true writes. */
+/** Step 2: the owner confirmed the shown file:line; the same body with confirm:true and the dry run's planToken
+ * writes (the server answers 409 inspector_plan_mismatch when the edit is not the one previewed). */
 export async function inspectorEdit(
   s: Session,
   projectId: string,
   baseRevision: number,
   element: Descriptor,
   edit: EditOp,
+  planToken: string,
 ): Promise<EditResult> {
   if (!PROJECT_RE.test(projectId)) throw new Error("bad project id");
   const b = plainObject(
     await call(s, `/projects/${projectId}/inspector/edit`, {
       method: "POST",
-      body: JSON.stringify({ baseRevision, element, ...edit, confirm: true }),
+      body: JSON.stringify({ baseRevision, element, ...edit, confirm: true, planToken }),
     }),
   ) ?? {};
   return {
