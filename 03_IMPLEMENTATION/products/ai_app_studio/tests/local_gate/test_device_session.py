@@ -114,16 +114,25 @@ def test_02_studio_session_boots_visible(sh, request) -> None:  # type: ignore[n
 @pytest.mark.probe("P9a")
 def test_03_p9a_guest_cannot_reach_host(sh, request) -> None:  # type: ignore[no-untyped-def]
     ports = sorted(set(STATE["listeners"]) | {STATE["canary"], 5641, 5600, 5601, 5037, 8554})
+    # The guest network comes up 20-40 s after boot_completed (wifi DHCP); a sweep before that proves nothing
+    # (2026-11-23 live run: only lo had an address). Wait for 10.0.2.15 first, then sweep.
+    t0 = time.monotonic()
+    net = ""
+    while time.monotonic() - t0 < 180:
+        net = _guest(sh, "ip -4 addr show; ip route", "emulator-5600", 5641, ns=True)
+        if "10.0.2.15" in net:
+            break
+        time.sleep(5)
+    request.node.aas_detail = {"net_up_after_s": round(time.monotonic() - t0, 1),
+                               "guest_net": " ".join(net.split())[:300]}
+    assert "10.0.2.15" in net  # the guest network is up: unreachable is restrict=on, not a dead interface
     out = _guest(sh, GUEST_SWEEP.format(ports=" ".join(map(str, ports))), "emulator-5600", 5641, ns=True)
     res = _parse_sweep(out)
     reached = [p for p, line in res.items() if _reached(line)]
-    request.node.aas_detail = {"ports": ports, "reached": reached,
-                               "sample": {str(p): res.get(p, "missing")[:120] for p in ports}}
-    net = _guest(sh, "ip -4 addr show; ip route", "emulator-5600", 5641, ns=True)
-    request.node.aas_detail["guest_net"] = " ".join(net.split())[:300]
+    request.node.aas_detail.update({"ports": ports, "reached": reached,
+                                    "sample": {str(p): res.get(p, "missing")[:120] for p in ports}})
     assert sorted(res) == ports, out
     assert reached == []
-    assert "10.0.2.15" in net  # the guest network is up: unreachable is restrict=on, not a dead interface
 
 
 @pytest.mark.probe("N7")
@@ -259,6 +268,8 @@ sudo -n pkill -KILL -f -- '-avd aas-phone -port 561[0]' 2>/dev/null
 for i in $(seq 1 20); do pgrep -f -- '-port 561[0]' >/dev/null || break; sleep 1; done
 $A kill-server >/dev/null 2>&1
 rm -rf "$HOME/.aas/run/ctl-user"
+# a SIGKILLed qemu stays <defunct> until it is reaped: wait for that rather than report the zombie
+for i in $(seq 1 30); do pgrep -f 'qemu-system|adb -P 5651' >/dev/null || break; sleep 1; done
 pgrep -af 'qemu-system|adb -P 5651' | grep -v pgrep || echo CLEAN
 """
     try:

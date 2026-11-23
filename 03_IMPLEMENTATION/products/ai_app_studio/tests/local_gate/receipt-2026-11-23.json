@@ -1,7 +1,7 @@
 {
   "gate": "ai_app_studio local gate S5",
   "distro": "Ubuntu-S9AI-D",
-  "finished": "2026-11-23T00:30:18+00:00",
+  "finished": "2026-11-23T00:52:57+00:00",
   "runs": [
     {
       "finished": "2026-11-23T00:10:26+00:00",
@@ -57,6 +57,36 @@
         "PM3c",
         "PM3d"
       ]
+    },
+    {
+      "finished": "2026-11-23T00:44:19+00:00",
+      "exitstatus": 1,
+      "probes": [
+        "N4",
+        "N7",
+        "P10a",
+        "P10c",
+        "P9a",
+        "PM3a",
+        "PM3b",
+        "PM3c",
+        "PM3d"
+      ]
+    },
+    {
+      "finished": "2026-11-23T00:52:57+00:00",
+      "exitstatus": 1,
+      "probes": [
+        "N4",
+        "N7",
+        "P10a",
+        "P10c",
+        "P9a",
+        "PM3a",
+        "PM3b",
+        "PM3c",
+        "PM3d"
+      ]
     }
   ],
   "probes": {
@@ -66,53 +96,74 @@
         {
           "test": "test_bash_env_canary_does_not_run_through_launcher",
           "status": "pass",
-          "at": "2026-11-23T00:30:17+00:00",
+          "at": "2026-11-23T00:52:26+00:00",
           "detail": null
         },
         {
           "test": "test_positive_control_canary_runs_without_scrub",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         }
       ]
     },
     "N7": {
-      "status": "skipped",
+      "status": "fail",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "fail",
+          "at": "2026-11-23T00:51:34+00:00",
+          "detail": {
+            "boot_s": 24.2,
+            "booted": {
+              "ch": "e",
+              "kind": "booted",
+              "avd": "aas-phone",
+              "ms": 22086,
+              "size": [
+                1080,
+                2340
+              ]
+            },
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
+          }
         },
         {
           "test": "test_04_n7_tap_fast_while_video_consumer_stalled",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
+          "status": "fail",
+          "at": "2026-11-23T00:51:45+00:00",
           "detail": null
         },
         {
           "test": "test_05_n7_positive_control_blocking_queue_stalls",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "fail",
+          "at": "2026-11-23T00:51:56+00:00",
+          "detail": {
+            "tap_reply_s": 3.016,
+            "stalled": true
+          }
         }
       ]
     },
     "P10a": {
-      "status": "skipped",
+      "status": "pass",
       "tests": [
         {
           "test": "test_07_owner_state_unchanged",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:51:59+00:00",
+          "detail": {
+            "owner_adb_before": "ADB5037=none",
+            "owner_adb_after": "ADB5037=none",
+            "tracked": 38,
+            "changed": []
+          }
         },
         {
           "test": "test_studio_code_never_names_owner_state",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": {
             "roots": [
               "core",
@@ -135,60 +186,131 @@
         {
           "test": "test_scan_positive_control_flags_fixture",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         }
       ]
     },
     "P10c": {
-      "status": "skipped",
+      "status": "fail",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "fail",
+          "at": "2026-11-23T00:51:34+00:00",
+          "detail": {
+            "boot_s": 24.2,
+            "booted": {
+              "ch": "e",
+              "kind": "booted",
+              "avd": "aas-phone",
+              "ms": 22086,
+              "size": [
+                1080,
+                2340
+              ]
+            },
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
+          }
         },
         {
           "test": "test_06_shutdown_leaves_nothing",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:51:59+00:00",
+          "detail": {
+            "exit_code": 0,
+            "leftover": "NONE\nNOPORTS"
+          }
         },
         {
           "test": "test_07_owner_state_unchanged",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:51:59+00:00",
+          "detail": {
+            "owner_adb_before": "ADB5037=none",
+            "owner_adb_after": "ADB5037=none",
+            "tracked": 38,
+            "changed": []
+          }
         },
         {
           "test": "test_08_checker_positive_control_detects_touch",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:52:00+00:00",
+          "detail": {
+            "detected": true
+          }
         }
       ]
     },
     "P9a": {
-      "status": "skipped",
+      "status": "fail",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "fail",
+          "at": "2026-11-23T00:51:34+00:00",
+          "detail": {
+            "boot_s": 24.2,
+            "booted": {
+              "ch": "e",
+              "kind": "booted",
+              "avd": "aas-phone",
+              "ms": 22086,
+              "size": [
+                1080,
+                2340
+              ]
+            },
+            "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +1173+165"
+          }
         },
         {
           "test": "test_03_p9a_guest_cannot_reach_host",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:51:44+00:00",
+          "detail": {
+            "net_up_after_s": 10.4,
+            "guest_net": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000 inet 127.0.0.1/8 scope host lo valid_lft forever preferred_lft forever 15: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000 inet 10.0.2.15/8 brd 10.255.255.25",
+            "ports": [
+              53,
+              1080,
+              5037,
+              5600,
+              5601,
+              5641,
+              8080,
+              8123,
+              8554,
+              9001,
+              11434,
+              23204
+            ],
+            "reached": [],
+            "sample": {
+              "53": "P 53 rc=1 out=nc: connect: Connection refused",
+              "1080": "P 1080 rc=1 out=nc: connect: Connection refused",
+              "5037": "P 5037 rc=1 out=nc: connect: Connection refused",
+              "5600": "P 5600 rc=1 out=nc: connect: Connection refused",
+              "5601": "P 5601 rc=1 out=nc: connect: Connection refused",
+              "5641": "P 5641 rc=1 out=nc: connect: Connection refused",
+              "8080": "P 8080 rc=1 out=nc: connect: Connection refused",
+              "8123": "P 8123 rc=1 out=nc: connect: Connection refused",
+              "8554": "P 8554 rc=1 out=nc: connect: Connection refused",
+              "9001": "P 9001 rc=1 out=nc: connect: Connection refused",
+              "11434": "P 11434 rc=1 out=nc: connect: Connection refused",
+              "23204": "P 23204 rc=1 out=nc: connect: Connection refused"
+            }
+          }
         },
         {
           "test": "test_09_p9a_positive_control_default_slirp_reaches_canary",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:52:25+00:00",
+          "detail": {
+            "canary_port": 23204,
+            "line": "P 23204 rc=0 out=HTTP/1.0 200 OKServer: SimpleHTTP/0.6 Python/3.12.3Date: Mon, 23 Nov 2026 00:52:24 GMTContent-type: text/html; cha"
+          }
         }
       ]
     },
@@ -198,187 +320,187 @@
         {
           "test": "test_single_wsl_call_site_in_apps",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_scanner_positive_control_flags_second_site",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_argv_snapshot[preflight]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_argv_snapshot[serve-phone]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_argv_snapshot[serve-tablet]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[-u_root]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--user_root]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--exec]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--cd_/]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[extra]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[serve-root]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[serve]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[shell]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[serve-phone ]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[preflight;id]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_unknown_verb_refused[serve-s9emu]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_other_distro_refused[Ubuntu]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_other_distro_refused[Ubuntu-S9AI-D2]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_other_distro_refused[docker-desktop]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_other_distro_refused[ubuntu-s9ai-d]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[phone extra-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[-u-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[--exec-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[root-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[s9emu-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[-64]",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_wrapper_refuses_root",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_ps1_wsl_call_sites_only_owner_setup",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_backend_and_tools_never_reference_wsl_or_install_ps1",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_backend_scan_positive_control",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         }
       ]
@@ -389,19 +511,19 @@
         {
           "test": "test_manifest_matches_sources",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_tampered_script_refused_no_spawn",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_matching_hash_spawns",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         }
       ]
@@ -412,42 +534,45 @@
         {
           "test": "test_tokens_match_safe_charset",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_distro_shell_echoes_tokens_unchanged",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_protocol_rejects_bad_requests",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         },
         {
           "test": "test_protocol_rejects_bad_device_lines",
           "status": "pass",
-          "at": "2026-11-23T00:30:18+00:00",
+          "at": "2026-11-23T00:52:27+00:00",
           "detail": null
         }
       ]
     },
     "PM3d": {
-      "status": "skipped",
+      "status": "fail",
       "tests": [
         {
           "test": "test_06_shutdown_leaves_nothing",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:16+00:00",
-          "detail": null
+          "status": "pass",
+          "at": "2026-11-23T00:51:59+00:00",
+          "detail": {
+            "exit_code": 0,
+            "leftover": "NONE\nNOPORTS"
+          }
         },
         {
           "test": "test_kill_wsl_exe_mid_session_leaves_nothing",
-          "status": "skipped",
-          "at": "2026-11-23T00:30:18+00:00",
+          "status": "fail",
+          "at": "2026-11-23T00:52:57+00:00",
           "detail": null
         }
       ]

@@ -23,14 +23,18 @@ ss -ltnH | awk '{print $4}' | grep -E ':(5600|5601|5641)$' || echo NOPORTS
 
 @pytest.mark.probe("PM3d")
 def test_kill_wsl_exe_mid_session_leaves_nothing(sh, request) -> None:  # type: ignore[no-untyped-def]
-    r = sh("setsid nohup sleep 600 >/dev/null 2>&1 < /dev/null & echo CTRL=$!\n")
+    # the 1 s wait lets setsid detach before this wsl.exe session ends (without it the sleep died with the session,
+    # before any kill, in the 2026-11-23 live run); the control is checked alive before the kill below
+    r = sh("setsid nohup sleep 600 >/dev/null 2>&1 < /dev/null & echo CTRL=$!; sleep 1\n")
     ctrl = int(r.stdout.split("CTRL=")[1].split()[0])
+    alive_cmd = f"kill -0 {ctrl} 2>/dev/null && echo ALIVE || echo DEAD\n"
     s = launcher.DeviceSession("phone")
     try:
         s.start(boot_timeout=300)
         assert s.tap(540, 1200)["ok"] is True
         before = sh(LEFTOVER).stdout
         assert "aas_devhost" in before  # the check sees the live session
+        assert "ALIVE" in sh(alive_cmd).stdout  # the control runs before the kill
         t0 = time.monotonic()
         s.proc.kill()  # TerminateProcess(wsl.exe): no shutdown request, no stdin close by us
         out = before
@@ -40,7 +44,7 @@ def test_kill_wsl_exe_mid_session_leaves_nothing(sh, request) -> None:  # type: 
             if "NONE" in out and "NONS" in out and "NOPORTS" in out:
                 break
         gone_s = round(time.monotonic() - t0, 1)
-        alive = "ALIVE" in sh(f"kill -0 {ctrl} 2>/dev/null && echo ALIVE || echo DEAD\n").stdout
+        alive = "ALIVE" in sh(alive_cmd).stdout
         request.node.aas_detail = {"gone_after_s": gone_s, "leftover": out.strip()[:300],
                                    "control_sleep_survived": alive}
         assert "NONE" in out and "NONS" in out and "NOPORTS" in out, out
