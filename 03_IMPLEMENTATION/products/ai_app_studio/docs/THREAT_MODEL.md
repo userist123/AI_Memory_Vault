@@ -240,8 +240,18 @@ shape is not detected).
 | P6f | implemented without close 4409: replay after reconnect + gap marker (S2 review decision) |
 | P7b, PM5b (exfil from the preview page to a canary) | not automated; dead proxy + WebRTC args + route filter in captures; next local gate |
 | P7d | implemented (S9b, above) |
-| PM1a, PM5a, P7c, P9a, P9b, P4a, PM2a | local gate (emulator / listener diff), receipt pending a fresh live run |
+| P9a | pass in the release live gate (run d4c76e32c806, shell uid; default-slirp positive control) |
+| PM1a, PM5a, P7c, P9b, P4a, PM2a | not automated for v1: accepted residuals with reason and existing controls in docs/SECURITY.md section 2 ("... not automated (release)"); PM1a and P4a partly covered by the P9a shell-uid sweep and the WSL listener snapshot |
 
 **R2 (S8 residual) closed.** The device host has `video_keyframe` (S9b): it ends the running screenrecord, the video
 loop starts a new one whose stream begins with SPS/PPS + IDR; throttled to one restart per 2 s
-(tests/local_gate/test_s9b_keyframe.py, fake only; live check at the next local gate).
+(tests/local_gate/test_s9b_keyframe.py with a fake; live: tests/local_gate/test_live_extras.py, "restarted" then SPS + IDR in the stream, 2026-11-23).
+
+**Release additions (2026-11-23).** (a) P1c: `core/aas_build/runner.py` is the only process spawner of the build
+package (docker, cargo, rustup, taskkill and now icacls for the owner-only desktop root: fixed argv from System32,
+validated SID, minimal env); the Windows ACL reads moved to `core/aas_build/winacl.py`, the single explicit exception
+to the ctypes ban, checked by AST to reference no process-creation API (CreateProcess*, ShellExecute*, WinExec, system,
+popen, spawn*), no dynamic lookup and no DLL other than advapi32/kernel32 (tests/build/test_runner.py). (b) Guest
+IPv6 checked live (off). (c) Probes PM1a, PM5a, P7c, P9b, P4a, PM2a and the external-MCP approval-cap label are
+accepted residuals for v1 (docs/SECURITY.md section 2). (d) v1 = `scripts/run_studio.ps1`; the NSIS installer stays
+experimental and unsigned.
