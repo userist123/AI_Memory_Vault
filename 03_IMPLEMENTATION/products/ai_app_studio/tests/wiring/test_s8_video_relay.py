@@ -63,14 +63,34 @@ def video_ws(c: TestClient, pid: str, token: str | None = TOKEN, protos: list[st
                                headers=headers or {})
 
 
-def sender(env: dict[str, str]):  # type: ignore[no-untyped-def]
-    return Client(env["AAS_VIDEO_PIPE"], authkey=bytes.fromhex(env["AAS_VIDEO_KEY"]))
+class SeqSender:
+    """The run's MCP side of the pipe: every message is an 8-byte big-endian seq (contiguous) + h264 bytes."""
+
+    def __init__(self, conn: Any) -> None:
+        self.conn, self.seq = conn, 0
+
+    def send_bytes(self, data: bytes) -> None:
+        self.seq += 1
+        self.conn.send_bytes(self.seq.to_bytes(vr.SEQ_HEADER, "big") + data)
+
+    def recv_bytes(self) -> bytes:
+        return bytes(self.conn.recv_bytes())
+
+    def close(self) -> None:
+        self.conn.close()
+
+
+def sender(env: dict[str, str]) -> SeqSender:
+    return SeqSender(Client(env["AAS_VIDEO_PIPE"], authkey=bytes.fromhex(env["AAS_VIDEO_KEY"])))
 
 
 def recv_until(ws: Any, needle: bytes, limit: int = 50) -> bytes:
+    """WS frames are a 4-byte big-endian seq (1, 2, ... without a drop) + NAL bytes; returns the NAL bytes."""
     got = b""
-    for _ in range(limit):
-        got += ws.receive_bytes()
+    for n in range(1, limit + 1):
+        frame = ws.receive_bytes()
+        assert len(frame) <= vr.MAX_FRAME and int.from_bytes(frame[:4], "big") == n
+        got += frame[4:]
         if needle in got:
             return got
     raise AssertionError(f"{needle!r} not received; got {len(got)} bytes")
@@ -276,8 +296,8 @@ class FakeVideoSession:
     def video_start(self, size: str = "540x1170") -> dict[str, Any]:
         import base64
         self.video_on = True
-        for part in (SPS + PPS, idr(1), pfr(2) + SC):
-            self.video_q.put({"ch": "v", "seq": 0, "b64": base64.b64encode(part).decode()})
+        for seq, part in enumerate((SPS + PPS, idr(1), pfr(2) + SC), start=1):  # host seq: 1, 2, 3
+            self.video_q.put({"ch": "v", "seq": seq, "b64": base64.b64encode(part).decode()})
         return {"ok": True}
 
     def video_stop(self) -> dict[str, Any]:

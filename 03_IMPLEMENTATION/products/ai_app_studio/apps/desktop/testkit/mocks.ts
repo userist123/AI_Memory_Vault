@@ -166,13 +166,21 @@ export class MockBackend {
     for (const s of this.sockets) s.send(raw);
   }
 
-  /** S8: whole stream in <= 64 KiB binary frames, as the backend hub sends it (SPS + PPS + IDR first). */
+  /** S8: whole stream in <= 64 KiB binary frames, as the backend hub sends it: 4-byte big-endian seq (1, 2, ...) +
+   * h264 bytes, SPS + PPS + IDR first. */
   private onVideo(ws: WebSocket): void {
     this.videoSockets.add(ws);
     ws.on("close", () => this.videoSockets.delete(ws));
     const s = this.videoStream;
     if (!s) return;
-    for (let i = 0; i < s.length; i += 64 * 1024) ws.send(s.subarray(i, i + 64 * 1024), { binary: true });
+    const body = 64 * 1024 - 4;
+    for (let i = 0, seq = 1; i < s.length; i += body, seq++) {
+      const part = s.subarray(i, i + body);
+      const f = Buffer.alloc(4 + part.length);
+      f.writeUInt32BE(seq, 0);
+      part.copy(f, 4);
+      ws.send(f, { binary: true });
+    }
   }
 
   private onSocket(ws: WebSocket, after: number): void {

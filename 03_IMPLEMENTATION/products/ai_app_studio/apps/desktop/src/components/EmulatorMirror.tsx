@@ -18,6 +18,7 @@ export function EmulatorMirror(props: {
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const workerRef = useRef<Worker | null>(null);
+  const clientRef = useRef<VideoClient | null>(null);
   const [status, setStatus] = useState({ text: "no stream", state: "idle" });
   const [scale, setScale] = useState(1);
 
@@ -32,6 +33,8 @@ export function EmulatorMirror(props: {
     w.onmessage = (m: MessageEvent<{ type: string; text?: unknown; state?: unknown }>) => {
       if (m.data?.type === "status") {
         setStatus({ text: String(m.data.text ?? "").slice(0, 200), state: String(m.data.state ?? "") });
+      } else if (m.data?.type === "resync") {
+        clientRef.current?.resync(); // decoder error: fresh stream after a bounded backoff
       }
     };
     const off = c.transferControlToOffscreen();
@@ -61,8 +64,10 @@ export function EmulatorMirror(props: {
       (chunk) => w.postMessage({ type: "chunk", data: chunk }, [chunk]),
       () => w.postMessage({ type: "reset" }),
     );
+    clientRef.current = client;
     client.start();
     return () => {
+      if (clientRef.current === client) clientRef.current = null;
       client.stop();
       w.postMessage({ type: "stop" });
     };

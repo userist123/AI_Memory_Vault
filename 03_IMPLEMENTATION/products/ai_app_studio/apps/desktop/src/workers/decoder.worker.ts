@@ -39,6 +39,8 @@ const feeder = createLiveFeeder({
     const r = await VideoDecoder.isConfigSupported({ codec, optimizeForLatency: true }).catch(() => null);
     return Boolean(r?.supported);
   },
+  // decoder error: the page's VideoClient reconnects (bounded backoff) and the server primes SPS/PPS + GOP
+  resync: () => ctx.postMessage({ type: "resync" }),
 });
 
 async function play(data: ArrayBuffer, fps: number, loop: boolean) {

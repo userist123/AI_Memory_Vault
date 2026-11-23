@@ -172,12 +172,16 @@ describe("VideoClient", () => {
     expect(ws.binaryType).toBe("arraybuffer");
     ws.onopen?.();
     expect(resets).toBe(1);
-    ws.onmessage?.({ data: new ArrayBuffer(10) });
+    const first = new ArrayBuffer(10); // review M1: 4-byte big-endian seq (1 first) + 6 bytes of h264
+    new DataView(first).setUint32(0, 1);
+    ws.onmessage?.({ data: first });
     ws.onmessage?.({ data: "text frame" }); // not video: ignored
-    expect(chunks).toEqual([10]);
+    expect(chunks).toEqual([6]); // the seq header is stripped
     expect(ws.sent).toEqual([]);
-    ws.onmessage?.({ data: new ArrayBuffer(VIDEO_MAX_FRAME + 1) }); // oversize: socket dropped, nothing forwarded
-    expect(chunks).toEqual([10]);
+    const big = new ArrayBuffer(VIDEO_MAX_FRAME + 1);
+    new DataView(big).setUint32(0, 2);
+    ws.onmessage?.({ data: big }); // oversize: socket dropped, nothing forwarded
+    expect(chunks).toEqual([6]);
     expect(ws.closed).toBe(true);
     vi.advanceTimersByTime(600);
     expect(FakeWS.all).toHaveLength(2);

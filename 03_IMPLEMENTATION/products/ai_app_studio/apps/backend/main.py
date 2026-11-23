@@ -272,7 +272,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     # ---------------------------------------------------------------- WebSocket: live emulator mirror (S8)
     @app.websocket(f"{API}/device/video")
     async def device_video(ws: WebSocket, projectId: str = "") -> None:  # noqa: N803
-        # same boundary (token, Host, Origin) and subprotocol rules as /events; binary frames of whole NAL units
+        # same boundary (token, Host, Origin) and subprotocol rules as /events; binary frames: 4-byte seq + whole NALs
         offered = [p.strip() for p in ws.headers.get("sec-websocket-protocol", "").split(",")]
         if WS_SUBPROTOCOL not in offered:
             await ws.close(code=4400)
@@ -302,7 +302,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             watcher = asyncio.create_task(watch_disconnect())
             try:
                 while not watcher.done():
-                    for frame in sub.take():
+                    for frame in sub.take_frames():
                         await ws.send_bytes(frame)
                     wake.clear()
                     with contextlib.suppress(TimeoutError):

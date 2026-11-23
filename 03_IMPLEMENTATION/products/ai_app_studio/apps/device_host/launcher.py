@@ -241,6 +241,7 @@ class DeviceSession:
         self.video_q: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=video_queue_max)
         self.video_dropped = 0
         self.video_received = 0
+        self._video_gap_next = False  # the last chunk could not be queued: the next one follows a hole
         self.events: deque[dict[str, Any]] = deque(maxlen=200)
         self.stderr_tail: deque[str] = deque(maxlen=200)
         self.exit_event: dict[str, Any] | None = None
@@ -385,18 +386,28 @@ class DeviceSession:
             self.stderr_tail.append(raw.decode("utf-8", "replace").rstrip()[:400])
 
     def _default_on_video(self, o: dict[str, Any]) -> None:
+        """Whole chunks only: when full, the oldest chunk is dropped and the chunk now after the hole is marked
+        ``gap`` (S8 review M1), so the relay resyncs at the next IDR instead of decoding across the hole."""
+        if self._video_gap_next:
+            o["gap"] = True
         try:
             self.video_q.put_nowait(o)
+            self._video_gap_next = False
         except queue.Full:
             try:
                 self.video_q.get_nowait()  # drop the oldest chunk, never block the reader
                 self.video_dropped += 1
+                with self.video_q.mutex:  # the consumer's next chunk follows the dropped one
+                    if self.video_q.queue:
+                        self.video_q.queue[0]["gap"] = True
             except queue.Empty:
                 pass
             try:
                 self.video_q.put_nowait(o)
+                self._video_gap_next = False
             except queue.Full:
                 self.video_dropped += 1
+                self._video_gap_next = True
 
     def drain_video(self) -> int:
         n = 0

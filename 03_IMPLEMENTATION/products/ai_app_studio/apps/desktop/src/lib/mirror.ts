@@ -131,6 +131,8 @@ export interface LiveDecoderLike extends DecoderLike {
 export interface LiveEnv extends PlayerEnv {
   /** VideoDecoder.isConfigSupported in the worker; tests inject it */
   supported(codec: string): Promise<boolean>;
+  /** decoder error: ask the transport for a fresh stream (the worker posts {type: "resync"} to the VideoClient) */
+  resync?(): void;
 }
 
 function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
@@ -213,21 +215,25 @@ export function createLiveFeeder(env: LiveEnv) {
       decoder.decode(env.makeChunk(au.key ? "key" : "delta", ts, au.data));
       ts += LIVE_STEP_US;
     } catch (e) {
-      closeDecoder();
-      codec = "";
-      report(`decoder error: ${e instanceof Error ? e.message : "decode failed"}`, "error");
+      decoderFailed(e instanceof Error ? e.message : "decode failed");
     }
+  }
+
+  /** The decoder is gone: ask the transport to resync (reconnect with backoff; the server primes SPS/PPS + GOP), and
+   * the SPS at the start of the new stream configures a new decoder (review M1 c). */
+  function decoderFailed(message: string) {
+    closeDecoder();
+    needKey = true;
+    codec = "";
+    pending = [];
+    report(`decoder error: ${message}`, "error");
+    env.resync?.();
   }
 
   function startDecoder() {
     closeDecoder();
     const d = env.createDecoder(onFrame, (e) => {
-      if (decoder === d) {
-        closeDecoder();
-        needKey = true;
-        codec = ""; // the next SPS (every reconnect starts with one) configures a new decoder
-        report(`decoder error: ${e.message}`, "error");
-      }
+      if (decoder === d) decoderFailed(e.message);
     }) as LiveDecoderLike;
     d.configure({ codec, optimizeForLatency: true });
     decoder = d;
