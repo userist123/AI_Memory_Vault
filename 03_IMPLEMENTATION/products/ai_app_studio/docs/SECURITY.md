@@ -94,7 +94,7 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 | R-EXT | The owner's WSL user has `NOPASSWD: ALL` + docker => root in the distro; `/opt/aas` hashes are drift detection, not a boundary | owner machine decision; documented in THREAT_MODEL |
 | Manifest trust | CI trusts the committed upstream hashes in VENDORED.json (no access to the AWS repo) | owner PC re-derives with `--upstream-repo` before merge |
 | Gradle TOFU | The initial `gradle/verification-metadata.xml` was generated from the network once | reviewed diff; PGP + curated keyring is a later hardening |
-| Gradle image | Sources pin Gradle 8.14.8 (S9) but the local android image was not rebuilt (C: < 10 GB): it still runs 8.14.3 | MUST-DO before release: rebuild, re-check metadata, record image id (DIGESTS.json `_must_do_s9`). Exposure is low: builds are offline (`--network none`), `--no-daemon`, read-only |
+| Gradle image | Sources pin Gradle 8.14.8 (S9) | Closed 2026-11-23 (release step b): image rebuilt (sha256:ad389dfcab6b...), Gradle 8.14.8, strict dependency verification passed, PB7a/PB7b pass |
 | SDK licence | Android SDK licence hash recorded, licence text verified online once (S8 L1) | — |
 | 64-hex exemption | Typed sha256/git fields are stored verbatim (exempt from redaction) | only lowercase digests under hash-named keys |
 | Grant / pipe key | The run grant secret and the mirror pipe key sit in the run's `mcp.json` under the data root for the run's lifetime | same-user exposure; deleted at run end and on startup purge |
@@ -106,7 +106,7 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 | Runtime integrity (S9b review L3) | The shell verifies runtime.zip against the sha256 in runtime.version before extracting: this catches damage and partial copies, not a deliberate swap of both files in the install dir | code signing of the installer (residual above) |
 | Runtime bundle | `scripts/build_runtime.ps1` (S9b) stages python + locked deps + Chromium headless shell + app sources; Docker images, the Android SDK/emulator and the Claude CLI are not inside (owner PC prerequisites) | installed-mode end-to-end test (install, first launch, capture) still to run |
 | Export scan | The export secret scan is pattern-based (key shapes + the registered owner token); a secret without a known shape is not detected | owner approval of the exact sha256 is the second control |
-| Web-build image | The local `aas-web-build:dev` image predates the S9b `tsc --noEmit` step (C: < 10 GB, not rebuilt); verified with the script bind-mounted | MUST-DO before release (DIGESTS.json `_must_do_s9b_web_build`) |
+| Web-build image | S9b `tsc --noEmit` step | Closed 2026-11-23 (release step b): image rebuilt (sha256:5b3a6cae2153...), a planted type error exits 5 in the real container |
 | GPU | `swiftshader_indirect` renders the guest correctly (screencap, S9 live check); the visible WSLg window was not inspected by eye in that check | confirm in the next live session; fall back to `-gpu host` = residual (gfxstream / virglrenderer guest-to-host GL path, WSL `/dev/dxg`) |
 | ipv6=off | The emulator accepts `restrict=on,ipv6=off` on both NICs (qemu argv checked live); the guest-side IPv6 check did not run | next local-gate run |
 | Loopback listeners | Inside the device namespace the emulator listens on a few random loopback ports besides console/adb | namespace-private, not reachable from Windows |

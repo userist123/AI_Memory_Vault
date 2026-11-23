@@ -12,8 +12,12 @@
   generic 500 with the security headers for unhandled errors (apps/backend/headers.py).
 - **v1 launch mode (decision 2026-11-23, owner rule "decide safe, record"):** v1 is launched from the repo/runtime with `scripts/run_studio.ps1` (Tauri window + backend). The NSIS installer is **experimental, unsigned** until an installed-mode e2e passes.
 - Release remaining (in order):
-  (a) owner frees C: >= 10 GB or moves the Docker disk to D:;
-  (b) rebuild aas-web-build (tsc) + aas-android-build (Gradle 8.14.8), update DIGESTS.json, rerun the Docker probes;
+  (a) DONE: Docker Desktop disk moved to D: (C: ~30 GB free);
+  (b) DONE 2026-11-23: aas-web-build:dev sha256:5b3a6cae2153 (431 MB, tsc baked; planted type error exits 5) and
+      aas-android-build:dev sha256:ad389dfcab6b (1.93 GB, Gradle 8.14.8, strict verification, 179 s); DIGESTS.json updated,
+      Docker probes rerun (test_docker_e2e + test_android incl. PB7a/PB7b: 34 passed). Open finding: P1c AST gate
+      (tests/build/test_runner.py::test_p1c_ast_only_runner_spawns_processes) fails at HEAD - core/aas_build/desktop.py (S9c)
+      imports subprocess/ctypes; needs a decision before (d);
   (c) fresh live local gate with C: >= 8 GB (new receipt incl. PM1a/PM5a/P7c/P9b/P4a/PM2a, or record each missing one);
   (d) full suite once at the release SHA;
   (e) push + PR #413 + vault CI once;

@@ -36,7 +36,8 @@ pytestmark = [pytest.mark.skipif(IMAGE_ID is None, reason="docker or aas-web-bui
 def make_ctx(root: Path, vite_config: str | None = None) -> Path:
     ctx = root / "ctx"
     ctx.mkdir()
-    for name in ("package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "index.html", "tsconfig.json", "capacitor.config.ts"):
+    for name in ("package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "index.html", "tsconfig.json", "capacitor.config.ts",
+                 "aas-env.d.ts"):  # same studio files as core/aas_build/service.py (S9b tsc step needs the ambient decls)
         shutil.copy2(KIT / name, ctx / name)
     shutil.copy2(KIT / "vite.config.ts", ctx / "vite.config.ts")
     shutil.copytree(KIT / "template" / "src", ctx / "src")

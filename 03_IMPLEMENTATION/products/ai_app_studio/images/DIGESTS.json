@@ -11,8 +11,11 @@
     "build-tools_r36_linux.zip": "5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b",
     "gradle-8.14.8-bin.zip": "94da89692fc3ca6d2d0ce6bb48548762ea0f1897ba444286f5c7f3759c7af651",
     "commandlinetools-linux-16111833_latest.zip (pinned, not used: --licenses refused)": "0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8",
-    "image_id_local_2026-11-23": "sha256:1418afea9cf40edb3055047061b80d426b2b42fa4f256aa4b8d544abedad2005",
-    "_must_do_s9": "S9 (2026-11-23): Gradle pin bumped 8.14.3 -> 8.14.8 (GHSA-j5m7-59rp-24f5, GHSA-xwqc-3h47-hg64, GHSA-mvvg-497x-hmj8 fixed in 8.14.6; GHSA-3cfg/gqrr/pcp8 in 8.14.7; GHSA-99wf/7f7r/4mf6/35pj in 8.14.8; gradle/gradle repository advisories). The image was NOT rebuilt (C: below 10 GB): image_id_local_2026-11-23 still runs Gradle 8.14.3. Rebuild, re-run the verification-metadata check and record the new image id before release."
+    "image_id_local_2026-11-23": "sha256:ad389dfcab6bfc49b85c9de41671f585a1be9adeae32e47e67aff068d2a387c4",
+    "image_note": "Release step (b) 2026-11-23: rebuilt with Gradle 8.14.8 (gradle --version = 8.14.8), resolve stage --dependency-verification strict against the committed verification-metadata.xml: BUILD SUCCESSFUL; 1.93 GB, build 179 s. PB7a/PB7b pass on this image."
   },
-  "_must_do_s9b_web_build": "S9b (2026-11-23): images/web-build/aas-build-web now runs `tsc --noEmit` (baked kit TypeScript 7.0.2) before vite and exits 5 on type errors. The local aas-web-build:dev image was NOT rebuilt (C: below 10 GB), so its baked script still skips the type check. Verified with the new script bind-mounted over the old image: blank/tabs/list-detail build, a planted type error exits 5. Rebuild the image (only the last COPY layer changes) before release."
+  "web-build": {
+    "image_id_local_2026-11-23": "sha256:5b3a6cae2153b621eb66bced616d3f990964ce1c81bfadd6167d900d49116198",
+    "image_note": "Release step (b) 2026-11-23: rebuilt with the S9b tsc --noEmit step baked in (431 MB). A planted type error exits 5 in the real container; tests/build/test_docker_e2e.py passes."
+  }
 }

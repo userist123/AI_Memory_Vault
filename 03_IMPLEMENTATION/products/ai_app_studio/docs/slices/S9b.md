@@ -80,6 +80,8 @@ See CHECKPOINT.md (final counts).
 ## Open (next)
 - S9c: Windows desktop wrapper (Tauri) for generated apps (`app_build windows`).
 - B1 one budget-capped real agent run; B2 real-WebView2 iframe probe; final gate round 2.
-- Rebuild `aas-web-build:dev` (tsc) and `aas-android-build:dev` (Gradle 8.14.8) when C: >= 10 GB; live check of
+- Done (release step b, 2026-11-23): `aas-web-build:dev` rebuilt with tsc (sha256:5b3a6cae2153...; real planted type error exits 5,
+  `tests/build/test_docker_e2e.py` fixture now copies `aas-env.d.ts` like `core/aas_build/service.py`) and
+  `aas-android-build:dev` rebuilt with Gradle 8.14.8. Still open: live check of
   `video_keyframe`; installed-mode end-to-end (install, first launch, capture) with the built runtime.
 - Not built: deps install stage (`deps_request_add`), `qa_run`, `preview_interact`.
