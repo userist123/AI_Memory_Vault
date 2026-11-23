@@ -26,7 +26,7 @@ from studio_core.config import Settings
 from studio_core.errors import StudioError, Unavailable
 from studio_core.policy import Actor
 
-from . import runner
+from . import desktop, runner
 
 PRODUCT = Path(__file__).resolve().parents[2]
 KIT = PRODUCT / "kit"
@@ -263,6 +263,96 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
             activity._note_dropped(studio)  # noqa: SLF001
         return {"ok": True, "target": "android", "revision": revision, "apkSha256": res.sha256, "sizeBytes": res.size,
                 "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur}
+    finally:
+        shutil.rmtree(build_root, ignore_errors=True)
+        _BUILDING.pop("project", None)
+        _LOCK.release()
+
+
+# ---- Windows desktop (S9c) ---------------------------------------------------------------------------------------------
+def desktop_path(settings: Settings, project_id: str) -> Path:
+    """The project's current unsigned desktop exe (export target ``desktop``)."""
+    return preview_base(settings, project_id) / "app-desktop.exe"
+
+
+def desktop_dist_path(settings: Settings, project_id: str) -> Path:
+    """Deterministic zip of the exact dist embedded in ``desktop_path`` (scanned on export)."""
+    return preview_base(settings, project_id) / "app-desktop.dist.zip"
+
+
+def build_desktop(studio: Any, project_id: str, *, run_id: str | None = None,
+                  run_build: Callable[..., runner.DesktopResult] = runner.run_desktop_build,
+                  cargo: str | None = None, actor: Actor | None = None,
+                  free_bytes: Callable[[], int] | None = None) -> dict[str, Any]:
+    """Current web build (preview site) -> studio Tauri wrapper -> host ``cargo build --release --offline --locked`` ->
+    unsigned exe at ``desktop_path``. Events: build.started/log/error/finished {target desktop, artifactSha256,
+    sizeBytes}; the exe sha256 is also in the typed artifact column (export binds the approval to it)."""
+    return _audited(studio, actor, project_id, "desktop", lambda: _build_desktop(
+        studio, project_id, run_id=run_id, run_build=run_build, cargo=cargo, free_bytes=free_bytes))
+
+
+def _build_desktop(studio: Any, project_id: str, *, run_id: str | None, run_build: Callable[..., runner.DesktopResult],
+                   cargo: str | None, free_bytes: Callable[[], int] | None) -> dict[str, Any]:
+    if not re.match(r"^prj_[0-9a-f]{16}$", project_id):
+        raise BuildFailed("invalid project id")
+    _disk_gate(studio.settings, free_bytes)
+    try:
+        root = desktop.desktop_root(studio.settings)
+    except runner.BuildError as e:
+        raise Unavailable(str(e)) from e
+    if free_bytes is None and root.exists() and shutil.disk_usage(root).free < MIN_FREE_BYTES:
+        raise Unavailable("builds are disabled: less than 5 GiB free on the desktop build drive")
+    if not _LOCK.acquire(blocking=False):
+        raise Unavailable("a build is already running")
+    _BUILDING["project"] = project_id
+    t0 = time.monotonic()
+    build_root = root / "builds" / ("d" + uuid.uuid4().hex[:16])
+    try:
+        revision = studio.get_revision(project_id)
+        site = site_root_for(studio.settings)(project_id[4:])
+        if site is None:
+            raise Unavailable("build the web target first (app_build target web): the exe packages the web build")
+        vendor = root / "vendor"
+        if not vendor.is_dir() or vendor.is_symlink() or not any(vendor.iterdir()):
+            raise Unavailable(f"the vendored crate dir is missing ({vendor}): run the one-time cargo vendor step "
+                              "(docs/slices/S9c.md)")
+        try:
+            cargo = cargo or runner.resolve_cargo()
+        except runner.BuildError as e:
+            raise Unavailable(str(e)) from e
+        project = studio.get_project(Actor("system", "build", "system"), project_id, with_components=False)
+        _rec(studio, "build.started", project_id, run_id, target="desktop", revision=revision)
+        dest = desktop_path(studio.settings, project_id)
+        stage = dest.parent / f".app-desktop.{uuid.uuid4().hex[:8]}.exe"
+        try:
+            wrapper = desktop.materialise(build_root, site, project_id, str(project.get("name", "")), vendor)
+            zdata = desktop.dist_zip(build_root / "dist")
+            res = run_build(cargo=cargo, wrapper=wrapper, target_dir=root / "target", cargo_home=root / "cargo-home",
+                            tmp=root / "tmp", dest=stage)
+            zip_path = desktop_dist_path(studio.settings, project_id)
+            ztmp = zip_path.with_name(zip_path.name + ".partial")
+            ztmp.write_bytes(zdata)
+            os.replace(ztmp, zip_path)
+            os.replace(stage, dest)
+        except (runner.BuildError, OSError, StudioError) as e:
+            stage.unlink(missing_ok=True)
+            msg = str(e)[:1000]
+            _rec(studio, "build.error", project_id, run_id, code="build_failed", message=msg)
+            _rec(studio, "build.finished", project_id, run_id, target="desktop", status="failed", revision=revision,
+                 durationMs=int((time.monotonic() - t0) * 1000))
+            raise BuildFailed(msg) from e
+        for line in [ln for ln in res.log_tail.splitlines() if ln.strip()][-LOG_LINES:]:
+            _rec(studio, "build.log", project_id, run_id, stream="stdout", line=line)
+        dur = int((time.monotonic() - t0) * 1000)
+        try:
+            activity.record(studio, "build.finished", project_id=project_id, run_id=run_id, source="build",
+                            artifact_sha256=res.sha256,
+                            payload={"target": "desktop", "status": "ok", "revision": revision, "durationMs": dur,
+                                     "artifactSha256": res.sha256, "sizeBytes": res.size})
+        except Exception:  # noqa: BLE001
+            activity._note_dropped(studio)  # noqa: SLF001
+        return {"ok": True, "target": "desktop", "revision": revision, "exeSha256": res.sha256, "sizeBytes": res.size,
+                "appId": desktop.app_id(project_id), "signed": False, "durationMs": dur}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
         _BUILDING.pop("project", None)

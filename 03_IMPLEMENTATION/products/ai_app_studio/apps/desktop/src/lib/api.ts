@@ -228,7 +228,7 @@ export type ExportOutcome =
 export async function exportProject(
   s: Session,
   projectId: string,
-  target: "web" | "android",
+  target: "web" | "android" | "desktop",
   approvalId?: string,
 ): Promise<ExportOutcome> {
   if (!PROJECT_RE.test(projectId) || (approvalId !== undefined && !APR_RE.test(approvalId)))

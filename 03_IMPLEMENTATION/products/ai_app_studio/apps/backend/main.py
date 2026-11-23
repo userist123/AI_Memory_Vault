@@ -99,7 +99,7 @@ class Retention(Strict):
 
 
 class ExportReq(Strict):
-    target: Literal["web", "android"]
+    target: Literal["web", "android", "desktop"]
     approvalId: str | None = Field(default=None, pattern=r"^apr_[0-9a-f]{16}$")  # noqa: N815
 
 

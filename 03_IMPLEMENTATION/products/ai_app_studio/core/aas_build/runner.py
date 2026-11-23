@@ -174,10 +174,16 @@ class _RunOutcome:
     over_files: bool = False
 
 
-def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: int, kill: Callable[[], None],
-                log_cap: int = LOG_CAP_BYTES, poll: float = 0.2, max_files: int | None = None) -> _RunOutcome:
-    """Run argv (no shell); keep only the last `log_cap` bytes of stdout/stderr; kill the container if /out outgrows its cap."""
-    proc = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=_env())  # noqa: S603
+def _run_capped(argv: list[str], *, timeout: float, out: Path | None, max_out_bytes: int, kill: Callable[[], None] | None,
+                log_cap: int = LOG_CAP_BYTES, poll: float = 0.2, max_files: int | None = None,
+                env: dict[str, str] | None = None, cwd: Path | None = None) -> _RunOutcome:
+    """Run argv (no shell); keep only the last `log_cap` bytes of stdout/stderr; kill the container if /out outgrows its cap.
+    ``out=None``: no output watchdog. ``kill=None``: the process tree is killed (host builds, S9c)."""
+    proc = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,  # noqa: S603
+                            env=_env() if env is None else env, cwd=None if cwd is None else str(cwd))
+    if kill is None:
+        def kill() -> None:
+            kill_tree(proc.pid)
     bufs = [bytearray(), bytearray()]
 
     def pump(stream, buf: bytearray) -> None:  # type: ignore[no-untyped-def]
@@ -197,6 +203,8 @@ def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: in
     done = threading.Event()
 
     def watchdog() -> None:
+        if out is None:
+            return
         while not done.wait(poll):
             size, nfiles = _tree_stats(out)
             if size > max_out_bytes:
@@ -553,3 +561,124 @@ def run_android_build(*, docker: str, build_id: str, dist: Path, keystore: Path,
         shutil.rmtree(out, ignore_errors=True)
         raise
     return AndroidResult(apk=dest, sha256=sha, size=size, signer_sha256=expected_signer, log_tail=o.tail)
+
+
+# ---- Windows desktop wrapper (S9c; host build, no Docker) -------------------------------------------------------------
+DESKTOP_TIMEOUT_S = 1800  # first build compiles ~430 vendored crates; later builds reuse the shared target dir
+EXE_MAX_BYTES = 200 * 1024 * 1024
+EXE_NAME = "aas-app.exe"
+SINKHOLE_PROXY = "http://127.0.0.1:9"
+# what rustc/link.exe/rc.exe need to find MSVC and the Windows SDK; nothing from the owner's profile or secrets
+_DESKTOP_ENV_KEEP = ("SystemRoot", "SYSTEMROOT", "SystemDrive", "SYSTEMDRIVE", "windir", "WINDIR", "ProgramFiles",
+                     "PROGRAMFILES", "ProgramFiles(x86)", "PROGRAMFILES(X86)", "ProgramW6432", "CommonProgramFiles",
+                     "CommonProgramFiles(x86)", "ProgramData", "PROGRAMDATA", "NUMBER_OF_PROCESSORS",
+                     "PROCESSOR_ARCHITECTURE", "PROCESSOR_IDENTIFIER", "OS", "ComSpec", "COMSPEC")
+
+
+@dataclass
+class DesktopResult:
+    exe: Path
+    sha256: str
+    size: int
+    log_tail: str = ""
+
+
+def build_desktop_argv(*, cargo: str) -> list[str]:
+    """Fixed argv; cwd = the studio-materialised wrapper dir (its .cargo/config.toml pins the vendored source)."""
+    if not isinstance(cargo, str) or not os.path.isabs(cargo):
+        raise BuildError("cargo executable must be an absolute path")
+    return [cargo, "build", "--release", "--offline", "--locked", "--quiet", "--color", "never"]
+
+
+def desktop_env(*, cargo: str, cargo_home: Path, target_dir: Path, tmp: Path) -> dict[str, str]:
+    """Minimal env: OS/MSVC lookup variables, the toolchain bin + System32 on PATH, studio-owned CARGO_HOME/target/tmp,
+    offline flags and a dead proxy for any build-script fetch. No token, RUSTFLAGS, RUSTC_WRAPPER or profile path."""
+    bin_dir = str(Path(cargo).parent)
+    sysroot = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows"
+    env = {k: v for k, v in os.environ.items() if k in _DESKTOP_ENV_KEEP}
+    env.update({
+        "PATH": os.pathsep.join([bin_dir, os.path.join(sysroot, "System32"), sysroot]),
+        "RUSTC": os.path.join(bin_dir, "rustc.exe"),
+        "CARGO_HOME": str(cargo_home), "CARGO_TARGET_DIR": str(target_dir),
+        "TEMP": str(tmp), "TMP": str(tmp),
+        "CARGO_NET_OFFLINE": "true", "CARGO_TERM_COLOR": "never", "CARGO_INCREMENTAL": "0",
+        "HTTP_PROXY": SINKHOLE_PROXY, "HTTPS_PROXY": SINKHOLE_PROXY, "ALL_PROXY": SINKHOLE_PROXY,
+        "http_proxy": SINKHOLE_PROXY, "https_proxy": SINKHOLE_PROXY, "NO_PROXY": "",
+    })
+    return env
+
+
+def resolve_cargo() -> str:
+    """The toolchain's real cargo.exe (not the rustup proxy): ``AAS_CARGO`` or ``rustup which cargo``. Fails closed."""
+    raw = os.environ.get("AAS_CARGO", "")
+    if not raw:
+        rustup = shutil.which("rustup")
+        if not rustup:
+            raise BuildError("Rust is not installed (rustup not on PATH)")
+        r = subprocess.run([rustup, "which", "cargo"], capture_output=True, timeout=60, check=False, shell=False,  # noqa: S603
+                           env=_env(), stdin=subprocess.DEVNULL)
+        raw = r.stdout.decode("utf-8", "replace").strip() if r.returncode == 0 else ""
+    p = Path(raw) if raw else None
+    if p is None or not p.is_absolute() or not p.is_file() or not (p.parent / "rustc.exe").is_file():
+        raise BuildError("cannot locate the Rust toolchain's cargo.exe (set AAS_CARGO)")
+    return str(p)
+
+
+def collect_exe(exe: Path, dest: Path, *, max_bytes: int = EXE_MAX_BYTES) -> tuple[str, int]:
+    """Read ``target/release/aas-app.exe`` after cargo exited: no link/reparse point (file or parent dirs), regular, PE
+    magic, <= cap; copied atomically to ``dest``. nlink <= 2 is accepted: cargo uplifts the exe from deps/ by hard link."""
+    for p in (exe.parent, exe.parent.parent):
+        if _is_link_like(os.lstat(p)):
+            raise BuildError("the cargo target dir contains a link or reparse point")
+    st = os.lstat(exe)
+    if _is_link_like(st) or not stat.S_ISREG(st.st_mode):
+        raise BuildError("the built exe is a link or not a regular file")
+    if st.st_nlink > 2:
+        raise BuildError("the built exe has unexpected hard links")
+    if st.st_size > max_bytes:
+        raise BuildError(f"exe over {max_bytes} bytes")
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(exe, flags)
+    try:
+        fst = os.fstat(fd)
+        if (fst.st_ino, fst.st_dev) != (st.st_ino, st.st_dev):
+            raise BuildError("file changed while being read")
+        with os.fdopen(fd, "rb", closefd=False) as f:
+            data = f.read(max_bytes + 1)
+    finally:
+        os.close(fd)
+    if len(data) > max_bytes:
+        raise BuildError(f"exe over {max_bytes} bytes")
+    if not data.startswith(b"MZ"):
+        raise BuildError("the built file is not a PE executable")
+    sha = hashlib.sha256(data).hexdigest()
+    tmp = dest.parent / f".{dest.name}.partial-{uuid.uuid4().hex[:8]}"
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_bytes(data)
+        os.replace(tmp, dest)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    return sha, len(data)
+
+
+def run_desktop_build(*, cargo: str, wrapper: Path, target_dir: Path, cargo_home: Path, tmp: Path, dest: Path,
+                      timeout: int = DESKTOP_TIMEOUT_S) -> DesktopResult:
+    """``cargo build --release --offline --locked`` in the wrapper dir; on failure nothing is written to ``dest``."""
+    argv = build_desktop_argv(cargo=cargo)
+    for d in (target_dir, cargo_home, tmp):
+        d.mkdir(parents=True, exist_ok=True)
+    exe = target_dir / "release" / EXE_NAME
+    if exe.exists() or exe.is_symlink():
+        exe.unlink()  # never pick up the exe of an earlier build
+    o = _run_capped(argv, timeout=timeout, out=None, max_out_bytes=0, kill=None, cwd=wrapper,
+                    env=desktop_env(cargo=cargo, cargo_home=cargo_home, target_dir=target_dir, tmp=tmp))
+    if o.timed_out:
+        raise BuildError(f"desktop build timed out after {timeout}s")
+    if o.returncode != 0:
+        raise BuildError(f"cargo exit code {o.returncode}: {o.tail.strip()[-900:]}")
+    if not exe.is_file():
+        raise BuildError("cargo finished but produced no exe")
+    sha, size = collect_exe(exe, dest)
+    return DesktopResult(exe=dest, sha256=sha, size=size, log_tail=o.tail)

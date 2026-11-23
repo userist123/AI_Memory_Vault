@@ -282,11 +282,14 @@ def activity_list(projectId: Annotated[str, Field(pattern=PROJECT_ID_PATTERN)] |
 
 
 @guarded("app_build")
-def app_build(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  # noqa: N803
-    """Build the app offline in Docker. web: refresh the preview. android: debug APK of the current web build, signed
-    with the studio key; when the studio emulator is running (owner setting on) it is installed and launched."""
+def app_build(projectId: ProjectId, target: Literal["web", "android", "desktop"]) -> Any:  # noqa: N803
+    """Build the app offline. web: refresh the preview (Docker). android: debug APK of the current web build, signed
+    with the studio key; when the studio emulator is running (owner setting on) it is installed and launched.
+    desktop: unsigned Windows exe of the current web build in the studio Tauri wrapper (host cargo, offline)."""
     if target == "web":
         return build_service.build_web(studio(), projectId, run_id=CALL.run_id, actor=actor())
+    if target == "desktop":
+        return build_service.build_desktop(studio(), projectId, run_id=CALL.run_id, actor=actor())
     res = build_service.build_android(studio(), projectId, run_id=CALL.run_id, actor=actor())
     if _DEVICE is not None and _DEVICE.session is not None:
         try:  # gates (owner setting, free disk) are re-checked inside install
@@ -299,8 +302,9 @@ def app_build(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  
 
 
 @guarded("app_export")
-def app_export(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  # noqa: N803
-    """Export the app for the owner: web = zip of the current web build, android = the debug APK. A final secret scan
+def app_export(projectId: ProjectId, target: Literal["web", "android", "desktop"]) -> Any:  # noqa: N803
+    """Export the app for the owner: web = zip of the current web build, android = the debug APK, desktop = the
+    unsigned Windows exe (its embedded dist is scanned too). A final secret scan
     runs first; then the owner must approve this exact artifact (sha256) in the studio. Waits for the decision; on
     timeout returns status pending (call again later: the same request is reused)."""
     import time as _time

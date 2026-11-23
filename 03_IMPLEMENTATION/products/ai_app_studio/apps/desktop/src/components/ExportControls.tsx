@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ExportOutcome } from "../lib/api";
 
-type Target = "web" | "android";
+type Target = "web" | "android" | "desktop";
 
 /**
  * The owner's Export buttons (S9b). Step 1 asks the server, which answers with the exact artifact sha256 to approve;
@@ -55,10 +55,13 @@ export function ExportControls(props: {
       <button className="btn" data-testid="export-android" disabled={busy || !props.projectId} onClick={() => start("android")}>
         Export APK
       </button>
+      <button className="btn" data-testid="export-desktop" disabled={busy || !props.projectId} onClick={() => start("desktop")}>
+        Export desktop (exe)
+      </button>
       {pending ? (
         <div className="export-confirm" role="dialog" aria-label="Approve export" data-testid="export-confirm">
           <p>
-            Export the {pending.target === "web" ? "web zip" : "debug APK"} with sha256{" "}
+            Export the {pending.target === "web" ? "web zip" : pending.target === "android" ? "debug APK" : "unsigned Windows exe"} with sha256{" "}
             <code title={pending.sha256}>{pending.sha256.slice(0, 12)}…</code>?
           </p>
           <button className="btn primary" data-testid="export-approve" onClick={confirm}>

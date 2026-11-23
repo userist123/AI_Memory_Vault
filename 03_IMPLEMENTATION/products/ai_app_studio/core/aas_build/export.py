@@ -41,7 +41,7 @@ from studio_core.services import request_hash
 from . import service
 
 OPERATION = "app.export"
-TARGETS = ("web", "android")
+TARGETS = ("web", "android", "desktop")
 FOLDER_KEY = "export_folder"
 MAX_FILES = 1000
 MAX_BYTES = 200 * 1024 * 1024
@@ -79,6 +79,7 @@ class Artifact:
     revision: int
     name: str
     files: list[str] = field(default_factory=list)
+    embedded: bytes = b""  # desktop: deterministic zip of the dist embedded in the exe (scan input only)
 
     @property
     def params(self) -> dict[str, Any]:
@@ -168,14 +169,14 @@ def _zip(files: list[tuple[str, bytes]]) -> bytes:
     return b.getvalue()
 
 
-def recorded_apk_sha(studio: Any, project_id: str) -> str | None:
+def recorded_apk_sha(studio: Any, project_id: str, target: str = "android") -> str | None:
     with studio.session() as db:
         q = (select(ActivityEvent).where(ActivityEvent.project_id == project_id, ActivityEvent.kind == "build.finished",
                                          ActivityEvent.artifact_sha256.is_not(None))
              .order_by(ActivityEvent.seq.desc()).limit(50))
         for e in db.execute(q).scalars():
             pl = e.payload or {}
-            if pl.get("target") == "android" and pl.get("status") == "ok":
+            if pl.get("target") == target and pl.get("status") == "ok":
                 return e.artifact_sha256
     return None
 
@@ -184,7 +185,7 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
     if not isinstance(project_id, str) or not _PID.match(project_id):
         raise ValidationFailed("invalid project id")
     if target not in TARGETS:
-        raise ValidationFailed("target must be web or android")
+        raise ValidationFailed("target must be web, android or desktop")
     project = studio.get_project(Actor("system", "export", "system"), project_id, with_components=False)
     revision = studio.get_revision(project_id)
     slug = _slug(str(project.get("name", "")))
@@ -197,6 +198,21 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
             raise Unavailable("the web build is empty")
         data = _zip(files)
         names = [n for n, _ in files]
+    elif target == "desktop":
+        exe = service.desktop_path(studio.settings, project_id)
+        zpath = service.desktop_dist_path(studio.settings, project_id)
+        for f in (exe, zpath):
+            if not f.is_file() or f.is_symlink() or os.lstat(f).st_nlink > 1:
+                raise Unavailable("no desktop exe has been built for this project (app_build target desktop)")
+        if exe.stat().st_size + zpath.stat().st_size > MAX_BYTES:
+            raise ValidationFailed("the desktop exe is over the export limit")
+        data = exe.read_bytes()
+        recorded = recorded_apk_sha(studio, project_id, "desktop")
+        if recorded is None or hashlib.sha256(data).hexdigest() != recorded:
+            raise Unavailable("the exe does not match a recorded build of this project: rebuild (app_build desktop)")
+        art = Artifact(project_id, target, data, hashlib.sha256(data).hexdigest(), revision, slug, ["app.exe"])
+        art.embedded = zpath.read_bytes()  # the dist the exe embeds (brotli inside the exe): scanned file by file
+        return art
     else:
         apk = service.apk_path(studio.settings, project_id)
         if not apk.is_file() or apk.is_symlink():
@@ -231,6 +247,17 @@ def scan_bytes(data: bytes) -> list[str]:
 
 
 def _entries(art: Artifact) -> list[tuple[str, bytes]]:
+    if art.target == "desktop":
+        out_d: list[tuple[str, bytes]] = [("app.exe", art.data)]
+        try:
+            with zipfile.ZipFile(io.BytesIO(art.embedded)) as z:
+                for i in z.infolist():
+                    if i.file_size > MAX_ENTRY_BYTES:
+                        raise ExportBlocked("an embedded file is over the scan limit: export refused", file=i.filename[:200])
+                    out_d.append(("embedded/" + i.filename, z.read(i)))
+        except zipfile.BadZipFile as e:
+            raise ExportBlocked("the embedded dist cannot be scanned: export refused") from e
+        return out_d
     if art.target == "web":
         with zipfile.ZipFile(io.BytesIO(art.data)) as z:
             return [(i.filename, z.read(i)) for i in z.infolist()]
@@ -306,7 +333,7 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
         folder = root / f"{art.name}-{art.project_id[4:]}"
         folder.mkdir(parents=True, exist_ok=True)
         _safe_dir(folder)
-        ext = ".zip" if art.target == "web" else ".apk"
+        ext = {"web": ".zip", "android": ".apk", "desktop": ".exe"}[art.target]
         target = folder / f"{art.name}-rev{art.revision}-{art.sha256[:12]}{ext}"
         if target.is_symlink():
             raise ValidationFailed("the export target is a link: export refused")

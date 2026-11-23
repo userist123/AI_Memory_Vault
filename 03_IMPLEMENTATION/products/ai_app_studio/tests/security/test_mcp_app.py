@@ -41,7 +41,7 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
                           "path": {"type": "string", "maxLength": 200}}, ["projectId", "baseRevision", "path"]),
     "activity_list": ({"projectId": {"anyOf": [PID, {"type": "null"}]}, "afterSeq": {"type": "integer", "minimum": 0},
                        "limit": {"type": "integer", "minimum": 1, "maximum": 200}}, []),
-    "app_build": ({"projectId": PID, "target": {"enum": ["web", "android"]}}, ["projectId", "target"]),
+    "app_build": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
     "preview_capture": ({"projectId": PID, "frame": {"enum": ["phone", "tablet", "desktop"]}}, ["projectId", "frame"]),
     # S6 additions
     "plan_submit": ({"projectId": PID, "title": {"type": "string", "minLength": 1, "maxLength": 200},
@@ -53,7 +53,7 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
                     "y": {"type": "integer", "minimum": 0, "maximum": 10000}}, ["x", "y"]),
     "device_screenshot": ({}, []),
     # S9b: export (owner approval bound to the artifact sha256; no approval field in the input)
-    "app_export": ({"projectId": PID, "target": {"enum": ["web", "android"]}}, ["projectId", "target"]),
+    "app_export": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 

@@ -516,3 +516,15 @@ Not in CI: Playwright e2e, Docker probes, the local gate (owner PC, SECURITY.md 
 
 **Installed mode (S9b).** `scripts/build_runtime.ps1` -> `apps/desktop/src-tauri/runtime/{runtime.zip,
 runtime.version}`; `pnpm tauri build --config src-tauri/tauri.release.conf.json` bundles them (NSIS, unsigned).
+
+**Desktop target as built (S9c, docs/slices/S9c.md).** `app_build target desktop` (plan-gated, policy `app.build`,
+same build lock and 5 GiB gate) -> fresh `<desktop root>/builds/d<hex>/{wrapper,dist}`: `images/desktop-wrapper`
+copied byte-for-byte + studio-written `tauri.conf.json` (identifier `dev.aiappstudio.p<id16>`, kit CSP,
+`capabilities []`, `frontendDist ../dist`, studio WebView2 args) + `.cargo/config.toml` (vendored source, offline);
+dist = the preview site re-validated by the web output reader. `cargo build --release --offline --locked` on the
+host (toolchain cargo.exe, minimal env, dead proxy, studio CARGO_HOME/target/tmp under `AAS_DESKTOP_ROOT` or
+`<data>/desktop`), exe read after exit -> `<preview>/<project>/app-desktop.exe` + `app-desktop.dist.zip`;
+build.finished `{target desktop, artifactSha256, sizeBytes}`. `app_export target desktop` / REST / UI "Export
+desktop (exe)": exe sha must match the recorded build; scan = raw exe + every embedded dist file; approval bound
+to the sha256. MCP catalogue unchanged (15 tools; target enums gain `desktop`). No NSIS, no signing, no launch
+button (open).
