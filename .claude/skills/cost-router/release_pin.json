@@ -1,5 +1,5 @@
 {
-  "commit": "b5aa6e55ee7b302e3b8b17eb5c88ca9be3790f26",
+  "commit": "1e385f554da00aa9273d5400dad6d3a3b66524f4",
   "files": {
     ".claude/agents/Explore.md": "071e47fdf97105de10d1169d392c97eb124377908e584234db891354998a5b19",
     ".claude/agents/check-runner.md": "65167c8e85c1d63cc5a08e69b90001eebc7e03ef7b872849fa4c4f5c33d5b74b",
@@ -9,7 +9,7 @@
     ".claude/agents/test-author.md": "976665d1e8eceb4de5a12c73664c416aed37173d875e2d722060013a6e015f71",
     ".claude/agents/vault-reviewer.md": "44d898a5e1448547233f979f16372bfa60d553181470c741a3de8b600ab5804f",
     ".claude/agents/vault-worker.md": "5896ba5545d342081e83100afa6e28bb801a91d61112e25d2720529ae7af9432",
-    ".claude/skills/cost-router/SKILL.md": "9ef7335853cf28a4f198379afcd224594442ac2136c41d2b557f4fea9899154e",
+    ".claude/skills/cost-router/SKILL.md": "f2b581dd1c2e952c36553d2d19773f0a2f4a635ddea63afdd0b6fc7e6f37bee1",
     ".claude/skills/cost-router/chat/SKILL.md": "8a4775d1e44e567aadf8d0783b789158019e0d2cc0578b3ec472ca889dbcd312",
     ".claude/skills/cost-router/hook_agent_model.py": "64cd77aec91cabf9acfdcaf1f70170283962032b1aa3490a72bfcf4fbabea508",
     ".claude/skills/cost-router/hook_agent_usage.py": "8845a687a9ea96c7e358b98974dc975fe36b574a13c8df49145110d26c139cd8",
@@ -50,7 +50,7 @@
     "03_IMPLEMENTATION/packages/routing/claude_model_router.py": "c0b7efaf70370624290688bdd0a1c1746614b6790224da94675891c958f6546f",
     "04_CONFIG/claude_model_routing.json": "c50d49e8d994199cbdc500c536d924463d67fcb4feca5abb19626c3db084438c"
   },
-  "files_sha256": "93129849c85e0641087aa65b10487ba701f34db83f67f2ca9a9da94606c758e7",
+  "files_sha256": "a3034605d1ce310a390defe9a528ee443d9c0e05026cef735f506185938f56e6",
   "schema": 1,
   "seq": 14
 }
