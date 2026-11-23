@@ -77,7 +77,7 @@ def test_kind_is_enum_and_server_set(studio: Studio) -> None:
     with pytest.raises(ValueError):
         activity.record(studio, "tool.call", source="attacker", payload={})
     assert "tool.call" in {k.value for k in activity.ActivityKind}
-    assert len(activity.ActivityKind) == 24
+    assert len(activity.ActivityKind) == 26  # S6 added cost.update and preview.captured (names the UI reads)
 
 
 def test_payload_field_allow_list_drops_unknown_and_forged_kind(studio: Studio) -> None:

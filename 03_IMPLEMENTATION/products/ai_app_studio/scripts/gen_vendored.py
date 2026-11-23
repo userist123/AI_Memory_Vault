@@ -36,7 +36,9 @@ FILES: list[tuple[str, str, str]] = [
      "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then "
      "activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live "
      "owner token), so a control character cannot split a secret and audit rows, tool_executions and approval params "
-     "never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added; no other change."),
+     "never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added. S6 (S2 review F1/F2): dict keys are sanitised before the "
+     "secret-key check and a well-formed lowercase sha256/git digest under a hash-named key is kept verbatim "
+     "(activity.hash_type_for_key / valid_hash); no other change."),
     ("core/studio_core/workspace.py", "core/studio_core/workspace.py", ""),
     ("core/studio_core/services.py", "core/studio_core/services.py",
      "ProjectKind seam: removed imports of component_model, renderer, templates, codefiles, scene3d, animation_model; "
@@ -127,6 +129,10 @@ LOCAL_FILES: list[tuple[str, str]] = [
     ("core/studio_core/aas_models.py", "AAS-owned ORM tables activity_events and app_settings"),
     ("core/studio_core/alembic/versions/0003_app_kind_activity_settings.py",
      "AAS-owned migration: projects.kind, activity_events, app_settings"),
+    ("core/studio_core/alembic/versions/0004_activity_kinds_cost_preview.py",
+     "AAS-owned migration: activity kinds cost.update and preview.captured"),
+    ("core/studio_core/plans.py", "AAS-owned approval/plan records and owner-only decisions"),
+    ("core/studio_core/run_grants.py", "AAS-owned per-run MCP grants of the built-in runner"),
     ("tests/vendored/__init__.py", "AAS-owned package marker"),
     ("tests/vendored/conftest.py", "AAS-owned: runs vendored tests against NullKind"),
 ]

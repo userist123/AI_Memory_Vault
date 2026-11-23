@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .activity import redact_text, sanitize_text
+from .activity import hash_type_for_key, redact_text, sanitize_text, valid_hash
 from .db import AuditEvent
 from .ids import iso, new_id, utcnow
 from .policy import Actor
@@ -22,8 +22,17 @@ _SECRET_KEYS = ("token", "password", "passwd", "pwd", "secret", "authorization",
 
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
-        return {k: ("[REDACTED]" if any(s in k.lower() for s in _SECRET_KEYS) else redact(v))
-                for k, v in value.items()}
+        # AAS (S2 review F1/F2): the key is sanitised BEFORE the secret-key check (an invisible character cannot hide
+        # "password"), and a well-formed lowercase digest under a hash-named key (sha256 / commit ...) is kept verbatim
+        out: dict[Any, Any] = {}
+        for k, v in value.items():
+            key = sanitize_text(k, cap=200) if isinstance(k, str) else k
+            if isinstance(key, str) and any(s in key.lower() for s in _SECRET_KEYS):
+                out[key] = "[REDACTED]"
+                continue
+            ht = hash_type_for_key(key) if isinstance(key, str) else None
+            out[key] = v if ht and valid_hash(ht, v) else redact(v)
+        return out
     if isinstance(value, list):
         return [redact(v) for v in value[:100]]
     if isinstance(value, str):

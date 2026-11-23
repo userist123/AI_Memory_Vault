@@ -53,6 +53,8 @@ class ActivityKind(StrEnum):
     AGENT_TEXT = "agent.text"
     AGENT_TYPING = "agent.typing"
     USAGE = "usage"
+    COST_UPDATE = "cost.update"
+    PREVIEW_CAPTURED = "preview.captured"
     STREAM_DROPPED = "stream.dropped"
 
 
@@ -70,17 +72,20 @@ _HASH_RE = {_H64: re.compile(r"[0-9a-f]{64}"), _H40: re.compile(r"[0-9a-f]{40}")
 
 # kind -> field -> (type, cap)   (cap = max characters for text, max items for lists)
 PAYLOAD_FIELDS: dict[str, dict[str, tuple[str, int]]] = {
-    "run.started": {"model": (_S, 80), "agent": (_S, 80)},
+    # field names are the ones apps/desktop reads (title, budgetUsd, stepId, callId, target, line, path, ...)
+    "run.started": {"model": (_S, 80), "agent": (_S, 80), "title": (_S, 200), "budgetUsd": (_F, 0)},
     "run.finished": {"status": (_S, 40), "turns": (_I, 0), "costUsd": (_F, 0), "durationMs": (_I, 0)},
-    "plan.proposed": {"planId": (_S, 40), "steps": (_L, 20)},
+    "plan.proposed": {"planId": (_S, 40), "title": (_S, 200), "steps": (_L, 20)},
     "plan.decided": {"planId": (_S, 40), "decision": (_S, 16)},
-    "step.started": {"index": (_I, 0), "text": (_S, 200)},
-    "tool.call": {"tool": (_S, 80), "operationId": (_S, 40), "status": (_S, 32), "actor": (_S, 80), "input": (_S, 2000)},
-    "tool.result": {"tool": (_S, 80), "operationId": (_S, 40), "status": (_S, 32), "isError": (_B, 0), "size": (_I, 0),
+    "step.started": {"index": (_I, 0), "text": (_S, 200), "stepId": (_S, 40), "title": (_S, 200)},
+    "tool.call": {"tool": (_S, 80), "operationId": (_S, 40), "status": (_S, 32), "actor": (_S, 80), "input": (_S, 2000),
+                  "callId": (_S, 80), "target": (_S, 500)},
+    "tool.result": {"tool": (_S, 80), "callId": (_S, 80), "operationId": (_S, 40), "status": (_S, 32), "isError": (_B, 0), "size": (_I, 0),
                     "sha256": (_H64, 64), "commit": (_H40, 40), "excerpt": (_S, 300)},
-    "file.diff": {"path": (_S, 200), "added": (_I, 0), "removed": (_I, 0), "diff": (_S, 6000)},
+    "file.diff": {"path": (_S, 200), "added": (_I, 0), "removed": (_I, 0), "diff": (_S, 6000),
+                  "revision": (_I, 0)},
     "build.started": {"target": (_S, 16), "revision": (_I, 0)},
-    "build.log": {"stream": (_S, 16), "text": (_S, 2000)},
+    "build.log": {"stream": (_S, 16), "text": (_S, 2000), "line": (_S, 2000)},
     "build.error": {"code": (_S, 80), "message": (_S, 1000)},
     "build.finished": {"status": (_S, 32), "durationMs": (_I, 0), "revision": (_I, 0)},
     "preview.revision": {"revision": (_I, 0)},
@@ -88,23 +93,25 @@ PAYLOAD_FIELDS: dict[str, dict[str, tuple[str, int]]] = {
     "device.state": {"state": (_S, 40), "avd": (_S, 40)},
     "device.input": {"action": (_S, 40), "x": (_I, 0), "y": (_I, 0), "text": (_S, 200)},
     "device.log": {"text": (_S, 1000)},
-    "qa.result": {"suite": (_S, 40), "passed": (_I, 0), "failed": (_I, 0)},
+    "qa.result": {"suite": (_S, 40), "passed": (_I, 0), "failed": (_I, 0), "summary": (_S, 500)},
     "approval.requested": {"approvalId": (_S, 40), "operation": (_S, 80)},
     "approval.decided": {"approvalId": (_S, 40), "decision": (_S, 16)},
     "agent.text": {"text": (_S, 4000)},
-    "agent.typing": {"text": (_S, 1000)},
+    "agent.typing": {"text": (_S, 1000), "path": (_S, 200)},
     "usage": {"inputTokens": (_I, 0), "outputTokens": (_I, 0), "costUsd": (_F, 0)},
+    "cost.update": {"inputTokens": (_I, 0), "outputTokens": (_I, 0), "costUsd": (_F, 0)},
+    "preview.captured": {"revision": (_I, 0), "frame": (_S, 16), "sha256": (_H64, 64)},
     "stream.dropped": {"count": (_I, 0), "reason": (_S, 200)},
 }
 assert set(PAYLOAD_FIELDS) == {k.value for k in ActivityKind}
 
 # ---------------------------------------------------------------- sanitising
-_ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]"              # CSI
-                   r"|\x1b\][^\x07\x1b\n]*(?:\x07|\x1b\\)?"  # OSC (incl. OSC 52), BEL/ST terminated; unterminated ends at newline
-                   r"|\x1b[PX^_][^\x1b]*(?:\x1b\\)?"         # DCS/SOS/PM/APC
+_ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]"                  # CSI
+                   r"|\x1b\][^\x07\x1b\n\r]*(?:\x07|\x1b\\)?"    # OSC (incl. OSC 52); unterminated ends at \n or \r
+                   r"|\x1b[PX^_][^\x1b\n\r]*(?:\x1b\\)?"         # DCS/SOS/PM/APC: stops at newline, CR, ST or the end
                    r"|\x1b[@-Z\\-_]")                         # other two-byte escapes
 _DROP = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f"                  # C0 (except tab/newline), DEL, C1
-                   "\u00ad\u061c"                                  # soft hyphen, Arabic letter mark
+                   "\u00ad\u061c\u034f\u115f\u180e\u3164"          # soft hyphen, Arabic mark, CGJ, Hangul/Mongolian fillers
                    "\u200b-\u200f\u2028\u2029\u202a-\u202e"        # zero-width, LRM/RLM, line/para separators, bidi
                    "\u2060-\u2064\u2066-\u2069"                    # word joiner, invisible operators, bidi isolates
                    "\ufe00-\ufe0f\ufeff"                           # variation selectors, BOM

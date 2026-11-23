@@ -26,9 +26,9 @@
       "upstream_path": "core/studio_core/audit.py",
       "upstream_commit": "25b3eab",
       "upstream_sha256": "0c006251c2cf141ea3592b84e51e54b79a15ea5989c80632b9960f605af47e71",
-      "local_sha256": "2ed3892b6fa99429eb243654e1abb242084e1fcb9ddf52caa3ea509b0898350a",
+      "local_sha256": "8e657c8dce1d413b2c4ddd03192e8212c81756eff00c2a0736aa0014aac03bf0",
       "patched": true,
-      "patch_reason": "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live owner token), so a control character cannot split a secret and audit rows, tool_executions and approval params never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added; no other change."
+      "patch_reason": "AAS value redaction: audit.redact now also runs activity.sanitize_text (ANSI/C0/C1/bidi/tag/zero-width) and then activity.redact_text over string values (tokens, sk-/ghp_/AKIA keys, JWT, PEM, high-entropy runs, the live owner token), so a control character cannot split a secret and audit rows, tool_executions and approval params never store a secret value (DESIGN.md 5.3, P6c); import of studio_core.activity added. S6 (S2 review F1/F2): dict keys are sanitised before the secret-key check and a well-formed lowercase sha256/git digest under a hash-named key is kept verbatim (activity.hash_type_for_key / valid_hash); no other change."
     },
     {
       "path": "core/studio_core/workspace.py",
@@ -370,6 +370,18 @@
     {
       "path": "core/studio_core/alembic/versions/0003_app_kind_activity_settings.py",
       "reason": "AAS-owned migration: projects.kind, activity_events, app_settings"
+    },
+    {
+      "path": "core/studio_core/alembic/versions/0004_activity_kinds_cost_preview.py",
+      "reason": "AAS-owned migration: activity kinds cost.update and preview.captured"
+    },
+    {
+      "path": "core/studio_core/plans.py",
+      "reason": "AAS-owned approval/plan records and owner-only decisions"
+    },
+    {
+      "path": "core/studio_core/run_grants.py",
+      "reason": "AAS-owned per-run MCP grants of the built-in runner"
     },
     {
       "path": "tests/vendored/__init__.py",
