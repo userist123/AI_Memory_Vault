@@ -1,5 +1,13 @@
 # Checkpoint — 2026-11-23 00:20 (session <owner-user>-d8, /loop active)
 
+## Runner profile modes (2026-11-23, owner decision: the builder loads the owner's Claude setup)
+- `runner.profile` = "full" (default) | "isolated" (old B7 behaviour). core/aas_runner/profile.py (setting, deny-list,
+  check_init_full, full settings), claude.py (argv/env per profile), mcp_denylist.default.json, REST
+  `/api/v1/settings/runner-profile` (owner only), UI toggle in RunControls. Docs: SECURITY.md B7 row, DESIGN 6.1,
+  THREAT_MODEL As built, RELEASE_NOTES. Tests: tests/runner/test_runner_profile.py, tests/runner/test_profile_real_cli.py
+  (real CLI; AAS_OWNER_CONFIG_PROBE=1 for the owner's real config), tests/security/test_backend.py, run_controls.test.ts.
+- Next: Opus review of the change; the owner keeps the deny-list current after plugin/MCP changes.
+
 ## PR #413 CI fixes (2026-11-23, owner decisions D1-D3 applied, local commits, pushed once at the end)
 - D1: no PNG under 03_IMPLEMENTATION. Screenshots moved to 50_ARTIFACTS/ai_app_studio/screenshots/ (links updated;
   the Playwright demo spec writes S4-demo.png there). Icons: one SVG source per icon set (apps/desktop/src-tauri/app-icon.svg,

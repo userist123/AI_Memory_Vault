@@ -11,7 +11,8 @@ while the owner watches live on the desktop what it is doing.
   phone and tablet form factors) mirrored into the studio, and an activity feed of every agent action.
 - **Agent:** the built-in runner drives the Claude CLI with a studio-only tool catalogue (no shell, no network tool);
   writes, deletes and builds need an owner-approved plan; images and console text the agent sees are wrapped as
-  untrusted data. An external MCP server is available but OFF by default.
+  untrusted data. An external MCP server is available but OFF by default. By default (profile `full`, owner
+  decision 2026-11-23) the runner also loads the owner's own Claude setup; the toggle "Use my Claude setup" turns it off.
 - **Export:** artifacts leave the studio only with an owner approval bound to the artifact sha256, after a secret scan.
 - **Templates:** starting templates for common app shapes (tabs, list-detail).
 
@@ -46,7 +47,11 @@ beyond the PC.
 - Host-build trust: the desktop build runs vendored crate build scripts with the owner's rights (integrity: cargo
   checksums + studio-held manifest + owner-only root).
 - Owner WSL user has `NOPASSWD: ALL` + docker (root in the distro); `/opt/aas` hashes are drift detection only.
-- Runner keeps the owner's real profile (the CLI needs the login); the B7 probe checks user extensions do not load.
+- Runner profile (owner decision 2026-11-23): `full` is the default and loads the owner's Claude setup (CLAUDE.md,
+  memory, hooks, plugins, skills, agents, user MCP servers) into the builder; shell, file-write and web built-ins stay
+  off and egress/exec MCP tools are denied by a name-based deny-list (init check fails closed). Residual: owner memory
+  sits next to untrusted generated content (prompt injection could echo it into the timeline or the app); owner hooks
+  run with the owner's rights. `isolated` (toggle "Use my Claude setup" off) restores the B7 isolation.
 - Others: CI trusts committed upstream hashes for vendored files; Gradle and cargo vendor TOFU at first fetch;
   debug-only APKs; no network in generated apps (kit CSP); nested virtualisation in WSL2 is unsupported upstream;
   export secret scan is pattern-based; WebView2 injects IPC scripts into subframes (blocked by CSP + Tauri ACL);

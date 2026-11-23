@@ -255,3 +255,5 @@ popen, spawn*), no dynamic lookup and no DLL other than advapi32/kernel32 (tests
 IPv6 checked live (off). (c) Probes PM1a, PM5a, P7c, P9b, P4a, PM2a and the external-MCP approval-cap label are
 accepted residuals for v1 (docs/SECURITY.md section 2). (d) v1 = `scripts/run_studio.ps1`; the NSIS installer stays
 experimental and unsigned.
+
+**Runner profile (owner decision 2026-11-23).** The owner made the B7 isolation selectable: profile `full` (default) loads the owner's CLAUDE.md, home auto-memory, hooks, plugins, skills, agents and user MCP servers into the builder; `isolated` keeps the M4/P5e/B7 controls exactly as before. Full keeps M4 for the project (empty run dir, no project setting source, studio-only writes) and adds: built-ins only Read/Grep/Glob/Skill/Task, a validated name-based MCP deny-list (fail closed), claude.ai connectors off, an init check that aborts on any denied tool. New residuals (owner memory next to untrusted content, read access to owner files, owner hooks, name-based deny-list) are in docs/SECURITY.md section 2. Probes: tests/runner/test_runner_profile.py, tests/runner/test_profile_real_cli.py.
