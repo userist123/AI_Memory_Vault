@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { errorText, TEMPLATES, type DeleteOutcome, type ProjectRef, type Template } from "../lib/api";
+import { DEFAULT_PRESET, PresetPicker, type PresetId } from "./PresetPicker";
 
 /** The backend's project name rule (studio_core.services._NAME_RE). */
 const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _.-]{0,63}$/;
@@ -35,7 +36,8 @@ export function ProjectPicker(props: {
   /** a run is going: no switching, no deleting */
   disabled: boolean;
   onSelect: (projectId: string) => void;
-  onCreate: (name: string, template: Template) => Promise<void>;
+  /** preset is passed only when the owner picked a non-default style (W1) */
+  onCreate: (name: string, template: Template, preset?: PresetId) => Promise<void>;
   requestDelete: (projectId: string, approvalId?: string) => Promise<DeleteOutcome>;
   approve: (approvalId: string) => Promise<void>;
   deny: (approvalId: string) => Promise<void>;
@@ -45,6 +47,7 @@ export function ProjectPicker(props: {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [template, setTemplate] = useState<Template>("blank");
+  const [preset, setPreset] = useState<PresetId>(DEFAULT_PRESET);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [pendingDelete, setPendingDelete] = useState<{ projectId: string; approvalId: string } | null>(null);
@@ -56,12 +59,12 @@ export function ProjectPicker(props: {
     if (!nameOk || busy) return;
     setBusy(true);
     setError("");
-    void props
-      .onCreate(name.trim(), template)
+    void (preset === DEFAULT_PRESET ? props.onCreate(name.trim(), template) : props.onCreate(name.trim(), template, preset))
       .then(() => {
         setFormOpen(false);
         setName("");
         setTemplate("blank");
+        setPreset(DEFAULT_PRESET);
       })
       .catch((e: unknown) => setError(`Proiectul nu a putut fi creat: ${errorText(e)}`))
       .finally(() => setBusy(false));
@@ -182,6 +185,7 @@ export function ProjectPicker(props: {
               ))}
             </select>
           </label>
+          <PresetPicker value={preset} onChange={setPreset} disabled={busy} />
           {name && !nameOk ? <small className="note">Litere fără diacritice, cifre, spațiu, _ . - (max. 64)</small> : null}
           <button type="submit" className="btn primary small" data-testid="project-form-create" disabled={!nameOk || busy}>
             Creează

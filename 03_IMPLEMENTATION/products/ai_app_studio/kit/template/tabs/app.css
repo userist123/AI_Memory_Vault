@@ -1,0 +1,18 @@
+/* Tabs template layout (mobile-first: base rules are the phone layout, @media widens). Tokens only. */
+.shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: calc(var(--space-5) + var(--safe-top)) calc(var(--space-4) + var(--safe-right)) var(--space-5) calc(var(--space-4) + var(--safe-left));
+}
+.panel:focus-visible { outline-offset: -3px; }
+.lead { color: var(--color-muted); }
+@media (min-width: 768px) {
+  .shell { flex-direction: column-reverse; justify-content: flex-end; }
+  .shell .ui-tabbar { position: sticky; top: 0; bottom: auto; border-top: 0; border-bottom: 1px solid var(--color-border); padding-bottom: 0; }
+  .shell .ui-tabbar__list { max-width: 720px; margin: 0 auto; }
+  .shell .ui-tabbar__tab { flex-direction: row; min-width: 120px; font-size: var(--text-sm); }
+  .panel { max-width: 720px; margin: 0 auto; width: 100%; padding-top: var(--space-6); }
+}
