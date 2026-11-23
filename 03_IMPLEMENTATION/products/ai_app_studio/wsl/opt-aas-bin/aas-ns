@@ -1,0 +1,15 @@
+#!/bin/bash -p
+# aas-ns <aas-phone|aas-tablet>  -- runs inside the private user+net+mount+pid namespace (uid 0 = owner user).
+# Private loopback + dummy IPv6 (qemu modem chardev needs a non-loopback IPv6, spike 2b), then the control loop.
+set -euo pipefail
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+[ "$#" -eq 1 ] || exit 64
+case "$1" in aas-phone|aas-tablet) ;; *) exit 64 ;; esac
+# qemu 31.3.9 segfaults on its graceful-exit path; WSL pipes cores to /wsl-capture-crash (~2.6 GB each on
+# the Windows TEMP drive). RLIMIT_CORE=1 makes the kernel abort piped core dumps; shutdown uses SIGKILL anyway.
+ulimit -c 1
+ip link set lo up
+ip link add d0 type dummy
+ip link set d0 up
+ip -6 addr add fd00::1/64 dev d0 nodad
+exec /usr/bin/python3 -I -S /opt/aas/bin/aas_devhost.py "$1"

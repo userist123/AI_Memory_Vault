@@ -1,0 +1,49 @@
+#!/bin/bash -p
+# aas-serve <phone|tablet>  -- AI App Studio device host entry point (installed root:root 0755 in /opt/aas/bin).
+# -p: BASH_ENV/ENV are not read and functions are not imported from the environment.
+# Chain: checks -> flock -> sudo -n runuser -g kvm -> env -i <fixed env> -> unshare (user+net+mount+pid) -> aas-ns.
+set -euo pipefail
+umask 077
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+die() { printf '{"ch":"e","kind":"exit","code":%d,"reason":"%s"}\n' "$1" "$2"; exit "$1"; }
+
+[ "$#" -eq 1 ] || die 64 usage
+case "$1" in
+  phone) AVD=aas-phone ;;
+  tablet) AVD=aas-tablet ;;
+  *) die 64 verb ;;
+esac
+[ "$(id -u)" -ne 0 ] || die 65 root
+ME=$(id -un)
+RH=$(getent passwd "$ME" | cut -d: -f6)
+[ -n "$RH" ] && [ -d "$RH" ] || die 66 home
+[ "$(wslinfo --networking-mode 2>/dev/null)" = nat ] || die 20 networking
+[ -c /dev/kvm ] || die 21 kvm
+getent group kvm >/dev/null || die 21 kvm-group
+
+S="$RH/.aas"
+[ -d "$S" ] && [ ! -L "$S" ] || die 22 state
+[ -z "$(find "$S" -type l -print -quit)" ] || die 23 symlink
+INI="$S/avd/$AVD.ini"
+[ -f "$INI" ] || die 26 avd-missing
+[ "$(grep -c '^path=' "$INI")" = 1 ] || die 27 avd-ini
+grep -qx "path=$S/avd/$AVD.avd" "$INI" || die 27 avd-path
+cmp -s "$S/avd/$AVD.avd/config.ini" "/opt/aas/bin/$AVD.config.ini" || die 28 avd-config
+SDK="$RH/emu/sdk"
+[ -x "$SDK/emulator/emulator" ] && [ -x "$SDK/platform-tools/adb" ] || die 29 sdk
+
+mkdir -p "$S/run" "$S/home/.config" "$S/android-user"
+
+exec flock -n -E 24 "$S/run/lock" \
+  sudo -n /usr/sbin/runuser -u "$ME" -g kvm -- /usr/bin/env -i \
+    HOME="$S/home" XDG_CONFIG_HOME="$S/home/.config" \
+    ANDROID_SDK_ROOT="$SDK" ANDROID_AVD_HOME="$S/avd" \
+    ANDROID_USER_HOME="$S/android-user" ANDROID_EMULATOR_HOME="$S/android-user" \
+    ANDROID_ADB_SERVER_PORT=5641 \
+    DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir \
+    PATH=/usr/sbin:/usr/bin:/sbin:/bin LANG=C.UTF-8 \
+    AAS_STATE="$S" \
+    /usr/bin/unshare -r -n -m -p -f --kill-child --mount-proc \
+    /bin/bash -p /opt/aas/bin/aas-ns "$AVD"
