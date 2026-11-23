@@ -23,6 +23,7 @@ from __future__ import annotations
 import fnmatch
 import json
 import re
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -43,12 +44,16 @@ FULL_TOOLS: tuple[str, ...] = ("Read", "Grep", "Glob", "Skill", "Task", "Agent")
 FULL_INIT_BUILTINS = frozenset(FULL_TOOLS)  # the only built-ins system/init may offer in full mode
 FULL_DENIED_BUILTINS: tuple[str, ...] = ("Bash", "PowerShell", "Edit", "Write", "MultiEdit", "NotebookEdit",
                                          "WebFetch", "WebSearch")
-# best-effort read limits in full mode (Read rules also cover Grep/Glob): credentials and key files of the owner
+# Read limits in full mode (Read rules also cover Grep/Glob). CLI rule syntax: `//x` = absolute, `~/x` = home; a bare
+# `**/x` is relative to the cwd (the empty run dir) and matches nothing outside it (review M1). Windows paths are
+# matched in POSIX form (drive D: -> /d/...). Live probe: tests/runner/test_profile_real_cli.py (AAS_LIVE_RUNNER_PROBE=1).
 FULL_READ_DENY: tuple[str, ...] = (
     "Read(~/.ssh/**)", "Read(~/.aws/**)", "Read(~/.azure/**)", "Read(~/.config/gh/**)", "Read(~/.docker/**)",
-    "Read(~/.claude/.credentials.json)", "Read(~/.claude.json)", "Read(**/.env)", "Read(**/.env.*)",
-    "Read(**/*.pem)", "Read(**/*.key)", "Read(**/*.pfx)", "Read(**/id_rsa*)", "Read(**/id_ed25519*)",
-    "Read(**/api_token)", "Read(**/*.mcp.json)",
+    "Read(~/.gnupg/**)", "Read(~/.claude/.credentials.json)", "Read(~/.claude.json)",
+    "Read(//**/.env)", "Read(//**/.env.*)", "Read(//**/*.pem)", "Read(//**/*.key)", "Read(//**/*.pfx)",
+    "Read(//**/*.p12)", "Read(//**/id_rsa*)", "Read(//**/id_ed25519*)", "Read(//**/id_ecdsa*)",
+    "Read(//**/api_token)", "Read(//**/*.mcp.json)", "Read(//**/.credentials.json)", "Read(//**/.git-credentials)",
+    "Read(//**/.netrc)", "Read(//**/_netrc)", "Read(//**/hosts.yml)",
 )
 
 # always denied in full mode, whatever the owner's file says (the owner can add, never remove these)
@@ -62,6 +67,7 @@ DEFAULT_DENYLIST = Path(__file__).with_name("mcp_denylist.default.json")
 OWNER_DENYLIST_NAME = "runner_mcp_denylist.json"
 MAX_ENTRIES = 500
 
+_OWNER_SERVER_NAME_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,120}$")
 _SERVER_RE = re.compile(r"^[A-Za-z0-9_*-]{1,120}$")
 _TOOL_RE = re.compile(r"^mcp__[A-Za-z0-9_*-]{1,120}__[A-Za-z0-9_*-]{1,120}$")
 _SUB_RE = re.compile(r"^[a-z0-9_]{3,40}$")
@@ -114,19 +120,42 @@ class DenyList:
         out += [f"mcp__*__*{sub}*" for sub in self.substrings if not any(sub in t.lower() for t in CATALOGUE_TOOLS)]
         return out
 
+    def denies_server(self, name: str) -> bool:
+        """True when every tool of the server is denied. Matching is NFKC + case-insensitive + `_` == `-` on the
+        CLI tool-prefix form of the name; a name that is not ASCII after NFKC is denied outright (lookalikes)."""
+        if _canon(name) is None:
+            return True
+        key = _canon(_server_key(name)) or ""
+        return any(fnmatch.fnmatchcase(key, _canon(s) or "") for s in self.servers)
+
     def denies(self, tool: str) -> bool:
-        if not tool.startswith("mcp__") or tool.startswith(TOOL_PREFIX):
+        """The deny-list is defence in depth: the primary control is ``--permission-mode dontAsk`` with no allow
+        entry for any owner MCP tool (only the studio catalogue and the read-only built-ins are pre-allowed)."""
+        if _canon(tool) is None:
+            return True  # non-ASCII tool name: fail closed
+        if tool.startswith(TOOL_PREFIX) or not tool.startswith("mcp__"):
             return False
-        rest = tool[len("mcp__"):]
-        server, sep, name = rest.partition("__")
+        server, sep, name = tool[len("mcp__"):].partition("__")
         if not sep:
             return True  # not a well-formed MCP tool name: fail closed
-        if any(fnmatch.fnmatchcase(server, s) for s in self.servers):
+        if self.denies_server(server):
             return True
-        if any(fnmatch.fnmatchcase(tool, t) for t in self.tools):
+        ct = _canon(tool) or ""
+        if any(fnmatch.fnmatchcase(ct, _canon(t) or "") for t in self.tools):
             return True
-        low = name.lower()
-        return any(sub in low for sub in self.substrings)
+        cn = _canon(name) or ""
+        return any((_canon(sub) or "") in cn for sub in self.substrings)
+
+
+def _canon(s: str) -> str | None:
+    """NFKC, lower case, `_` == `-`. None when the text is not ASCII after NFKC (fail closed)."""
+    n = unicodedata.normalize("NFKC", s)
+    return n.lower().replace("_", "-") if n.isascii() else None
+
+
+def _server_key(name: str) -> str:
+    """A configured server name in the CLI's tool-prefix form ("claude.ai Vercel" -> "claude_ai_Vercel")."""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", unicodedata.normalize("NFKC", name))
 
 
 def parse_denylist(obj: Any) -> DenyList:
@@ -169,8 +198,12 @@ def check_init_full(obj: dict[str, Any], deny: DenyList) -> None:
     servers = obj.get("mcp_servers")
     if not isinstance(servers, list):
         raise InitViolation("init has no mcp_servers list")
-    if SERVER not in [_server_name(s) for s in servers]:
+    names = [_server_name(s) for s in servers]
+    if SERVER not in names:
         raise InitViolation(f"{SERVER!r} is not among the init mcp_servers")
+    bad_servers = [n for n in names if n != SERVER and (not isinstance(n, str) or deny.denies_server(n))]
+    if bad_servers:
+        raise InitViolation(f"init lists denied MCP servers: {[str(b)[:60] for b in bad_servers][:5]}")
     tools = obj.get("tools")
     if not isinstance(tools, list):
         raise InitViolation("init has no tools list")
@@ -204,11 +237,63 @@ def home_memory_dir(env: dict[str, str]) -> Path | None:
     return d if d.is_dir() else None
 
 
-def full_settings(memory_dir: Path | None) -> dict[str, Any]:
+def rule_path(p: Path) -> str:
+    """An absolute path in the CLI's permission-rule form: `//` + POSIX path, a Windows drive as `/d/...`."""
+    s = str(p).replace(chr(92), "/")
+    m = re.match(r"^([A-Za-z]):/?(.*)$", s)
+    if m:
+        return f"//{m.group(1).lower()}/{m.group(2)}".rstrip("/")
+    return "//" + s.strip("/")
+
+
+def _env_reads(data_dir: Path | None, env: dict[str, str] | None) -> list[str]:
+    low = {k.upper(): v for k, v in (env or {}).items()}
+    out: list[str] = []
+    if data_dir is not None:  # the studio's own state: token, run grants, run configs, audit, every workspace
+        out.append(f"Read({rule_path(data_dir)}/**)")
+    if low.get("CLAUDE_CONFIG_DIR"):
+        out.append(f"Read({rule_path(Path(low['CLAUDE_CONFIG_DIR']))}/.credentials.json)")
+    if low.get("APPDATA"):
+        out.append(f"Read({rule_path(Path(low['APPDATA']) / 'GitHub CLI')}/**)")
+    return out
+
+
+def full_settings(memory_dir: Path | None, *, data_dir: Path | None = None,
+                  env: dict[str, str] | None = None) -> dict[str, Any]:
     s: dict[str, Any] = {
         "enableAllProjectMcpServers": False,
-        "permissions": {"defaultMode": "dontAsk", "deny": [*FULL_DENIED_BUILTINS, *FULL_READ_DENY]},
+        "permissions": {"defaultMode": "dontAsk",
+                        "deny": [*FULL_DENIED_BUILTINS, *FULL_READ_DENY, *_env_reads(data_dir, env)]},
     }
     if memory_dir is not None:
         s["autoMemoryDirectory"] = str(memory_dir)
     return s
+
+
+# ---------------------------------------------------------------------------------------------- owner MCP servers
+def owner_mcp_servers(env: dict[str, str], deny: DenyList) -> dict[str, dict[str, Any]]:
+    """The owner's user-scope MCP servers (``mcpServers`` of ``<CLAUDE_CONFIG_DIR>/.claude.json``, else
+    ``~/.claude.json``) that the deny-list does not fully deny. The runner passes them in its own ``--mcp-config``
+    with ``--strict-mcp-config`` (review L3), so a denied server is never launched; plugin and claude.ai servers are
+    never passed. An unreadable file gives none; a server named ``ai-app-studio`` or with a non-ASCII / odd name is
+    dropped."""
+    low = {k.upper(): v for k, v in env.items()}
+    if low.get("CLAUDE_CONFIG_DIR"):
+        path = Path(low["CLAUDE_CONFIG_DIR"]) / ".claude.json"
+    elif low.get("USERPROFILE") or low.get("HOME"):
+        path = Path(low.get("USERPROFILE") or low.get("HOME") or "") / ".claude.json"
+    else:
+        return {}
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    servers = obj.get("mcpServers") if isinstance(obj, dict) else None
+    if not isinstance(servers, dict):
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for name, cfg in servers.items():
+        if (isinstance(name, str) and isinstance(cfg, dict) and _OWNER_SERVER_NAME_RE.match(name)
+                and _canon(name) != SERVER and not deny.denies_server(name)):
+            out[name] = cfg
+    return out

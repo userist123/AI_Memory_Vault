@@ -4,6 +4,7 @@ setting and its REST route."""
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -42,7 +43,7 @@ def test_isolated_argv_is_unchanged(tmp_path: Path) -> None:
 
 def test_full_argv_loads_user_settings_and_keeps_the_studio_server(tmp_path: Path) -> None:
     argv = argv_for(tmp_path, "full")
-    assert "--strict-mcp-config" not in argv
+    assert "--strict-mcp-config" in argv  # review L3: only the runner's own config (studio + allowed owner servers)
     assert val(argv, "--mcp-config") == str(tmp_path / "m.json")
     assert val(argv, "--setting-sources") == "user"
     assert val(argv, "--settings") == str(tmp_path / "s.json")
@@ -211,7 +212,7 @@ def test_runner_uses_the_owner_profile(studio, fake_cli, tmp_path: Path) -> None
     run = r.start(pid, _scenario(tmp_path))
     assert r.wait(run, 30) == "success"
     rec = json.loads((tmp_path / "rec.json").read_text())
-    assert "--strict-mcp-config" not in rec["argv"] and rec["argv"][rec["argv"].index("--setting-sources") + 1] == "user"
+    assert rec["argv"][rec["argv"].index("--setting-sources") + 1] == "user"
     prof.set_profile(studio, OWNER, "isolated")
     run = r.start(pid, _scenario(tmp_path))
     assert r.wait(run, 30) == "success"
@@ -235,3 +236,64 @@ def test_full_run_with_an_invalid_owner_deny_list_is_refused(studio, fake_cli, t
     with pytest.raises(prof.DenyListInvalid):
         r.start(pid, _scenario(tmp_path))
     assert r.live_project() is None  # released: the next start is not blocked
+
+
+# ---------------------------------------------------------------- review round 1 (Opus, 4a7fe3a5b)
+def test_full_argv_uses_strict_mcp_config(tmp_path: Path) -> None:
+    """L3: denied owner servers are never launched; the runner writes the allowed ones into its own --mcp-config."""
+    assert "--strict-mcp-config" in argv_for(tmp_path, "full")
+
+
+def test_owner_mcp_servers_keeps_only_servers_the_deny_list_does_not_fully_deny(tmp_path: Path) -> None:
+    cfg = tmp_path / "cfg"
+    cfg.mkdir()
+    (cfg / ".claude.json").write_text(json.dumps({"mcpServers": {
+        "canary": {"command": "x"}, "fetch": {"command": "y"}, "Desktop_Commander": {"command": "z"},
+        "ai-app-studio": {"command": "shadow"}, "dеsktop": {"command": "cyrillic"}, "bad": "not-a-dict"}}))
+    got = prof.owner_mcp_servers({"USERPROFILE": str(tmp_path / "home"), "CLAUDE_CONFIG_DIR": str(cfg)},
+                                 prof.load_denylist(None))
+    assert got == {"canary": {"command": "x"}}
+    assert prof.owner_mcp_servers({"USERPROFILE": str(tmp_path / "nohome")}, prof.load_denylist(None)) == {}
+
+
+@pytest.mark.parametrize("tool", [
+    "mcp__Desktop-Commander__start", "mcp__desktop_commander__list_directory", "mcp__DESKTOP-COMMANDER__x",
+    "mcp__FETCH__fetch", "mcp__ｆｅｔｃｈ__fetch",  # fullwidth: NFKC folds it to fetch
+    "mcp__dеsktop-commander__x",  # Cyrillic е: non-ASCII -> denied outright
+    "mcp__other__Run_Shell", "mcp__other__Write-File", "mcp__other__nоte",  # Cyrillic о in the tool name
+])
+def test_deny_matching_is_case_insensitive_normalised_and_rejects_non_ascii(tool: str) -> None:
+    assert prof.load_denylist(None).denies(tool)
+
+
+def test_denied_or_non_ascii_server_in_init_aborts() -> None:
+    d = prof.load_denylist(None)
+    for servers in (["ai-app-studio", "fetch"], ["ai-app-studio", "Desktop_Commander"], ["ai-app-studio", "cаnary"]):
+        with pytest.raises(InitViolation):
+            prof.check_init_full(init(servers, STUDIO_TOOLS), d)
+    prof.check_init_full(init(["ai-app-studio", "canary"], STUDIO_TOOLS), d)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows drive form")
+def test_rule_path_is_the_cli_absolute_form() -> None:
+    """The CLI matches Windows paths in POSIX form (drive C: -> /c/...); an absolute rule starts with //."""
+    drive = os.environ.get("SystemDrive", "C:")[0]
+    assert prof.rule_path(Path(f"{drive}:/w/x y")) == f"//{drive.lower()}/w/x y"
+
+
+def test_full_read_deny_rules_are_absolute_and_cover_the_secret_paths(tmp_path: Path) -> None:
+    """M1: `**/.env` is relative to the cwd (the empty run dir) under the CLI rule syntax; every rule must be absolute
+    (`//...`) or home-anchored (`~/...`)."""
+    data = tmp_path / "data"
+    env = {"USERPROFILE": str(tmp_path / "home"), "APPDATA": str(tmp_path / "roaming"),
+           "CLAUDE_CONFIG_DIR": str(tmp_path / "cfg")}
+    deny = prof.full_settings(None, data_dir=data, env=env)["permissions"]["deny"]
+    reads = [r for r in deny if r.startswith("Read(")]
+    assert reads and all(r.startswith(("Read(//", "Read(~/")) for r in reads), reads
+    for r in ("Read(//**/.env)", "Read(//**/.env.*)", "Read(//**/*.pem)", "Read(//**/*.key)", "Read(//**/api_token)",
+              "Read(//**/*.mcp.json)", "Read(//**/.credentials.json)", "Read(//**/.git-credentials)",
+              "Read(//**/.netrc)", "Read(//**/hosts.yml)", "Read(~/.ssh/**)", "Read(~/.aws/**)",
+              "Read(~/.claude/.credentials.json)", f"Read({prof.rule_path(data)}/**)",
+              f"Read({prof.rule_path(tmp_path / 'cfg')}/.credentials.json)",
+              f"Read({prof.rule_path(tmp_path / 'roaming' / 'GitHub CLI')}/**)"):
+        assert r in deny, r

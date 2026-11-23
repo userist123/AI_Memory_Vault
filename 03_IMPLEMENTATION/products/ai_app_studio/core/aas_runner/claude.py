@@ -100,7 +100,9 @@ def build_argv(*, cli: list[str], model: str, mcp_config: Path, settings: Path, 
             *cli, "-p", "--input-format", "text", "--output-format", "stream-json", "--verbose",
             "--include-partial-messages", "--model", model,
             "--no-session-persistence",
-            "--mcp-config", str(mcp_config),  # no --strict-mcp-config: the owner's user MCP servers load too
+            # strict (review L3): the runner's own config holds ai-app-studio plus the owner's user-scope servers the
+            # deny-list does not fully deny (profile.owner_mcp_servers); a denied server is never launched
+            "--mcp-config", str(mcp_config), "--strict-mcp-config",
             "--tools", ",".join(prof.FULL_TOOLS),
             "--allowedTools", ",".join([*(TOOL_PREFIX + t for t in CATALOGUE_TOOLS), *prof.FULL_TOOLS]),
             "--disallowedTools", ",".join([*prof.FULL_DENIED_BUILTINS, *deny.argv_entries()]),
@@ -260,7 +262,9 @@ class Runner:
         env.setdefault("PYTHONUTF8", "1")
         if run.profile == "full":
             settings = self.root / "settings-full.json"
-            settings.write_text(json.dumps(prof.full_settings(prof.home_memory_dir(env))), encoding="utf-8")
+            settings.write_text(json.dumps(prof.full_settings(prof.home_memory_dir(env),
+                                                              data_dir=self.studio.settings.data_dir, env=env)),
+                                encoding="utf-8")
         else:
             settings = self.root / "settings.json"
             settings.write_text(json.dumps(SETTINGS_JSON), encoding="utf-8")
@@ -280,8 +284,11 @@ class Runner:
         pw = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "")
         if pw and os.path.isabs(pw) and os.path.isdir(pw):  # preview_capture's Chromium (a path, not a secret)
             env_child["PLAYWRIGHT_BROWSERS_PATH"] = pw
-        mcp_cfg.write_text(json.dumps({"mcpServers": {SERVER: {"command": sys.executable, "args": [str(SERVER_PY)],
-                                                               "env": env_child}}}), encoding="utf-8")
+        servers: dict[str, Any] = {}
+        if run.profile == "full" and run.deny is not None:
+            servers.update(prof.owner_mcp_servers(env, run.deny))
+        servers[SERVER] = {"command": sys.executable, "args": [str(SERVER_PY)], "env": env_child}
+        mcp_cfg.write_text(json.dumps({"mcpServers": servers}), encoding="utf-8")
         argv = build_argv(cli=self.cli, model=self.model, mcp_config=mcp_cfg, settings=settings,
                           max_turns=self.max_turns, max_budget_usd=self.max_budget_usd, profile=run.profile,
                           deny=run.deny)

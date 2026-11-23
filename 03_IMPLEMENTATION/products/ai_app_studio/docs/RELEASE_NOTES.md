@@ -48,7 +48,7 @@ beyond the PC.
   checksums + studio-held manifest + owner-only root).
 - Owner WSL user has `NOPASSWD: ALL` + docker (root in the distro); `/opt/aas` hashes are drift detection only.
 - Runner profile (owner decision 2026-11-23): `full` is the default and loads the owner's Claude setup (CLAUDE.md,
-  memory, hooks, plugins, skills, agents, user MCP servers) into the builder; shell, file-write and web built-ins stay
+  memory, hooks, plugins, skills, agents, user MCP servers not on the deny-list) into the builder; shell, file-write and web built-ins stay
   off and egress/exec MCP tools are denied by a name-based deny-list (init check fails closed). Residual: owner memory
   sits next to untrusted generated content (prompt injection could echo it into the timeline or the app); owner hooks
   run with the owner's rights. `isolated` (toggle "Use my Claude setup" off) restores the B7 isolation.
