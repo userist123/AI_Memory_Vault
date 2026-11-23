@@ -341,6 +341,11 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     def start_run(b: RunStart) -> dict[str, Any]:
         return {"runId": runner.start(b.projectId, b.prompt), "status": "running"}
 
+    @app.get(f"{API}/runs/active")
+    def active_run() -> dict[str, Any]:  # the desktop's source of truth for "a run is in progress" (picker lock)
+        run_id, project_id = runner.live_run()
+        return {"runId": run_id, "projectId": project_id, "running": run_id is not None}
+
     app.include_router(chat_routes.router(studio, runner))  # owner chat per project (chat_routes.py)
 
     @app.post(f"{API}/runs/{{run_id}}/stop")

@@ -133,3 +133,17 @@ describe("runner profile (owner decision 2026-11-23)", () => {
     expect(await getRunnerProfile(SESSION)).toBe("full");
   });
 });
+
+describe("RunControls prompt draft per project", () => {
+  it("starts from the draft the App kept for this project and reports every edit", () => {
+    const onDraft = vi.fn();
+    const { getByTestId, unmount } = controls({ draft: "Add a dark mode", onDraft });
+    expect((getByTestId("run-prompt") as HTMLTextAreaElement).value).toBe("Add a dark mode");
+    fireEvent.change(getByTestId("run-prompt"), { target: { value: "Add a dark mode toggle" } });
+    expect(onDraft).toHaveBeenLastCalledWith("Add a dark mode toggle");
+    unmount();
+    // another project (the App remounts RunControls per project) gets its own text, not the previous one
+    const other = controls({ draft: "", onDraft });
+    expect((other.getByTestId("run-prompt") as HTMLTextAreaElement).value).toBe("");
+  });
+});

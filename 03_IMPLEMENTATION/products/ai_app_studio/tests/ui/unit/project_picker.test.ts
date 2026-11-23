@@ -3,7 +3,7 @@
 import { act, afterEach, cleanup, createElement, describe, expect, fireEvent, it, render, vi } from "../../../apps/desktop/testkit/unit";
 import { ProjectPicker, buildTimeText } from "../../../apps/desktop/src/components/ProjectPicker";
 import { DeviceFrame } from "../../../apps/desktop/src/components/DeviceFrames";
-import { deleteProject, listProjects } from "../../../apps/desktop/src/lib/api";
+import { deleteProject, getActiveRun, listProjects, parseActiveRun, pickerLocked } from "../../../apps/desktop/src/lib/api";
 
 const SESSION = { apiBase: "http://127.0.0.1:47875", wsUrl: "ws://127.0.0.1:47875/api/v1/events", token: "t".repeat(40), previewPort: 47880 };
 const A = "prj_00000000000000aa";
@@ -184,5 +184,28 @@ describe("api: projects", () => {
     expect((await deleteProject(SESSION, "../x")).kind).toBe("error");
     expect(f).not.toHaveBeenCalled();
     expect(await deleteProject(SESSION, A)).toEqual({ kind: "error", message: "a run is in progress" });
+  });
+});
+
+describe("project list lock follows the server when a run is stuck", () => {
+  const RUN = "run_0123456789abcdef";
+  it("parses the server's answer strictly", () => {
+    expect(parseActiveRun({ running: true, runId: RUN, projectId: A })).toEqual({ running: true, runId: RUN, projectId: A });
+    expect(parseActiveRun({ running: true, runId: "bogus", projectId: A }).running).toBe(false);
+    expect(parseActiveRun(null)).toEqual({ running: false, runId: null, projectId: null });
+  });
+  it("unlocks when the server has no run even though the local flag still says running", () => {
+    expect(pickerLocked(true, null)).toBe(true); // server not asked yet / unreachable: the local flag decides
+    expect(pickerLocked(true, { running: true, runId: RUN, projectId: A })).toBe(true);
+    expect(pickerLocked(true, { running: false, runId: null, projectId: null })).toBe(false);
+    expect(pickerLocked(false, null)).toBe(false);
+    expect(pickerLocked(false, { running: true, runId: RUN, projectId: A })).toBe(true);
+  });
+  it("asks GET /runs/active with the owner token", async () => {
+    const f = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ running: false, runId: null, projectId: null }), { status: 200, headers: { "Content-Type": "application/json" } }),
+    );
+    expect(await getActiveRun(SESSION)).toEqual({ running: false, runId: null, projectId: null });
+    expect(String(f.mock.calls[0]?.[0])).toBe(`${SESSION.apiBase}/api/v1/runs/active`);
   });
 });

@@ -145,6 +145,8 @@ LOCAL_FILES: list[tuple[str, str]] = [
      "AAS-owned migration: projects.kind, activity_events, app_settings"),
     ("core/studio_core/alembic/versions/0004_activity_kinds_cost_preview.py",
      "AAS-owned migration: activity kinds cost.update and preview.captured"),
+    ("core/studio_core/alembic/versions/0005_activity_kinds_chat.py",
+     "AAS-owned migration: activity kinds chat.prompt and chat.fallback"),
     ("core/studio_core/plans.py", "AAS-owned approval/plan records, owner-only decisions and the P5f plan gate "
                                   "(owner toggle, default ON)"),
     ("core/studio_core/run_grants.py", "AAS-owned per-run MCP grants of the built-in runner (carry the approved "

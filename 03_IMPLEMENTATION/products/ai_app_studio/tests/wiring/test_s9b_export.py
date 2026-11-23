@@ -122,9 +122,12 @@ def test_web_export_refuses_links_in_the_site(studio, tmp_path: Path) -> None:  
 
 def apk_bytes(extra: bytes = b"") -> bytes:
     b = io.BytesIO()
+    # fixed entry timestamps: writestr(<name>) stamps the current time (2 s DOS resolution), so two calls straddling a
+    # 2 s boundary returned different bytes and the "exported bytes == apk_bytes()" assertion flaked
+    stamp = (2026, 1, 1, 0, 0, 0)
     with zipfile.ZipFile(b, "w") as z:
-        z.writestr("AndroidManifest.xml", b"\x03\x00manifest")
-        z.writestr("classes.dex", b"dex\n035\0" + extra)
+        z.writestr(zipfile.ZipInfo("AndroidManifest.xml", date_time=stamp), b"\x03\x00manifest")
+        z.writestr(zipfile.ZipInfo("classes.dex", date_time=stamp), b"dex\n035\0" + extra)
     return b.getvalue()
 
 

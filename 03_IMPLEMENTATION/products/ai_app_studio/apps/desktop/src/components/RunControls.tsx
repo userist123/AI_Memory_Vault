@@ -23,9 +23,16 @@ export function RunControls(props: {
   onProfile?: (profile: RunnerProfile) => void;
   /** S9b: owner export buttons for the chosen (existing) project */
   renderExport?: (projectId: string) => ReactNode;
+  /** the text the owner typed earlier for this project (kept by the App across project switches) */
+  draft?: string;
+  onDraft?: (text: string) => void;
 }) {
   const { projects, running, busy } = props;
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPromptState] = useState(props.draft ?? "");
+  const setPrompt = (text: string) => {
+    setPromptState(text);
+    props.onDraft?.(text);
+  };
   // "" = not chosen yet (defaults to the newest project), NEW = the owner picked "New project"
   const [project, setProject] = useState("");
   const [template, setTemplate] = useState<Template>("blank");

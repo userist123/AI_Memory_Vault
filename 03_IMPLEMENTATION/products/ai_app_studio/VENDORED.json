@@ -380,6 +380,10 @@
       "reason": "AAS-owned migration: activity kinds cost.update and preview.captured"
     },
     {
+      "path": "core/studio_core/alembic/versions/0005_activity_kinds_chat.py",
+      "reason": "AAS-owned migration: activity kinds chat.prompt and chat.fallback"
+    },
+    {
       "path": "core/studio_core/plans.py",
       "reason": "AAS-owned approval/plan records, owner-only decisions and the P5f plan gate (owner toggle, default ON)"
     },

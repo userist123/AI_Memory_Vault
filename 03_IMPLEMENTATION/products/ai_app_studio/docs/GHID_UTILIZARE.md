@@ -44,7 +44,8 @@ Pe bara de sus, lângă numele aplicației, lista **Proiect** arată toate proie
 (sau „neconstruit încă”). Alegi alt proiect din listă și cronologia, fișierele și ramele trec pe proiectul ales.
 **Proiect nou** deschide un formular mic: nume și șablon (**Gol**, **Cu file (tabs)**, **Listă și detalii**).
 **Șterge** cere confirmarea ta (aprobare); fișierele merg în coș. Cât timp rulează AI-ul, lista și ștergerea sunt
-blocate.
+blocate; dacă bara rămâne pe `running` deși serverul nu mai are nicio rulare (de exemplu după o repornire), lista se
+deblochează singură în câteva secunde.
 
 ### Telefon, tabletă, desktop
 Tab-urile din dreapta: **Phone 390×844**, **Tablet 834×1112**, **Desktop 1440×900** arată aceeași aplicație în rame
@@ -57,17 +58,33 @@ arat-o pe telefon”*. Necesită WSL pregătit o dată cu `wsl\install.ps1` și 
 ### Modificări
 Alege proiectul în listă, scrie ce vrei schimbat (*„adaugă culori pentru notițe”*) și apasă din nou **Start run**.
 
-## 4. Export
+## 4. Chat cu AI-ul
+
+Panoul **Chat cu AI-ul** (în stânga) îți permite să vorbești cu AI-ul despre proiectul ales, tură cu tură:
+1. Alege proiectul în lista panoului (implicit e proiectul deschis).
+2. Scrie ce mai vrei (*„fă butonul + verde”*) și apasă **Trimite**.
+3. Fiecare mesaj pornește o rulare obișnuită: vezi pașii în cronologie, iar dacă AI-ul propune un plan, cardul de
+   aprobare apare chiar sub mesajul tău.
+4. AI-ul își amintește turele anterioare. Eticheta de lângă titlu arată cum: în profilul complet continuă aceeași
+   sesiune Claude (ca un chat normal; conversația se salvează și în istoricul tău Claude, în `~/.claude/projects`), în
+   profilul izolat primește un rezumat al turelor anterioare și nu se salvează nimic în istoricul Claude.
+
+Cât timp rulează ceva, butonul de trimitere e blocat: o singură rulare odată. Textul scris în caseta de sus
+(**Start run**) rămâne păstrat pentru fiecare proiect când treci de la unul la altul.
+
+## 5. Export
 
 Sub listă ai trei butoane pentru proiectul ales:
 - **Export web (zip)** — site-ul gata de publicat;
-- **Export APK** — aplicația Android (debug) de instalat pe telefon;
+- **Export APK** — aplicația Android (debug) de instalat pe telefon. Dacă proiectul nu are încă un APK construit (sau
+  cel existent e mai vechi decât ultimele modificări), studioul îl construiește singur la clic — poate dura câteva
+  minute; panoul arată progresul;
 - **Export desktop (exe)** — aplicația Windows (.exe, nesemnată).
 
-Studioul îți cere o confirmare (legată de amprenta exactă a fișierului), verifică să nu existe parole sau chei în el,
-apoi îți afișează calea fișierului exportat.
+Studioul îți cere o confirmare (legată de amprenta exactă a fișierului, sha256), verifică să nu existe parole sau chei
+în el, apoi îți afișează calea fișierului exportat și butonul **Deschide folderul**.
 
-## 5. Probleme și soluții
+## 6. Probleme și soluții
 
 | Ce vezi (exact) | Ce înseamnă | Ce faci |
 |---|---|---|

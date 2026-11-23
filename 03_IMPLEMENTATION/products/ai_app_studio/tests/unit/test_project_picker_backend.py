@@ -62,3 +62,19 @@ def test_delete_is_still_two_step_with_owner_approval(env: tuple[TestClient, Set
     done = client.request("DELETE", f"/api/v1/projects/{pid}", json={"approvalId": apr}, headers=AUTH)
     assert done.status_code == 200, done.text
     assert client.get("/api/v1/projects", headers=AUTH).json() == []
+
+
+def test_active_run_reports_the_servers_view_so_a_stuck_picker_can_unlock(env: tuple[TestClient, Settings]) -> None:
+    c, _ = env
+    r = c.get(f"{BASE}/api/v1/runs/active", headers=AUTH)
+    assert r.status_code == 200
+    assert r.json() == {"runId": None, "projectId": None, "running": False}
+    runner = c.app.state.runner  # type: ignore[attr-defined]
+    with runner._lock:  # simulate a run that is starting or alive on the server
+        runner._active, runner._active_project = "run_0123456789abcdef", "prj_0123456789abcdef"
+    try:
+        body = c.get(f"{BASE}/api/v1/runs/active", headers=AUTH).json()
+        assert body == {"runId": "run_0123456789abcdef", "projectId": "prj_0123456789abcdef", "running": True}
+    finally:
+        runner._release("run_0123456789abcdef")
+    assert c.get(f"{BASE}/api/v1/runs/active").status_code == 401  # owner token required like every other route

@@ -6,6 +6,9 @@ import {
   type Template,
   createProject,
   deleteProject,
+  getActiveRun,
+  pickerLocked,
+  type ActiveRun,
   errorText,
   projectTitle,
   decideApproval,
@@ -182,6 +185,26 @@ export function App() {
 
   // ---- the open project (header picker) ----
   const running = state.runStatus === "running";
+  // the server's view of the run in progress: the picker unlocks when the event stream missed a run's end
+  const [serverRun, setServerRun] = useState<ActiveRun | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    let live = true;
+    setServerRun(null); // the local flag just changed: until the server answers, it decides
+    const check = () =>
+      getActiveRun(session)
+        .then((r) => live && setServerRun(r))
+        .catch(() => live && setServerRun(null));
+    void check();
+    const timer = running ? window.setInterval(check, 5000) : undefined;
+    return () => {
+      live = false;
+      if (timer !== undefined) window.clearInterval(timer);
+    };
+  }, [session, running]);
+  const locked = pickerLocked(running, serverRun);
+  // the prompt the owner typed, kept per project across switches (RunControls remounts per project)
+  const drafts = useRef(new Map<string, string>());
   // the header always names the project whose events the timeline shows (a live run, or the run replayed on open);
   // a switch resets the store, so its projectId is "" until that project's own events arrive
   useEffect(() => {
@@ -207,7 +230,7 @@ export function App() {
 
   /** Switch the studio to another project: timeline, diff and frames start from that project's state. */
   const openProject = (id: string) => {
-    if (!id || id === selectedProject || running) return;
+    if (!id || id === selectedProject || locked) return;
     store.dispatch({ type: "reset" });
     setActiveFile(null);
     setSelectedProject(id);
@@ -345,7 +368,7 @@ export function App() {
           <ProjectPicker
             projects={projects}
             selected={selectedProject}
-            disabled={running}
+            disabled={locked}
             onSelect={openProject}
             onCreate={onCreateProject}
             requestDelete={(pid, apr) => deleteProject(session, pid, apr)}
@@ -408,6 +431,8 @@ export function App() {
           {!demo && session ? (
             <RunControls
               key={selectedProject || "none"}
+              draft={drafts.current.get(selectedProject) ?? ""}
+              onDraft={(text) => drafts.current.set(selectedProject, text)}
               projects={selectedRef ? [selectedRef, ...projects.filter((p) => p.id !== selectedRef.id)] : projects}
               running={state.runStatus === "running"}
               busy={runBusy}

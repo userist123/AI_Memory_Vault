@@ -281,6 +281,34 @@ export async function startRun(s: Session, projectId: string, prompt: string): P
   return { runId };
 }
 
+/** The server's view of the one run that is starting or alive (GET /runs/active). */
+export interface ActiveRun {
+  running: boolean;
+  runId: string | null;
+  projectId: string | null;
+}
+
+export function parseActiveRun(body: unknown): ActiveRun {
+  const b = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const runId = typeof b.runId === "string" && RUN_RE.test(b.runId) ? b.runId : null;
+  const projectId = typeof b.projectId === "string" && PROJECT_RE.test(b.projectId) ? b.projectId : null;
+  return { running: b.running === true && runId !== null, runId, projectId };
+}
+
+export async function getActiveRun(s: Session): Promise<ActiveRun> {
+  return parseActiveRun(await request(s, "/runs/active"));
+}
+
+/**
+ * The project list is locked while a run is in progress. The local flag comes from the event stream; when that stream
+ * missed the end of a run (backend restart, dropped socket) the server's answer unlocks it. Unknown server state
+ * (not asked yet, or the request failed) keeps the local flag.
+ */
+export function pickerLocked(localRunning: boolean, server: ActiveRun | null): boolean {
+  if (!localRunning) return server?.running === true;
+  return server === null ? true : server.running;
+}
+
 export async function stopRun(s: Session, runId: string): Promise<void> {
   if (!RUN_RE.test(runId)) return;
   await request(s, `/runs/${runId}/stop`, { method: "POST", body: "{}" });

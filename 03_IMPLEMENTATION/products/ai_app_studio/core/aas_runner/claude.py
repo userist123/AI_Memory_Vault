@@ -278,6 +278,12 @@ class Runner:
             if self._active == run_id:
                 self._active = self._active_project = None
 
+    def live_run(self) -> tuple[str | None, str | None]:
+        """(runId, projectId) of the run that is starting or alive, or (None, None): the server's view, which the
+        desktop uses to unlock the project picker when its own event stream missed the end of a run."""
+        with self._lock:
+            return self._active, self._active_project
+
     def live_project(self) -> str | None:
         """Project of the run that is starting or alive (B4: such a project cannot be deleted)."""
         with self._lock:
