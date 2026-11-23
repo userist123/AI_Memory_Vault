@@ -361,3 +361,29 @@ def test_p1c_ast_only_runner_spawns_processes() -> None:
         assert _winacl_violations(src), src
     assert _spawners((pkg / "runner.py").read_text(encoding="utf-8"))  # [+] the detector sees the real spawner
     assert _spawners("import os\nos.system('x')")
+
+
+# ---------------------------------------------------------------- owner run 2026-11-23: say why a build cannot start
+class _Done:
+    def __init__(self, rc: int, out: bytes = b"", err: bytes = b"") -> None:
+        self.returncode, self.stdout, self.stderr = rc, out, err
+
+
+def test_resolve_image_says_docker_is_not_running(monkeypatch: pytest.MonkeyPatch) -> None:
+    err = (b"error during connect: Get \"http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.51/images/x/json\": "
+           b"open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.")
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _Done(1, b"", err))
+    with pytest.raises(BuildError, match="Docker Desktop is not running"):
+        runner.resolve_image(abs_win_path("d", "docker.exe"))
+
+
+def test_resolve_image_missing_image_points_to_setup(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _Done(1, b"", b"Error: No such image: aas-web-build:dev"))
+    with pytest.raises(BuildError, match=r"not available locally.*setup\.ps1"):
+        runner.resolve_image(abs_win_path("d", "docker.exe"))
+
+
+def test_resolve_image_positive_control(monkeypatch: pytest.MonkeyPatch) -> None:
+    iid = "sha256:" + "a" * 64
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **k: _Done(0, iid.encode()))
+    assert runner.resolve_image(abs_win_path("d", "docker.exe")) == iid

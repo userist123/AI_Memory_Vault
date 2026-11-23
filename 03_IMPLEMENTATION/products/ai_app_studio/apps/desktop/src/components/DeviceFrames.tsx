@@ -75,7 +75,10 @@ export function DeviceFrame(props: {
             <DemoScreen revision={props.demoRevision} />
           </div>
         ) : (
-          <div className="frame-empty">No preview yet</div>
+          <div className="frame-empty" data-testid="frame-empty" role="status">
+            <strong>Nicio aplicație construită încă</strong>
+            <span>Scrie ce aplicație vrei în caseta din stânga și apasă Start run. Aprobă planul, iar aplicația apare aici.</span>
+          </div>
         )}
         <TapLayer taps={props.taps} scale={scale} now={props.now} />
       </div>

@@ -161,7 +161,13 @@ def resolve_image(docker: str, tag: str = "aas-web-build:dev") -> str:
                        check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)
     out = r.stdout.decode("utf-8", "replace").strip()
     if r.returncode != 0 or not _IMAGE_RE.match(out):
-        raise BuildError(f"build image {tag} is not available locally (docker build -f images/web-build/Dockerfile ...)")
+        err = (r.stderr or b"").decode("utf-8", "replace").lower()
+        if any(s in err for s in ("error during connect", "cannot connect to the docker daemon", "dockerdesktoplinuxengine",
+                                  "docker_engine", "is the docker daemon running")):
+            raise BuildError("Docker Desktop is not running: start Docker Desktop, wait for 'Engine running', then build "
+                             "again (Docker Desktop nu rulează)")
+        raise BuildError(f"build image {tag} is not available locally: run scripts\\setup.ps1 once "
+                         "(it builds the studio images)")
     return out
 
 

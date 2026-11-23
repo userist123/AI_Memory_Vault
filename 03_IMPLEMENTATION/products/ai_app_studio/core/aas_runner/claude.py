@@ -42,6 +42,22 @@ from .streamjson import CATALOGUE_TOOLS, SERVER, TOOL_PREFIX, InitViolation, Str
 
 __all__ = ["CATALOGUE_TOOLS", "SETTINGS_JSON", "RunInProgress", "Runner", "build_argv", "resolve_cli", "runner_env"]
 
+# Owner run 2026-11-23: with profile "full" the CLI runs the owner's SessionStart hooks and prints their
+# system/hook_started|hook_progress|hook_response lines BEFORE system/init. Only those, only in "full", at most this many,
+# are skipped (never recorded: hook output carries owner context); any other line before init still aborts (H2).
+MAX_PRE_INIT_HOOK_LINES = 64
+_PRE_INIT_HOOK_SUBTYPES = frozenset({"hook_started", "hook_progress", "hook_response"})
+
+
+def _is_session_start_hook_line(raw: bytes) -> bool:
+    try:
+        obj = json.loads(raw)
+    except ValueError:
+        return False
+    return (isinstance(obj, dict) and obj.get("type") == "system" and obj.get("subtype") in _PRE_INIT_HOOK_SUBTYPES
+            and obj.get("hook_event") == "SessionStart")
+
+
 DENIED_BUILTINS = ("Bash", "Edit", "Write", "MultiEdit", "NotebookEdit", "Read", "Glob", "Grep", "LS", "WebFetch",
                    "WebSearch", "Task", "Agent")
 SETTINGS_JSON: dict[str, Any] = {
@@ -414,6 +430,7 @@ class Runner:
         assert proc is not None and proc.stdin and proc.stdout and proc.stderr
         mapper = StreamMapper()
         t0 = time.monotonic()
+        pre_init_hooks = 0
         threading.Thread(target=lambda: self._drain(proc.stderr), daemon=True).start()
         threading.Thread(target=self._watchdog, args=(run, t0), daemon=True).start()
         try:
@@ -433,6 +450,12 @@ class Runner:
                     # H2, fail closed: the first non-blank line must be a valid system/init; anything else (an event,
                     # garbage, another system subtype) aborts the run before it is mapped or recorded
                     if not raw.strip():
+                        continue
+                    if run.profile == "full" and _is_session_start_hook_line(raw):
+                        pre_init_hooks += 1
+                        if pre_init_hooks > MAX_PRE_INIT_HOOK_LINES:
+                            self._abort(run, "init_missing", immediate=True)
+                            break
                         continue
                     mapper.feed(raw)
                     if mapper.init is None:

@@ -11,6 +11,7 @@ import os
 import re
 import socket
 import stat
+import sys
 import threading
 from collections.abc import Callable, Iterable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -89,6 +90,12 @@ class _BoundedServer(ThreadingHTTPServer):
     def __init__(self, addr, handler, max_connections: int) -> None:  # type: ignore[no-untyped-def]
         super().__init__(addr, handler)
         self._slots = threading.BoundedSemaphore(max_connections)
+
+    def handle_error(self, request, client_address) -> None:  # type: ignore[no-untyped-def]
+        # a client that hangs up mid-response (the WebView reloading a frame) is normal, not an error worth a traceback
+        if isinstance(sys.exc_info()[1], (ConnectionAbortedError, ConnectionResetError, BrokenPipeError)):
+            return
+        super().handle_error(request, client_address)
 
     def server_bind(self) -> None:
         if os.name == "nt":

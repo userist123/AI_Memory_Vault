@@ -266,3 +266,19 @@ def test_s6_dev_frame_ancestors_are_opt_in_and_strict(sites: dict[str, Path]) ->
                 "http://127.0.0.1:1421;"):
         with pytest.raises(ValueError):
             PreviewServer(lambda pid: None, port=0, extra_frame_ancestors=[bad])
+
+
+def test_client_abort_is_not_dumped_to_the_console(server: PreviewServer, capsys: pytest.CaptureFixture[str]) -> None:
+    """Owner run 2026-11-23: the WebView closing a preview mid-response printed pages of ConnectionAbortedError
+    tracebacks into the studio console. A client hang-up is normal; other handler errors are still reported."""
+    for exc in (ConnectionAbortedError(10053, "aborted"), ConnectionResetError(10054, "reset"), BrokenPipeError()):
+        try:
+            raise exc
+        except OSError:
+            server.httpd.handle_error(None, ("127.0.0.1", 1))  # type: ignore[arg-type]
+    assert capsys.readouterr().err == ""
+    try:
+        raise ValueError("real bug")
+    except ValueError:
+        server.httpd.handle_error(None, ("127.0.0.1", 1))  # type: ignore[arg-type]
+    assert "real bug" in capsys.readouterr().err

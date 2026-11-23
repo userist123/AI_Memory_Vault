@@ -297,3 +297,53 @@ def test_full_read_deny_rules_are_absolute_and_cover_the_secret_paths(tmp_path: 
               f"Read({prof.rule_path(tmp_path / 'cfg')}/.credentials.json)",
               f"Read({prof.rule_path(tmp_path / 'roaming' / 'GitHub CLI')}/**)"):
         assert r in deny, r
+
+
+# ---------------------------------------------------------------- owner run 2026-11-23: SessionStart hooks before init
+def _hook(subtype: str, event: str = "SessionStart", **kw: object) -> dict[str, object]:
+    return {"type": "system", "subtype": subtype, "hook_id": "h1", "hook_name": f"{event}:startup",
+            "hook_event": event, "uuid": "u", "session_id": "s", **kw}
+
+
+SESSION_HOOKS = [_hook("hook_started"), _hook("hook_response", output="OWNER-PRIVATE-CONTEXT", exit_code=0,
+                                                 outcome="success")]
+
+
+def test_full_run_accepts_owner_session_start_hooks_before_init(studio, fake_cli, tmp_path: Path) -> None:
+    """The real CLI with the owner's setup prints SessionStart hook lines before system/init; the fail-closed init
+    check aborted every real run as init_missing in 1.6 s. They are skipped (never recorded), the run proceeds."""
+    pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    r = rc.Runner(studio, cli=fake_cli)
+    run = r.start(pid, _scenario(tmp_path, pre_init=SESSION_HOOKS))
+    assert r.wait(run, 30) == "success"
+    from studio_core import activity
+    dump = json.dumps(activity.list_events(studio, limit=1000))
+    assert "OWNER-PRIVATE-CONTEXT" not in dump and "hook_response" not in dump
+
+
+@pytest.mark.parametrize("line", [
+    _hook("hook_started", event="PreToolUse"),                       # only SessionStart hooks run before init
+    {"type": "system", "subtype": "status", "hook_event": "SessionStart"},  # other system subtypes stay refused
+    {"type": "assistant", "message": {"content": []}},
+])
+def test_full_run_still_refuses_other_lines_before_init(studio, fake_cli, tmp_path: Path, line: dict) -> None:
+    pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    r = rc.Runner(studio, cli=fake_cli)
+    run = r.start(pid, _scenario(tmp_path, pre_init=[line]))
+    assert r.wait(run, 30) == "aborted"
+
+
+def test_isolated_run_refuses_hook_lines_before_init(studio, fake_cli, tmp_path: Path) -> None:
+    """isolated loads no owner settings, so no hook can run: a hook line there is unexpected and fails closed."""
+    prof.set_profile(studio, OWNER, "isolated")
+    pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    r = rc.Runner(studio, cli=fake_cli)
+    run = r.start(pid, _scenario(tmp_path, pre_init=SESSION_HOOKS))
+    assert r.wait(run, 30) == "aborted"
+
+
+def test_full_run_bounds_the_hook_lines_before_init(studio, fake_cli, tmp_path: Path) -> None:
+    pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
+    r = rc.Runner(studio, cli=fake_cli)
+    run = r.start(pid, _scenario(tmp_path, pre_init=[_hook("hook_started")] * (rc.MAX_PRE_INIT_HOOK_LINES + 1)))
+    assert r.wait(run, 30) == "aborted"

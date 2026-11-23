@@ -1,7 +1,7 @@
 """Fake Claude Code CLI for runner tests: emits recorded stream-json lines, no network, no model.
 
 The prompt (stdin) is a JSON scenario:
-  {"record": "<path>", "init": {...overrides...}, "no_init": <bool>, "events": [<json objects or raw strings>], "sleep": <seconds>,
+  {"record": "<path>", "pre_init": [<json objects>], "init": {...overrides...}, "no_init": <bool>, "events": [<json objects or raw strings>], "sleep": <seconds>,
    "mcp_calls": [{"tool": "code_write_file", "args": {...}}], "project_id": "...", "exit": 0}
 It records argv, cwd, the cwd listing, and the environment keys to scenario["record"] before emitting anything.
 With "mcp_calls" it behaves like the real CLI: it starts the MCP server named in --mcp-config over stdio (the
@@ -64,6 +64,8 @@ def main() -> int:
             "tools": ["mcp__ai-app-studio__code_write_file", "mcp__ai-app-studio__code_read_file"],
             "session_id": "fake"}
     init.update(scenario.get("init") or {})
+    for ev in scenario.get("pre_init") or []:  # lines a real CLI prints before init (owner SessionStart hooks)
+        emit(ev)
     if not scenario.get("no_init"):  # "no_init": the stream starts with whatever "events" holds (fail-closed tests)
         emit(init)
     for ev in scenario.get("events") or []:

@@ -193,7 +193,9 @@ export function App() {
   const shownFile = pickShownFile(activeFile, state.files, state.fileOrder);
 
   const previewSrc = (d: DeviceKind): string | null => {
-    if (demo || !session || !state.previewProjectId) return null;
+    // no build published in this run yet (previewNonce counts preview.revision/captured): show the empty-state text
+    // instead of the preview server's bare 404 page
+    if (demo || !session || !state.previewProjectId || state.previewNonce === 0) return null;
     void d;
     return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}-${state.previewNonce}`;
   };
@@ -335,6 +337,11 @@ export function App() {
                 />
               )}
             />
+          ) : null}
+          {state.runStatus === "failed" && state.endReason ? (
+            <p className="warn banner" role="alert" data-testid="run-end-reason">
+              {state.endReason}
+            </p>
           ) : null}
           <Timeline
             state={state}

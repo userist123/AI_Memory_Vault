@@ -44,6 +44,8 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
   label (the external-MCP one, shared by every session) is counted over a rolling 24 h window, so it cannot lock forever.
 - One live run at a time (S9, B6): a second start answers 409 `run_in_progress`.
 - The first stream-json line must be a valid `system/init` naming only the studio MCP server and catalogue tools.
+  Profile `full` only: up to 64 `system/hook_started|hook_progress|hook_response` lines with `hook_event`
+  `SessionStart` (the owner's own hooks) may precede it; they are skipped, never recorded (owner smoke 2026-11-23).
 - Every MCP call is bound to the run's project by a per-run grant; writes/deletes/builds need an approved plan (P5f).
 
 ### Operations (policy + audit)

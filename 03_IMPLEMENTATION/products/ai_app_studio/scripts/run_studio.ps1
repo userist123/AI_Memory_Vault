@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Runs AI App Studio on this PC: backend + preview server + desktop UI, one command, everything stopped on exit.
 
@@ -45,6 +45,21 @@ $ErrorActionPreference = 'Stop'
 
 $Product = Split-Path -Parent $PSScriptRoot
 $Desktop = Join-Path $Product 'apps\desktop'
+
+# owner bug 2026-11-23: a plain `run_studio.ps1` used to start the backend and then stop with an English error.
+# Without -Dev there is no UI to show (production = the packaged app), so stop before starting anything and say
+# exactly what to run.
+if (-not $Dev -and -not $NoUi) {
+  [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+  Write-Host ''
+  Write-Host 'AI App Studio nu a pornit nimic: lipsește modul de pornire.' -ForegroundColor Yellow
+  Write-Host 'Pornește studioul cu una dintre variantele de mai jos:'
+  Write-Host '  1. dublu-clic pe scurtătura „AI App Studio” de pe Desktop (o creează scripts\setup.ps1), sau'
+  Write-Host "  2. powershell -ExecutionPolicy Bypass -File `"$Product\scripts\start_studio.ps1`""
+  Write-Host '  3. (echivalent, manual) .\scripts\run_studio.ps1 -Dev -Ui tauri'
+  Write-Host 'Prima dată rulează o singură dată: .\scripts\setup.ps1'
+  exit 2
+}
 $Python = Join-Path $Product '.venv\Scripts\python.exe'
 if (-not (Test-Path $Python)) { throw "no virtualenv at $Python - run 'uv sync --frozen' in $Product first" }
 $TauriExe = $env:AAS_TAURI_EXE
@@ -127,6 +142,20 @@ try {
   if (-not $Dev) { throw 'the UI modes of this script load the vite dev server and need -Dev (production uses the packaged app)' }
   $mode = $Ui
   if ($mode -eq 'auto') { $mode = if (Test-Path $TauriExe) { 'tauri' } else { 'window' } }
+  if ($mode -eq 'tauri' -and -not $env:AAS_TAURI_EXE) {
+    # owner bug 2026-11-23: a debug exe built with the custom-protocol feature (e.g. `tauri build --debug`) embeds an
+    # old copy of the UI and never loads the vite dev server, so UI fixes were invisible. A plain `cargo build` makes it
+    # a dev build again (loads http://127.0.0.1:1421); it is a no-op of a few seconds when it is already up to date.
+    $cargo = Get-Command cargo -ErrorAction SilentlyContinue
+    if ($cargo) {
+      Write-Host 'pregătesc fereastra studioului (cargo build, durează doar prima dată)...'
+      $cb = Start-Process -FilePath $cargo.Source -ArgumentList 'build' -WorkingDirectory (Join-Path $Desktop 'src-tauri') -NoNewWindow -Wait -PassThru
+      if ($cb.ExitCode -ne 0) { Write-Host 'cargo build a eșuat; folosesc fereastra Chromium (-Ui window).' -ForegroundColor Yellow; $mode = 'window' }
+    } elseif (-not (Test-Path $TauriExe)) {
+      Write-Host 'cargo (Rust) lipsește și nu există fereastra Tauri; folosesc fereastra Chromium (-Ui window).' -ForegroundColor Yellow
+      $mode = 'window'
+    }
+  }
   $pnpm = (Get-Command pnpm.cmd -ErrorAction Stop).Source
   $devServer = Start-Child "$env:SystemRoot\System32\cmd.exe" ('/c ""' + $pnpm + '" dev"') $Desktop @{ AAS_TEST_API_PORT = "$ApiPort" } $false
   $devUrl = 'http://127.0.0.1:1421'

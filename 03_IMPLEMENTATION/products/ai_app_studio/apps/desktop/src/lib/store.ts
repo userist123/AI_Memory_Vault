@@ -78,6 +78,8 @@ export interface State {
   runId: string;
   projectId: string;
   runStatus: "idle" | "running" | "finished" | "failed";
+  /** why the last run did not succeed, in plain Romanian for the owner ("" when it succeeded or is running) */
+  endReason: string;
   runTitle: string;
   startedAt: number | null;
   endedAt: number | null;
@@ -111,6 +113,7 @@ export const initialState: State = {
   runId: "",
   projectId: "",
   runStatus: "idle",
+  endReason: "",
   runTitle: "",
   startedAt: null,
   endedAt: null,
@@ -216,6 +219,22 @@ function upsertFile(state: State, path: string, patch: Partial<FileView>, ts: nu
   return { ...state, files, fileOrder: order };
 }
 
+const END_REASONS: Record<string, string> = {
+  init_missing: "Claude CLI nu a pornit corect (nu a trimis mesajul de inițializare). Verifică în PowerShell că «claude» rulează și că ești autentificat, apoi încearcă din nou.",
+  init_violation: "Claude CLI a pornit cu unelte nepermise de studio (de exemplu un server MCP de pe lista interzisă); rularea a fost oprită din motive de siguranță.",
+  timeout: "Rularea a depășit timpul maxim și a fost oprită.",
+  plan_timeout: "Planul nu a fost aprobat la timp; rularea a fost oprită. Pornește din nou și apasă «Approve plan».",
+  line_too_long: "Claude CLI a trimis un mesaj prea mare; rularea a fost oprită.",
+  runner_error: "Eroare internă la pornirea lui Claude CLI; vezi consola studioului.",
+  error_max_budget_usd: "S-a atins bugetul maxim al rulării. Pornește încă o rulare pe același proiect ca să continui.",
+  error_max_turns: "S-a atins numărul maxim de pași al rulării. Pornește încă o rulare pe același proiect ca să continui.",
+};
+
+/** plain Romanian text for a run that did not succeed (reason codes from aas_runner, statuses from the CLI result) */
+export function endReasonText(status: string, reason: string): string {
+  return END_REASONS[reason] ?? END_REASONS[status] ?? `Rularea s-a oprit (${reason || status || "fără motiv"}).`;
+}
+
 function applyEvent(s0: State, e: ActivityEvent): State {
   if (e.seq <= s0.lastSeq) return s0; // duplicate / replay overlap
   let s: State = { ...s0, lastSeq: e.seq };
@@ -241,6 +260,7 @@ function applyEvent(s0: State, e: ActivityEvent): State {
   switch (e.kind) {
     case "run.started": {
       s.runStatus = "running";
+      s.endReason = "";
       s.runTitle = P.text(e, "title", 200);
       s.startedAt = ts;
       s.endedAt = null;
@@ -254,11 +274,19 @@ function applyEvent(s0: State, e: ActivityEvent): State {
     }
     case "run.finished": {
       const status = P.short(e, "status");
-      s.runStatus = status === "failed" || status === "error" ? "failed" : "finished";
+      const failed = status === "failed" || status === "error" || status === "aborted" || status.startsWith("error_");
+      s.runStatus = failed ? "failed" : "finished";
+      s.endReason = failed ? endReasonText(status, P.short(e, "reason")) : "";
       s.endedAt = ts;
       if (s.steps.length) {
         const last = s.steps[s.steps.length - 1]!;
         if (last.endedAt === null) s.steps = replaceLast(s.steps, { ...last, endedAt: ts });
+      }
+      // owner bug 2026-11-23: a finished run (also one replayed when the studio opens) ends on the built app, not on
+      // the emulator mirror, which is a black canvas once the device session is gone
+      if (s.previewProjectId && (s.captures.length > 0 || s.revision > 0)) {
+        const lastFrame = s.captures[s.captures.length - 1]?.frame ?? "phone";
+        focus("device", null, lastFrame);
       }
       break;
     }

@@ -87,6 +87,15 @@ export function EmulatorMirror(props: {
     <div className="mirror" data-testid="mirror" data-source={liveProject ? "live" : props.stream ? "fixture" : "none"}>
       <div className="mirror-screen">
         <canvas ref={canvasRef} width={180} height={320} data-testid="mirror-canvas" />
+        {status.state !== "decoding" ? (
+          <div className="mirror-placeholder" data-testid="mirror-placeholder" role="status">
+            <strong>{liveProject ? "Se așteaptă imaginea emulatorului…" : "Emulatorul Android nu rulează acum"}</strong>
+            <span>
+              Aplicația construită se vede în tab-ul Phone (sau Tablet / Desktop). Emulatorul pornește singur când ceri o
+              aplicație Android, de exemplu „fă și varianta Android și arat-o pe telefon”.
+            </span>
+          </div>
+        ) : null}
         {/* device.tap coordinates are in device pixels of a 1080-wide screen */}
         <TapLayer taps={props.taps} scale={scale} now={props.now} />
       </div>

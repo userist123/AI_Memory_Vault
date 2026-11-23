@@ -110,6 +110,8 @@ class StreamMapper:
         if obj.get("subtype") == "init":
             self.init = obj
             self.model = _text(obj.get("model", ""), 80)
+        elif obj.get("subtype") in ("hook_started", "hook_progress", "hook_response"):
+            pass  # the owner's own hooks (profile full): expected, never mapped or recorded, not a "dropped" warning
         else:
             self.dropped += 1
         return []

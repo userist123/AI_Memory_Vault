@@ -133,3 +133,28 @@ def test_script_sets_dev_origins_only_inside_the_dev_branch() -> None:
     assert lines, "the script must handle AAS_DEV_ORIGINS explicitly"
     for ln in lines:
         assert ln.startswith("if ($Dev)") or "Remove" in ln or "= $null" in ln or "Remove(" in ln, ln
+
+
+# ---------------------------------------------------------------- owner bug 2026-11-23: plain `run_studio.ps1`
+def test_no_args_starts_nothing_and_says_exactly_what_to_run(tmp_path: Path) -> None:
+    """The owner's first try, `.\scripts\run_studio.ps1` with no switches, used to start the backend and then die with
+    'the UI modes ... need -Dev'. It must stop before starting anything and print the one command to use."""
+    assert not listening(API)
+    env = {k: os.environ[k] for k in ("SYSTEMROOT", "PATH", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP")
+           if k in os.environ}
+    r = subprocess.run([POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT),  # noqa: S603
+                        "-ApiPort", str(API), "-PreviewPort", str(PREVIEW), "-DataDir", str(tmp_path / "data")],
+                       env=env, capture_output=True, timeout=60)
+    out = (r.stdout + r.stderr).decode("utf-8", "replace")
+    assert r.returncode != 0
+    assert "start_studio.ps1" in out and "-Dev -Ui tauri" in out, out
+    assert "apps.backend" not in " ".join(c for _, c in command_lines(f"{API}"))
+    assert not listening(API) and not (tmp_path / "data").exists()  # nothing was started
+
+
+def test_start_and_setup_scripts_exist_and_call_the_dev_ui() -> None:
+    start = (PRODUCT / "scripts" / "start_studio.ps1").read_text(encoding="utf-8")
+    assert "run_studio.ps1" in start and "-Dev" in start and "tauri" in start
+    setup = (PRODUCT / "scripts" / "setup.ps1").read_text(encoding="utf-8")
+    for step in ("uv", "sync", "pnpm", "install", "cargo", "docker", "claude", "AI App Studio.lnk"):
+        assert step in setup, step

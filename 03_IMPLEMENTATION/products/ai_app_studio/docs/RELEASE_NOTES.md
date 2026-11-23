@@ -25,6 +25,11 @@ Prerequisites on the PC: `uv sync --frozen` in the product dir; `pnpm install` i
 images (`images/*/DIGESTS.json`); for device features the WSL distro set up with `wsl/install.ps1`; the Claude CLI
 logged in for agent runs; C: >= 8 GB free before an emulator launch.
 
+Owner path (2026-11-23 smoke fix): `scripts/setup.ps1` once (installs/verifies all of the above, builds missing images,
+creates the desktop shortcut "AI App Studio"), then the shortcut or `scripts/start_studio.ps1`. Owner guide (Romanian):
+docs/GHID_UTILIZARE.md. A plain `run_studio.ps1` without switches now starts nothing and prints the command to use;
+`-Ui tauri` runs `cargo build` first so the window is a dev build that loads the vite server (an exe built with the
+custom-protocol feature had embedded a stale UI).
 ```
 powershell -File scripts/run_studio.ps1 -Dev -Ui tauri    # Tauri window (loads the vite dev server on 127.0.0.1:1421)
 powershell -File scripts/run_studio.ps1 -Dev -Ui window   # same UI in a Chromium app window
@@ -56,6 +61,16 @@ beyond the PC.
   debug-only APKs; no network in generated apps (kit CSP); nested virtualisation in WSL2 is unsupported upstream;
   export secret scan is pattern-based; WebView2 injects IPC scripts into subframes (blocked by CSP + Tauri ACL);
   the pipe DACL test cannot simulate a second Windows account.
+
+## Owner smoke 2026-11-23 (real Claude CLI, profile full)
+Found and fixed: (1) every real run aborted in ~1.6 s with `init_missing` because the owner's SessionStart hooks print
+`system/hook_*` lines before `system/init`; in profile `full` only SessionStart hook lines (max 64, never recorded) are
+skipped, anything else before init still aborts (isolated unchanged); (2) aborted/limit runs showed as "finished" -
+now "failed" with a Romanian reason; (3) the right pane opened on the black Emulator canvas after a replayed run -
+a finished run now focuses the built app, empty phone/emulator frames show explicit text; (4) stale embedded UI in the
+debug exe; (5) preview-server tracebacks on client aborts; (6) Docker-down/missing-image build errors now say so.
+Result: "Fă-mi o aplicație de notițe pentru telefon" -> plan approved in the UI -> web build -> phone preview in 46 s,
+$0.24 (50_ARTIFACTS/ai_app_studio/screenshots/owner-smoke.png).
 
 ## Test evidence (release run)
 Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (50_ARTIFACTS/ai_app_studio/screenshots/S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.

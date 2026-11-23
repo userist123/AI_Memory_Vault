@@ -129,3 +129,15 @@ def test_catalogue_is_a_subset_of_the_mcp_server_tools(tmp_path: Path) -> None:
             return {t.name for t in (await s.list_tools()).tools}
 
     assert set(rc.CATALOGUE_TOOLS) <= asyncio.run(names())
+
+
+def test_owner_hook_lines_are_neither_recorded_nor_reported_as_dropped() -> None:
+    """Owner smoke 2026-11-23: profile full runs the owner's hooks; their system/hook_* lines are expected, so they do
+    not raise the "agent stream item(s) dropped" warning. Their content is never mapped. Other system lines still count."""
+    from aas_runner.streamjson import StreamMapper
+    m = StreamMapper()
+    for sub in ("hook_started", "hook_progress", "hook_response"):
+        assert m.feed(json.dumps({"type": "system", "subtype": sub, "hook_event": "PreToolUse", "output": "SECRET-CTX"})) == []
+    assert m.dropped == 0
+    m.feed(json.dumps({"type": "system", "subtype": "status"}))
+    assert m.dropped == 1
