@@ -126,3 +126,17 @@ Update 2026-11-23 (S6 review round 1 fixed, local commits on claude/ai-app-studi
 - Verified: uv run pytest -q 489 passed / 20 skipped; tsc, vitest 91, Playwright 12; cargo test --lib 2; check_vendored both
   modes and gen_vendored --check OK.
 - Next = review round 2 on the delta only, then the final gate (unchanged).
+
+Update 2026-11-23 ~05:30 (S7 done, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S7.md
+- Android: images/android-build built (2.0 GB, all downloads sha256-pinned, offline Gradle cache + verification-metadata,
+  run --network none --read-only, /tmp noexec, 4g, non-root); PB7a/PB7b real Docker probes with positive controls pass;
+  studio key in %LOCALAPPDATA%\AIAppStudio\keys; app_build android -> APK (sha256 in build.finished) -> install + launch on
+  the studio emulator when it runs. preview_capture (Playwright, 3 frames, PNG by sha256, GET /api/v1/captures/<sha>).
+- S6 low items closed: R-A purge at Runner start, SYSTEM_PROMPT plan_submit first, UI plan-gate toggle, plan contentSha256
+  bound to the approval. run_studio.ps1 -Dev UI bug ($dev vs [switch]$Dev) fixed.
+- Verified: uv run pytest -q 513 passed / 20 skipped (Docker up); tsc clean, vitest 92, Playwright 13; check_vendored both
+  modes + gen_vendored --check OK; local gate non-live 141/20. Live demo docs/slices/S7-demo.png (1 emulator launch, no new
+  crash dump). APK build ~30-38 s.
+- Open: capture thumbnails in the UI; emulator mirror pane black; Nested-Virt modal; CI build of the android image with a
+  pinned digest; real paid agent run.
+- Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).

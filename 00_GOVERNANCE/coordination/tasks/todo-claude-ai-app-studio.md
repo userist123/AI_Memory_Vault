@@ -55,3 +55,10 @@ Update 2026-11-23 ~05:00 (S6 review round 1 fixed, local commits only):
   owner toggle), UI prompt box/Start/Stop, Tauri `python -I` launcher + env scrub, device re-check/stop at run end,
   bounded line reader, AAS_DEV_ORIGINS only with run_studio.ps1 -Dev. pytest 489 passed / 20 skipped; vitest 91; Playwright 12.
 - Open: review round 2 (delta only); then the final gate.
+
+Update 2026-11-23 ~05:30 (S7 done, local commits only):
+- Done: offline Android image built + PB7a/PB7b probes; app_build android -> signed APK -> install + launch on the studio
+  emulator; preview_capture (Playwright, PNGs by sha256 over REST); S6 low items (R-A purge, prompt, plan-gate toggle, plan
+  content hash bound to the approval). pytest 513 passed / 20 skipped; vitest 92; Playwright 13. Demo: docs/slices/S7-demo.png.
+- Open: capture thumbnails in the UI, emulator mirror stream, Nested-Virt modal, CI digest of the android image, paid run.
+- NEXT = final gate (fable-consultant, then Codex/Gemini via agent-bridge, fix and repeat, security-lockdown, push + PR #413).

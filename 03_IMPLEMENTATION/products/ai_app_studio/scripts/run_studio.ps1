@@ -128,7 +128,7 @@ try {
   $mode = $Ui
   if ($mode -eq 'auto') { $mode = if (Test-Path $TauriExe) { 'tauri' } else { 'window' } }
   $pnpm = (Get-Command pnpm.cmd -ErrorAction Stop).Source
-  $dev = Start-Child "$env:SystemRoot\System32\cmd.exe" ('/c ""' + $pnpm + '" dev"') $Desktop @{ AAS_TEST_API_PORT = "$ApiPort" } $false
+  $devServer = Start-Child "$env:SystemRoot\System32\cmd.exe" ('/c ""' + $pnpm + '" dev"') $Desktop @{ AAS_TEST_API_PORT = "$ApiPort" } $false
   $devUrl = 'http://127.0.0.1:1421'
   $deadline = (Get-Date).AddSeconds(60)
   while ((Get-Date) -lt $deadline) {
