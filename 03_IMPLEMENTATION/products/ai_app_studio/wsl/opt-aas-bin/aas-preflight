@@ -1,0 +1,54 @@
+#!/bin/bash -p
+# aas-preflight  -- prints ONE JSON line describing the device-host prerequisites and exits 0.
+# Read-only: no emulator, no adb, nothing outside the studio state is opened for writing.
+set -euo pipefail
+umask 077
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ "$#" -eq 0 ] || { printf '{"ch":"e","kind":"exit","code":64,"reason":"usage"}\n'; exit 64; }
+[ "$(id -u)" -ne 0 ] || { printf '{"ch":"e","kind":"exit","code":65,"reason":"root"}\n'; exit 65; }
+ME=$(id -un)
+RH=$(getent passwd "$ME" | cut -d: -f6)
+export AAS_NET="$(wslinfo --networking-mode 2>/dev/null || echo unknown)"
+export AAS_SUDO="$(sudo -n -l 2>&1 | sed -n '/may run the following/,$p' | tail -n +2 | head -20 || true)"
+export AAS_LISTEN="$(ss -ltnH 2>/dev/null | awk '{print $4}' | head -100 || true)"
+export AAS_STATE="$RH/.aas"
+export AAS_KVM="$([ -c /dev/kvm ] && echo 1 || echo 0)"
+export AAS_KVMGRP="$(getent group kvm >/dev/null && echo 1 || echo 0)"
+export AAS_UNSHARE="$(unshare -r -n -m -p -f --kill-child --mount-proc /bin/true >/dev/null 2>&1 && echo 1 || echo 0)"
+exec /usr/bin/python3 -I -S -c '
+import hashlib, json, os
+st = os.environ["AAS_STATE"]
+avd_dir = os.path.join(st, "avd")
+avds = sorted(n[:-4] for n in os.listdir(avd_dir) if n.endswith(".ini")) if os.path.isdir(avd_dir) else []
+bin_dir = "/opt/aas/bin"
+installed = {}
+for n in sorted(os.listdir(bin_dir)):
+    p = os.path.join(bin_dir, n)
+    if os.path.isfile(p) and not os.path.islink(p):
+        with open(p, "rb") as f:
+            installed[n] = hashlib.sha256(f.read()).hexdigest()
+links = []
+if os.path.isdir(st):
+    for root, dirs, files in os.walk(st):
+        for n in dirs + files:
+            if os.path.islink(os.path.join(root, n)):
+                links.append(n)
+cfg_ok = {}
+for a in ("aas-phone", "aas-tablet"):
+    pin = os.path.join(bin_dir, a + ".config.ini")
+    cur = os.path.join(avd_dir, a + ".avd", "config.ini")
+    try:
+        cfg_ok[a] = open(pin, "rb").read() == open(cur, "rb").read()
+    except OSError:
+        cfg_ok[a] = False
+print(json.dumps({"ch": "e", "kind": "preflight",
+    "networkingMode": os.environ["AAS_NET"].strip(),
+    "kvm": os.environ["AAS_KVM"] == "1", "kvmGroup": os.environ["AAS_KVMGRP"] == "1",
+    "unshareUserNetPid": os.environ["AAS_UNSHARE"] == "1",
+    "sudoList": [l.strip() for l in os.environ["AAS_SUDO"].splitlines() if l.strip()][:20],
+    "avds": avds, "avdConfigOk": cfg_ok, "stateSymlinks": len(links),
+    "installed": installed,
+    "listeners": sorted(set(l.strip() for l in os.environ["AAS_LISTEN"].split() if l.strip()))[:100]},
+    separators=(",", ":")))
+'
