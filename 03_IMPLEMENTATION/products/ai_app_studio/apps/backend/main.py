@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
+import re
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,10 +24,12 @@ from fastapi import FastAPI, Query, Request, WebSocket  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field, StrictBool  # noqa: E402
-from studio_core import __version__, activity  # noqa: E402
+from aas_device import service as dsvc  # noqa: E402
+from aas_runner.claude import Runner  # noqa: E402
+from studio_core import __version__, activity, plans  # noqa: E402
 from studio_core.app_kind import BLANK_FILES, register_app_kind  # noqa: E402,F401
 from studio_core.config import Settings, load_settings  # noqa: E402
-from studio_core.errors import StudioError  # noqa: E402
+from studio_core.errors import StudioError, ValidationFailed  # noqa: E402
 from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
@@ -54,16 +59,34 @@ class FileWrite(Strict):
     content: str = Field(max_length=200_000)
 
 
+class RunStart(Strict):
+    projectId: str = Field(pattern=r"^prj_[0-9a-f]{16}$")  # noqa: N815
+    prompt: str = Field(min_length=1, max_length=20_000)
+
+
+class Decision(Strict):
+    decision: str = Field(max_length=16)
+
+
+class PlanDecision(Strict):
+    decision: str = Field(max_length=16)
+    note: str = Field(default="", max_length=4000)
+
+
 class ExternalMcp(Strict):
     enabled: StrictBool  # JSON true/false only: "yes", 1, "on" are 422
 
 
-def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] = ()) -> FastAPI:
+def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] = (),
+               runner_cli: list[str] | None = None, runner_extra_env: dict[str, str] | None = None) -> FastAPI:
+    """``runner_cli`` is the argv prefix that starts the agent CLI (default: the installed ``claude``). It comes from
+    the process command line only - no route, setting or environment variable can change it."""
     if len(token) < MIN_TOKEN_CHARS:
         raise ValueError(f"owner token must be at least {MIN_TOKEN_CHARS} characters")
     activity.register_secret(token)
     register_app_kind()
     studio = Studio(settings, kind="app")
+    runner = Runner(studio, cli=runner_cli or [shutil.which("claude") or "claude"], extra_env=runner_extra_env)
     app = FastAPI(title="AI App Studio API", version=__version__, docs_url=None, redoc_url=None,
                   openapi_url=f"{API}/openapi.json")
     app.state.studio = studio
@@ -97,11 +120,44 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     def write_file(pid: str, b: FileWrite) -> dict[str, Any]:
         return studio.write_file(OWNER, pid, b.baseRevision, b.path, b.content)
 
+    # ---------------------------------------------------------------- approvals and plans (owner only)
+    @app.get(f"{API}/approvals")
+    def approvals() -> list[dict[str, Any]]:
+        return plans.list_records(studio)  # server records: the UI renders cards only from these (P6b)
+
+    @app.post(f"{API}/approvals/{{approval_id}}/decide")
+    def decide_approval(approval_id: str, b: Decision) -> dict[str, Any]:
+        return plans.decide_approval(studio, OWNER, approval_id, b.decision)
+
+    @app.post(f"{API}/plans/{{plan_id}}/decide")
+    def decide_plan(plan_id: str, b: PlanDecision) -> dict[str, Any]:
+        return plans.decide(studio, OWNER, plan_id, b.decision, b.note)
+
     # ---------------------------------------------------------------- activity + owner-only settings
     @app.get(f"{API}/activity")
     def activity_events(afterSeq: int = Query(0, ge=0), limit: int = Query(200, ge=1, le=1000),  # noqa: N803
                         projectId: str | None = None) -> list[dict[str, Any]]:  # noqa: N803
         return activity.list_events(studio, after_seq=afterSeq, limit=limit, project_id=projectId)
+
+    @app.get(f"{API}/settings/device")
+    def get_device() -> dict[str, Any]:
+        return {"enabled": dsvc.is_enabled(studio)}
+
+    @app.put(f"{API}/settings/device")
+    def set_device(b: ExternalMcp) -> dict[str, Any]:  # same shape: {"enabled": <strict bool>}
+        return dsvc.set_enabled(studio, OWNER, b.enabled)
+
+    # ---------------------------------------------------------------- built-in runner (owner only)
+    @app.post(f"{API}/runs", status_code=202)
+    def start_run(b: RunStart) -> dict[str, Any]:
+        return {"runId": runner.start(b.projectId, b.prompt), "status": "running"}
+
+    @app.post(f"{API}/runs/{{run_id}}/stop")
+    def stop_run(run_id: str) -> dict[str, Any]:
+        if not re.fullmatch(r"run_[0-9a-f]{16}", run_id):
+            raise ValidationFailed("invalid run id")
+        runner.stop(run_id)
+        return {"runId": run_id, "status": "stopping"}
 
     @app.get(f"{API}/settings/external-mcp")
     def get_external_mcp() -> dict[str, Any]:
@@ -169,7 +225,14 @@ def main(argv: list[str] | None = None) -> None:
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--token-stdin", action="store_true", help="read the owner token from the first stdin line")
     g.add_argument("--dev-token-file", action="store_true", help="DEV ONLY: token from <data>/config/api_token")
+    ap.add_argument("--runner-cli-json", help="DEV/TEST: JSON list used as argv prefix instead of the installed `claude` "
+                                              "(e.g. the fake CLI fixture); command line only")
     args = ap.parse_args(argv)
+    runner_cli: list[str] | None = None
+    if args.runner_cli_json:
+        runner_cli = json.loads(args.runner_cli_json)
+        if not isinstance(runner_cli, list) or not runner_cli or not all(isinstance(x, str) for x in runner_cli):
+            sys.exit("--runner-cli-json must be a non-empty JSON list of strings")
     settings = load_settings()
     if args.token_stdin:
         token = sys.stdin.readline().strip()
@@ -179,7 +242,7 @@ def main(argv: list[str] | None = None) -> None:
         token = settings.api_token()
         print("WARNING: dev token file mode - any local process of this user can read the token", file=sys.stderr)
     import uvicorn
-    uvicorn.run(create_app(settings, token), host=HOST, port=settings.api_port, log_level="warning",
+    uvicorn.run(create_app(settings, token, runner_cli=runner_cli), host=HOST, port=settings.api_port, log_level="warning",
                 server_header=False, proxy_headers=False)
 
 
