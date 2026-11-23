@@ -1,5 +1,5 @@
 {
-  "commit": "1e385f554da00aa9273d5400dad6d3a3b66524f4",
+  "commit": "f60bc3a202645d072b05811043057d7da1d5d754",
   "files": {
     ".claude/agents/Explore.md": "071e47fdf97105de10d1169d392c97eb124377908e584234db891354998a5b19",
     ".claude/agents/check-runner.md": "65167c8e85c1d63cc5a08e69b90001eebc7e03ef7b872849fa4c4f5c33d5b74b",
@@ -13,7 +13,7 @@
     ".claude/skills/cost-router/chat/SKILL.md": "8a4775d1e44e567aadf8d0783b789158019e0d2cc0578b3ec472ca889dbcd312",
     ".claude/skills/cost-router/hook_agent_model.py": "64cd77aec91cabf9acfdcaf1f70170283962032b1aa3490a72bfcf4fbabea508",
     ".claude/skills/cost-router/hook_agent_usage.py": "8845a687a9ea96c7e358b98974dc975fe36b574a13c8df49145110d26c139cd8",
-    ".claude/skills/cost-router/hook_enforce_route.py": "eabfbf1fcbdf2f3d26f64fc2c17ff9460a71436665f5d04ad2d2bd4707871ac4",
+    ".claude/skills/cost-router/hook_enforce_route.py": "f3f7845487f08a7fb4b921708a62f686af705d3fc0b9fb7cb8483eccefa556af",
     ".claude/skills/cost-router/hook_prompt_route.py": "e7896e6b6a702336090e52f1fc11a08f769de9360f8208f85967f450ff67d6f5",
     ".claude/skills/cost-router/hook_repo_map.py": "150f66d0682b728f14f1d861dc0774646b795660488dd1a8dbe8c12d92d55e87",
     ".claude/skills/cost-router/hook_resume_guard.py": "6a65256804e943afe9fcda317863e6a449ca718212b8d2e596845a3f361a9309",
@@ -50,7 +50,7 @@
     "03_IMPLEMENTATION/packages/routing/claude_model_router.py": "c0b7efaf70370624290688bdd0a1c1746614b6790224da94675891c958f6546f",
     "04_CONFIG/claude_model_routing.json": "c50d49e8d994199cbdc500c536d924463d67fcb4feca5abb19626c3db084438c"
   },
-  "files_sha256": "a3034605d1ce310a390defe9a528ee443d9c0e05026cef735f506185938f56e6",
+  "files_sha256": "46d07c3af6868ab9b9cd9f5146aba918c2d69377bb2070b74e5a249c5b3d33cb",
   "schema": 1,
-  "seq": 14
+  "seq": 15
 }
