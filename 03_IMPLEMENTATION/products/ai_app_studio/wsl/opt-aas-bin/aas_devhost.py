@@ -36,6 +36,48 @@ IDLE_S = 15 * 60  # no request for this long -> stop the session (DESIGN 2.2)
 MANIFEST_MAX = 4 * 1024 * 1024
 
 
+SCREEN_MIN = 200
+WM_SIZE_RE = re.compile(r"(Physical|Override) size: ([1-9][0-9]{0,4})x([1-9][0-9]{0,4})")
+VIEWPORT_ROT_RE = re.compile(r"Viewport INTERNAL:.*?\borientation=([0-9]+)\b")
+SURFACE_ROT_RE = re.compile(r"SurfaceOrientation: ([0-9]+)")
+ROTATION_CMD = "dumpsys input | grep -E 'Viewport INTERNAL|SurfaceOrientation'"
+
+
+def parse_wm_size(rc, text):
+    """`wm size` -> panel [w, h] or None. Anchored lines only; an override that differs from the physical size
+    (scaled display) is None: console pixels would not match `input` pixels."""
+    if rc != 0:
+        return None
+    found = {}
+    for ln in text.splitlines():
+        m = WM_SIZE_RE.fullmatch(ln.strip())
+        if m and m.group(1) not in found:
+            found[m.group(1)] = [int(m.group(2)), int(m.group(3))]
+    phys = found.get("Physical")
+    if phys is None or found.get("Override", phys) != phys:
+        return None
+    if not all(SCREEN_MIN <= v <= 8192 for v in phys):
+        return None
+    return phys
+
+
+def parse_rotation(rc, text):
+    """`dumpsys input` (filtered) -> display rotation 0..3, or None when absent, out of range or ambiguous."""
+    if rc != 0:
+        return None
+    vals = set()
+    for ln in text.splitlines():
+        m = VIEWPORT_ROT_RE.search(ln)
+        if m is None or "Viewport INTERNAL" not in ln:
+            m = SURFACE_ROT_RE.search(ln)
+        if m:
+            vals.add(int(m.group(1)))
+    if len(vals) != 1:
+        return None
+    r = vals.pop()
+    return r if 0 <= r <= 3 else None
+
+
 def _int(v, lo, hi):
     if type(v) is not int or not lo <= v <= hi:
         raise ValueError("bad int")
@@ -187,17 +229,23 @@ class Console:
     One persistent connection to 127.0.0.1:<console port> inside the private net namespace, authenticated with
     the token the emulator wrote into the studio fake HOME. Only `event mouse <x> <y> 0 <0|1>` lines with
     integers validated against the screen size are ever sent; the token is sent only when the banner asks for
-    it and names that same token file."""
+    it and names exactly that token file.
+
+    Coordinates come in the logical (rotated) display space, like `input tap`; `size` is the panel (rotation 0)
+    size and `rotation` (Surface.ROTATION_*) maps logical to panel pixels. Once a touch-down was written, every
+    error path writes the matching up (best effort) and is reported as ConsoleError: never retried on adb."""
 
     MAX_LINE = 1024
     MAX_LINES = 32
-    LINE_RE = re.compile(r"^event mouse (0|[1-9][0-9]{0,4}) (0|[1-9][0-9]{0,4}) 0 [01]$")
-    TOKEN_RE = re.compile(r"^[A-Za-z0-9+/=_-]{1,128}$")
+    RELEASE_S = 1.0
+    LINE_RE = re.compile(r"event mouse (0|[1-9][0-9]{0,4}) (0|[1-9][0-9]{0,4}) 0 [01]")
+    TOKEN_RE = re.compile(r"[A-Za-z0-9+/=_-]{1,128}")
 
-    def __init__(self, port, token_path, size, connect=socket.create_connection):
+    def __init__(self, port, token_path, size, connect=socket.create_connection, rotation=0):
         if not isinstance(size, list) or len(size) != 2:
             raise ValueError("bad size")
         self.w, self.h = _int(size[0], 1, 8192), _int(size[1], 1, 8192)
+        self.rotation = _int(rotation, 0, 3)
         self.port = _int(port, 1, 65535)
         self.token_path = token_path
         self.connect = connect
@@ -208,40 +256,68 @@ class Console:
         self.lock = threading.Lock()
 
     # ---------- public ----------
+    def set_rotation(self, rotation):
+        rotation = _int(rotation, 0, 3)
+        with self.lock:
+            self.rotation = rotation
+
     def tap(self, x, y, timeout=5.0):
-        x, y = _int(x, 0, self.w - 1), _int(y, 0, self.h - 1)
-        self._gesture([(x, y, 1, 0.0), (x, y, 0, 0.0)], timeout)
+        with self.lock:
+            lw, lh = self._logical()
+            x, y = _int(x, 0, lw - 1), _int(y, 0, lh - 1)
+            self._gesture([(x, y, 1, 0.0), (x, y, 0, 0.0)], timeout)
 
     def swipe(self, x1, y1, x2, y2, ms, timeout=10.0):
-        x1, x2 = _int(x1, 0, self.w - 1), _int(x2, 0, self.w - 1)
-        y1, y2 = _int(y1, 0, self.h - 1), _int(y2, 0, self.h - 1)
-        ms = _int(ms, 1, 5000)
-        steps = max(1, min(100, ms // 16))
-        pts = [(x1, y1, 1, 0.0)]
-        for k in range(1, steps + 1):
-            pts.append((x1 + (x2 - x1) * k // steps, y1 + (y2 - y1) * k // steps, 1, ms / 1000.0 * k / steps))
-        pts.append((x2, y2, 0, ms / 1000.0))
-        self._gesture(pts, timeout + ms / 1000.0)
+        with self.lock:
+            lw, lh = self._logical()
+            x1, x2 = _int(x1, 0, lw - 1), _int(x2, 0, lw - 1)
+            y1, y2 = _int(y1, 0, lh - 1), _int(y2, 0, lh - 1)
+            ms = _int(ms, 1, 5000)
+            steps = max(1, min(100, ms // 16))
+            pts = [(x1, y1, 1, 0.0)]
+            for k in range(1, steps + 1):
+                pts.append((x1 + (x2 - x1) * k // steps, y1 + (y2 - y1) * k // steps, 1,
+                            ms / 1000.0 * k / steps))
+            pts.append((x2, y2, 0, ms / 1000.0))
+            self._gesture(pts, timeout + ms / 1000.0)
 
     def close(self):
         with self.lock:
             self._close()
 
     # ---------- internals ----------
-    def _gesture(self, pts, timeout):
-        with self.lock:
-            if self.disabled:
-                raise ConsoleUnavailable("disabled")
-            t0 = time.monotonic()
-            deadline = t0 + timeout
-            fresh = self.sock is None
-            if fresh:
-                self._open(deadline)
+    def _logical(self):
+        return (self.h, self.w) if self.rotation in (1, 3) else (self.w, self.h)
+
+    def _panel(self, x, y):
+        """Logical (rotated) pixel -> panel pixel; inverse of the TouchInputMapper rotation transform."""
+        r, w1, h1 = self.rotation, self.w - 1, self.h - 1
+        if r == 1:
+            return w1 - y, x
+        if r == 2:
+            return w1 - x, h1 - y
+        if r == 3:
+            return y, h1 - x
+        return x, y
+
+    def _gesture(self, pts, timeout):  # caller holds self.lock
+        if self.disabled:
+            raise ConsoleUnavailable("disabled")
+        t0 = time.monotonic()
+        deadline = t0 + timeout
+        fresh = self.sock is None
+        if fresh:
+            self._open(deadline)  # ConsoleUnavailable here: nothing was sent, the adb path may be used
+        down = None  # panel position of a touch-down that may have reached the emulator without its up
+        try:
             for i, (x, y, b, at) in enumerate(pts):
                 wait = t0 + at - time.monotonic()
                 if wait > 0:
                     time.sleep(wait)
-                line = "event mouse %d %d 0 %d" % (x, y, b)
+                px, py = self._panel(x, y)
+                line = "event mouse %d %d 0 %d" % (px, py, b)
+                if b:
+                    down = (px, py)  # set before the write: a partial or unanswered write may have landed
                 try:
                     self._cmd(line, deadline)
                 except (ConsoleError, OSError) as e:
@@ -255,6 +331,25 @@ class Console:
                     fresh = True
                     self._open(deadline)
                     self._cmd(line, deadline)
+                if not b:
+                    down = None
+        except BaseException as e:
+            if down is not None:
+                self._release(down)
+                if isinstance(e, ConsoleUnavailable):
+                    raise ConsoleError("console lost after touch down") from None
+            raise
+
+    def _release(self, pos):
+        """Best effort: write the touch-up for a down that was sent, on the open or a fresh connection."""
+        deadline = time.monotonic() + self.RELEASE_S
+        try:
+            if self.sock is None:
+                self._open(deadline)
+            self._send("event mouse %d %d 0 0" % pos)
+            self._until_ok(deadline)
+        except Exception:  # noqa: BLE001 - best effort, the original error is reported
+            self._close()
 
     def _cmd(self, line, deadline):
         try:
@@ -269,7 +364,7 @@ class Console:
             raise
 
     def _send(self, line, secret=False):
-        if not secret and not self.LINE_RE.match(line):
+        if not secret and not self.LINE_RE.fullmatch(line):
             raise ValueError("bad console line")
         if self.sock is None:
             raise ConsoleError("not connected")
@@ -321,7 +416,7 @@ class Console:
             tok = data.decode("ascii").strip()
         except UnicodeDecodeError:
             raise ConsoleUnavailable("bad console token") from None
-        if not self.TOKEN_RE.match(tok):
+        if not self.TOKEN_RE.fullmatch(tok):
             raise ConsoleUnavailable("bad console token")
         return tok
 
@@ -339,9 +434,10 @@ class Console:
             if any(b"Authentication required" in ln for ln in banner):
                 named = [ln[1:-1] for ln in banner if len(ln) > 2 and ln[:1] == b"'" and ln[-1:] == b"'"]
                 ok = {self.token_path.encode(), os.path.realpath(self.token_path).encode()}
-                if named and not set(named) <= ok:
-                    self.disabled = True  # this console expects another token file: never send ours
-                    raise ConsoleUnavailable("console names another token file")
+                if len(named) != 1 or named[0] not in ok:
+                    # no path, several paths or another token file: this may not be our console, never send ours
+                    self.disabled = True
+                    raise ConsoleUnavailable("console does not name the studio token file")
                 tok = self._read_token()
                 self._send("auth " + tok, secret=True)
                 try:
@@ -581,18 +677,60 @@ class Host:
                 self.shell(*words, timeout=20)
             except subprocess.TimeoutExpired:
                 pass
-        rc, w = self.adb("shell", "wm size", timeout=10)
-        m = re.search(r"(\d+)x(\d+)", w)
-        size = [int(m.group(1)), int(m.group(2))] if m else [0, 0]
-        self.console = self._make_console(size)
+        size, self.console = self._setup_console()
         self.out.control({"ch": "e", "kind": "booted", "avd": self.avd, "ms": boot_ms, "size": size})
+        if self.console is not None:
+            threading.Thread(target=self._rotation_watch, daemon=True).start()
         threading.Thread(target=self._modal_watch, daemon=True).start()
         threading.Thread(target=self._emu_watch, daemon=True).start()
         self.last_activity = time.monotonic()
         threading.Thread(target=self._idle_watch, daemon=True).start()
         return True
 
-    def _make_console(self, size):
+    def _setup_console(self):
+        """(panel size or [0, 0], Console or None). Unknown or bogus size or rotation: no console (adb path)."""
+        try:
+            rc, w = self.adb("shell", "wm size", timeout=10)
+        except subprocess.TimeoutExpired:
+            rc, w = 1, ""
+        size = parse_wm_size(rc, w)
+        if size is None:
+            log("screen size unknown or bogus: console input off")
+            return [0, 0], None
+        rot = self._read_rotation()
+        if rot is None:
+            log("display rotation unknown: console input off")
+            return size, None
+        return size, self._make_console(size, rot)
+
+    def _read_rotation(self):
+        try:
+            rc, txt = self.adb("shell", ROTATION_CMD, timeout=10)
+        except subprocess.TimeoutExpired:
+            return None
+        return parse_rotation(rc, txt)
+
+    def _rotation_tick(self):
+        """Refresh the console rotation; False (console dropped, adb path) when the rotation cannot be read."""
+        c = self.console
+        if c is None:
+            return False
+        rot = self._read_rotation()
+        if rot is None:
+            log("display rotation unreadable: console input off")
+            self.console = None
+            c.close()
+            return False
+        c.set_rotation(rot)
+        return True
+
+    def _rotation_watch(self, tick=2.0):
+        while not self.stopping and self.console is not None:
+            time.sleep(tick)
+            if self.stopping or not self._rotation_tick():
+                return
+
+    def _make_console(self, size, rotation=0):
         """Console client for taps/swipes, or None (adb `input` path). The token is read only from the studio fake
         HOME that aas-serve sets ($AAS_STATE/home), never from another HOME."""
         home = os.environ.get("HOME", "")
@@ -600,7 +738,7 @@ class Host:
             log("HOME is not the studio home: console input off")
             return None
         try:
-            return Console(self.port, os.path.join(home, ".emulator_console_auth_token"), size)
+            return Console(self.port, os.path.join(home, ".emulator_console_auth_token"), size, rotation=rotation)
         except ValueError:
             log("screen size unknown: console input off")
             return None

@@ -5,13 +5,14 @@ Tests in this module run in file order and share one studio phone session.
 from __future__ import annotations
 
 import queue
+import re
 import random
 import time
 
 import pytest
 
 from apps.device_host import launcher
-from tests.local_gate.conftest import live
+from tests.local_gate.conftest import leak_pids, leftovers, live
 
 pytestmark = [live, pytest.mark.usefixtures("emulator_guard_module")]
 
@@ -47,17 +48,56 @@ done
 """
 
 
+DEVHOST_PID = "P=$(pgrep -f 'python3 -I -S /opt/aas/bin/aas_devhost.py aas-phone' | head -1)\n"
+# Runs as the owner with env -i: $0 = adb, $1 = port, $2 = serial, $3 = guest command. Never auto-starts an adb
+# server: no listener on the port -> NO_ADB_SERVER and nothing is run.
+GUEST_INNER = ('echo "INNS=$(readlink /proc/self/ns/pid)"; '
+               'ss -ltnH "sport = :$1" | grep -q . || { echo NO_ADB_SERVER; exit 3; }; '
+               'exec "$0" -P "$1" -s "$2" shell "$3"')
+
+
+def guest_script(cmd: str, serial: str, port: int, ns: bool) -> str:
+    """Harness script for one adb shell command in the guest. ns=True enters the studio session's net AND pid
+    namespaces (nsenter -n -p), so an adb server the client might start is a member of the session's pid
+    namespace and dies with it; the caller's and the session's pid namespaces must differ."""
+    env = ('env -i HOME="$HOME/.aas/home" ANDROID_USER_HOME="$HOME/.aas/android-user" PATH=/usr/bin:/bin '
+           f'/bin/bash -c {_sq(GUEST_INNER)} "{SDK_ADB}" {int(port)} {_sq(serial)} "$1"')
+    head = "set -- " + _sq(cmd) + "\n"
+    if not ns:
+        return head + env + "\n"
+    return (head + DEVHOST_PID +
+            '[ -n "$P" ] || { echo NO_DEVHOST; exit 1; }\n'
+            'H=$(sudo -n readlink "/proc/$P/ns/pid"); S=$(readlink /proc/self/ns/pid)\n'
+            'echo "HOSTNS=$H SELFNS=$S"\n'
+            '[ -n "$H" ] && [ "$H" != "$S" ] || { echo SAME_PIDNS; exit 2; }\n'
+            f'sudo -n nsenter -t "$P" -n -p -- runuser -u "$(id -un)" -- {env}\n')
+
+
 def _guest(sh, cmd: str, serial: str, port: int, ns: bool) -> str:  # type: ignore[no-untyped-def]
-    env = ('env -i HOME="$HOME/.aas/home" ANDROID_USER_HOME="$HOME/.aas/android-user" '
-           f'{SDK_ADB} -P {port} -s {serial} shell')
+    out = sh(guest_script(cmd, serial, port, ns), timeout=300).stdout
+    assert "NO_ADB_SERVER" not in out and "SAME_PIDNS" not in out and "NO_DEVHOST" not in out, out[:300]
     if ns:
-        script = ("P=$(pgrep -f 'python3 -I -S /opt/aas/bin/aas_devhost.py aas-phone' | head -1)\n"
-                  '[ -n "$P" ] || { echo NO_DEVHOST; exit 1; }\n'
-                  f"sudo -n nsenter -t \"$P\" -n -- runuser -u \"$(id -un)\" -- {env} \"$1\"\n")
-    else:
-        script = f'{env} "$1"\n'
-    wrapped = "set -- " + _sq(cmd) + "\n" + script
-    return sh(wrapped, timeout=300).stdout
+        host = out.split("HOSTNS=", 1)[1].split()[0]
+        inns = out.split("INNS=", 1)[1].split()[0]
+        assert inns == host, (inns, host)  # the command ran inside the session's pid namespace
+    return out
+
+
+_XY_RES = (re.compile(r"pointers=\[0: \(([0-9.]+), ([0-9.]+)\)"), re.compile(r"x\[0\]=([0-9.]+), y\[0\]=([0-9.]+)"))
+
+
+def last_down_xy(dump: str) -> list[float] | None:
+    """Coordinates of the last touch-down in the input dispatcher dump (native or Java MotionEvent format)."""
+    xy = None
+    for ln in dump.splitlines():
+        if "DOWN" not in ln:
+            continue
+        for rx in _XY_RES:
+            m = rx.search(ln)
+            if m:
+                xy = [float(m.group(1)), float(m.group(2))]
+                break
+    return xy
 
 
 def _sq(s: str) -> str:
@@ -109,6 +149,14 @@ def test_02_studio_session_boots_visible(sh, request) -> None:  # type: ignore[n
     assert ev["kind"] == "booted"
     assert "aas-phone" in win
     assert s.tap(540, 1200)["ok"] is True
+    # does a console tap land on the pixel asked for? the input dispatcher's recent queue shows the coordinates
+    assert s.tap(531, 1207)["ok"] is True
+    time.sleep(1.0)
+    ev_out = _guest(sh, "dumpsys input | grep -E 'MotionEvent|pointers=' | tail -n 6", "emulator-5600", 5641,
+                    ns=True)
+    xy = last_down_xy(ev_out)
+    request.node.aas_detail.update({"tap_check_at": [531, 1207], "last_down_xy": xy,
+                                    "tap_landed": xy is not None and round(xy[0]) == 531 and round(xy[1]) == 1207})
 
 
 @pytest.mark.probe("P9a")
@@ -205,17 +253,52 @@ def test_05_n7_positive_control_blocking_queue_stalls(request) -> None:  # type:
     assert s.tap(540, 1200)["ok"]  # recovers once drained
 
 
+# $0 = adb. Lists every adb process (comm "adb") for port 5641 with its pid namespace.
+RESTART_ADB = ('"$0" -P 5641 kill-server; sleep 1; "$0" -P 5641 devices >/dev/null 2>&1; sleep 1; '
+               'for q in $(pgrep -x adb); do tr "\\0" " " < /proc/$q/cmdline | grep -q 5641 || continue; '
+               'echo "ADB $q $(readlink /proc/$q/ns/pid)"; done')
+
+
+def _restart_adb(sh, pid_ns: bool) -> str:  # type: ignore[no-untyped-def]
+    """Kill the studio adb server and let a client auto-start a new one, inside the session's net namespace;
+    pid_ns=False is the old (leaky) way: the new server lives in the root pid namespace."""
+    flags = "-n -p" if pid_ns else "-n"
+    return sh(DEVHOST_PID + '[ -n "$P" ] || { echo NO_DEVHOST; exit 1; }\n'
+              f'sudo -n nsenter -t "$P" {flags} -- runuser -u "$(id -un)" -- env -i HOME="$HOME/.aas/home" '
+              f'ANDROID_USER_HOME="$HOME/.aas/android-user" PATH=/usr/bin:/bin /bin/bash -c {_sq(RESTART_ADB)} '
+              f'"{SDK_ADB}"\n'
+              'echo "ROOTPIDNS=$(readlink /proc/self/ns/pid)"\n', timeout=120).stdout
+
+
 @pytest.mark.probe("P10c")
 @pytest.mark.probe("PM3d")
 def test_06_shutdown_leaves_nothing(sh, request) -> None:  # type: ignore[no-untyped-def]
+    """Real check + positive control in one session: an adb server auto-started the new way (nsenter -n -p)
+    must die with the session; one started the old way (nsenter -n only) escapes the pid namespace and keeps the
+    session's net namespace alive, and the leftover probe must flag exactly that one."""
     s: launcher.DeviceSession = STATE.pop("session")
+    new_way = _restart_adb(sh, pid_ns=True)
+    old_way = _restart_adb(sh, pid_ns=False)
+    root_ns = old_way.split("ROOTPIDNS=", 1)[1].split()[0]
+    injected = {int(ln.split()[1]) for ln in old_way.splitlines() if ln.startswith("ADB ") and ln.split()[2] == root_ns}
     code = s.shutdown(timeout=60)
     time.sleep(3)
-    r = sh("pgrep -af 'qemu-system|aas_devhost|emulator -avd aas-|adb -P 5641' | grep -v pgrep || echo NONE\n"
-           "ss -ltnH | awk '{print $4}' | grep -E ':(5600|5601|5641)$' || echo NOPORTS\n")
-    request.node.aas_detail = {"exit_code": code, "leftover": r.stdout.strip()[:300]}
+    leaks, raw = leftovers(sh)
+    flagged = leak_pids(leaks)
+    kinds = sorted({ln.split()[1] for ln in leaks})
+    for pid in sorted(injected):  # our own leftover adb server(s) only
+        sh(f"kill -KILL {pid} 2>/dev/null; true\n")
+    time.sleep(2)
+    after, raw_after = leftovers(sh)
+    request.node.aas_detail = {"exit_code": code, "new_way_adb": [ln for ln in new_way.splitlines()
+                                                                  if ln.startswith("ADB ")],
+                               "injected_old_way": sorted(injected), "control_flagged": leaks[:8],
+                               "control_kinds": kinds, "leftover_after_cleanup": after[:8]}
     assert code == 0
-    assert "NONE" in r.stdout and "NOPORTS" in r.stdout, r.stdout
+    assert injected, old_way  # [+] the old way really left a server in the root pid namespace
+    assert flagged == injected, (flagged, injected, raw)  # flagged = exactly the injected leftover, nothing else
+    assert {"netns", "adb5641", "home"} <= set(kinds), leaks  # each check of the probe sees it
+    assert after == [], raw_after
 
 
 @pytest.mark.probe("P10a")

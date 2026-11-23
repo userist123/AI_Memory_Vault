@@ -390,9 +390,11 @@ class _FakeConsole:
     """Emulator-console stand-in on 127.0.0.1: banner, `auth`, `event mouse`; records every command line."""
 
     def __init__(self, token: str = TOKEN, auth: bool = True, banner_path: str | None = None,
-                 drop_after: int | None = None, mute: bool = False, ko: bool = False) -> None:
+                 drop_after: int | None = None, mute: bool = False, ko: bool = False,
+                 refuse_after_drop: bool = False) -> None:
         self.token, self.auth, self.banner_path = token, auth, banner_path
         self.drop_after, self.mute, self.ko = drop_after, mute, ko
+        self.refuse_after_drop = refuse_after_drop  # after the drop, close the listener: reconnects fail
         self.lines: list[str] = []
         self.accepts = 0
         self.srv = socket.socket()
@@ -414,10 +416,11 @@ class _FakeConsole:
     def _client(self, c: socket.socket) -> None:
         f = c.makefile("rb")
         if self.auth:
-            path = self.banner_path or "/x/.emulator_console_auth_token"
+            path = "/x/.emulator_console_auth_token" if self.banner_path is None else self.banner_path
+            named = (b"'" + path.encode() + b"'\r\n") if path else b""  # "" = banner without the path line
             c.sendall(b"Android Console: Authentication required\r\nAndroid Console: type 'auth <auth_token>' to "
-                      b"authenticate\r\nAndroid Console: you can find your <auth_token> in \r\n'"
-                      + path.encode() + b"'\r\nOK\r\n")
+                      b"authenticate\r\nAndroid Console: you can find your <auth_token> in \r\n"
+                      + named + b"OK\r\n")
         else:
             c.sendall(b"Android Console: type 'help' for a list of commands\r\nOK\r\n")
         authed = not self.auth
@@ -441,6 +444,9 @@ class _FakeConsole:
                     self.drop_after = None
                     self.lines.pop()  # never processed
                     c.close()
+                    if self.refuse_after_drop:
+                        self.stop = True
+                        self.srv.close()
                     return
                 if self.mute:
                     continue
@@ -616,9 +622,12 @@ def test_console_timeout_closes_then_reconnects(tmp_path: Path) -> None:
         with pytest.raises(devhost.subprocess.TimeoutExpired):
             c.tap(1, 2, timeout=0.5)
         assert c.sock is None
+        # the touch-down was sent: the release reconnects (connect 2) and sends the up, best effort
+        assert "event mouse 1 2 0 0" in fake.lines
         fake.mute = False
         c.tap(3, 4, timeout=5)
-        assert c.connects == 2
+        assert c.connects == 3
+        assert _mouse(fake.lines)[-2:] == ["event mouse 3 4 0 1", "event mouse 3 4 0 0"]
     finally:
         c.close()
         fake.close()
@@ -689,3 +698,211 @@ def test_host_console_home_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert h._make_console([1080, 2340]) is None  # never the owner's ~/.emulator_console_auth_token
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     assert h._make_console([0, 0]) is None  # unknown screen size: adb path
+
+
+# ---------- review fixes: banner path, touch release, strict regexes, screen size + rotation ----------
+
+def test_console_auth_banner_without_path_refused(tmp_path: Path) -> None:
+    fake = _FakeConsole(banner_path="")  # asks for auth but names no token file
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert c.disabled
+        assert not any(ln.startswith("auth") for ln in fake.lines)  # token never sent blind
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_banner_naming_two_files_refused(tmp_path: Path) -> None:
+    tok = tmp_path / ".emulator_console_auth_token"
+    fake = _FakeConsole(banner_path=str(tok) + "'\r\n'" + str(tok))  # two quoted lines, both ours
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert not any(ln.startswith("auth") for ln in fake.lines)
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_line_regex_is_full_match(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    c = _console(tmp_path, fake)
+    try:
+        for line in ("event mouse 1 1 0 1\n", "event mouse 1 1 0 1\r"):
+            with pytest.raises(ValueError):
+                c._send(line)
+        assert devhost.Console.TOKEN_RE.fullmatch("abc") and not devhost.Console.TOKEN_RE.fullmatch("abc\n")
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_token_with_second_line_refused(tmp_path: Path) -> None:
+    fake = _FakeConsole()
+    try:
+        c = _console(tmp_path, fake, token=TOKEN + "\nmore")  # second line in the token file
+        with pytest.raises(devhost.ConsoleUnavailable):
+            c.tap(1, 2, timeout=5)
+        assert not any(ln.startswith("auth") for ln in fake.lines)
+        c.close()
+    finally:
+        fake.close()
+
+
+def test_console_up_sent_when_connection_drops_after_down(tmp_path: Path) -> None:
+    fake = _FakeConsole(drop_after=1)  # processes the down, drops on the up
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleError):
+            c.tap(5, 6, timeout=5)
+        assert _mouse(fake.lines) == ["event mouse 5 6 0 1", "event mouse 5 6 0 0"]  # up resent after reconnect
+        assert fake.accepts == 2
+    finally:
+        c.close()
+        fake.close()
+
+
+def test_console_lost_after_down_never_falls_back_to_adb(tmp_path: Path) -> None:
+    fake = _FakeConsole(drop_after=2, refuse_after_drop=True)
+    c = _console(tmp_path, fake)
+    try:
+        c.tap(5, 6, timeout=5)
+        # stale connection: the down of the 2nd tap is written, the console is gone and refuses a reconnect.
+        # That is not "nothing was sent" (ConsoleUnavailable -> adb): the caller must not retry on adb.
+        with pytest.raises(devhost.ConsoleError):
+            c.tap(7, 8, timeout=3)
+    finally:
+        c.close()
+        fake.close()
+    h = _host(tmp_path)
+    seen: list[tuple[str, ...]] = []
+
+    class _Sh:
+        def run(self, words: tuple[str, ...], timeout: float) -> tuple[int, str]:
+            seen.append(tuple(words))
+            return 0, ""
+
+    class _Con:
+        disabled = False
+
+        def tap(self, x: int, y: int, timeout: float) -> None:
+            raise devhost.ConsoleError("console lost after touch down")
+
+    h.input, h.console = _Sh(), _Con()
+    assert h.handle({"id": 1, "op": "tap", "x": 1, "y": 2})["ok"] is False
+    assert seen == []
+
+
+def test_console_swipe_error_mid_gesture_releases(tmp_path: Path) -> None:
+    fake = _FakeConsole(drop_after=3)  # down + 2 moves, then drop
+    c = _console(tmp_path, fake)
+    try:
+        with pytest.raises(devhost.ConsoleError):
+            c.swipe(100, 1000, 300, 600, 160, timeout=5)
+        m = _mouse(fake.lines)
+        assert len(m) == 4 and all(ln.endswith(" 0 1") for ln in m[:3])
+        assert m[-1].endswith(" 0 0")  # released (at the last position written, which the fake never saw)
+        assert fake.accepts == 2
+    finally:
+        c.close()
+        fake.close()
+
+
+@pytest.mark.parametrize("rc, text, want", [
+    (0, "Physical size: 1080x2340", [1080, 2340]),
+    (0, "Physical size: 1080x2340\nOverride size: 1080x2340", [1080, 2340]),
+    (0, "Physical size: 1080x2340\r\n", [1080, 2340]),
+    (0, "Physical size: 072x1", None),
+    (0, "Physical size: 1080x150", None),
+    (0, "Physical size: 199x2340", None),
+    (0, "Physical size: 9000x2340", None),
+    (0, "error: device offline 1080x2340", None),
+    (0, "", None),
+    (1, "Physical size: 1080x2340", None),
+    (0, "Physical size: 1080x2340\nOverride size: 720x1560", None),  # scaled display: console coords differ
+    (0, "Override size: 720x1560", None),
+])
+def test_parse_wm_size(rc: int, text: str, want: list[int] | None) -> None:
+    assert devhost.parse_wm_size(rc, text) == want
+
+
+@pytest.mark.parametrize("rc, text, want", [
+    (0, "    Viewport INTERNAL: displayId=0, uniqueId=local:1, port=0, orientation=0, logicalFrame=[0, 0, 1080, "
+        "2340], isActive=[1]", 0),
+    (0, "      SurfaceOrientation: 1\n", 1),
+    (0, "Viewport INTERNAL: displayId=0, orientation=3, x\nSurfaceOrientation: 3", 3),
+    (0, "Viewport INTERNAL: displayId=0, orientation=1, x\nSurfaceOrientation: 3", None),  # disagree
+    (0, "SurfaceOrientation: 7", None),
+    (0, "nothing here", None),
+    (1, "SurfaceOrientation: 0", None),
+])
+def test_parse_rotation(rc: int, text: str, want: int | None) -> None:
+    assert devhost.parse_rotation(rc, text) == want
+
+
+def _screen_host(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, wm: tuple[int, str],
+                 rot: tuple[int, str]) -> Any:
+    h = _host(tmp_path)
+    h.port = 5600
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+
+    def adb(*args: str, timeout: float = 30, data: bool = False) -> Any:
+        if args[:2] == ("shell", "wm size"):
+            return wm
+        if args[:1] == ("shell",) and "dumpsys input" in args[1]:
+            return rot
+        return 0, ""
+
+    h.adb = adb
+    return h
+
+
+def test_bogus_screen_size_means_no_console(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    h = _screen_host(tmp_path, monkeypatch, (0, "Physical size: 072x1"), (0, "SurfaceOrientation: 0"))
+    size, con = h._setup_console()
+    assert con is None and size == [0, 0]
+    h = _screen_host(tmp_path, monkeypatch, (0, "Physical size: 1080x2340"), (0, "no rotation line"))
+    assert h._setup_console()[1] is None  # rotation unknown: adb path
+    h = _screen_host(tmp_path, monkeypatch, (0, "Physical size: 1080x2340"), (0, "SurfaceOrientation: 0"))
+    size, con = h._setup_console()
+    assert size == [1080, 2340] and con is not None and con.rotation == 0
+
+
+@pytest.mark.parametrize("rot, tap, panel", [
+    (0, (100, 2000), (100, 2000)),
+    (1, (2000, 500), (579, 2000)),  # 90: logical x = panel y, logical y = W-1 - panel x
+    (2, (100, 2000), (979, 339)),
+    (3, (2000, 500), (500, 339)),
+])
+def test_console_rotation_maps_logical_to_panel(tmp_path: Path, rot: int, tap: tuple[int, int],
+                                                panel: tuple[int, int]) -> None:
+    fake = _FakeConsole()
+    c = _console(tmp_path, fake)
+    c.set_rotation(rot)
+    try:
+        c.tap(*tap, timeout=5)  # landscape (rot 1/3): x up to 2339 is accepted
+        assert _mouse(fake.lines) == ["event mouse %d %d 0 1" % panel, "event mouse %d %d 0 0" % panel]
+        if rot in (1, 3):
+            with pytest.raises(ValueError):
+                c.tap(0, 1080, timeout=5)  # landscape height is 1080
+        else:
+            with pytest.raises(ValueError):
+                c.tap(1080, 0, timeout=5)
+    finally:
+        c.close()
+        fake.close()
+    for bad in (-1, 4, True, "1"):
+        with pytest.raises(ValueError):
+            c.set_rotation(bad)  # type: ignore[arg-type]
+
+
+def test_rotation_watch_updates_and_disables(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    h = _screen_host(tmp_path, monkeypatch, (0, "Physical size: 1080x2340"), (0, "SurfaceOrientation: 1"))
+    h.console = devhost.Console(5600, str(tmp_path / "t"), [1080, 2340])
+    assert h._rotation_tick() is True and h.console.rotation == 1
+    h.adb = lambda *a, **k: (0, "garbage")
+    assert h._rotation_tick() is False and h.console is None  # unknown rotation: adb path from now on
