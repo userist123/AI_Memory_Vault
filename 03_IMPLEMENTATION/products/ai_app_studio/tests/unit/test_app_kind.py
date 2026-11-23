@@ -36,7 +36,7 @@ def test_migration_0003_adds_kind_activity_and_settings(settings: Settings) -> N
             "seq", "prev_seq", "ts", "run_id", "project_id", "kind", "source", "audit_id", "payload",
             "artifact_sha256", "redactions"}
         assert {r[1] for r in con.execute("PRAGMA table_info(app_settings)")} >= {"key", "value"}
-        assert con.execute("SELECT version_num FROM alembic_version").fetchone()[0] == "0003"
+        assert con.execute("SELECT version_num FROM alembic_version").fetchone()[0] == "0004"  # head: S6 added 0004 (activity kinds cost.update, preview.captured)
     finally:
         con.close()
     upgrade_to_head(settings.db_url)  # idempotent

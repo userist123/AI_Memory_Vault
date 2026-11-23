@@ -183,3 +183,21 @@ def test_runs_routes_need_the_owner_token_and_validate_input(client: TestClient)
     assert client.post("/api/v1/runs", headers=AUTH, json=body).status_code == 404  # unknown project, nothing started
     assert client.post("/api/v1/runs/run_0123456789abcdef/stop").status_code == 401
     assert client.post("/api/v1/runs/not-a-run/stop", headers=AUTH).status_code == 422
+
+
+# ---------------------------------------------------------------- dev UI origins (process environment only, strict)
+def test_dev_origins_are_off_by_default_and_strictly_validated(tmp_path: Path) -> None:
+    dev = "http://127.0.0.1:1421"
+    off = TestClient(backend.create_app(Settings(data_dir=tmp_path / "a"), TOKEN), base_url=BASE)
+    assert off.get("/api/v1/projects", headers={**AUTH, "Origin": dev}).status_code == 403  # control: not allowed by default
+    on = TestClient(backend.create_app(Settings(data_dir=tmp_path / "b"), TOKEN, dev_origins=[dev]), base_url=BASE)
+    assert on.get("/api/v1/projects", headers={**AUTH, "Origin": dev}).status_code == 200
+    assert on.get("/api/v1/projects", headers={**AUTH, "Origin": "http://127.0.0.1:1422"}).status_code == 403
+    for bad in ("http://evil.example:1421", "http://127.0.0.1", "https://127.0.0.1:1421", "null", "*", "http://127.0.0.1:1421/x",
+                "http://localhost:1421.evil.com"):
+        with pytest.raises(ValueError):
+            backend.create_app(Settings(data_dir=tmp_path / "c"), TOKEN, dev_origins=[bad])
+    assert backend.parse_dev_origins(" http://127.0.0.1:1421 , http://localhost:4174 ") == [
+        "http://127.0.0.1:1421", "http://localhost:4174"]
+    assert backend.parse_dev_origins("") == []
+    project_kind.unregister("app")

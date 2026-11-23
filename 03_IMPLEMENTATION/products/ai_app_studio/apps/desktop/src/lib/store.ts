@@ -1,5 +1,5 @@
 /** Activity state: a pure reducer over validated frames plus a tiny external store for React. */
-import { type ActivityEvent, P, isPreviewProjectId } from "./events";
+import { type ActivityEvent, P, previewLabel } from "./events";
 import { clean, inspect, TEXT_CAP } from "./sanitize";
 
 export type DeviceKind = "phone" | "tablet" | "desktop";
@@ -79,6 +79,8 @@ export interface State {
   build: { lines: BuildLine[]; errors: BuildLine[]; status: string };
   revision: number;
   previewProjectId: string;
+  /** bumped by every preview.captured / preview.revision: the iframes reload on it (a file.diff already raises revision) */
+  previewNonce: number;
   taps: Tap[];
   cost: { inputTokens: number; outputTokens: number; costUsd: number; budgetUsd: number | null };
   gaps: Gap[];
@@ -108,6 +110,7 @@ export const initialState: State = {
   build: { lines: [], errors: [], status: "" },
   revision: 0,
   previewProjectId: "",
+  previewNonce: 0,
   taps: [],
   cost: { inputTokens: 0, outputTokens: 0, costUsd: 0, budgetUsd: null },
   gaps: [],
@@ -232,7 +235,10 @@ function applyEvent(s0: State, e: ActivityEvent): State {
       s.endedAt = null;
       const bud = P.num(e, "budgetUsd");
       if (bud !== null) s.cost = { ...s.cost, budgetUsd: bud };
-      if (isPreviewProjectId(e.projectId)) s.previewProjectId = e.projectId;
+      {
+        const label = previewLabel(e.projectId);
+        if (label) s.previewProjectId = label;
+      }
       break;
     }
     case "run.finished": {
@@ -370,10 +376,14 @@ function applyEvent(s0: State, e: ActivityEvent): State {
     }
     case "preview.captured":
     case "preview.revision": {
+      s.previewNonce = s.previewNonce + 1;
       const rev = P.num(e, "revision");
       if (rev !== null && rev > s.revision) s.revision = rev;
       else if (rev === null) s.revision = s.revision + 1;
-      if (isPreviewProjectId(e.projectId)) s.previewProjectId = e.projectId;
+      {
+        const label = previewLabel(e.projectId);
+        if (label) s.previewProjectId = label;
+      }
       focus("device", null, asDevice(P.short(e, "frame")) ?? "phone");
       break;
     }

@@ -5,6 +5,7 @@ Serves ``<data>/preview/<project>/current`` for ``Host: p-<id16>.localhost:<port
 """
 from __future__ import annotations
 
+import os
 import sys
 import threading
 
@@ -16,7 +17,8 @@ from .service import site_root_for
 
 def main() -> None:
     settings = load_settings()
-    srv = PreviewServer(site_root_for(settings), port=settings.preview_port).start()
+    dev = [o.strip() for o in os.environ.get("AAS_DEV_ORIGINS", "").split(",") if o.strip()]
+    srv = PreviewServer(site_root_for(settings), port=settings.preview_port, extra_frame_ancestors=dev).start()
     print(f"preview server on http://127.0.0.1:{srv.port}", flush=True)
     stop = threading.Event()
 

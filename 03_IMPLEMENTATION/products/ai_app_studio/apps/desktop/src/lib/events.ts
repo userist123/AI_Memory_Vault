@@ -128,6 +128,14 @@ export function isPreviewProjectId(id: string): boolean {
   return PROJECT_HOST_RE.test(id);
 }
 
+/** The backend names projects prj_<16 lowercase hex>; the preview host label is the 16 hex digits. "" = not valid. */
+const BACKEND_PROJECT_RE = /^prj_([0-9a-f]{16})$/;
+export function previewLabel(id: string): string {
+  const m = BACKEND_PROJECT_RE.exec(id);
+  if (m) return m[1]!;
+  return isPreviewProjectId(id) ? id : "";
+}
+
 /** Server-side gap marker: {type: "gap", after, before} = rows after+1 .. before-1 are missing from the table. */
 export function parseGapFrame(raw: unknown): { after: number; before: number } | null {
   if (typeof raw !== "string" || raw.length > MAX_FRAME_CHARS || !raw.includes('"gap"')) return null;

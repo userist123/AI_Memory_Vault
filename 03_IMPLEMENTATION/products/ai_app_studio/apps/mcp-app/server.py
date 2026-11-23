@@ -236,7 +236,7 @@ def device() -> Any:
 
 @guarded("device_start")
 def device_start(form: Literal["phone", "tablet"]) -> Any:
-    """Start the visible Android emulator (owner setting, 8 GiB free disk and a healthy WSL are required)."""
+    """Start the visible Android emulator (owner setting, 8 GiB free disk and a healthy device host are required)."""
     return device().start(form)
 
 

@@ -114,9 +114,11 @@ fn hide_window(cmd: &mut Command) {
 
 fn spawn_backend(token: &str) -> Result<Child, String> {
     let root = product_root();
-    let script = root.join("apps").join("backend").join("main.py");
+    // `python -m apps.backend` (the package uses relative imports, so `python apps/backend/main.py` cannot work);
+    // the current directory is the product root, which is what makes `apps` importable
+    let script = root.join("apps").join("backend").join("__main__.py");
     if !script.exists() {
-        return Err("backend entry point apps/backend/main.py not found (set AAS_REPO_ROOT)".into());
+        return Err("backend entry point apps/backend/__main__.py not found (set AAS_REPO_ROOT)".into());
     }
     if port_in_use() {
         return Err(format!(
@@ -125,8 +127,10 @@ fn spawn_backend(token: &str) -> Result<Child, String> {
         ));
     }
     let mut cmd = Command::new(python_exe(&root));
-    cmd.arg("-I")
-        .arg(&script)
+    cmd.arg("-X")
+        .arg("utf8")
+        .arg("-m")
+        .arg("apps.backend")
         .arg("--token-stdin")
         .current_dir(&root)
         .env("AAS_API_PORT", api_port().to_string())
@@ -159,7 +163,31 @@ impl Backend {
         }
     }
 
+    /// Attach mode (scripts/run_studio.ps1): the launcher already started the backend and hands the owner token to
+    /// this process on the FIRST LINE OF STDIN (never argv, environment, file or log). Nothing is spawned here.
+    fn attach(&self) {
+        let mut line = String::new();
+        let phase = match std::io::stdin().read_line(&mut line) {
+            Ok(_) => {
+                let token = line.trim().to_string();
+                if token.len() >= 32 && token.len() <= 256 && token.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+                    Phase::Ready(Session { api_base: format!("http://127.0.0.1:{}", api_port()), token })
+                } else {
+                    Phase::Failed("attach mode: the first stdin line is not a valid owner token".into())
+                }
+            }
+            Err(e) => Phase::Failed(format!("attach mode: could not read the token from stdin: {e}")),
+        };
+        if let Ok(mut g) = self.phase.lock() {
+            *g = phase;
+        }
+        self.changed.notify_all();
+    }
+
     fn start(&self) {
+        if std::env::var("AAS_ATTACH_BACKEND").map(|v| v == "1").unwrap_or(false) {
+            return self.attach();
+        }
         let token = generate_token();
         let phase = match spawn_backend(&token) {
             Ok(child) => {

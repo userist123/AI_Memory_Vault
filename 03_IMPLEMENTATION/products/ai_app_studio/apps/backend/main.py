@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import dataclasses
 import json
+import os
 import re
 import shutil
 import sys
@@ -77,10 +79,25 @@ class ExternalMcp(Strict):
     enabled: StrictBool  # JSON true/false only: "yes", 1, "on" are 422
 
 
+_DEV_ORIGIN = re.compile(r"^http://(?:127\.0\.0\.1|localhost):[0-9]{4,5}$")
+
+
+def parse_dev_origins(value: str) -> list[str]:
+    return [o.strip() for o in value.split(",") if o.strip()]
+
+
 def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] = (),
-               runner_cli: list[str] | None = None, runner_extra_env: dict[str, str] | None = None) -> FastAPI:
-    """``runner_cli`` is the argv prefix that starts the agent CLI (default: the installed ``claude``). It comes from
-    the process command line only - no route, setting or environment variable can change it."""
+               runner_cli: list[str] | None = None, runner_extra_env: dict[str, str] | None = None,
+               dev_origins: list[str] | None = None) -> FastAPI:
+    """``runner_cli`` is the argv prefix that starts the agent CLI (default: the installed ``claude``).
+    ``dev_origins`` adds exact loopback UI origins (``http://127.0.0.1:<port>``) for the vite dev/preview servers of
+    scripts/run_studio.ps1 and the tests. Both come from the process command line / environment of the backend
+    only - no route or setting can change them, and nothing but a loopback http origin with a port is accepted."""
+    for o in dev_origins or []:
+        if not _DEV_ORIGIN.match(o):
+            raise ValueError(f"dev origin {o!r} is not http://127.0.0.1:<port> or http://localhost:<port>")
+    if dev_origins:
+        settings = dataclasses.replace(settings, allowed_origins=(*settings.allowed_origins, *dev_origins))
     if len(token) < MIN_TOKEN_CHARS:
         raise ValueError(f"owner token must be at least {MIN_TOKEN_CHARS} characters")
     activity.register_secret(token)
@@ -242,7 +259,8 @@ def main(argv: list[str] | None = None) -> None:
         token = settings.api_token()
         print("WARNING: dev token file mode - any local process of this user can read the token", file=sys.stderr)
     import uvicorn
-    uvicorn.run(create_app(settings, token, runner_cli=runner_cli), host=HOST, port=settings.api_port, log_level="warning",
+    dev_origins = parse_dev_origins(os.environ.get("AAS_DEV_ORIGINS", ""))
+    uvicorn.run(create_app(settings, token, runner_cli=runner_cli, dev_origins=dev_origins), host=HOST, port=settings.api_port, log_level="warning",
                 server_header=False, proxy_headers=False)
 
 

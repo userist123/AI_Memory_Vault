@@ -123,3 +123,20 @@ describe("inspect(): fail-closed visible escaping for approval/tool fields", () 
     expect(inspectList("rm -rf /").unsafe).toBe(true);
   });
 });
+
+// S6 follow-ups (S4 review): invisible fillers are flagged like the backend, and "ESC[" is not an over-swallowing CSI
+describe("S6 sanitiser follow-ups", () => {
+  it.each(["\u3164", "\u115f", "\u180e", "\u034f"])("drops and flags the invisible filler U+%s", (ch) => {
+    expect(clean(`ab${ch}cd`)).toBe("abcd");
+    const r = inspect(`ab${ch}cd`);
+    expect(r.unsafe).toBe(true);
+    expect(r.text).not.toContain(ch);
+  });
+
+  it("an ESC[ introducer without a final byte only loses the introducer, not the text after it", () => {
+    expect(clean(`a${ESC}[12é`)).toBe("a12é");
+    expect(clean(`a${ESC}[`)).toBe("a");
+    expect(clean(`a${ESC}[x`)).toBe("a"); // a letter IS a valid CSI final byte: ESC[x is one complete sequence
+    expect(clean(`a${ESC}[31mred${ESC}[0m`)).toBe("ared"); // control: real CSI sequences still go
+  });
+});

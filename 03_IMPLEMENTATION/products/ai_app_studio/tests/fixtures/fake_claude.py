@@ -29,6 +29,10 @@ async def run_mcp(cfg_path: str, calls: list[dict], project_id: str) -> None:
     rev = 0
     async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
         await s.initialize()
+        if not project_id:  # a runner grant is bound to one project: project_list returns exactly that one
+            listed = await s.call_tool("project_list", {})
+            body = json.loads(next(x.text for x in listed.content if x.type == "text"))
+            project_id = body["result"][0]["id"]
         for i, c in enumerate(calls):
             args = {k: (project_id if v == "$project" else rev if v == "$rev" else v) for k, v in c["args"].items()}
             cid = f"toolu_{i}"

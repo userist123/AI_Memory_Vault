@@ -140,7 +140,7 @@ export function App() {
   const previewSrc = (d: DeviceKind): string | null => {
     if (demo || !session || !state.previewProjectId) return null;
     void d;
-    return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}`;
+    return `${previewOrigin(state.previewProjectId, session.previewPort)}/?r=${state.revision}-${state.previewNonce}`;
   };
 
   const onDecide = (id: string, d: "approve" | "deny") => {

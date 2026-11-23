@@ -246,3 +246,22 @@ def test_connection_cap_refuses_extra_and_frees_slots(sites: dict[str, Path]) ->
         for c in held:
             c.close()
         s.stop()
+
+
+def test_s6_dev_frame_ancestors_are_opt_in_and_strict(sites: dict[str, Path]) -> None:
+    """The vite dev/preview UI (http://127.0.0.1:<port>) may frame the preview only when the server was started with
+    that exact origin; the default header stays Tauri-only and bad origins are refused."""
+    default = PreviewServer(lambda pid: sites.get(pid), port=0).start()
+    dev = PreviewServer(lambda pid: sites.get(pid), port=0, extra_frame_ancestors=["http://127.0.0.1:1421"]).start()
+    try:
+        assert "http://127.0.0.1:1421" not in req(default, "/")[1]["content-security-policy"]
+        csp = req(dev, "/")[1]["content-security-policy"]
+        assert "frame-ancestors http://tauri.localhost tauri://localhost http://127.0.0.1:1421" in csp
+        assert req(dev, "/nope")[1]["content-security-policy"] == csp  # also on error responses
+    finally:
+        default.stop()
+        dev.stop()
+    for bad in ("*", "http://evil.example:1421", "https://127.0.0.1:1421", "http://127.0.0.1", "http://127.0.0.1:1421 evil.com",
+                "http://127.0.0.1:1421;"):
+        with pytest.raises(ValueError):
+            PreviewServer(lambda pid: None, port=0, extra_frame_ancestors=[bad])

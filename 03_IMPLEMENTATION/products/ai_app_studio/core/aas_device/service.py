@@ -1,11 +1,11 @@
 """Device tools service (start phone, install, tap, screenshot) in front of the S5 launcher's public API.
 
-Gates, all fail closed and checked before any ``wsl.exe`` is started:
+Gates, all fail closed and checked before any device process is started:
   1. the owner setting ``device_enabled`` (default OFF; only the authenticated owner can change it);
-  2. free space on the system and LOCALAPPDATA drives >= 8 GiB (the S5 emulator crash-looped and filled C: with WSL dumps);
-  3. the WSL preflight (networking mode nat, pinned scripts, only aas-* AVDs).
+  2. free space on the system and LOCALAPPDATA drives >= 8 GiB (the S5 emulator crash-looped and filled C: with crash dumps);
+  3. the device-host preflight (networking mode nat, pinned scripts, only aas-* AVDs).
 The only thing imported from ``apps.device_host`` is ``launcher`` (``preflight``, ``DeviceSession``); this module
-never builds an argv and never calls ``wsl.exe``. Screenshots are saved under ``<data>/device/shots/<sha256>.png``
+never builds an argv and never starts a process itself. Screenshots are saved under ``<data>/device/shots/<sha256>.png``
 and only their digest and size are returned to the agent.
 """
 from __future__ import annotations
@@ -80,7 +80,7 @@ class DeviceService:
         try:
             self._preflight()
         except Exception as e:  # noqa: BLE001 - LauncherRefused, Tampered, DeviceError, OSError: all fail closed
-            raise Unavailable(f"device tools are disabled: WSL preflight failed ({type(e).__name__}: {str(e)[:160]})") from e
+            raise Unavailable(f"device tools are disabled: device-host preflight failed ({type(e).__name__}: {str(e)[:160]})") from e
 
     def _rec(self, kind: str, **payload: Any) -> None:
         try:

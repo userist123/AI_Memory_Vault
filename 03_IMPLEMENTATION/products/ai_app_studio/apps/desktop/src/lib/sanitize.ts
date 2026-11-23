@@ -15,7 +15,9 @@ export const TRUNCATION_MARK = " …[truncated]";
 // so the text after it is kept instead of being swallowed to the end of the string.
 const OSC = /(?:\u001b\]|\u009d)[^\u0007\u001b\u009c\n\r]*(?:\u0007|\u001b\\|\u009c)/g;
 // CSI: ESC [ params final ; also 8-bit 0x9B
-const CSI = /(?:\u001b\[|\u009b)[0-?]*[ -/]*[@-~]?/g;
+// The final byte is required: an incomplete "ESC[12" must lose only its introducer (ESC2 / CONTROL below), not the
+// text that follows (S6: the optional final byte swallowed one extra character).
+const CSI = /(?:\u001b\[|\u009b)[0-?]*[ -/]*[@-~]/g;
 // DCS/SOS/PM/APC: ESC P/X/^/_ ... ST. Same rule: only a terminated string is removed as a whole.
 const DCS = /\u001b[PX^_][^\u001b\n\r]*\u001b\\/g;
 const ESC2 = /\u001b[ -~]?/g;
@@ -24,8 +26,9 @@ const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
 // Same list as the backend (activity.py _DROP): soft hyphen, Arabic letter mark, zero-width/LRM/RLM, line and
 // paragraph separators, bidi embeddings/overrides/isolates, word joiner and invisible operators, variation
 // selectors, BOM
-const INVISIBLE = /[\u00ad\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufe00-\ufe0f\ufeff]/g;
-const INVISIBLE_ONE = /^[\u00ad\u061c\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufe00-\ufe0f\ufeff]$/;
+// plus (S6) the invisible fillers U+034F, U+115F, U+180E, U+3164 (backend list is the same)
+const INVISIBLE = /[\u00ad\u034f\u061c\u115f\u180e\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2064\u2066-\u2069\u3164\ufe00-\ufe0f\ufeff]/g;
+const INVISIBLE_ONE = /^[\u00ad\u034f\u061c\u115f\u180e\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2064\u2066-\u2069\u3164\ufe00-\ufe0f\ufeff]$/;
 // Unicode tag block U+E0000-U+E007F (surrogate pair DB40 DC00-DC7F) and variation selectors supplement
 // U+E0100-U+E01EF (DB40 DD00-DDEF)
 const TAGS = /\udb40[\udc00-\udc7f\udd00-\uddef]/g;

@@ -147,3 +147,35 @@ describe("frame size cap aligned with the backend payload cap (review S4 finding
     expect(r.ok).toBe(false);
   });
 });
+
+// S6: the backend names projects prj_<16 hex>; the preview host label is the 16 hex digits (p-<id16>.localhost)
+describe("preview project id (backend prj_ ids)", () => {
+  it("run.started / preview.captured with a prj_ id select the preview host label without the prefix", () => {
+    const base = initialState;
+    const a = reducer(base, { type: "event", event: ev("run.started", { title: "T" }, { projectId: "prj_0123456789abcdef" }) });
+    expect(a.previewProjectId).toBe("0123456789abcdef");
+    const b = reducer(base, { type: "event", event: ev("preview.captured", { revision: 2, frame: "phone" }, { projectId: "prj_fedcba9876543210" }) });
+    expect(b.previewProjectId).toBe("fedcba9876543210");
+  });
+  it("a prj_ id with a bad body or other prefixes is still refused", () => {
+    const base = initialState;
+    for (const id of ["prj_xyz", "prj_0123456789abcde", "evil_0123456789abcdef", "prj_0123456789ABCDEF"]) {
+      expect(reducer(base, { type: "event", event: ev("run.started", {}, { projectId: id }) }).previewProjectId).toBe(base.previewProjectId);
+    }
+  });
+});
+
+// S6: a file.diff already carries the new revision, but the preview only has it after the build -> reload on preview.*
+describe("preview reload nonce", () => {
+  it("preview.captured bumps previewNonce even when the revision did not increase (file.diff came first)", () => {
+    const pid = { projectId: "prj_0123456789abcdef" };
+    let s = reducer(initialState, { type: "event", event: ev("file.diff", { path: "src/App.tsx", diff: "+x", revision: 3 }, pid) });
+    expect(s.revision).toBe(3);
+    const before = s.previewNonce;
+    s = reducer(s, { type: "event", event: ev("preview.captured", { revision: 3, frame: "phone" }, pid) });
+    expect(s.revision).toBe(3);
+    expect(s.previewNonce).toBe(before + 1);
+    s = reducer(s, { type: "event", event: ev("file.diff", { path: "src/App.tsx", diff: "+y", revision: 4 }, pid) });
+    expect(s.previewNonce).toBe(before + 1); // a diff alone never reloads the preview
+  });
+});

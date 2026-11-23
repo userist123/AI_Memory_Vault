@@ -11,7 +11,7 @@ import os
 import re
 import stat
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
@@ -42,6 +42,7 @@ SECURITY_HEADERS: tuple[tuple[str, str], ...] = (
 )
 
 _HOST_RE = re.compile(r"^p-([0-9a-f]{16})\.localhost:([0-9]{1,5})$")
+_DEV_ANCESTOR_RE = re.compile(r"^http://(?:127\.0\.0\.1|localhost):[0-9]{4,5}$")
 _SEGMENT_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._@+-]{0,100}$")
 _REPARSE = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
 _MIME = {
@@ -98,9 +99,16 @@ class _BoundedServer(ThreadingHTTPServer):
 
 class PreviewServer:
     def __init__(self, site_root_for: Callable[[str], Path | None], host: str = BIND_HOST, port: int = DEFAULT_PORT,
-                 idle_timeout: float = IDLE_TIMEOUT_S, max_connections: int = MAX_CONNECTIONS) -> None:
+                 idle_timeout: float = IDLE_TIMEOUT_S, max_connections: int = MAX_CONNECTIONS,
+                 extra_frame_ancestors: Iterable[str] = ()) -> None:
         if host != BIND_HOST:
             raise ValueError("preview server binds to 127.0.0.1 only")
+        extra = list(extra_frame_ancestors)
+        for o in extra:  # S6: exact loopback UI origins of the vite dev/preview servers only (dev + tests)
+            if not _DEV_ANCESTOR_RE.match(o):
+                raise ValueError(f"frame ancestor {o!r} is not http://127.0.0.1:<port> or http://localhost:<port>")
+        self._headers = tuple(
+            (k, v + "".join(f" {o}" for o in extra) if k == "Content-Security-Policy" else v) for k, v in SECURITY_HEADERS)
         self._site_root_for = site_root_for
         self._idle_timeout = idle_timeout
         self.httpd = _BoundedServer((host, port), self._make_handler(), max_connections)
@@ -140,7 +148,7 @@ class PreviewServer:
                 self.send_response(code)
                 self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(body)))
-                for k, v in SECURITY_HEADERS:
+                for k, v in server._headers:
                     self.send_header(k, v)
                 self.send_header("Connection", "close")
                 self.end_headers()

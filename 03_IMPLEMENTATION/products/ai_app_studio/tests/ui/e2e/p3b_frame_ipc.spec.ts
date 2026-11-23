@@ -32,7 +32,7 @@ test("preview frame is isolated from the studio IPC", async ({ page }) => {
 
   be.push({ kind: "run.started", payload: { title: "frames" } }, { kind: "preview.revision", payload: { revision: 1, frame: "phone" } });
   const iframe = page.getByTestId("frame-phone");
-  await expect(iframe).toHaveAttribute("src", `http://p-${PROJECT}.localhost:${PORTS.preview}/?r=1`);
+  await expect(iframe).toHaveAttribute("src", `http://p-${PROJECT}.localhost:${PORTS.preview}/?r=1-1`);
   await expect(iframe).toHaveAttribute("referrerpolicy", "no-referrer");
   // allow-same-origin is only tolerable because the frame origin is not the app origin
   expect(new URL(`http://p-${PROJECT}.localhost:${PORTS.preview}/`).origin).not.toBe(new URL(uiUrl).origin);
@@ -79,9 +79,9 @@ test("preview frame is isolated from the studio IPC", async ({ page }) => {
   // exact sandbox (checked after the behaviour so a mutation shows the behavioural failure first)
   await expect(iframe).toHaveAttribute("sandbox", "allow-scripts allow-same-origin");
 
-  // frames reload on every revision
+  // frames reload on every preview.revision / preview.captured (src = revision-nonce, S6)
   be.push({ kind: "preview.revision", payload: { revision: 2, frame: "phone" } });
-  await expect(iframe).toHaveAttribute("src", `http://p-${PROJECT}.localhost:${PORTS.preview}/?r=2`);
+  await expect(iframe).toHaveAttribute("src", `http://p-${PROJECT}.localhost:${PORTS.preview}/?r=2-2`);
 });
 
 test("positive controls: same-origin frame reads the parent; probe without CSP/sandbox reaches the API", async ({ page }) => {
