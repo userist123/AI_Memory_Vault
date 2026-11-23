@@ -202,13 +202,15 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
             raise ValidationFailed("invalid project id")
         if runner.live_project() == pid:
             raise runner_mod.RunInProgress("a run of this project is in progress: stop it first", projectId=pid)
+        if build_service.building_project() == pid:  # also a build started by an external MCP client
+            raise runner_mod.RunInProgress("a build of this project is in progress: wait for it", projectId=pid)
         studio.get_project(OWNER, pid, with_components=False)  # NotFound
         if b is None or not b.approvalId:
             apr = studio.request_approval(OWNER, "project.delete", {"projectId": pid}, project_id=pid)
             raise ApprovalRequired("deleting a project needs the owner's approval", approvalId=apr["approvalId"])
         res = studio.delete_project(OWNER, pid, approval_id=b.approvalId)
         shutil.rmtree(build_service.preview_base(settings, pid), ignore_errors=True)
-        (capture.captures_dir(settings) / ".index" / f"{pid}.json").unlink(missing_ok=True)
+        capture.forget_project(settings, pid)  # index + the PNGs no other project references
         return res
 
     @app.put(f"{API}/projects/{{pid}}/file")
@@ -437,7 +439,11 @@ class CappedLog:
 
 def purge_trash(settings: Settings, days: int, *, now: float | None = None) -> int:
     """B4: deleted projects wait in <data>/trash for the retention period, then go. Only ``prj_*`` entries that are
-    real directories (no link) directly under trash are removed. Returns the number removed."""
+    real directories (no link) directly under trash are removed. Returns the number removed.
+    The age is the deletion time encoded in the folder name (``prj_<id>-<UTC %Y%m%dT%H%M%S>``, set by
+    Studio.delete_project): shutil.move keeps the project's old mtime, so the mtime says nothing about the deletion.
+    A name whose stamp does not parse is kept (never guessed)."""
+    import datetime as _dt
     import time
     trash = settings.data_dir / "trash"
     if not trash.is_dir() or trash.is_symlink():
@@ -445,11 +451,14 @@ def purge_trash(settings: Settings, days: int, *, now: float | None = None) -> i
     limit = (now if now is not None else time.time()) - days * 86400
     n = 0
     for d in trash.iterdir():
-        try:
-            st = d.lstat()
-        except OSError:
+        m = re.fullmatch(r"prj_[0-9a-f]{16}-([0-9]{8}T[0-9]{6})", d.name)
+        if not m:
             continue
-        if re.fullmatch(r"prj_[0-9a-f]{16}-[0-9T]{15}", d.name) and d.is_dir() and not d.is_symlink()                 and st.st_mtime < limit:
+        try:
+            deleted = _dt.datetime.strptime(m.group(1), "%Y%m%dT%H%M%S").replace(tzinfo=_dt.UTC).timestamp()
+        except ValueError:
+            continue
+        if d.is_dir() and not d.is_symlink() and deleted < limit:
             shutil.rmtree(d, ignore_errors=True)
             n += 1
     return n

@@ -37,6 +37,7 @@ LOG_LINES = 40
 _ID16 = re.compile(r"^[0-9a-f]{16}$")
 _SITE = re.compile(r"^site-[0-9]{10,16}$")
 _LOCK = threading.Lock()
+_BUILDING: dict[str, str] = {}  # "project" -> project id of the build holding _LOCK (S9a review: delete is refused)
 MIN_FREE_BYTES = 5 * 1024 ** 3  # B4: a build (Docker layers, node_modules copy, Gradle) never starts below this
 BUILD_ACTOR = Actor("system", "build", "system")  # only when a caller passes no actor; still policy-checked + audited
 
@@ -70,6 +71,11 @@ def _audited(studio: Any, actor: Actor | None, project_id: str, target: str, fn:
 class BuildFailed(StudioError):
     code = "build_failed"
     http_status = 422
+
+
+def building_project() -> str | None:
+    """Project whose build (web or android, any caller incl. external MCP) holds the build lock, else None."""
+    return _BUILDING.get("project")
 
 
 def preview_base(settings: Settings, project_id: str) -> Path:
@@ -137,6 +143,7 @@ def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: C
     _disk_gate(studio.settings, free_bytes)
     if not _LOCK.acquire(blocking=False):
         raise Unavailable("a build is already running")
+    _BUILDING["project"] = project_id
     t0 = time.monotonic()
     build_root = studio.settings.data_dir / "build" / ("b" + uuid.uuid4().hex[:16])
     try:
@@ -178,6 +185,7 @@ def _build_web(studio: Any, project_id: str, *, run_id: str | None, run_build: C
                 "durationMs": dur, "url": f"http://p-{project_id[4:]}.localhost:{studio.settings.preview_port}/"}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
+        _BUILDING.pop("project", None)
         _LOCK.release()
 
 
@@ -213,6 +221,7 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
     _disk_gate(studio.settings, free_bytes)
     if not _LOCK.acquire(blocking=False):
         raise Unavailable("a build is already running")
+    _BUILDING["project"] = project_id
     t0 = time.monotonic()
     build_root = studio.settings.data_dir / "build" / ("a" + uuid.uuid4().hex[:16])
     try:
@@ -256,4 +265,5 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
                 "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
+        _BUILDING.pop("project", None)
         _LOCK.release()

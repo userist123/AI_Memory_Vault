@@ -103,6 +103,7 @@ if sys.platform == "win32":
     _PIPE_TYPE_MESSAGE, _PIPE_READMODE_MESSAGE, _PIPE_REJECT_REMOTE_CLIENTS = 0x4, 0x2, 0x8
     _INVALID_HANDLE = wintypes.HANDLE(-1).value
     _ERROR_NO_DATA = 232
+    _ERROR_PIPE_BUSY = 231
     _WAIT_TIMEOUT = 0x102
 
     def logon_sid() -> str:
@@ -171,7 +172,15 @@ if sys.platform == "win32":
             with self._lock:
                 if self._closed:
                     raise OSError("listener closed")
-                if self._ov is None:
+                busy = False
+                if self.handle is None:  # all instances were busy after the last accept: try again now
+                    try:
+                        self.handle = self._new_handle()
+                    except OSError as e:
+                        if getattr(e, "winerror", None) != _ERROR_PIPE_BUSY:
+                            raise
+                        busy = True
+                if not busy and self._ov is None:
                     try:
                         self._ov = _winapi.ConnectNamedPipe(self.handle, overlapped=True)
                     except OSError as e:
@@ -180,6 +189,9 @@ if sys.platform == "win32":
                         self._recycle()  # the client connected and left already
                         return None
                 ov = self._ov
+            if busy:
+                time.sleep(min(timeout, ACCEPT_POLL_S))
+                return None
             res = _winapi.WaitForMultipleObjects([ov.event], False, max(1, int(timeout * 1000)))
             if res == _WAIT_TIMEOUT:
                 return None
@@ -192,14 +204,26 @@ if sys.platform == "win32":
                     self._recycle()
                     return None
                 conn = PipeConnection(self.handle)
-                self.handle = self._new_handle()
+                self.handle = None  # owned by conn from here: the listener never closes it
+                try:
+                    self.handle = self._new_handle()
+                except OSError as e:  # ERROR_PIPE_BUSY: every instance is taken; the next accept() retries
+                    if getattr(e, "winerror", None) != _ERROR_PIPE_BUSY:
+                        conn.close()
+                        raise
                 return conn
 
         def _recycle(self) -> None:
+            h, self.handle = self.handle, None
             try:
-                _winapi.CloseHandle(self.handle)
+                if h is not None:
+                    _winapi.CloseHandle(h)
             finally:
-                self.handle = self._new_handle()
+                try:
+                    self.handle = self._new_handle()
+                except OSError as e:
+                    if getattr(e, "winerror", None) != _ERROR_PIPE_BUSY:
+                        raise
 
         def close(self) -> None:
             with self._lock:
@@ -214,9 +238,11 @@ if sys.platform == "win32":
                     except OSError:
                         pass
                 try:
-                    _winapi.CloseHandle(self.handle)
+                    if self.handle is not None:
+                        _winapi.CloseHandle(self.handle)
                 except OSError:
                     pass
+                self.handle = None
                 if self._sd:
                     _K32.LocalFree(self._sd)
                     self._sd = ctypes.c_void_p()

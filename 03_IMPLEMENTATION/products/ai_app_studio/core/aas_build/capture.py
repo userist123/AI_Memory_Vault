@@ -111,6 +111,26 @@ def _register_and_prune(settings: Any, project_id: str, added: list[tuple[str, i
                     (captures_dir(settings) / f"{sha}.png").unlink(missing_ok=True)
 
 
+def forget_project(settings: Any, project_id: str) -> int:
+    """Project delete: drop the project's index and unlink its PNGs that no other project's index references.
+    Returns the number of PNGs removed."""
+    if not isinstance(project_id, str) or not _PID.match(project_id):
+        return 0
+    idx = _index_dir(settings)
+    path = idx / f"{project_id}.json"
+    n = 0
+    with _INDEX_LOCK:
+        own = {e["sha"] for e in _read_index(path)}
+        path.unlink(missing_ok=True)
+        held = {e["sha"] for f in idx.glob("prj_*.json") for e in _read_index(f)} if idx.is_dir() else set()
+        for sha in own - held:
+            p = captures_dir(settings) / f"{sha}.png"
+            if p.is_file() and not p.is_symlink():
+                p.unlink(missing_ok=True)
+                n += 1
+    return n
+
+
 def captures_dir(settings: Any) -> Path:
     return Path(settings.data_dir) / "captures"
 
