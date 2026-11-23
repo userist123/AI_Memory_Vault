@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.winpaths import abs_win_path
 from aas_build import desktop, export, runner, service
 from aas_build.runner import BuildError, DesktopResult
 from studio_core import activity
@@ -19,7 +20,7 @@ from studio_core.errors import Unavailable
 from .conftest import OWNER
 from .test_s9b_export import KEY, built, site, two_step
 
-CARGO = "C:/fake/toolchain/bin/cargo.exe"
+CARGO = abs_win_path("fake", "toolchain", "bin", "cargo.exe")
 FAKE_EXE = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00 fake exe"
 SEEN: dict[str, Any] = {}
 
@@ -31,7 +32,7 @@ def droot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, studio) -> Path:  # t
     (root / "vendor" / "tauri-2.12.7" / "src" / "lib.rs").write_text("pub fn a() {}", encoding="utf-8")
     monkeypatch.setenv("AAS_DESKTOP_ROOT", str(root))
     desktop.secure_dir(root)  # owner-only root (S9c review M2/M3), then the studio-held vendor manifest
-    real = desktop.read_acl  # real ACL of the root and below; the temp dir's parents (e.g. D:\w) are not under test
+    real = desktop.read_acl  # real ACL of the root and below; the temp dir's parents are not under test
     monkeypatch.setattr(desktop, "read_acl", lambda p: real(p) if Path(p).is_relative_to(root) else (desktop.current_sid(), []))
     desktop.record_vendor(studio.settings, root / "vendor")
     return root
@@ -43,7 +44,7 @@ def fake_build(exe: bytes = FAKE_EXE, fail: str | None = None):  # type: ignore[
         SEEN["files"] = sorted(p.relative_to(wrapper.parent).as_posix() for p in wrapper.parent.rglob("*") if p.is_file())
         SEEN["conf"] = json.loads((wrapper / "tauri.conf.json").read_text(encoding="utf-8"))
         SEEN["cargo_config"] = (wrapper / ".cargo" / "config.toml").read_text(encoding="utf-8")
-        SEEN["template"] = {f: (wrapper / f).read_bytes() for f in desktop.TEMPLATE_FILES}
+        SEEN["template"] = {f: (wrapper / f).read_bytes() for f in (*desktop.TEMPLATE_FILES, *desktop.ICON_FILES)}
         SEEN["dist"] = {p.relative_to(wrapper.parent / "dist").as_posix(): p.read_bytes()
                         for p in (wrapper.parent / "dist").rglob("*") if p.is_file()}
         if fail:
@@ -65,7 +66,7 @@ def test_argv_is_fixed_offline_locked_release() -> None:
 def test_env_is_minimal_offline_and_proxy_sinkholed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for k, v in {"ANTHROPIC_API_KEY": "sk-ant-x", "GITHUB_TOKEN": "t", "HTTPS_PROXY": "http://corp:3128",
                  "RUSTFLAGS": "-C link-arg=/evil", "CARGO_REGISTRIES_X_TOKEN": "t", "RUSTC_WRAPPER": "evil.exe",
-                 "USERPROFILE": "C:/Users/x", "AAS_OWNER_TOKEN": "z" * 40}.items():
+                 "USERPROFILE": abs_win_path("Users", "x"), "AAS_OWNER_TOKEN": "z" * 40}.items():
         monkeypatch.setenv(k, v)
     env = runner.desktop_env(cargo=CARGO, cargo_home=tmp_path / "ch", target_dir=tmp_path / "t", tmp=tmp_path / "tmp")
     assert env["CARGO_NET_OFFLINE"] == "true"
@@ -177,6 +178,8 @@ def test_agent_files_cannot_override_the_template(studio, droot: Path) -> None: 
     service.build_desktop(studio, pid, run_build=fake_build(), cargo=CARGO)
     for f in desktop.TEMPLATE_FILES:
         assert SEEN["template"][f] == (desktop.TEMPLATE / f).read_bytes(), f
+    for f in desktop.ICON_FILES:  # generated from the committed icon.svg, never taken from the project (D1)
+        assert SEEN["template"][f] and f.startswith("icons/")
     assert set(SEEN["dist"]) == {"index.html", "assets/app.js"}
     assert SEEN["conf"]["identifier"] == "dev.aiappstudio.p" + pid[4:]
     assert (droot / "vendor").as_posix() in SEEN["cargo_config"]

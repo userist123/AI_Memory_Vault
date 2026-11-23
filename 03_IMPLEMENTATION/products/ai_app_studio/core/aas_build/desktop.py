@@ -3,7 +3,8 @@
 The agent supplies only the web dist (already validated by the web build reader); it never supplies Rust, Cargo
 files, tauri.conf.json, capabilities or cargo config. Layout of one build dir (``<desktop root>/builds/d<hex>``):
 
-    wrapper/   TEMPLATE_FILES copied byte-for-byte from images/desktop-wrapper, plus two studio-written files:
+    wrapper/   TEMPLATE_FILES copied byte-for-byte from images/desktop-wrapper, plus icons/ generated
+               from icon.svg at build time (icons.py, nothing binary is committed), plus two studio-written files:
                tauri.conf.json (identifier dev.aiappstudio.p<id16>, kit CSP, no capabilities, frontendDist ../dist)
                .cargo/config.toml (crates-io replaced by the vendored, checksum-locked crate dir; net.offline)
     dist/      the current preview site, re-validated with the web output reader (allow-listed names/extensions,
@@ -29,14 +30,15 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from . import runner
+from . import icons, runner
 from .runner import BuildError, BuildLimits
 from .winacl import Ace, current_sid, read_acl  # ctypes lives in winacl (P1c allow-list)
 
 PRODUCT = Path(__file__).resolve().parents[2]
 TEMPLATE = PRODUCT / "images" / "desktop-wrapper"
-TEMPLATE_FILES = ("Cargo.toml", "Cargo.lock", "build.rs", "src/main.rs", "icons/32x32.png", "icons/128x128.png",
-                  "icons/icon.ico")
+TEMPLATE_FILES = ("Cargo.toml", "Cargo.lock", "build.rs", "src/main.rs")
+ICON_SOURCE = "icon.svg"  # committed SVG; the PNG/ICO files the config lists are generated into <wrapper>/icons at build time
+ICON_FILES = ("icons/32x32.png", "icons/128x128.png", "icons/icon.ico")
 # = kit/index.html meta CSP (the preview server's header minus frame-ancestors: the app is the top-level document)
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; "
        "font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self'; manifest-src 'self'; "
@@ -106,6 +108,13 @@ def _copy_template(dst: Path) -> None:
         t = dst / rel
         t.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, t)
+    svg = TEMPLATE / ICON_SOURCE
+    if runner._is_link_like(os.lstat(svg)) or not svg.is_file():  # noqa: SLF001
+        raise BuildError(f"desktop template file is not a regular file: {ICON_SOURCE}")
+    try:
+        icons.write_icons(svg, dst / "icons")  # before cargo: tauri-build embeds icons/icon.ico
+    except (icons.IconError, OSError, ValueError) as e:
+        raise BuildError(f"desktop icon generation failed: {e}") from e
 
 
 def copy_dist(site: Path, dst: Path, limits: BuildLimits | None = None) -> list[str]:
@@ -168,7 +177,7 @@ def assert_root_trusted(root: Path, *, reader: Callable[[Path], tuple[str, list[
     """The desktop root (holds vendor/target/cargo-home) must be writable only by the current user, SYSTEM and
     Administrators: root itself (incl. inherit-only aces: they reach the children) and every parent up to, not
     including, the drive root (delete-child / DELETE / write-dac / write-owner would let another account swap the root;
-    so D:\w, where Authenticated Users have modify, is refused: use an owner-only dir under the drive root); add-file /
+    so a shared scratch dir directly under a drive root, where Authenticated Users have modify, is refused: use an owner-only dir under the drive root); add-file /
     add-subdirectory on a parent is refused too (a planted ``.cargo`` config there would be merged by cargo).
     No-op off Windows unless a ``reader`` is given."""
     if reader is None:

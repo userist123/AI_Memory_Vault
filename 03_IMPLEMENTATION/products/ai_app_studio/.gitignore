@@ -13,3 +13,8 @@ artifacts/
 data/
 *.keystore
 *.jks
+
+# D1: generated at build time from the committed SVG sources (images/desktop-wrapper/icon.svg via core/aas_build/icons.py,
+# apps/desktop/src-tauri/app-icon.svg via `pnpm icons` = tauri icon)
+images/desktop-wrapper/icons/
+apps/desktop/src-tauri/icons/

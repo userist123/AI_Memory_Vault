@@ -1,4 +1,4 @@
-// Demo mode replays the fixture run (no backend); writes the owner-facing screenshot docs/slices/S4-demo.png.
+// Demo mode replays the fixture run (no backend); writes the owner-facing screenshot 50_ARTIFACTS/ai_app_studio/screenshots/S4-demo.png.
 import { resolve } from "node:path";
 import { expect, test } from "../../../apps/desktop/testkit/pw";
 
@@ -15,7 +15,7 @@ test("demo mode replays a full run", async ({ page }) => {
   await expect(card.getByTestId("approval-argv").locator("code")).toHaveText(["pnpm", "add", "--offline", "date-fns@4.1.0"]);
   await expect(page.getByTestId("now-doing")).toContainText("deps_install");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: resolve(__dirname, "../../../docs/slices/S4-demo.png") });
+  await page.screenshot({ path: resolve(__dirname, "../../../50_ARTIFACTS/ai_app_studio/screenshots/S4-demo.png") });
 
   await expect(page.getByTestId("tap-marker").first()).toBeAttached({ timeout: 30_000 });
   await expect(page.getByTestId("build-errors")).toContainText("src/App.tsx:9:8");

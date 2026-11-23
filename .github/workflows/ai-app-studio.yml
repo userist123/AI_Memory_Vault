@@ -216,6 +216,8 @@ jobs:
         run: pnpm exec vitest run
       - name: vite build (frontendDist for the Tauri crate)
         run: pnpm exec vite build
+      - name: generate icons from the committed SVG (no PNG or ICO in git)
+        run: pnpm exec tauri icon src-tauri/app-icon.svg --output src-tauri/icons
       - name: cargo test --lib
         working-directory: 03_IMPLEMENTATION/products/ai_app_studio/apps/desktop/src-tauri
         run: cargo test --lib --locked

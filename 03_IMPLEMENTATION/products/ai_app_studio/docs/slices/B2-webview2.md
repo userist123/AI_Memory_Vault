@@ -11,7 +11,7 @@ code change was needed for B2.
   by clicking "Approve plan" in the studio window via Windows UI Automation) -> `code_write_file src/App.tsx` ->
   `app_build web` (offline Docker build) -> the studio loads it in the phone frame
   (`http://p-<id>.localhost:17880`, sandbox `allow-scripts allow-same-origin`, preview CSP `connect-src 'self'`).
-- Results were read three ways: the screenshot `B2-webview2.png` (unmodified debug exe, PrintWindow capture of the studio
+- Results were read three ways: the screenshot `50_ARTIFACTS/ai_app_studio/screenshots/B2-webview2.png` (unmodified debug exe, PrintWindow capture of the studio
   window only), the iframe's accessibility text (UI Automation), and CDP on a second, test-only copy of the exe whose
   only difference is `--remote-debugging-port` in `additionalBrowserArgs` (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` is
   ignored because the app sets the option; the config change was reverted and the product exe rebuilt).

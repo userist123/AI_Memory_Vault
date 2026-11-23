@@ -32,7 +32,7 @@ runner configuration (owner auto-memory in the builder's context) and fixed in a
 | capture returned | preview_capture tool.result ok, `preview.captured` phone rev 3 (shown in the UI) | PASS |
 
 Cost and size: **$0.1196, 8 turns**, 33.5 s (API 23.4 s), model claude-sonnet-5-5, 14 input / 3792 output tokens,
-85 465 cache-read / 18 275 cache-creation tokens; budget cap $2.00 not reached. Screenshot: `B1-real-run.png` (studio
+85 465 cache-read / 18 275 cache-creation tokens; budget cap $2.00 not reached. Screenshot: `50_ARTIFACTS/ai_app_studio/screenshots/B1-real-run.png` (studio
 window only: steps, diff, phone preview, capture thumbnail, cost pill).
 
 ## Findings
