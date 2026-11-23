@@ -24,7 +24,9 @@ SHA = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 
 @pytest.fixture()
 def client(tmp_path: Path) -> Iterator[TestClient]:
-    app = backend.create_app(Settings(data_dir=tmp_path / "data"), TOKEN)
+    # Hermetic: a stand-in CLI path (never spawned: the run routes under test refuse before any start) so the result
+    # does not depend on whether the Claude Code CLI is installed on the machine (a CI runner has none -> 503).
+    app = backend.create_app(Settings(data_dir=tmp_path / "data"), TOKEN, runner_cli=[str(tmp_path / "claude-standin")])
     with TestClient(app, base_url=BASE) as c:
         yield c
     project_kind.unregister("app")

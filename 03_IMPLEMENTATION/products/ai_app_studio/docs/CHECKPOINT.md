@@ -269,3 +269,27 @@ Update 2026-11-23 (B1 real run + B2 WebView2 probe, local commits on claude/ai-a
 - Verified: pytest tests/runner 54 passed (incl. real-CLI P5e + new auto-memory tests).
 - NEXT = fix F2/F3 (small), image rebuilds when C: >= 10 GB, final gate round 2 (fable-consultant -> Codex/Gemini ->
   security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (PR #413 failing checks, triage; fixed items pushed, open items need the owner):
+- FIXED exempt-area secret scan + zero-regression part 2: tests/security/test_activity.py and tests/wiring/test_s9b_export.py
+  plant fake PEM headers / the AWS documentation example key on purpose; added two narrow per-file, per-rule entries with
+  reasons to 20_TESTS/fixtures/exempt_area_secret_allowlist.json. Local: exempt_area_secret_scan.py FINDINGS=0.
+- FIXED pytest (windows runner, 3 failures): (a) tests/security/test_s6_backend.py client fixture now passes a stand-in
+  runner_cli, so the run routes no longer depend on the Claude CLI being installed (CI had none -> 503 not 404);
+  (b) tests/wiring/test_s9_named_pipe.py compared the DACL SID text with vr.user_sid(); Windows prints the built-in
+  Administrator (what the runner runs as) as the SDDL alias "LA", so the expected SID is now round-tripped through the
+  same SDDL API (_sddl_form). Product behaviour unchanged. Local: 20 + 11 passed.
+- FIXED CodeQL (11 alerts): activity._DROP now a raw-string pattern (identical match set, checked over every code
+  point); capture.py/preview_server.py/capture route get a normpath + startswith containment guard (defence in depth over
+  the _PID/_SHA/_SEGMENT_RE checks); test_s9_hardening origin assert uses exact set membership; p6a_adversarial.spec.ts
+  scheme check covers javascript/data/vbscript (UI e2e not run locally).
+- OSV: cookie 0.18.2 -> 0.18.3 in both Cargo.lock files (cargo update -p cookie --precise; not rebuilt here).
+  OPEN: 95 Maven findings (netty, bouncycastle, commons-compress, ... in images/android-build/template/gradle/
+  verification-metadata.xml = Gradle/AGP toolchain of the Android build image: needs a Gradle/AGP bump, regenerated
+  verification metadata and an image rebuild) and Rust glib 0.18.5 (tauri/gtk-rs 0.18, Linux-only), chrono (no fix),
+  proc-macro-error (unmaintained, no fix). Not ignored; owner decision.
+- OPEN, owner decision: validate_repository_layout.py / repository_hygiene.py ban *.png under 03_IMPLEMENTATION (14 files:
+  tauri icons, docs/slices screenshots, desktop-wrapper icons) and any drive-letter literal in 03_IMPLEMENTATION .py
+  (8 product files + 11 test files; the tests use such literals on purpose, e.g. test_appfiles path-traversal cases).
+  Fixing needs either moving the assets out of 03_IMPLEMENTATION or a narrow product exemption in the gate scripts;
+  literal-splitting to dodge the regex was rejected as gate evasion.

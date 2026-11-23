@@ -60,13 +60,17 @@ def _link_like(st: os.stat_result) -> bool:
 
 def _safe_file(root: Path, rel_segments: list[str]) -> Path | None:
     """Walk component by component; None when anything is a link/reparse point, missing, or not a lone regular file."""
-    cur = root
+    root_s = os.path.normpath(os.path.abspath(root))
+    cur = Path(root_s)
     try:
-        if _link_like(os.lstat(root)):
+        if _link_like(os.lstat(root_s)):
             return None
         for seg in rel_segments:
-            cur = cur / seg
-            st = os.lstat(cur)
+            nxt = os.path.normpath(os.path.join(str(cur), seg))
+            if not nxt.startswith(root_s + os.sep):  # defence in depth over _SEGMENT_RE: never leave the site root
+                return None
+            cur = Path(nxt)
+            st = os.lstat(nxt)
             if _link_like(st):
                 return None
         if not stat.S_ISREG(st.st_mode) or st.st_nlink > 1 or st.st_size > MAX_SERVE:

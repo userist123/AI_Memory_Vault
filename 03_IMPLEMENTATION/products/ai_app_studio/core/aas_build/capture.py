@@ -70,6 +70,16 @@ def _kill_active() -> None:
             pass
 
 
+def _contained(base: Path, name: str) -> Path:
+    """``base/name``, refused unless it stays inside ``base`` once normalised (defence in depth: ``name`` is already an
+    id that matched ``_PID``/``_SHA``, so this only fires if one of those checks is ever loosened)."""
+    root = os.path.normpath(os.path.abspath(base))
+    full = os.path.normpath(os.path.join(root, name))
+    if not full.startswith(root + os.sep):
+        raise ValidationFailed("path escapes its directory")
+    return Path(full)
+
+
 def _index_dir(settings: Any) -> Path:
     return captures_dir(settings) / ".index"
 
@@ -88,7 +98,7 @@ def _register_and_prune(settings: Any, project_id: str, added: list[tuple[str, i
     """Record the stored PNGs in the project's index (newest last) and prune the oldest over the count/byte quota."""
     idx = _index_dir(settings)
     idx.mkdir(parents=True, exist_ok=True)
-    path = idx / f"{project_id}.json"
+    path = _contained(idx, f"{project_id}.json")
     with _INDEX_LOCK:
         entries = _read_index(path)
         for sha, size in added:
@@ -112,14 +122,14 @@ def forget_project(settings: Any, project_id: str) -> int:
     if not isinstance(project_id, str) or not _PID.match(project_id):
         return 0
     idx = _index_dir(settings)
-    path = idx / f"{project_id}.json"
+    path = _contained(idx, f"{project_id}.json")
     n = 0
     with _INDEX_LOCK:
         own = {e["sha"] for e in _read_index(path)}
         path.unlink(missing_ok=True)
         held = {e["sha"] for f in idx.glob("prj_*.json") for e in _read_index(f)} if idx.is_dir() else set()
         for sha in own - held:
-            p = captures_dir(settings) / f"{sha}.png"
+            p = _contained(captures_dir(settings), f"{sha}.png")
             if p.is_file() and not p.is_symlink():
                 p.unlink(missing_ok=True)
                 n += 1
@@ -134,7 +144,7 @@ def capture_file(settings: Any, sha256: str) -> Path | None:
     """The stored PNG for a digest, or None (bad id, missing, link)."""
     if not isinstance(sha256, str) or not _SHA.match(sha256):
         return None
-    p = captures_dir(settings) / f"{sha256}.png"
+    p = _contained(captures_dir(settings), f"{sha256}.png")
     return p if p.is_file() and not p.is_symlink() else None
 
 

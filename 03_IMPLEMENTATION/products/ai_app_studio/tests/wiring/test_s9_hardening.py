@@ -37,7 +37,7 @@ def rows(studio, tool: str) -> list[ToolExecution]:  # type: ignore[no-untyped-d
 def test_production_origins_have_no_vite_dev_server() -> None:
     o = Settings(data_dir=Path("x")).allowed_origins
     assert not any(":1420" in x or ":1421" in x for x in o)
-    assert "http://tauri.localhost" in o and "tauri://localhost" in o
+    assert {"http://tauri.localhost", "tauri://localhost"} <= set(o)  # exact members, not substrings
 
 
 def test_dev_origin_is_only_added_explicitly(tmp_path: Path) -> None:

@@ -28,6 +28,8 @@ if sys.platform == "win32":
                                      ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(ctypes.c_void_p)]
     _adv.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [
         ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(wintypes.LPWSTR), ctypes.c_void_p]
+    _adv.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(ctypes.c_void_p), ctypes.c_void_p]
     _k32.LocalFree.argtypes = [ctypes.c_void_p]
     _k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
                                  wintypes.DWORD, wintypes.HANDLE]
@@ -140,6 +142,23 @@ def test_hub_pipe_keeps_the_hmac_handshake_and_rejects_a_wrong_key() -> None:
         assert time.monotonic() - t0 < 3  # the accept loop stops without the old wake-up client trick
 
 
+def _sddl_form(sid: str) -> str:
+    """How Windows prints ``sid`` inside an SDDL ACE: well-known SIDs become two-letter aliases (the built-in
+    Administrator account S-1-5-21-...-500 is "LA", which is what a GitHub runner runs as), so a plain string
+    comparison with ``vr.user_sid()`` only holds for ordinary accounts. Round-trip it through the same API."""
+    sd = ctypes.c_void_p()
+    assert _adv.ConvertStringSecurityDescriptorToSecurityDescriptorW(f"D:P(A;;GA;;;{sid})", 1, ctypes.byref(sd), None)
+    s = wintypes.LPWSTR()
+    try:
+        assert _adv.ConvertSecurityDescriptorToStringSecurityDescriptorW(sd, 1, 4, ctypes.byref(s), None)
+        out = s.value or ""
+    finally:
+        _k32.LocalFree(s)
+        _k32.LocalFree(sd)
+    assert out.startswith("D:P(A;;GA;;;") and out.endswith(")"), out
+    return out[len("D:P(A;;GA;;;"):-1]
+
+
 def _sddl_sid(lst: object) -> str:
     sddl = dacl_of(lst.handle)  # type: ignore[attr-defined]
     assert sddl.startswith("D:P"), sddl
@@ -174,7 +193,7 @@ def test_pipe_dacl_falls_back_to_the_token_user_sid_without_a_logon_sid(monkeypa
     addr = LOCAL + "aas-test-" + secrets.token_hex(8)
     lst = vr.NativePipeListener(addr)
     try:
-        assert _sddl_sid(lst) == vr.user_sid()
+        assert _sddl_sid(lst) == _sddl_form(vr.user_sid())
         assert lst._mode & vr._PIPE_REJECT_REMOTE_CLIENTS  # noqa: SLF001
         with pytest.raises(OSError):
             vr.NativePipeListener(addr)  # FILE_FLAG_FIRST_PIPE_INSTANCE still set

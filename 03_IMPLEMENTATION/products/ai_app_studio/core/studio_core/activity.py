@@ -112,12 +112,12 @@ _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]"                  # CSI
                    r"|\x1b\][^\x07\x1b\n\r]*(?:\x07|\x1b\\)?"    # OSC (incl. OSC 52); unterminated ends at \n or \r
                    r"|\x1b[PX^_][^\x1b\n\r]*(?:\x1b\\)?"         # DCS/SOS/PM/APC: stops at newline, CR, ST or the end
                    r"|\x1b[@-Z\\-_]")                         # other two-byte escapes
-_DROP = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f"                  # C0 (except tab/newline), DEL, C1
-                   "\u00ad\u061c\u034f\u115f\u180e\u3164"          # soft hyphen, Arabic mark, CGJ, Hangul/Mongolian fillers
-                   "\u200b-\u200f\u2028\u2029\u202a-\u202e"        # zero-width, LRM/RLM, line/para separators, bidi
-                   "\u2060-\u2064\u2066-\u2069"                    # word joiner, invisible operators, bidi isolates
-                   "\ufe00-\ufe0f\ufeff"                           # variation selectors, BOM
-                   "\U000e0000-\U000e007f\U000e0100-\U000e01ef]")  # tag characters, variation selectors supplement
+_DROP = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f"                  # C0 (except tab/newline), DEL, C1
+                   r"\u00ad\u061c\u034f\u115f\u180e\u3164"          # soft hyphen, Arabic mark, CGJ, Hangul/Mongolian fillers
+                   r"\u200b-\u200f\u2028\u2029\u202a-\u202e"        # zero-width, LRM/RLM, line/para separators, bidi
+                   r"\u2060-\u2064\u2066-\u2069"                    # word joiner, invisible operators, bidi isolates
+                   r"\ufe00-\ufe0f\ufeff"                           # variation selectors, BOM
+                   r"\U000e0000-\U000e007f\U000e0100-\U000e01ef]")  # tag characters, variation selectors supplement
 
 
 def sanitize_text(value: str | bytes, cap: int | None = None) -> str:

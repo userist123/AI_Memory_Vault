@@ -93,7 +93,7 @@ test.describe("P6a", () => {
     expect(dom.clipped).toBe(true);
     expect(dom.maxText).toBeLessThanOrEqual(16_100);
     expect(be.canaryHits).toEqual([]);
-    expect(pageRequests.filter((u) => u.includes(`:${PORTS.canary}`) || u.startsWith("javascript:"))).toEqual([]);
+    expect(pageRequests.filter((u) => u.includes(`:${PORTS.canary}`) || /^(?:javascript|data|vbscript):/i.test(u))).toEqual([]);
 
     // positive control: same page, same payload, innerHTML instead of text nodes
     await page.evaluate((html) => {
