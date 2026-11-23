@@ -147,6 +147,16 @@ def _write_meta(folder: Path, revision: int, caption: str) -> None:
     os.replace(tmp, folder / _META)
 
 
+def generated_revision(settings: Any, project_id: str) -> int | None:
+    """The app revision the stored store screenshots were shot from (None when unknown)."""
+    folder = brand.BrandStore(settings.data_dir).shots_dir(project_id)
+    try:
+        rev = json.loads((folder / _META).read_text(encoding="utf-8")).get("revision")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return rev if isinstance(rev, int) and not isinstance(rev, bool) else None
+
+
 def ensure_current(studio: Any, project_id: str, *, shoot: Callable[..., dict[str, Any]] | None = None) -> bool:
     """wow2 #8: when the brand kit enables store screenshots, make sure the stored ones match the app's current revision
     and caption (capturing the preview if not). True when new images were generated. Called by the owner export BEFORE

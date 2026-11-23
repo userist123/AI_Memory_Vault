@@ -15,12 +15,12 @@ export function ExportControls(props: {
   approve: (approvalId: string) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<{ target: Target; approvalId: string; sha256: string } | null>(null);
+  const [pending, setPending] = useState<{ target: Target; approvalId: string; sha256: string; note?: string } | null>(null);
   const [msg, setMsg] = useState<{ kind: "ok" | "warn"; text: string } | null>(null);
 
   const show = (target: Target, o: ExportOutcome) => {
-    if (o.kind === "approval") setPending({ target, approvalId: o.approvalId, sha256: o.sha256 });
-    else if (o.kind === "done") setMsg({ kind: "ok", text: `Exported to ${o.path}` });
+    if (o.kind === "approval") setPending({ target, approvalId: o.approvalId, sha256: o.sha256, note: o.note });
+    else if (o.kind === "done") setMsg({ kind: "ok", text: `Exported to ${o.path}${o.note ? `. ${o.note}` : ""}` });
     else if (o.kind === "blocked") setMsg({ kind: "warn", text: `Export blocked (secret scan): ${o.findings.join(", ")}` });
     else setMsg({ kind: "warn", text: `Export failed: ${o.message}` });
   };
@@ -64,6 +64,11 @@ export function ExportControls(props: {
             Export the {pending.target === "web" ? "web zip" : pending.target === "android" ? "debug APK" : "unsigned Windows exe"} with sha256{" "}
             <code title={pending.sha256}>{pending.sha256.slice(0, 12)}…</code>?
           </p>
+          {pending.note ? (
+            <p className="warn" data-testid="export-confirm-note">
+              {pending.note}
+            </p>
+          ) : null}
           <button className="btn primary" data-testid="export-approve" onClick={confirm}>
             Approve and export
           </button>

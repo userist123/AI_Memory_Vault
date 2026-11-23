@@ -91,12 +91,15 @@ class Artifact:
     files: list[str] = field(default_factory=list)
     embedded: bytes = b""  # desktop: deterministic zip of the dist embedded in the exe (scan input only)
     store_shots: dict[str, Any] = field(default_factory=dict)  # android: sha256 of each store screenshot + caption
+    store_shots_note: str = ""  # android: why stored screenshots were left out (shown to the owner, bound into the hash)
 
     @property
     def params(self) -> dict[str, Any]:
         p: dict[str, Any] = {"projectId": self.project_id, "target": self.target, "sha256": self.sha256}
         if self.store_shots:  # bound into the approval hash: regenerated/swapped screenshots need a new approval
             p["storeShots"] = dict(self.store_shots)
+        if self.store_shots_note:
+            p["storeShotsNote"] = self.store_shots_note
         return p
 
 
@@ -209,6 +212,7 @@ def recorded_build(studio: Any, project_id: str, target: str) -> tuple[str, dict
 
 
 STORE_SHOOT: Any = None  # tests inject a browser stand-in; None = the real capture
+STORE_SHOTS_OMITTED = "Capturi pentru magazin omise: nu s-au putut reface"  # owner-facing (Romanian)
 
 
 def prepare(studio: Any, project_id: str, target: str) -> Artifact:
@@ -274,17 +278,24 @@ def prepare(studio: Any, project_id: str, target: str) -> Artifact:
         names = ["app-debug.apk"]
     sha = hashlib.sha256(data).hexdigest()
     shots_fp: dict[str, Any] = {}
+    shots_note = ""
     if target == "android":
         try:
             from . import store_shots
+            failed = False
             try:  # wow2 #8: brand kit says store screenshots: shoot the preview now, before approval (never blocks)
                 store_shots.ensure_current(studio, project_id, shoot=STORE_SHOOT)
             except Exception as e:  # noqa: BLE001 - screenshots are optional; the APK export goes on without them
+                failed = True
                 log.warning("store screenshots were not generated for %s: %s", project_id, type(e).__name__)
             shots_fp = store_shots.fingerprint(studio.settings, project_id)
+            if failed and shots_fp and store_shots.generated_revision(studio.settings, project_id) != revision:
+                shots_fp = {}  # never ship screenshots of an older revision: leave them out and say so
+                shots_note = STORE_SHOTS_OMITTED
         except (OSError, ValueError):
             shots_fp = {}
-    return Artifact(project_id, target, data, sha, revision, slug, names, store_shots=shots_fp)
+    return Artifact(project_id, target, data, sha, revision, slug, names, store_shots=shots_fp,
+                    store_shots_note=shots_note)
 
 
 # ---------------------------------------------------------------- scan
@@ -401,7 +412,7 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
     def _do(ctx: Any) -> dict[str, Any]:
         if art.target == "android":  # nothing is written if the approved screenshots are no longer the stored ones
             from . import store_shots
-            if store_shots.fingerprint(studio.settings, art.project_id) != art.store_shots:
+            if not art.store_shots_note and store_shots.fingerprint(studio.settings, art.project_id) != art.store_shots:
                 raise ConflictError("the store screenshots changed after the owner approved the export: approve again")
         folder = root / f"{art.name}-{art.project_id[4:]}"
         _safe_dir(folder)
@@ -417,7 +428,7 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
             f.write(art.data)
         os.replace(tmp, target)
         shots: list[str] = []
-        if art.target == "android":  # W5: framed store screenshots (if the owner/agent made them) travel with the APK
+        if art.target == "android" and not art.store_shots_note:  # W5: framed store screenshots travel with the APK
             try:
                 from . import store_shots
                 shots = store_shots.copy_for_export(studio.settings, art.project_id, folder, art.store_shots)
@@ -428,6 +439,8 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
                "bytes": len(art.data), "revision": art.revision, "approvalId": approval_id}
         if shots:
             res["storeScreenshots"] = shots
+        if art.store_shots_note:
+            res["storeScreenshotsNote"] = art.store_shots_note
         return res
     return studio.operation(actor, OPERATION, OPERATION, art.params, _do, project_id=art.project_id,
                             approval_id=approval_id)
@@ -453,5 +466,6 @@ def export(studio: Any, actor: Actor, project_id: str, target: str, *, approval_
     if not approval_id:
         req = request(studio, actor, art)
         raise ApprovalRequired("exporting needs the owner's approval of this exact artifact",
-                               approvalId=req["approvalId"], sha256=art.sha256, target=target, status=req["status"])
+                               approvalId=req["approvalId"], sha256=art.sha256, target=target, status=req["status"],
+                               **({"storeShotsNote": art.store_shots_note} if art.store_shots_note else {}))
     return write(studio, actor, art, approval_id, dest_root)

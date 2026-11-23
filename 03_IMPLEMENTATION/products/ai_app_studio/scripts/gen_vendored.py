@@ -62,7 +62,9 @@ FILES: list[tuple[str, str, str]] = [
      "refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records "
      "(a runner:<run_id> label over the whole run; any other agent label, e.g. the external-MCP one, within a rolling "
      "APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever); R2: Studio.workspace validates the project id "
-     "with re.fullmatch (a trailing newline no longer passes `$`)."),
+     "with re.fullmatch (a trailing newline no longer passes `$`); wow2 B2a: peek_project (owner read endpoints: "
+     "policy enforced, no audit row and no run-less project.inspect activity event) and read_file(quiet=...) "
+     "that uses it."),
     ("core/studio_core/db.py", "core/studio_core/db.py",
      "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
      "(activity_events, app_settings) live in aas_models.py, not here."),

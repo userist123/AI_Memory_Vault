@@ -103,3 +103,53 @@ def test_capture_failure_does_not_block_the_export(studio, monkeypatch) -> None:
     monkeypatch.setattr(export, "STORE_SHOOT", boom)
     art = export.prepare(studio, pid, "android")
     assert not art.params.get("storeShots")
+
+
+OMITTED = "Capturi pentru magazin omise: nu s-au putut reface"
+
+
+def _boom(url: str, frames: list[str]) -> dict[str, bytes]:
+    raise RuntimeError("no chromium")
+
+
+def _set_meta_revision(studio: Any, pid: str, rev: int) -> None:
+    import json
+    meta = brand.BrandStore(studio.settings.data_dir).shots_dir(pid) / ".generated.json"
+    d = json.loads(meta.read_text(encoding="utf-8"))
+    d["revision"] = rev
+    meta.write_text(json.dumps(d), encoding="utf-8")
+
+
+def test_failed_reshoot_omits_stale_store_screenshots_and_says_so(studio, tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    pid = built(studio)
+    record_apk(studio, pid, apk_bytes())
+    _enable(studio, pid)
+    monkeypatch.setattr(export, "STORE_SHOOT", Shooter())
+    assert export.prepare(studio, pid, "android").params.get("storeShots")  # shots made at the current revision
+    _set_meta_revision(studio, pid, studio.get_revision(pid) - 1)  # ... now they are from an older revision
+    monkeypatch.setattr(export, "STORE_SHOOT", _boom)  # and re-shooting fails
+    art = export.prepare(studio, pid, "android")
+    assert not art.params.get("storeShots")  # stale shots are not shipped
+    assert art.params["storeShotsNote"] == OMITTED  # visible in the approval preview (and bound into its hash)
+    with pytest.raises(ApprovalRequired) as ei:
+        export.export(studio, OWNER, pid, "android", dest_root=tmp_path)
+    assert ei.value.details["storeShotsNote"] == OMITTED
+    approve(studio, ei.value.details["approvalId"])
+    res = export.export(studio, OWNER, pid, "android", approval_id=ei.value.details["approvalId"], dest_root=tmp_path)
+    assert res["status"] == "exported" and "storeScreenshots" not in res
+    assert res["storeScreenshotsNote"] == OMITTED
+    assert not [p for p in tmp_path.rglob("store-*.png") if "data" not in p.relative_to(tmp_path).parts]
+
+
+def test_failed_reshoot_keeps_screenshots_that_are_already_current(studio, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    pid = built(studio)
+    record_apk(studio, pid, apk_bytes())
+    _enable(studio, pid)
+    monkeypatch.setattr(export, "STORE_SHOOT", Shooter())
+    first = export.prepare(studio, pid, "android").params["storeShots"]
+    store = brand.BrandStore(studio.settings.data_dir)  # caption changed -> a re-shoot is attempted and fails
+    store.save_config(pid, brand.BrandConfig(glyph="leaf", background="#166534", caption="Other", store_screenshots=True))
+    monkeypatch.setattr(export, "STORE_SHOOT", _boom)
+    art = export.prepare(studio, pid, "android")
+    assert set(art.params["storeShots"]) == set(first)  # same revision: kept
+    assert "storeShotsNote" not in art.params

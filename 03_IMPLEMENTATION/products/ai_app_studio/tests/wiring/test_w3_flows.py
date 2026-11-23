@@ -93,7 +93,7 @@ def test_parse_accepts_the_playwright_subset() -> None:
     ("import { test } from 'node:fs';\ntest('x', async ({ page }) => {});", "@playwright/test"),
     ("test.use({ baseURL: 'http://evil' });", "top level"),
     ("test('x', async ({ page }) => { console.log(1); });", "statement"),
-    ("test('x', async ({ page }) => { await page.screenshot({ path: 'C:/x.png' }); });", "screenshot"),
+    ("test('x', async ({ page }) => { await page.screenshot({ path: '../x.png' }); });", "screenshot"),
     ("test('x', async ({ page }) => { await page.locator('a').evaluate(e => e.click()); });", "evaluate"),
     ("test('x', async ({ page }) => { await page.setExtraHTTPHeaders({}); });", "setExtraHTTPHeaders"),
     ("test('x', async ({ page }) => { await page.getByText(/(a+)+$/).click(); });", "regular expression"),

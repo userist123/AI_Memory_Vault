@@ -351,8 +351,8 @@ export async function fetchCapture(s: Session, sha256: string): Promise<Blob> {
 const APR_RE = /^apr_[0-9a-f]{16}$/;
 
 export type ExportOutcome =
-  | { kind: "approval"; approvalId: string; sha256: string }
-  | { kind: "done"; path: string; sha256: string }
+  | { kind: "approval"; approvalId: string; sha256: string; note?: string }
+  | { kind: "done"; path: string; sha256: string; note?: string }
   | { kind: "blocked"; findings: string[] }
   | { kind: "error"; message: string };
 
@@ -384,9 +384,11 @@ export async function exportProject(
     return { kind: "error", message: `HTTP ${res.status}` };
   }
   const d = (body.details && typeof body.details === "object" ? body.details : {}) as Record<string, unknown>;
+  // review #5: stale store screenshots were left out (server text, shown as plain sanitised text)
+  const note = (v: unknown) => (typeof v === "string" && v ? { note: inspect(v, 200).text } : {});
   if (res.status === 428) {
     if (typeof d.approvalId === "string" && APR_RE.test(d.approvalId) && typeof d.sha256 === "string" && SHA256_RE.test(d.sha256))
-      return { kind: "approval", approvalId: d.approvalId, sha256: d.sha256 };
+      return { kind: "approval", approvalId: d.approvalId, sha256: d.sha256, ...note(d.storeShotsNote) };
     return { kind: "error", message: "malformed approval request" };
   }
   if (res.status === 422 && body.error === "export_blocked") {
@@ -397,6 +399,6 @@ export async function exportProject(
     return { kind: "blocked", findings };
   }
   if (res.ok && typeof body.path === "string" && typeof body.sha256 === "string" && SHA256_RE.test(body.sha256))
-    return { kind: "done", path: inspect(body.path, 400).text, sha256: body.sha256 };
+    return { kind: "done", path: inspect(body.path, 400).text, sha256: body.sha256, ...note(body.storeScreenshotsNote) };
   return { kind: "error", message: inspect(body.message ?? `HTTP ${res.status}`, 200).text };
 }
