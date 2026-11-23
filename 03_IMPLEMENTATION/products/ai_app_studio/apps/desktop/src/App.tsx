@@ -40,6 +40,16 @@ import { exportArtifact, openExportFolder, ownerBuildStatus, startOwnerBuild } f
 import { RunControls } from "./components/RunControls";
 import { ChatPanel } from "./components/ChatPanel";
 import { fetchChat, sendChat } from "./lib/chatApi";
+import { InspectorOverlay } from "./components/InspectorOverlay";
+import { InspectorPanel } from "./components/InspectorPanel";
+import {
+  fetchInspectorOptions,
+  inspectorCapture,
+  inspectorEdit,
+  type ChatAttachment,
+  type EditOp,
+  type InspectorSelection,
+} from "./lib/inspector";
 import { elapsed, Timeline } from "./components/Timeline";
 
 const FOLLOW_PAUSE_MS = 10_000;
@@ -105,6 +115,11 @@ export function App() {
   const [selectedProject, setSelectedProject] = useState("");
   const [runBusy, setRunBusy] = useState(false);
   const [runError, setRunError] = useState("");
+  // W4 click-to-edit inspector: one toggle for the frames, the current selection, the element attached to the chat
+  const [inspectOn, setInspectOn] = useState(false);
+  const [inspected, setInspected] = useState<InspectorSelection | null>(null);
+  const [chatAttachment, setChatAttachment] = useState<ChatAttachment | null>(null);
+  const [frameEl, setFrameEl] = useState<HTMLIFrameElement | null>(null);
   const buildRef = useRef<HTMLDivElement>(null);
 
   // ---- S8: capture thumbnails (authenticated fetch -> blob: URLs) and the live emulator mirror ----
@@ -347,6 +362,19 @@ export function App() {
     return sendChat(session, pid, message);
   }, [session]);
 
+  const inspectorOptions = useCallback((pid: string) => {
+    if (!session) return Promise.reject(new Error("no session"));
+    return fetchInspectorOptions(session, pid);
+  }, [session]);
+  const inspectorSave = useCallback((pid: string, rev: number, sel: InspectorSelection, op: EditOp) => {
+    if (!session) return Promise.reject(new Error("no session"));
+    return inspectorEdit(session, pid, rev, sel.element, op);
+  }, [session]);
+  const inspectorShot = useCallback((sel: InspectorSelection) => {
+    if (!session) return Promise.resolve(null);
+    return inspectorCapture(session, sel.projectId, sel.device, sel.element);
+  }, [session]);
+
   const onStopRun = () => {
     if (!session || !state.runId) return;
     void stopRun(session, state.runId).catch(() => setRunError("Stop failed."));
@@ -469,6 +497,18 @@ export function App() {
               plans={plans}
               onPlanApprove={onPlanApprove}
               onPlanEdit={onPlanEdit}
+              attachment={chatAttachment}
+              onClearAttachment={() => setChatAttachment(null)}
+            />
+          ) : null}
+          {!demo && session && inspected ? (
+            <InspectorPanel
+              selection={inspected}
+              loadOptions={inspectorOptions}
+              edit={inspectorSave}
+              capture={inspectorShot}
+              onAttach={setChatAttachment}
+              onClose={() => setInspected(null)}
             />
           ) : null}
           {state.runStatus === "failed" && state.endReason ? (
@@ -524,9 +564,20 @@ export function App() {
               demoRevision={demo && state.revision > 0 ? state.revision : null}
               taps={state.taps.filter((t) => t.target === d)}
               now={now}
+              frameRef={setFrameEl}
             />
           ) : null,
         )}
+        {!demo && session && rightTab !== "mirror" ? (
+          <InspectorOverlay
+            device={rightTab}
+            src={previewSrc(rightTab)}
+            frame={frameEl}
+            active={inspectOn}
+            onToggle={setInspectOn}
+            onSelect={setInspected}
+          />
+        ) : null}
         {(Object.keys(DEVICES) as DeviceKind[]).map((d) => {
           if (rightTab !== d) return null;
           const last = [...state.captures].reverse().find((c) => c.frame === d);

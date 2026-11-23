@@ -34,6 +34,7 @@ PRODUCT = Path(__file__).resolve().parents[2]
 KIT = PRODUCT / "kit"
 KIT_FILES = ("package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "index.html", "tsconfig.json",
              "capacitor.config.ts", "vite.config.ts", "aas-env.d.ts")
+KIT_INSPECTOR = KIT / "template" / "src" / "aas-inspector.ts"  # W4: preview-only click-to-edit inspector
 KEEP_SITES = 2
 LOG_LINES = 40
 _ID16 = re.compile(r"^[0-9a-f]{16}$")
@@ -233,6 +234,10 @@ def _materialise(studio: Any, project_id: str, ctx: Path) -> int:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(ws.read_bytes(rel))
             n += 1
+    # W4: the kit's preview inspector (index.html loads /src/aas-inspector.ts) always comes from the kit, never from
+    # the project: a project file of the same name is overwritten here.
+    (ctx / "src").mkdir(parents=True, exist_ok=True)
+    shutil.copy2(KIT_INSPECTOR, ctx / "src" / "aas-inspector.ts")
     return n
 
 

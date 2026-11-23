@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PlanRecord, ProjectRef } from "../lib/api";
 import { CHAT_MAX, type ChatState, type ChatTurn } from "../lib/chatApi";
+import type { ChatAttachment } from "../lib/inspector";
 import { endReasonText } from "../lib/store";
 import { PlanCard } from "./PlanCard";
 
@@ -36,6 +37,9 @@ export function ChatPanel(props: {
   plans: PlanRecord[];
   onPlanApprove: (id: string) => void;
   onPlanEdit: (id: string, note: string) => void;
+  /** W4: an inspector element (descriptor text + cropped capture id) attached to the next message of its project */
+  attachment?: ChatAttachment | null;
+  onClearAttachment?: () => void;
 }) {
   const { projects, currentProjectId, version, runActive, load, send } = props;
   const [picked, setPicked] = useState("");
@@ -73,18 +77,21 @@ export function ChatPanel(props: {
     endRef.current?.scrollIntoView?.({ block: "nearest" });
   }, [chat.turns.length, pending]);
 
+  const attached = props.attachment && props.attachment.projectId === projectId ? props.attachment : null;
   const blocked = runActive || chat.busy || chat.running || sending;
   const canSend = !!projectId && !blocked && message.trim().length > 0;
 
   const onSend = () => {
     if (!canSend) return;
-    const text = message.trim().slice(0, CHAT_MAX);
+    const extra = attached ? `\n\n${attached.context}`.slice(0, CHAT_MAX - 1) : "";
+    const text = message.trim().slice(0, CHAT_MAX - extra.length) + extra;
     setSending(true);
     setError("");
     setPending(text);
     void send(projectId, text)
       .then(() => {
         setMessage("");
+        if (attached) props.onClearAttachment?.();
         return load(projectId).then(setChat);
       })
       .catch((e: unknown) => {
@@ -174,6 +181,16 @@ export function ChatPanel(props: {
         ) : null}
         <div ref={endRef} />
       </div>
+      {attached ? (
+        <p className="row tag" data-testid="chat-attachment">
+          <span>Element atașat: {attached.label}</span>
+          {attached.captureSha ? <small className="muted"> (cu captură)</small> : null}
+          <button className="btn" data-testid="chat-attachment-remove" aria-label="Scoate elementul atașat"
+            onClick={() => props.onClearAttachment?.()}>
+            ×
+          </button>
+        </p>
+      ) : null}
       <div className="row chat-input">
         <textarea
           data-testid="chat-input"
