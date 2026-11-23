@@ -1,0 +1,6 @@
+/* AI App Studio edge-to-edge shell (injected into index.html by aas-build-android).
+   viewport-fit=cover makes the page draw under the status bar, display cutout and gesture bar; these rules keep the
+   content clear of them. env() is the web standard; --safe-area-inset-* is what Capacitor's SystemBars plugin injects.
+   A page that already handles insets itself opts out with <html data-aas-insets="app">. */
+:root{--aas-inset-top:max(env(safe-area-inset-top,0px),var(--safe-area-inset-top,0px));--aas-inset-right:max(env(safe-area-inset-right,0px),var(--safe-area-inset-right,0px));--aas-inset-bottom:max(env(safe-area-inset-bottom,0px),var(--safe-area-inset-bottom,0px));--aas-inset-left:max(env(safe-area-inset-left,0px),var(--safe-area-inset-left,0px))}
+html:not([data-aas-insets="app"]) body{padding-top:var(--aas-inset-top);padding-right:var(--aas-inset-right);padding-bottom:var(--aas-inset-bottom);padding-left:var(--aas-inset-left);box-sizing:border-box}

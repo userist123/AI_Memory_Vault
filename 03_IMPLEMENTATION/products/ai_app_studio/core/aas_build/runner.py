@@ -460,7 +460,7 @@ def _studio_keystore(p: Path) -> None:
 
 
 def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path, out: Path, image: str, app_id: str,
-                       cpus: str = "4", memory: str = "4g") -> list[str]:
+                       cpus: str = "4", memory: str = "4g", brand: Path | None = None) -> list[str]:
     """Fixed argv of the offline APK build. /tmp is noexec: Gradle runs from the image (/opt), aapt2 comes from the
     pinned build-tools (android.aapt2FromMavenOverride) and native integration is off (org.gradle.native=false)."""
     if not os.path.isabs(docker):
@@ -472,6 +472,8 @@ def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path
     if not isinstance(app_id, str) or not _APP_ID_RE.match(app_id):
         raise BuildError("application id is not a studio package id")
     _studio_keystore(keystore)
+    # W5: the brand kit (icons/splash/strings/version) is mounted read-only like /dist; the script allow-lists its files
+    brand_mount = ["-v", f"{_check_dir(brand, 'brand')}:/brand:ro"] if brand is not None else []
     return [
         docker, "run", "--rm", "--name", CONTAINER_PREFIX + build_id,
         *_hardening(cpus, memory, ANDROID_FSIZE_ULIMIT, 1024),
@@ -479,6 +481,7 @@ def build_android_argv(*, docker: str, build_id: str, dist: Path, keystore: Path
         "-e", f"AAS_APP_ID={app_id}",
         "-v", f"{_check_dir(dist, 'dist')}:/dist:ro",
         "-v", f"{_check_dir(keystore, 'keystore')}:/keys/{KEYSTORE_NAME}:ro",
+        *brand_mount,
         "-v", f"{_check_dir(out, 'out')}:/out:rw",
         image, "build",
     ]
@@ -570,10 +573,10 @@ def collect_apk(out: Path, dest: Path, *, container_exists: Callable[[str], bool
 
 def run_android_build(*, docker: str, build_id: str, dist: Path, keystore: Path, expected_signer: str, out: Path,
                       image: str, app_id: str, dest: Path, container_exists: Callable[[str], bool] | None = None,
-                      timeout: int = ANDROID_TIMEOUT_S, poll: float = 0.5) -> AndroidResult:
+                      timeout: int = ANDROID_TIMEOUT_S, poll: float = 0.5, brand: Path | None = None) -> AndroidResult:
     """Offline APK build; on ANY failure `out` is deleted and `dest` is left untouched."""
     argv = build_android_argv(docker=docker, build_id=build_id, dist=dist, keystore=keystore, out=out, image=image,
-                              app_id=app_id)
+                              app_id=app_id, brand=brand)
     name = CONTAINER_PREFIX + build_id
     try:
         o = _run_capped(argv, timeout=timeout, out=out, max_out_bytes=APK_MAX_BYTES,

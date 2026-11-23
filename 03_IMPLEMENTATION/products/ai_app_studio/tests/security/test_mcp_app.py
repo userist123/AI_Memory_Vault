@@ -54,6 +54,14 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
     "device_screenshot": ({}, []),
     # S9b: export (owner approval bound to the artifact sha256; no approval field in the input)
     "app_export": ({"projectId": PID, "target": {"enum": ["web", "android", "desktop"]}}, ["projectId", "target"]),
+    # W5: brand kit (icon/splash/label/version of the Android app); no path, URL or free text beyond a 60 char caption
+    "brand_kit": ({"projectId": PID, "glyph": {"anyOf": [{"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 30}, {"type": "null"}]},
+                   "background": {"anyOf": [{"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}, {"type": "null"}]},
+                   "foreground": {"anyOf": [{"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}, {"type": "null"}]},
+                   "caption": {"anyOf": [{"type": "string", "maxLength": 60}, {"type": "null"}]},
+                   "versionMajor": {"anyOf": [{"type": "integer", "minimum": 0, "maximum": 999}, {"type": "null"}]},
+                   "versionMinor": {"anyOf": [{"type": "integer", "minimum": 0, "maximum": 999}, {"type": "null"}]},
+                   "storeScreenshots": {"type": "boolean"}}, ["projectId"]),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 

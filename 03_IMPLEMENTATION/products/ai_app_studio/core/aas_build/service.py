@@ -28,7 +28,7 @@ from studio_core.config import Settings
 from studio_core.errors import StudioError, Unavailable
 from studio_core.policy import Actor
 
-from . import desktop, runner
+from . import brand, desktop, runner
 
 PRODUCT = Path(__file__).resolve().parents[2]
 KIT = PRODUCT / "kit"
@@ -360,10 +360,18 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
         try:
             keystore, signer = ensure_keys(docker=docker, image=image, keys_dir=keys_dir(studio.settings))
             out.mkdir(parents=True)
+            app_id = runner.app_id_for(project_id)
+            store = brand.BrandStore(studio.settings.data_dir)
+            code = store.next_version_code(project_id)  # W5: consumed only after the build succeeded (below)
+            name = str(studio.get_project(Actor("system", "brand", "system"), project_id,
+                                          with_components=False).get("name", ""))
+            brand_dir = brand.write_brand_dir(_brand_config(studio, project_id, store), name, app_id, code,
+                                              build_root / "brand")
             res = run_build(docker=docker, build_id=build_root.name, dist=site, keystore=keystore,
-                            expected_signer=signer, out=out, image=image, app_id=runner.app_id_for(project_id),
-                            dest=apk_path(studio.settings, project_id))
-        except (runner.BuildError, OSError, StudioError) as e:
+                            expected_signer=signer, out=out, image=image, app_id=app_id,
+                            dest=apk_path(studio.settings, project_id), brand=brand_dir)
+            store.commit_version_code(project_id, code)
+        except (runner.BuildError, brand.BrandError, OSError, StudioError) as e:
             msg = str(e)[:1000]
             _rec(studio, "build.error", project_id, run_id, code="build_failed", message=msg)
             _rec(studio, "build.finished", project_id, run_id, target="android", status="failed", revision=revision,
@@ -380,11 +388,32 @@ def _build_android(studio: Any, project_id: str, *, run_id: str | None, run_buil
                                      "signerSha256": res.signer_sha256})
         except Exception:  # noqa: BLE001
             activity._note_dropped(studio)  # noqa: SLF001
+        cfg = _brand_config(studio, project_id, store)
+        try:  # W5: 16 KB page-size report of the native libraries (informational; never fails the build)
+            align = brand.check_native_alignment(res.apk)
+        except (OSError, ValueError) as e:
+            align = {"status": "unknown", "problems": [type(e).__name__]}
         return {"ok": True, "target": "android", "revision": revision, "apkSha256": res.sha256, "sizeBytes": res.size,
-                "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur}
+                "signerSha256": res.signer_sha256, "packageId": runner.app_id_for(project_id), "durationMs": dur,
+                "versionCode": code, "versionName": brand.semver(cfg, code), "alignment16k": align}
     finally:
         shutil.rmtree(build_root, ignore_errors=True)
         held.close()
+
+
+def _brand_config(studio: Any, project_id: str, store: brand.BrandStore) -> brand.BrandConfig:
+    """The project's saved brand, or one seeded from the project's design tokens (src/index.css) when none was saved."""
+    if (store.dir(project_id) / "brand.json").is_file():
+        return store.config(project_id)
+    try:
+        css = studio.read_file(Actor("system", "brand", "system"), project_id, "src/index.css").get("content", "")
+    except Exception:  # noqa: BLE001 - no token file: the default palette
+        css = ""
+    pal = brand.palette_from_css(str(css))
+    try:
+        return brand.validate(brand.BrandConfig(**pal))
+    except brand.BrandError:
+        return brand.BrandConfig(background=pal.get("background", brand.DEFAULT_BACKGROUND))
 
 
 # ---- Windows desktop (S9c) ---------------------------------------------------------------------------------------------

@@ -36,6 +36,8 @@ import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
 import { ProjectPicker } from "./components/ProjectPicker";
 import { ExportPanel } from "./components/ExportPanel";
+import { BrandKitPanel } from "./components/BrandKitPanel";
+import { brandApi } from "./lib/brandApi";
 import { exportArtifact, openExportFolder, ownerBuildStatus, startOwnerBuild } from "./lib/exportApi";
 import { RunControls } from "./components/RunControls";
 import { ChatPanel } from "./components/ChatPanel";
@@ -444,6 +446,8 @@ export function App() {
               profile={runnerProfile}
               onProfile={onRunnerProfile}
               renderExport={(pid) => (
+                <>
+                <BrandKitPanel key={"brand-" + pid} projectId={pid} api={brandApi(session)} />
                 <ExportPanel
                   key={pid}
                   projectId={pid}
@@ -455,6 +459,7 @@ export function App() {
                     openFolder: (p) => openExportFolder(session, p),
                   }}
                 />
+                </>
               )}
             />
           ) : null}
