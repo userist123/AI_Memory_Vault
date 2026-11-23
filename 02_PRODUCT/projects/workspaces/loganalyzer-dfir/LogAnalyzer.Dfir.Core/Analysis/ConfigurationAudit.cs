@@ -1,4 +1,5 @@
 using System.Globalization;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -16,6 +17,9 @@ public sealed record ConfigValue(string? Data, DateTimeOffset? KeyLastWriteUtc, 
 /// <summary>The value names of one list key (Defender exclusions: the name is the excluded path / extension / process); null names = the key does not exist.</summary>
 public sealed record ConfigNames(IReadOnlyList<string>? Names, DateTimeOffset? KeyLastWriteUtc, string? EvidenceId = null, string? Sha256 = null);
 
+/// <summary>The CBS package of the Windows PowerShell 2.0 client (neutral ~amd64~~ entry) read from SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages: key name, CurrentState (null = value absent) and the key's LastWrite.</summary>
+public sealed record CbsPackage(string KeyName, uint? CurrentState, DateTimeOffset? KeyLastWriteUtc);
+
 /// <summary>One stored hive (SOFTWARE or SYSTEM) read for the configuration audit. <see cref="Error"/> non-empty = the hive could not be read at all.</summary>
 public sealed class ConfigHive
 {
@@ -31,6 +35,8 @@ public sealed class ConfigHive
     public string ControlSet { get; init; } = "ControlSet001";
     public Dictionary<string, ConfigValue> Values { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, ConfigNames> Lists { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>SOFTWARE only (full hive): the PowerShell 2.0 CBS package; null = no such package key (or the hive is a Quick subkey set that has no CBS key).</summary>
+    public CbsPackage? PowerShellV2Package { get; set; }
 }
 
 public sealed class ConfigAuditResult
@@ -56,7 +62,7 @@ public static class ConfigurationAudit
     public const string RuleUac = "CFG-UAC-OFF", RuleUacPrompt = "CFG-UAC-NOPROMPT", RuleSmb1 = "CFG-SMB1", RuleWdigest = "CFG-WDIGEST", RuleLsa = "CFG-LSA-PPL",
         RuleDefenderOff = "CFG-DEFENDER-OFF", RuleDefenderExcl = "CFG-DEFENDER-EXCL", RuleRdpNla = "CFG-RDP-NLA",
         RuleFirewallOff = "CFG-FIREWALL-OFF", RuleRemoteRegistry = "CFG-REMOTEREGISTRY", RuleAutologon = "CFG-AUTOLOGON", RuleTokenFilter = "CFG-LOCALACCOUNT-TOKENFILTER",
-        RuleAlwaysInstall = "CFG-ALWAYSINSTALLELEVATED", RuleSmbSigning = "CFG-SMB-SIGNING", RuleOsEol = "CFG-OS-EOL";
+        RuleAlwaysInstall = "CFG-ALWAYSINSTALLELEVATED", RuleSmbSigning = "CFG-SMB-SIGNING", RuleOsEol = "CFG-OS-EOL", RulePsv2 = "CFG-PSV2", RuleOsInsider = "CFG-OS-INSIDER";
 
     /// <summary>What the reader stores instead of a secret value (the Winlogon DefaultPassword): the password itself is never read into the audit, only whether one exists.</summary>
     public const string SecretPresent = "(prezentă)";
@@ -84,6 +90,15 @@ public static class ConfigurationAudit
     public static readonly ConfigProbe DisplayVersion = new("SOFTWARE", CurVer, "DisplayVersion");
     public static readonly ConfigProbe CurrentBuild = new("SOFTWARE", CurVer, "CurrentBuild");
     public static readonly ConfigProbe Ubr = new("SOFTWARE", CurVer, "UBR");
+    private const string SelfHost = @"Microsoft\WindowsSelfHost\Applicability";
+    public static readonly ConfigProbe InsiderBranch = new("SOFTWARE", SelfHost, "BranchName");
+    public static readonly ConfigProbe InsiderRing = new("SOFTWARE", SelfHost, "Ring");
+    public static readonly ConfigProbe InsiderContent = new("SOFTWARE", SelfHost, "ContentType");
+    /// <summary>The CBS Packages key and the name prefix of the neutral amd64 PowerShell 2.0 client package (the "PowerShellEngine" key is a leftover and is NOT used).</summary>
+    public const string CbsPackagesKey = @"Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages";
+    public const string Psv2PackagePrefix = "Microsoft-Windows-PowerShell-V2-Client-Package~31bf3856ad364e35~amd64~~";
+    public const uint CbsInstalled = 0x70;
+    public const int Win11ReleaseBuild = 26100;
     public static readonly ConfigProbe TokenFilter = new("SOFTWARE", Sys, "LocalAccountTokenFilterPolicy");
     public static readonly ConfigProbe AlwaysInstall = new("SOFTWARE", @"Policies\Microsoft\Windows\Installer", "AlwaysInstallElevated");
     /// <summary>Firewall profiles: (name in both the local FirewallPolicy key and the policy key, readable label).</summary>
@@ -107,7 +122,7 @@ public static class ConfigurationAudit
     public static IReadOnlyList<ConfigProbe> Probes(string hive, string controlSet) => hive switch
     {
         "SOFTWARE" => [UacEnable, UacConsent, RtpLocal, RtpPolicy, AvPolicy, TokenFilter, AlwaysInstall, AutoAdminLogon, DefaultUserName, DefaultPassword,
-            ProductName, EditionId, DisplayVersion, CurrentBuild, Ubr, .. FirewallProfiles.Select(x => FwPolicy(x.Name))],
+            ProductName, EditionId, DisplayVersion, CurrentBuild, Ubr, InsiderBranch, InsiderRing, InsiderContent, .. FirewallProfiles.Select(x => FwPolicy(x.Name))],
         "SYSTEM" => [Smb1(controlSet), WDigest(controlSet), Lsa(controlSet), RdpDeny(controlSet), RdpNla(controlSet), RemoteRegistry(controlSet), SmbSigning(controlSet),
             .. FirewallProfiles.Select(x => FwLocal(controlSet, x.Name))],
         _ => [],
@@ -127,11 +142,11 @@ public static class ConfigurationAudit
             if (h.Error.Length > 0)
             {
                 res.Gaps.Add(new EvidenceGap($"Configurație din hive-ul {h.Hive}", EvidenceStatus.Failed, h.Error,
-                    h.Hive == "SOFTWARE" ? "Setările UAC, Defender, politicile firewall, logarea automată, AlwaysInstallElevated nu au putut fi verificate" : "Setările SMB, WDigest, protecția LSA, RDP/NLA, firewall, RemoteRegistry nu au putut fi verificate",
+                    h.Hive == "SOFTWARE" ? "Setările UAC, Defender, politicile firewall, conectarea automată, AlwaysInstallElevated nu au putut fi verificate" : "Setările SMB, WDigest, protecția LSA, RDP/NLA, firewall, RemoteRegistry nu au putut fi verificate",
                     $@"reg query pe stație sau o copie nouă a hive-ului {h.Hive}", "Doar prin reachiziție"));
                 continue;
             }
-            if (h.Hive == "SOFTWARE") { SoftwareHive(h, host, nextId, res); SoftwareHiveHardening(h, host, nextId, res); OsLifecycle(h, host, nextId, res); }
+            if (h.Hive == "SOFTWARE") { SoftwareHive(h, host, nextId, res); SoftwareHiveHardening(h, host, nextId, res); OsLifecycle(h, host, nextId, res); PowerShellV2(h, host, nextId, res); }
             else if (h.Hive == "SYSTEM") { SystemHive(h, host, nextId, res); SystemHiveHardening(h, host, nextId, res); }
         }
         // the firewall verdict of a profile needs both hives (the local setting in SYSTEM, the policy override in SOFTWARE)
@@ -178,7 +193,7 @@ public static class ConfigurationAudit
 
         if (Read(h, UacConsent, res, out var cons, out var consV) && cons == 0)
             res.Findings.Add(Make(h, host, nextId, RuleUacPrompt, Severity.Medium, Confidence.High,
-                "Ridicarea drepturilor administratorului se face fără întrebare: ConsentPromptBehaviorAdmin = 0",
+                "Administratorii primesc drepturi ridicate fără confirmare: ConsentPromptBehaviorAdmin = 0",
                 "Registrul spune că administratorii primesc drepturi ridicate fără nicio întrebare: ConsentPromptBehaviorAdmin = 0.",
                 "Windows ridică drepturile administratorilor fără să întrebe",
                 "gravitate medie: un program pornit de administrator își ridică drepturile fără confirmare, dar UAC rămâne în funcțiune",
@@ -234,7 +249,7 @@ public static class ConfigurationAudit
         var wd = WDigest(cs);
         if (Read(h, wd, res, out var w, out var wV) && w == 1)
             res.Findings.Add(Make(h, host, nextId, RuleWdigest, Severity.High, Confidence.High,
-                "WDigest păstrează parolele în clar în memorie: UseLogonCredential = 1",
+                "WDigest este setat să păstreze parolele în clar în memorie: UseLogonCredential = 1",
                 "Furnizorul WDigest este setat să păstreze parola în clar a utilizatorilor conectați în memoria procesului lsass: UseLogonCredential = 1.",
                 "Windows păstrează parolele utilizatorilor conectați în clar în memorie (WDigest)",
                 "gravitate ridicată: un program cu drepturi de administrator poate citi parolele în clar din memorie",
@@ -249,7 +264,7 @@ public static class ConfigurationAudit
                 "Protecția LSA este oprită: RunAsPPL = 0",
                 "Procesul de securitate lsass nu este pornit ca proces protejat: RunAsPPL = 0.",
                 "Windows nu protejează procesul de securitate lsass (LSA)",
-                "gravitate mică: protecția este o măsură de întărire suplimentară, lipsa ei nu este o breșă în sine",
+                "gravitate scăzută: protecția este o măsură de întărire suplimentară, lipsa ei nu este o breșă în sine",
                 [(lsa, plV!)],
                 ["Pe unele versiuni Windows protecția este activă implicit chiar și când valoarea lipsește; aici valoarea este 0 explicit.", "Unele programe de securitate cer oprirea ei."],
                 ["Valoarea este starea din hive la colectare; nu arată de când este așa."]));
@@ -258,7 +273,7 @@ public static class ConfigurationAudit
                 "Protecția LSA nu este setată în registru: RunAsPPL lipsește",
                 "Valoarea RunAsPPL nu există în registru, deci protecția procesului de securitate lsass nu este cerută explicit.",
                 "Windows nu are cerută explicit protecția procesului de securitate lsass (LSA)",
-                "gravitate mică: este o măsură de întărire suplimentară și nu se poate spune din registru dacă Windows o aplică implicit",
+                "gravitate scăzută: este o măsură de întărire suplimentară și nu se poate spune din registru dacă Windows o aplică implicit",
                 [(lsa, new ConfigValue("lipsă", lv.KeyLastWriteUtc))],
                 ["Windows 11 (22H2 și ulterior) poate activa protecția implicit fără a scrie valoarea; valoarea lipsă nu dovedește că protecția este oprită."],
                 ["Starea efectivă se vede în Event Viewer, jurnalul System, evenimentul 12 din Wininit sau în Securitate Windows → Securitatea dispozitivului → Izolarea nucleului.", "Valoarea este starea din hive la colectare."]));
@@ -332,7 +347,8 @@ public static class ConfigurationAudit
         string tbl = $"tabelul de cicluri de viață are data {WindowsLifecycle.TableDate}";
         if (life.State == LifecycleState.UnknownBuild)
         {
-            res.Gaps.Add(new EvidenceGap($"Ciclu de viață Windows (compilarea {build})", EvidenceStatus.NotAvailable, "build necunoscut în tabel (posibil Insider/Canary)",
+            if (Insider(h, host, nextId, res, build)) return;
+            res.Gaps.Add(new EvidenceGap($"Ciclu de viață Windows (compilarea {build})", EvidenceStatus.NotAvailable, "compilare necunoscută în tabel (posibil Insider/Canary)",
                 $"Sfârșitul serviciului nu poate fi comparat; lipsa unei constatări nu înseamnă că versiunea este în suport ({tbl})", "Pagina Microsoft Lifecycle a versiunii", "Da, prin actualizarea tabelului de date"));
             return;
         }
@@ -347,16 +363,16 @@ public static class ConfigurationAudit
         string end = life.EndOfServicing!.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), coll = collected.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         string label = $"{life.Name} (compilarea {build}{(ubr.Length > 0 ? "." + ubr : "")}, ediția {edition})";
         bool past = life.State == LifecycleState.Past;
-        string when = past ? $"{-life.DaysToEnd} zile înaintea colectării" : $"{life.DaysToEnd} zile după colectare";
+        string when = past ? $"{RoText.Count(-life.DaysToEnd, "zi", "zile")} înaintea colectării" : $"{RoText.Count(life.DaysToEnd, "zi", "zile")} după colectare";
         string facts = $"ProductName = {name}; EditionID = {edition}; DisplayVersion = {display}; CurrentBuild = {build}; UBR = {ubr}";
-        string src = bv.TimeSource is null ? $"din hive-ul {h.Hive} păstrat în caz" : "dintr-o citire doar-citire la colectare";
+        string src = bv.TimeSource is null ? $"din hive-ul {h.Hive} păstrat în caz" : "dintr-o citire fără modificări (doar-citire) la colectare";
         var evidence = new List<EvidenceRef>();
         foreach (var p in new[] { ProductName, EditionId, DisplayVersion, CurrentBuild, Ubr })
             if (h.Values.TryGetValue(p.Locator, out var v) && v.Data is not null)
                 evidence.Add(new(v.EvidenceId ?? h.EvidenceId, p.Locator, $"valoarea {p.Name} {src}", v.Sha256 ?? h.Sha256, $"{p.Name} = {v.Data}", v.TimeSource ?? TimeSource, Channel));
         var times = bv.KeyLastWriteUtc is { } kw ? new List<DateTimeOffset> { kw } : [];
         res.Findings.Add(Build(h, host, nextId, RuleOsEol, past ? Severity.High : Severity.Medium, Confidence.Medium,
-            past ? $"{label} a ieșit din suport la {end}, înainte de colectare ({coll})" : $"{label} iese din suport la {end}, la {life.DaysToEnd} zile după colectare ({coll})",
+            past ? $"{label} a ieșit din suport la {end}, înainte de colectare ({coll})" : $"{label} iese din suport la {end}, la {RoText.Count(life.DaysToEnd, "zi", "zile")} după colectare ({coll})",
             $"Registrul spune: {facts}. Conform tabelului de cicluri de viață ({tbl}), {life.Name}, familia de ediții {life.Family}, are sfârșitul serviciului la {end}; data colectării este {coll}, deci sfârșitul serviciului este {when}. " +
             (past ? "După această dată Microsoft nu mai publică actualizări de securitate pentru versiunea respectivă, în afara programului ESU, care nu este citit aici." : "După această dată Microsoft nu va mai publica actualizări de securitate pentru versiunea respectivă, în afara programului ESU, care nu este citit aici."),
             past ? $"Windows este într-o versiune ({life.Name}) care nu mai primește actualizări de securitate" : $"Windows este într-o versiune ({life.Name}) care nu va mai primi actualizări de securitate în curând",
@@ -365,6 +381,53 @@ public static class ConfigurationAudit
             ["Stația poate primi actualizări extinse (ESU) sau poate fi administrată de o organizație cu un alt contract; acest lucru nu este citit aici.", "Tabelul de cicluri de viață poate fi depășit: Microsoft poate schimba datele."],
             [$"Tabelul de cicluri de viață are data {WindowsLifecycle.TableDate}; sursa lui: {WindowsLifecycle.Source}", $"Compararea se face cu data colectării ({coll}), nu cu data de azi.",
              "Valoarea este starea din hive la colectare; nu arată când a fost instalată versiunea."]));
+    }
+
+    /// <summary>CFG-OS-INSIDER: SOFTWARE\Microsoft\WindowsSelfHost\Applicability exists (BranchName / Ring / ContentType): an Insider build has no end-of-servicing date in the table. True = the finding was added.</summary>
+    private static bool Insider(ConfigHive h, string host, Func<string> nextId, ConfigAuditResult res, int build)
+    {
+        var present = new[] { InsiderBranch, InsiderRing, InsiderContent }
+            .Where(p => h.Values.TryGetValue(p.Locator, out var v) && !string.IsNullOrWhiteSpace(v.Data))
+            .Select(p => (P: p, V: h.Values[p.Locator])).ToList();
+        if (present.Count == 0) return false;
+        string Of(ConfigProbe p) => present.FirstOrDefault(x => x.P == p).V?.Data?.Trim() ?? "";
+        string label = string.Join("/", new[] { Of(InsiderBranch), Of(InsiderRing) }.Where(x => x.Length > 0));
+        if (label.Length == 0) label = Of(InsiderContent);
+        string facts = string.Join("; ", present.Select(x => $"{x.P.Name} = {x.V.Data}"));
+        res.Findings.Add(Make(h, host, nextId, RuleOsInsider, Severity.Info, Confidence.High,
+            $"Windows Insider ({label}): versiune de test, fără date de sfârșit de suport în tabel",
+            $@"Registrul conține cheia Microsoft\WindowsSelfHost\Applicability ({facts}); compilarea {build} nu este în tabelul de cicluri de viață ({WindowsLifecycle.TableDate}). O versiune Insider este o versiune de test, fără dată de sfârșit a serviciului în tabel, deci nu se compară cu data colectării.",
+            "Windows rulează o versiune de test (Windows Insider), nu o versiune stabilă",
+            "gravitate informativă: este o stare de configurare; nu spune că stația este compromisă",
+            present, ["Stația poate fi una de test a unui dezvoltator sau a unui administrator."],
+            ["Cheia arată înscrierea în programul Insider; nu arată de când este stația înscrisă."]));
+        return true;
+    }
+
+    /// <summary>
+    /// CFG-PSV2: the CBS package of the PowerShell 2.0 client, CurrentState 0x70 = installed. The PowerShell\1\PowerShellEngine PowerShellVersion = 2.0 value is a leftover that stays after removal and is not used.
+    /// Package key missing: nothing on a build from 26100 on (v2 is removed there), otherwise an informational gap.
+    /// </summary>
+    private static void PowerShellV2(ConfigHive h, string host, Func<string> nextId, ConfigAuditResult res)
+    {
+        if (h.PowerShellV2Package is { } pkg)
+        {
+            if (pkg.CurrentState != CbsInstalled) return;
+            var probe = new ConfigProbe("SOFTWARE", CbsPackagesKey + "\\" + pkg.KeyName, "CurrentState");
+            res.Findings.Add(Make(h, host, nextId, RulePsv2, Severity.Low, Confidence.Medium,
+                $"Motorul PowerShell 2.0 este instalat (pachetul CBS {pkg.KeyName}, CurrentState = 0x70)",
+                $@"Pachetul Component Based Servicing {pkg.KeyName} are CurrentState = 0x70 (112), adică este instalat. Windows PowerShell 2.0 este un motor vechi, fără jurnalizarea și interfața de scanare antimalware (AMSI) ale versiunilor noi; un atacator îl poate porni pentru a ocoli aceste măsuri.",
+                "Windows PowerShell 2.0 este instalat pe stație",
+                "gravitate scăzută: este o caracteristică veche care slăbește protecțiile PowerShell, dar prezența ei nu este o breșă în sine",
+                [(probe, new ConfigValue("0x70", pkg.KeyLastWriteUtc))],
+                ["O aplicație veche sau o unealtă de administrare poate cere PowerShell 2.0."],
+                [@"Valoarea Microsoft\PowerShell\1\PowerShellEngine\PowerShellVersion = 2.0 nu este folosită: rămâne în registru și după eliminarea motorului.", "Starea se citește din pachetul CBS la colectare; nu arată când a fost instalat."]));
+            return;
+        }
+        if (h.Values.TryGetValue(CurrentBuild.Locator, out var bv) && int.TryParse(bv.Data, NumberStyles.None, CultureInfo.InvariantCulture, out int build) && build < Win11ReleaseBuild)
+            res.Gaps.Add(new EvidenceGap("Starea PowerShell 2.0 (CFG-PSV2)", EvidenceStatus.NotAvailable, "starea PowerShell 2.0 nu poate fi stabilită din registru: pachetul CBS Microsoft-Windows-PowerShell-V2-Client-Package lipsește din hive-ul copiat",
+                "Prezența PowerShell 2.0 nu poate fi stabilită; lipsa unei constatări nu înseamnă că motorul este eliminat",
+                "dism /online /get-featureinfo /featurename:MicrosoftWindowsPowerShellV2 (ca administrator)", "Da, pe stație"));
     }
 
     private static void Autologon(ConfigHive h, string host, Func<string> nextId, ConfigAuditResult res)
@@ -384,26 +447,26 @@ public static class ConfigurationAudit
         bool hasPassword = !string.IsNullOrEmpty(pw.Data);
         // the password is never read into the audit (ProbeText): only that it exists
         string quote = $"AutoAdminLogon = 1; DefaultUserName = {user}; DefaultPassword = " + (hasPassword ? SecretNotShown : "(lipsă)");
-        string ts = aal.TimeSource ?? TimeSource, src = aal.TimeSource is null ? $"din hive-ul {h.Hive} păstrat în caz" : "dintr-o citire doar-citire la colectare (parola nu este citită în caz)";
+        string ts = aal.TimeSource ?? TimeSource, src = aal.TimeSource is null ? $"din hive-ul {h.Hive} păstrat în caz" : "dintr-o citire fără modificări (doar-citire) la colectare (parola nu este citită în caz)";
         var evidence = new List<EvidenceRef> { new(aal.EvidenceId ?? h.EvidenceId, AutoAdminLogon.Locator, $"valoarea AutoAdminLogon {src}", aal.Sha256 ?? h.Sha256, quote, ts, Channel) };
         evidence.Add(new(pw.EvidenceId ?? h.EvidenceId, DefaultPassword.Locator, $"existența valorii DefaultPassword {src} (conținutul nu este citit)", pw.Sha256 ?? h.Sha256, "DefaultPassword = " + (hasPassword ? SecretNotShown : "(lipsă)"), ts, Channel));
         var times = new[] { aal, pw }.Where(x => x.KeyLastWriteUtc is not null).Select(x => x.KeyLastWriteUtc!.Value).ToList();
         res.Findings.Add(hasPassword
             ? Build(h, host, nextId, RuleAutologon, Severity.High, Confidence.High,
                 $"Windows se conectează automat în contul {user} cu o parolă stocată în registru: AutoAdminLogon = 1 și DefaultPassword prezentă",
-                $"Logarea automată este pornită (AutoAdminLogon = 1) pentru contul {user} și registrul conține o valoare DefaultPassword nevidă. Parola se păstrează în clar în registru și poate fi citită de un cont cu drepturi de administrator. Valoarea ei nu este afișată în acest raport.",
+                $"Conectarea automată este pornită (AutoAdminLogon = 1) pentru contul {user} și registrul conține o valoare DefaultPassword nevidă. Parola se păstrează în clar în registru și poate fi citită de un cont cu drepturi de administrator. Valoarea ei nu este afișată în acest raport.",
                 $"Windows se conectează singur în contul {user} și păstrează parola în clar în registru",
                 "gravitate ridicată: oricine poate citi registrul (administrator, copie a hive-ului) vede parola contului",
                 evidence, times,
                 ["Stații de tip chioșc, ecrane de afișare sau laborator sunt configurate uneori deliberat așa.", "Parola stocată poate fi veche sau a unui cont fără alte drepturi; registrul nu o spune."],
                 ["Parola nu este citită sau afișată de aplicație; se arată doar că valoarea există.", "Valoarea este starea din hive la colectare; nu arată de când este așa."])
             : Build(h, host, nextId, RuleAutologon, Severity.Medium, Confidence.Medium,
-                $"Logare automată activată fără parolă stocată în registru: AutoAdminLogon = 1 (contul {user})",
-                $"Logarea automată este pornită (AutoAdminLogon = 1) pentru contul {user}, dar registrul nu conține o valoare DefaultPassword nevidă: logare automată fără parolă stocată în registru (parola poate fi în LSA secrets, sau contul nu are parolă).",
-                $"Windows se conectează singur în contul {user}; parola nu este în registru, dar poate fi stocată în LSA secrets",
-                "gravitate medie: logarea automată există, dar parola nu se vede în registru",
+                $"Conectare automată activată fără parolă stocată în registru: AutoAdminLogon = 1 (contul {user})",
+                $"Conectarea automată este pornită (AutoAdminLogon = 1) pentru contul {user}, dar registrul nu conține o valoare DefaultPassword nevidă: conectare automată fără parolă stocată în registru (parola poate fi în secretele LSA, sau contul nu are parolă).",
+                $"Windows se conectează singur în contul {user}; parola nu este în registru, dar poate fi stocată în secretele LSA",
+                "gravitate medie: conectarea automată există, dar parola nu se vede în registru",
                 evidence, times,
-                ["Parola poate fi păstrată în LSA secrets (DefaultPassword în secretele LSA), unde nu se vede din registru.", "Contul poate să nu aibă parolă."],
+                ["Parola poate fi păstrată în secretele LSA (DefaultPassword în secretele LSA), unde nu se vede din registru.", "Contul poate să nu aibă parolă."],
                 ["Din hive nu se poate spune unde este parola sau dacă există una.", "Valoarea este starea din hive la colectare; nu arată de când este așa."]));
     }
 
@@ -427,7 +490,7 @@ public static class ConfigurationAudit
                 "Serverul SMB nu cere semnarea mesajelor: RequireSecuritySignature = 0",
                 @"Serverul de fișiere nu cere semnarea mesajelor SMB: LanmanServer\Parameters\RequireSecuritySignature = 0. Fără semnare un atacator aflat în rețea poate modifica mesajele sau le poate retransmite.",
                 "Windows nu cere semnarea mesajelor la partajarea de fișiere SMB",
-                "gravitate mică: este o măsură de întărire; valoarea implicită diferă între versiuni și un client poate cere el semnarea",
+                "gravitate scăzută: este o măsură de întărire; valoarea implicită diferă între versiuni și un client poate cere el semnarea",
                 [(sg, sigV!)],
                 ["Windows 11 24H2 și Windows Server 2025 cer semnarea implicit; la versiunile mai vechi valoarea implicită este 0 pe stații, deci 0 poate fi doar starea implicită scrisă explicit.", "Politica de grup poate înlocui valoarea."],
                 [.. HklmLimit, "Se arată doar serverul; semnarea cerută de client (LanmanWorkstation) și valoarea EnableSecuritySignature nu sunt citite aici."]));
@@ -491,12 +554,12 @@ public static class ConfigurationAudit
     private static Finding MakeList(ConfigHive h, string host, Func<string> nextId, int total, string shown, List<(string Key, ConfigNames N)> found)
     {
         var evidence = found.Select(x => new EvidenceRef(x.N.EvidenceId ?? h.EvidenceId, "SOFTWARE\\" + x.Key, $"cheia {x.Key} din hive-ul SOFTWARE păstrat în caz", x.N.Sha256 ?? h.Sha256,
-            $"{x.N.Names!.Count} excluderi: " + string.Join("; ", x.N.Names!.Take(ListCap)) + (x.N.Names!.Count > ListCap ? $"; … încă {x.N.Names!.Count - ListCap}" : ""), TimeSource, Channel)).ToList();
+            $"{RoText.Count(x.N.Names!.Count, "excludere", "excluderi")}: " + string.Join("; ", x.N.Names!.Take(ListCap)) + (x.N.Names!.Count > ListCap ? $"; … încă {x.N.Names!.Count - ListCap}" : ""), TimeSource, Channel)).ToList();
         var times = found.Where(x => x.N.KeyLastWriteUtc is not null).Select(x => x.N.KeyLastWriteUtc!.Value).ToList();
         return Build(h, host, nextId, RuleDefenderExcl, Severity.Medium, Confidence.High,
-            $"Microsoft Defender are {total} excluderi de la scanare",
-            $"Registrul listează {total} excluderi de la scanarea antivirus: {shown}.",
-            $"Windows are {total} excluderi de la scanarea antivirus Defender",
+            $"Microsoft Defender are {RoText.Count(total, "excludere", "excluderi")} de la scanare",
+            $"Registrul listează {RoText.Count(total, "excludere", "excluderi")} de la scanarea antivirus: {shown}.",
+            $"Windows are {RoText.Count(total, "excludere", "excluderi")} de la scanarea antivirus Defender",
             "gravitate medie: un program sau un fișier dintr-o excludere nu este scanat, deci poate ascunde un program rău-intenționat",
             evidence, times,
             ["Excluderile sunt adesea puse de administrator pentru performanță (baze de date, mașini virtuale, unelte de compilare).", "Programele de securitate sau de dezvoltare își adaugă singure excluderi."],

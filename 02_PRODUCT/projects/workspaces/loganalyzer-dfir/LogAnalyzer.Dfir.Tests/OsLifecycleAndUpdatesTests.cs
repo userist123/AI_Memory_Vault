@@ -65,6 +65,8 @@ public sealed class OsLifecycleAndUpdatesTests
         k.Value("DisplayVersion", RegfBuilder.String, "22H2");
         k.Value("CurrentBuild", RegfBuilder.String, build);
         k.Value("UBR", RegfBuilder.Dword, int.Parse(ubr));
+        // CFG-PSV2 needs the CBS package or it reports a gap on builds below 26100; a package in another state keeps these lifecycle tests about the lifecycle only
+        r.Sub(@"Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages\Microsoft-Windows-PowerShell-V2-Client-Package~31bf3856ad364e35~amd64~~10.0.26100.1").Value("CurrentState", RegfBuilder.Dword, 0x40);
         using var ms = new MemoryStream(RegfBuilder.Build(r, "SOFTWARE"));
         var h = ConfigurationHiveReader.Read(new RawRegistry(ms), "E-0001", "sha-1", "SOFTWARE");
         h.CollectedUtc = collected;
@@ -105,7 +107,7 @@ public sealed class OsLifecycleAndUpdatesTests
         var res = Eval(Soft("26300", "Professional", Utc(2026, 11, 21)));
         Assert.Empty(res.Findings);
         var gap = Assert.Single(res.Gaps);
-        Assert.Contains("build necunoscut în tabel (posibil Insider/Canary)", gap.Reason);
+        Assert.Contains("compilare necunoscută în tabel (posibil Insider/Canary)", gap.Reason);
         var ltsc = Eval(Soft("19045", "EnterpriseS", Utc(2026, 11, 21)));
         Assert.Empty(ltsc.Findings);
         Assert.Contains("ediție", Assert.Single(ltsc.Gaps).Reason);
