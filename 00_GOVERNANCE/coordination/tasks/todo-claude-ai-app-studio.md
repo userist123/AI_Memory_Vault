@@ -37,3 +37,15 @@ Update 2026-11-23 ~03:00:
   narrowed capability); S4.md says 6 vitest files, actual 5.
 - S5 claude/aas-s5 @ cfcdf2c3b: fixes done (80 tests), live probes DEFERRED until C: >= 8 GB; round-2 review running.
 - S3 claude/aas-s3: finishing worker running (Docker back up).
+
+Update 2026-11-23 ~04:00 (S6 done, local commits on claude/ai-app-studio, nothing pushed):
+- S6 delivered (docs/slices/S6.md): built-in runner + P5e/N3 probe (real CLI, positive control), run grants, MCP plan_submit/
+  app_build/device tools, build->preview wiring, device setting gates, N1, backend approvals/plans/runs routes, activity
+  field names + migration 0004, sanitiser/audit F1/F2, DESIGN 5.3 residuals, UI fixes (fillers, CSI, prj_ ids, preview
+  reload), Tauri attach mode + debug build launched (get_session works), scripts/run_studio.ps1, end-to-end with the fake CLI
+  and a screenshot of the real desktop window (docs/slices/S6-e2e.png). uv run pytest -q: 399 passed, 20 skipped.
+- S4 and S2 follow-ups (F1/F2/F3) are closed; DESIGN 5.3 residuals recorded.
+- Open: UI prompt box; P5f plan gate on code_write_file; Android build / preview_capture unavailable; S5 live probes deferred
+  (C: < 8 GiB); real paid agent run not done; S5 live-gate results may still arrive on claude/aas-s5.
+- NEXT = final gate: fable-consultant verifies the complete app; its open questions go via agent-bridge to Codex (ChatGPT) and
+  Gemini; fix and repeat until clean; security-lockdown skill; then push + PR #413 + vault CI + merge.

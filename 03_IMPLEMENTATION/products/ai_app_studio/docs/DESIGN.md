@@ -280,6 +280,18 @@ field) or redacted as free text (inside an input). Value patterns: `sk-ant-[\w-]
 `(?i)bearer\s+\S{16,}`, `(?i)(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S+`, the live owner token
 (exact), hex/base64 runs >=40 chars with entropy >4.0 -> `[REDACTED:<kind>]`. The same function is added to
 `audit.redact` (key-name only today, audit.py:18-30) so audit rows and tool_executions get value redaction too.
+S6 updates: DCS/SOS/PM/APC bodies stop at newline, CR, ST or the end of the string (the newline is kept); an OSC
+also ends at CR; U+034F, U+115F, U+180E, U+3164 are dropped (the desktop client drops AND flags them, so Approve is
+disabled); `audit.redact` sanitises dict keys before the secret-key check and keeps a valid digest under a hash-named
+key verbatim (S2 review F1/F2); the client's CSI pattern requires its final byte.
+Residuals recorded (accepted, owner decision pending in the final gate): (1) a 64-hex value under a hash-named key
+(`sha256`, `*Sha256`) is kept verbatim, so a secret that is exactly 64 lowercase hex characters stored under such a
+key is not redacted - the typed fields only ever receive digests the studio computed itself; (2) the `stream.dropped`
+counter is in memory per process, so a process that dies after a failed write loses the pending count (the
+sequence-number gap marker still shows the hole); (3) the runner counts unknown stream-json fields per run and writes
+ONE `stream.dropped` row at the end of the run, not one per field; (4) `tool.call` rows written by
+`Studio.operation` carry no run id and no `callId`, so the UI shows them as separate rows next to the runner's own
+`tool.call`/`tool.result` pair of the same MCP call.
 ### 5.4 Transport (P6d, P6f)
 WS `/api/v1/events?afterSeq=N` behind BoundaryMiddleware (AWS:apps/backend/security.py:30-103: exact Host,
 Origin, token). The client offers two subprotocols: the fixed `aas.v1` and `aas.token.<t>` (order-free); the

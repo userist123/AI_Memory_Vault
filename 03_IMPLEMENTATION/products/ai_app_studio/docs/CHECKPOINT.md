@@ -100,3 +100,18 @@ Next after S2 (appended)
 - S3 = build pipeline (Docker, offline web build with the studio-owned kit) + preview server (17880) + CSP header.
 - Then device host/emulator, runner, desktop UI as in DESIGN.md; each slice local only.
 - Last: final gate as in Key facts (fable-consultant, then Codex/Gemini via agent-bridge, repeat until clean), then push + PR + CI + merge.
+
+Update 2026-11-23 (S6 done, local commits on claude/ai-app-studio, nothing pushed)
+- S6 = built-in runner + wiring, see docs/slices/S6.md: core/aas_runner (Claude Code CLI -> stream-json -> activity_events,
+  P5e/N3 probe with positive control against the real CLI 2.1.328, fake CLI fixture for tests), run grants for the runner's
+  MCP child, MCP tools plan_submit/app_build (real offline Docker build -> preview)/device_*, device tools behind an owner
+  setting (off by default, off below 8 GiB free or on failed preflight), N1 (watchdog counts files), backend routes
+  approvals/plans/runs/device setting (owner only), UI field names + migration 0004, sanitiser fixes, audit.redact F1/F2,
+  DESIGN 5.3 residuals, desktop fixes (fillers, CSI, prj_ ids, preview reload nonce), Tauri attach mode,
+  scripts/run_studio.ps1 (token on stdin everywhere; Tauri debug exe or Chromium window).
+- Verified: uv run pytest -q 399 passed / 20 skipped; desktop tsc + vitest 82 + Playwright 11; check_vendored both modes and
+  gen_vendored --check OK; end to end with the fake CLI and the real Tauri window: docs/slices/S6-e2e.png.
+- Open: UI prompt box (runs start from run_studio.ps1 -Prompt / POST /runs); P5f plan gate not enforced on code_write_file;
+  Android build and preview_capture still unavailable; S5 live device probes still deferred; real (paid) agent run not done.
+- Next = final gate: fable-consultant verification of the whole app, its open questions to Codex/Gemini via agent-bridge,
+  security-lockdown skill, fix and repeat, then push + PR #413 + vault CI + merge.
