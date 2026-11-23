@@ -161,11 +161,22 @@ def test_install_registers_each_hook_once_and_uninstall_removes_them(tmp_path):
     assert "hooks" not in json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))
 
 
+def _repin(home: Path, pin_file: Path) -> None:
+    """The owner pins a newer release: the installed pin and VERSION line 1 name it. (install.py refuses to record a
+    pin whose files differ from the source it installs, M12 finding 1, so the v1 install cannot carry the v2 pin.)"""
+    skill = home / ".claude" / "skills" / "cost-router"
+    (skill / "release_pin.json").write_bytes(pin_file.read_bytes())
+    lines = (skill / "VERSION").read_text(encoding="utf-8").splitlines()
+    commit = json.loads(pin_file.read_text(encoding="utf-8"))["commit"]
+    (skill / "VERSION").write_text("\n".join([commit, *lines[1:]]) + "\n", encoding="utf-8")
+
+
 def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
     home = tmp_path / "home"
+    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin1.json")))  # v1, pinned
     _commit(origin, ".claude/skills/cost-router/SKILL.md", "\n<!-- v2 -->\n")
     ref = _commit(origin, ".claude/agents/Explore.md", "\n<!-- agent v2 -->\n")
-    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin.json")))  # the owner pins v2
+    _repin(home, _pin_for(origin, "HEAD", tmp_path / "pin.json", seq=2))  # the owner pins v2
     assert _update(home, origin, capsys) == "updated"
     installed = home / ".claude" / "skills" / "cost-router"
     assert "<!-- v2 -->" in (installed / "SKILL.md").read_text(encoding="utf-8")
@@ -181,8 +192,9 @@ def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
 
 def test_owner_edited_agent_survives_the_update(tmp_path, origin):
     home = tmp_path / "home"
+    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin1.json")))
     _commit(origin, ".claude/agents/vault-worker.md", "\n<!-- upstream change -->\n")
-    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin.json")))
+    _repin(home, _pin_for(origin, "HEAD", tmp_path / "pin.json", seq=2))
     mine = home / ".claude" / "agents" / "vault-worker.md"
     mine.write_text("my own worker\n", encoding="utf-8")
     assert _update(home, origin) == "updated"
