@@ -18,15 +18,15 @@
    "threat model",
    "securizeaza aplicatia",
    "hardening",
-   "echipa de agenti",
-   "cap coada",
+   "echipa de agenti pentru aplicatie",
+   "aplicatie cap coada",
    "instaleaza unealta"
   ],
   "en": [
    "secure app",
    "build a secure",
    "harden the app",
-   "agent team",
+   "agent team app",
    "end to end app",
    "install missing tool"
   ]

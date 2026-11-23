@@ -21,7 +21,7 @@ Când o fază are nevoie de o unealtă care lipsește, e prea veche sau nu merge
 1. inventar (poate există deja sau există o alternativă);
 2. studiez documentația oficială înainte de instalare;
 3. aleg discul cu cel mai mult spațiu liber (C: doar dacă are peste 30 GB liberi);
-4. instalez doar după id exact și versiune fixată, din sursa oficială, cu semnătura (Authenticode, editor așteptat) ȘI hash-ul sha256 verificate când există, neinteractiv, cu diferență de persistență (servicii, taskuri, chei Run) și o intrare atomică în `<X>:\tools\INSTALLED.json` cu comanda de dezinstalare;
+4. instalez doar după id exact și versiune fixată, din sursa oficială, cu cel puțin o ancoră de încredere a vendorului (semnătură Authenticode validă cu editorul așteptat SAU sha256 publicat pe canalul oficial; ambele verificate când există; fără niciuna → BLOCKED), neinteractiv, cu diferență de persistență (servicii, taskuri, chei Run) și o intrare atomică în `<X>:\tools\INSTALLED.json` cu comanda de dezinstalare;
 5. exersez în `<X>:\tools\_antrenament\` pe scara pe risc: Lite (CLI cu un singur binar, doar citire) E1, E4, E8; Full (runtime-uri, SDK-uri, baze de date, daemoni) E1–E8 (de bază, configurare, compus, cazuri de eroare, repetiție, update/reinstalare, securitate și ieșire în rețea, determinism fără interfață);
 6. scriu fișa uneltei în `references/unelte/<nume>.md`;
 7. abia apoi o folosesc în proiect.
@@ -51,7 +51,7 @@ Nu cer voie: decid, instalez reversibil și raportez.
 - Pentru agenți: fixture-uri adversariale (instrucțiuni injectate, encodate, multilingve, multi-turn), un **canary secret** care nu are voie să iasă, tokenuri separate per apelant (403 pe rutele proprietarului).
 
 ### 5. Implementare
-- Un singur agent de implementare odată, cu brief scris de Opus (threat model + probe). Alegerea modelului pentru fiecare pas se face prin skill-ul **`cost-router`** (regula proprietarului: toate trec prin el): Haiku pentru căutări, inventare și rularea testelor; Sonnet (`vault-worker`) pentru implementare și fix-uri; Opus e advisor și recenzor și execută doar după ce Sonnet a picat verificarea; Fable doar ca `fable-consultant`.
+- Implementatori în paralel doar pe fișiere disjuncte, în worktree-uri separate, cu un singur integrator (Opus); fiecare cu brief scris de Opus (threat model + probe). Alegerea modelului pentru fiecare pas se face prin skill-ul **`cost-router`** (regula proprietarului: toate trec prin el): Haiku pentru căutări, inventare și rularea testelor; Sonnet (`vault-worker`) pentru implementare și fix-uri; Opus e advisor și recenzor și execută doar după ce Sonnet a picat verificarea; Fable ca `fable-consultant` (doar citire) și ca `fable-executor` numai prin poarta din `cost-router` (după ce Sonnet și Opus au picat aceeași verificare).
 - Lista de verificare pe tipul de produs: `references/checklists.md`. Principiile care nu se negociază pentru agenți:
   - textul recuperat, importat sau propus e **DATE, nu AUTORITATE**; schimbările de stare se impun în cod, nu de model;
   - niciun guardrail doar din instrucțiuni sau LLM-as-judge ca graniță de securitate;

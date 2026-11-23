@@ -180,13 +180,13 @@ denies until you delegate; same-tier routes get one advisory note instead. `hook
 denies a second resume. `#direct` / `COST_ROUTER_ENFORCE=0` bypass only the Vault router gate;
 `COST_ROUTER_OFF=1` never makes the Fable guard inert. (details: references/enforcement.md#4a-enforcement)
 
-### 4B. Subagent usage telemetry and idempotency
+### 4A.1. Subagent usage telemetry and idempotency
 
 `hook_agent_usage.py` records per-subagent tokens and estimated cost (never content); replayed tool ids
 count once; these hooks fail open. Report: `hook_agent_usage.py --report [session_id]`.
 (details: references/enforcement.md#4a1-telemetry)
 
-## 4A. Context-size switches (environment)
+## 4A.2. Context-size switches (environment)
 
 Repo map cap/off (`COST_ROUTER_REPO_MAP_MAX_CHARS`, `COST_ROUTER_NO_REPO_MAP=1`); compact route line unless
 `COST_ROUTER_VERBOSE_ROUTE=1`. (details: references/enforcement.md#4a2-context-size)

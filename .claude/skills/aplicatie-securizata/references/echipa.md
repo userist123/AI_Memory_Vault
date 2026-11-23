@@ -54,7 +54,8 @@ i18n) and say so in the report.
   by the integrator.
 - At most 3 concurrent writers and 5 concurrent read-only agents.
 - The integrator is the Opus main session: merges in small batches and runs the affected tests after
-  each merge. Workers push nothing and never poll CI.
+  each merge. Workers commit/push their own branch only when the brief says so, then stop; they
+  never poll CI and never merge. The integrator merges.
 
 ## Review selection
 - Deterministic gates first (lint, types, tests, SAST, gitleaks): no LLM reviews a red build.

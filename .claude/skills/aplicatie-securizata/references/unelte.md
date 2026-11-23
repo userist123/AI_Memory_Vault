@@ -41,43 +41,52 @@ Preference order (stop at the first that works):
    `uv tool install` with `UV_TOOL_DIR`/`UV_TOOL_BIN_DIR` on <X>:; a Python venv on <X>:; project-local
    `npm i -D` / `pnpm` (no global prefix change).
 2. winget, by exact id only, never by fuzzy search:
-   `winget install --exact --id <Publisher.Package> --version <v> --source winget --location <X>:\tools\<name> --scope user --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`
+   `winget install --exact --id <Publisher.Package> --version <v> --source winget --location <X>:\tools\<name>\<version> --scope user --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`
    Before installing, `winget show --id <id> --version <v>` must show a publisher and an installer URL
    on the vendor's official domain found in step 2. Default `winget` source only (`msstore` only when needed).
 3. choco `-y --no-progress` (needs admin by default, so prefer portable/winget):
-   `choco install <pkg> --version <v> --install-directory=<X>:\tools\<name>` where supported.
+   `choco install <pkg> --version <v> --install-directory=<X>:\tools\<name>\<version>` where supported.
 4. Installers that need elevation (Scope machine / ElevationRequirement): prefer a user-level, portable
    or WSL alternative; otherwise try once under the timeout and, if elevation is not granted, record
    BLOCKED with the reason. Never weaken security to get around it.
 
 Rules:
-- Official source only. Verification is AND, not OR: Authenticode `Status -eq 'Valid'` with the
-  EXPECTED publisher when the file is signed, AND sha256 against a digest published on the vendor's
-  official channel when one exists. A hash inside a community wrapper is not a trust anchor.
+- Official source only. At least ONE vendor trust anchor is mandatory: a valid Authenticode
+  signature (`Status -eq 'Valid'`) with the EXPECTED publisher, OR a sha256 published on the
+  vendor's official channel (HTTPS, vendor domain). When both exist, BOTH are checked and both must
+  match. With neither -> BLOCKED (do not install). A hash inside a community wrapper is not a trust anchor.
   After install verify the binary path and `--version`. Check the package exists and is the right one
   (typosquatting, AI-hallucinated names).
 - `--location` is honoured only by some installers: measure free space on C: before and after; set
   TEMP/TMP to `<X>:\tools\_tmp` for the install; if the tool still landed on C: and takes over 1 GB,
   uninstall it and use a portable build.
 - Non-interactive with a 15-minute timeout per install; no step may wait for input.
-- Pin the version; no `curl | sh` from unknown hosts; no tool that asks to disable antivirus,
+- Pin the version; no `curl | sh` / `iex (irm ...)` piping of remote scripts at all; no tool that asks to disable antivirus,
   Defender, firewall or SmartScreen.
 - Free/open-source or already-owned licences only; never buy, never enter card data. A tool that
   needs the owner's password or payment is BLOCKED (owner's absolute limits).
 - Disable telemetry where the tool allows it.
-- PATH and ACLs: before adding `<X>:\tools\...\bin` to PATH, harden the ACL
-  (`icacls <dir> /inheritance:r /grant:r "%USERNAME%:(OI)(CI)F" "Users:(OI)(CI)RX"` or equivalent).
-  APPEND to the USER PATH, never prepend. Call tools by the absolute path recorded in the ledger;
+- ACLs: harden `<X>:\tools` itself once, when it is first created (not only `bin`), from
+  PowerShell with well-known SIDs (works on any Windows language, keeps SYSTEM/Administrators):
+  `icacls "<X>:\tools" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" "${env:USERNAME}:(OI)(CI)F" "*S-1-5-32-545:(OI)(CI)RX"`
+  Run it from PowerShell, not Git Bash (Git Bash rewrites `/inheritance:r` into a path). Afterwards
+  check the output of `icacls "<X>:\tools"`; abort if the owner's account does not have F.
+- PATH: APPEND to the USER PATH, never prepend. Call tools by the absolute path recorded in the ledger;
   check `Get-Command <tool> -All` for shadowing. New shells must reload PATH (running processes
   do not see the change).
 - Persistence diff: snapshot services, scheduled tasks, HKCU/HKLM Run keys and firewall rules before
   install, after install and after uninstall; report unexpected new autostart entries.
-- One install at a time: lock file `<X>:\tools\.install.lock` with the PID and a stale-lock check
-  (PID not running -> remove). Windows Installer exit 1618 = another install is running: wait, retry.
+- One install at a time: create the lock `<X>:\tools\.install.lock` atomically
+  (`New-Item -ItemType File -Path <lock> -ErrorAction Stop` fails if it exists, or
+  `[IO.File]::Open(<lock>, 'CreateNew')`) and write the PID + process start time into it. The lock is
+  stale only if no process with that PID AND that start time exists, or it is older than 2 hours. Windows Installer exit 1618 = another install is running: wait, retry.
 - Ledger `<X>:\tools\INSTALLED.json`: write atomically (temp file + rename). Per entry: name, version,
   source URL, sha256/signature, install dir, PATH change, size, date, reason, project, exact uninstall
   command, and a state: INSTALLING, VERIFIED, FAILED_NEEDS_CLEANUP, UNINSTALLED. No secrets in the
   ledger or in tool cards. Every install stays reversible.
+- The ledger (including stored uninstall commands) is untrusted input. Never execute a stored
+  free-text command: re-derive it from the package manager (`winget uninstall --exact --id <id>`,
+  `choco uninstall <pkg>`, or deleting the recorded dir under the cleanup rules below).
 
 ## 5. Practice before real use (exercise ladder, scratch dir)
 Work in `<X>:\tools\_antrenament\<name>\` (never in the project). Each exercise is scripted and
@@ -129,6 +138,13 @@ Only now does the tool enter the project, pinned there (lockfile, `.tool-version
 At task end add the scratch dir to `.curatenie.json` (delete, olderThanDays 7); keep `<X>:\tools` itself.
 
 ## Cleanup is a transaction
-Uninstall; remove only the directories the tool created; revert PATH/env changes; verify the
-persistence diff is empty; set the ledger state to UNINSTALLED. User data is listed separately and
-kept unless the owner's task says otherwise.
+Uninstall (command re-derived as above); revert PATH/env changes; verify the persistence diff is
+empty; set the ledger state to UNINSTALLED. User data is listed separately and kept unless the
+owner's task says otherwise. Deleting files:
+- Delete only paths recorded at INSTALLING time that, after full path resolution
+  (`[IO.Path]::GetFullPath` / `Resolve-Path`), lie under `<X>:\tools\<name>\`.
+- Check each path is not a junction/symlink: `(Get-Item -Force <p>).LinkType` must be empty. Never
+  recurse through reparse points: Windows PowerShell 5.1 `Remove-Item -Recurse` follows junctions.
+  Remove a link itself with `[System.IO.Directory]::Delete(<p>, $false)` or `cmd /c rmdir <p>`
+  (without /s), or use PowerShell 7+.
+- Anything outside `<X>:\tools\<name>\` is listed in the report, never deleted.
