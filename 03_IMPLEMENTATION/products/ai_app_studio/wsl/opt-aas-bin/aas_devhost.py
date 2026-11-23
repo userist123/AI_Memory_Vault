@@ -12,6 +12,7 @@ import os
 import queue
 import re
 import signal
+import struct
 import subprocess
 import sys
 import threading
@@ -201,16 +202,25 @@ def _u32(b, o):
 
 
 
+POOL_MAX_BYTES = 256 * 1024  # total decoded string bytes per manifest
+POOL_MAX_STRINGS = 20000
+_KNOWN_CHUNKS = {0x0001, 0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0180}  # pool, ns, elements, cdata, resmap
+
+
 def _pool_strings(b, o):
+    hsize, size = _u16(b, o + 2), _u32(b, o + 4)
+    if hsize < 28 or hsize > size or o + size > len(b):
+        raise ValueError("pool header")
     count, flags, start = _u32(b, o + 8), _u32(b, o + 16), _u32(b, o + 20)
-    size = _u32(b, o + 4)
-    if count > 100000 or o + size > len(b):
+    if count > POOL_MAX_STRINGS or hsize + 4 * count > size or start > size:
         raise ValueError("pool")
     utf8 = bool(flags & 0x100)
+    end = o + size
+    total = 0
     out = []
     for i in range(count):
-        so = o + start + _u32(b, o + 28 + 4 * i)
-        if so >= o + size:
+        so = o + start + _u32(b, o + hsize + 4 * i)
+        if so >= end:
             raise ValueError("string offset")
         if utf8:
             n = b[so]
@@ -220,50 +230,73 @@ def _pool_strings(b, o):
                 blen = ((blen & 0x7F) << 8) | b[so + 1]
                 so += 1
             so += 1
-            out.append(b[so:so + blen].decode("utf-8"))
+            nbytes = blen
         else:
             n = _u16(b, so)
             so += 2
             if n & 0x8000:
                 n = ((n & 0x7FFF) << 16) | _u16(b, so)
                 so += 2
-            out.append(b[so:so + 2 * n].decode("utf-16-le"))
+            nbytes = 2 * n
+        total += nbytes
+        if total > POOL_MAX_BYTES or so + nbytes > end:
+            raise ValueError("pool too large")
+        out.append(b[so:so + nbytes].decode("utf-8" if utf8 else "utf-16-le"))
     return out
 
 
 def _axml_package(b):
+    try:
+        return _axml_package1(b)
+    except (ValueError, MemoryError, struct.error, IndexError, UnicodeDecodeError, OverflowError):
+        return None
+
+
+def _axml_package1(b):
     if len(b) < 8 or _u16(b, 0) != 0x0003 or _u32(b, 4) > len(b):
         return None
-    o = _u16(b, 2)
-    strings = None
+    top = _u16(b, 2)
+    if top < 8 or top > len(b):
+        return None
+    # pass 1: every chunk header must be sane and known; exactly one string pool (Android uses the last one, a
+    # parser that uses another one can be fooled, so more than one is refused).
+    chunks = []
+    o = top
     while o + 8 <= len(b):
         ctype, hsize, csize = _u16(b, o), _u16(b, o + 2), _u32(b, o + 4)
-        if csize < 8 or o + csize > len(b):
+        if ctype not in _KNOWN_CHUNKS or hsize < 8 or csize < hsize or o + csize > len(b):
             return None
-        if ctype == 0x0001 and strings is None:
-            strings = _pool_strings(b, o)
-        elif ctype == 0x0102:  # first start element must be <manifest>
-            if strings is None:
-                return None
-            body = o + hsize  # ResXMLTree_attrExt: ns, name, attributeStart, attributeSize, attributeCount, ...
-            name = _u32(b, body + 4)
-            if name >= len(strings) or strings[name] != "manifest":
-                return None
-            a_start, a_size, a_count = _u16(b, body + 8), _u16(b, body + 10), _u16(b, body + 12)
-            if a_size < 20:
-                return None
-            found = []
-            for i in range(a_count):
-                ao = body + a_start + i * a_size
-                an, raw = _u32(b, ao + 4), _u32(b, ao + 8)
-                dtype, data = b[ao + 15], _u32(b, ao + 16)
-                if an < len(strings) and strings[an] == "package":
-                    idx = raw if raw != 0xFFFFFFFF else (data if dtype == 0x03 else None)
-                    if idx is None or idx >= len(strings):
-                        return None
-                    found.append(strings[idx])
-            return found[0] if len(found) == 1 else None
+        chunks.append((ctype, hsize, o))
         o += csize
+    if o != len(b) and _u32(b, 4) != o:
+        return None
+    pools = [c for c in chunks if c[0] == 0x0001]
+    if len(pools) != 1:
+        return None
+    strings = _pool_strings(b, pools[0][2])
+    for ctype, hsize, o in chunks:
+        if ctype != 0x0102:  # first start element must be <manifest>
+            continue
+        if hsize < 16:
+            return None
+        body = o + hsize  # ResXMLTree_attrExt: ns, name, attributeStart, attributeSize, attributeCount, ...
+        name = _u32(b, body + 4)
+        if name >= len(strings) or strings[name] != "manifest":
+            return None
+        a_start, a_size, a_count = _u16(b, body + 8), _u16(b, body + 10), _u16(b, body + 12)
+        if a_size < 20:
+            return None
+        found = []
+        for i in range(a_count):
+            ao = body + a_start + i * a_size
+            an, raw = _u32(b, ao + 4), _u32(b, ao + 8)
+            dtype, data = b[ao + 15], _u32(b, ao + 16)
+            if an < len(strings) and strings[an] == "package":
+                idx = raw if raw != 0xFFFFFFFF else (data if dtype == 0x03 else None)
+                if idx is None or idx >= len(strings):
+                    return None
+                found.append(strings[idx])
+        return found[0] if len(found) == 1 else None
     return None
 
 
@@ -550,11 +583,30 @@ class Host:
                     return {"ok": False, "phase": "done", "err": "package not allowed"}
                 # between builds: drop the previous build and its data, then install (DESIGN 2.2)
                 self.shell("pm", "uninstall", pkg, timeout=60)
+                # authoritative check: whatever the manifest parser believed, only studio packages may appear
+                before = self._packages()
+                if before is None:
+                    return {"ok": False, "phase": "done", "err": "package list failed"}
                 rc, txt = self.adb("install", "-r", "-d", inst["path"], timeout=180)
+                after = self._packages()
+                if after is None:
+                    return {"ok": False, "phase": "done", "err": "package list failed"}
+                bad = sorted(p for p in after - before if not PKG_RE.match(p))
+                if bad:
+                    for p in bad:
+                        if PKG_RE.match(p) is None and re.match(r"^[A-Za-z0-9_.]{1,200}$", p):
+                            self.shell("pm", "uninstall", p, timeout=60)
+                    return {"ok": False, "phase": "done", "err": "unexpected package installed"}
             finally:
                 os.unlink(inst["path"])
             return {"ok": rc == 0 and "Success" in txt, "phase": "done", "pkg": pkg, "msg": txt[-200:]}
         raise ValueError("bad op")
+
+    def _packages(self):
+        rc, txt = self.shell("pm", "list", "packages", timeout=60)
+        if rc != 0:
+            return None
+        return {ln[8:].strip() for ln in txt.splitlines() if ln.startswith("package:")}
 
     @staticmethod
     def _ok_rc(res):

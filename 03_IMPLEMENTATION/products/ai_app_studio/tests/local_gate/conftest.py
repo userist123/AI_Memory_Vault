@@ -57,6 +57,11 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):  # type
     outcome = yield
     rep = outcome.get_result()
     marks = [m.args[0] for m in item.iter_markers("probe")]
+    if rep.when == "teardown" and rep.failed:
+        # a failing teardown (crash-dump guard) fails the probe; a module-scoped guard reports on the module's
+        # last test, so every probe in that module is failed
+        marks = sorted(set(marks) | {m.args[0] for it in item.session.items if it.module is item.module
+                                     for m in it.iter_markers("probe")})
     if not marks:
         return
     now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
@@ -66,6 +71,8 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):  # type
         status = "pass" if rep.passed else ("skipped" if rep.skipped else "fail")
     elif rep.when == "setup" and rep.failed:
         status = "error"
+    elif rep.when == "teardown" and rep.failed:
+        status = "fail"
     else:
         return
     for pid in marks:

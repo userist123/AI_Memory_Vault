@@ -96,6 +96,64 @@ def test_apk_package_refused(tmp_path: Path, data: bytes) -> None:
     assert got is None or not devhost.PKG_RE.match(got)
 
 
+def _two_pools(pool_a: list[str], pool_b: list[str]) -> bytes:
+    """Reviewer PoC: pool A (allowed name) is first, pool B (evil name) is the one Android ends up using."""
+    chunks = _pool(pool_a, False) + _pool(pool_b, False) + _start_el(0, [(1, 2)])
+    return struct.pack("<HHI", 0x0003, 8, 8 + len(chunks)) + chunks
+
+
+def test_two_string_pools_refused(tmp_path: Path) -> None:
+    p = tmp_path / "a.apk"
+    p.write_bytes(apk(_two_pools(["manifest", "package", GOOD_PKG], ["manifest", "package", "com.evil.app"])))
+    assert devhost.apk_package(str(p)) is None
+
+
+def test_unknown_chunk_and_bad_header_refused() -> None:
+    good = axml(GOOD_PKG)
+    assert devhost._axml_package(good) == GOOD_PKG
+    pool_len = struct.unpack_from("<I", good, 12)[0]
+    unk = good[:8] + struct.pack("<HHI", 0x7777, 8, 8) + good[8:]
+    unk = struct.pack("<HHI", 0x0003, 8, len(unk)) + unk[8:]
+    assert devhost._axml_package(unk) is None
+    assert pool_len > 0
+    # header size larger than the chunk
+    bad = bytearray(good)
+    struct.pack_into("<H", bad, 10, 0xFFF0)
+    assert devhost._axml_package(bytes(bad)) is None
+
+
+def test_pool_offsets_use_header_size() -> None:
+    """A pool whose header is larger than 28 bytes: offsets array starts after the real header."""
+    strings = ["manifest", "package", GOOD_PKG]
+    data, offs = b"", []
+    for s_ in strings:
+        offs.append(len(data))
+        data += struct.pack("<H", len(s_)) + s_.encode("utf-16-le") + b"\x00\x00"
+    hdr = 36  # 8 extra bytes
+    start = hdr + 4 * len(strings)
+    body = b"\x00" * 8 + b"".join(struct.pack("<I", o) for o in offs) + data
+    # the 8 filler bytes sit inside the header, so rebuild as header+filler
+    pool = struct.pack("<HHIIIIII", 0x0001, hdr, hdr + len(body) - 8, 3, 0, 0, start, 0) + body
+    chunks = pool + _start_el(0, [(1, 2)])
+    assert devhost._axml_package(struct.pack("<HHI", 3, 8, 8 + len(chunks)) + chunks) == GOOD_PKG
+
+
+def test_pool_string_amplification_bounded() -> None:
+    """100000 entries all pointing at one long UTF-16 string must be refused fast, not decoded 100000 times."""
+    long_s = "a" * 60000
+    data = struct.pack("<H", 0x8000 | (len(long_s) >> 16)) + struct.pack("<H", len(long_s) & 0xFFFF)
+    data += long_s.encode("utf-16-le") + b"\x00\x00"
+    n = 100000
+    hdr = 28
+    start = hdr + 4 * n
+    body = struct.pack("<I", 0) * n + data
+    pool = struct.pack("<HHIIIIII", 0x0001, hdr, hdr + len(body), n, 0, 0, start, 0) + body
+    chunks = pool + _start_el(0, [])
+    t0 = time.monotonic()
+    assert devhost._axml_package(struct.pack("<HHI", 3, 8, 8 + len(chunks)) + chunks) is None
+    assert time.monotonic() - t0 < 2.0
+
+
 # ---------- install / uninstall through Host.handle with a fake adb ----------
 
 class _Out:
@@ -121,10 +179,19 @@ def _host(tmp_path: Path) -> Any:
 
     def adb(*args: str, timeout: float = 30, data: bool = False) -> Any:
         h.calls.append(("adb",) + args)
+        if args[:1] == ("install",):
+            h.pkgs.extend(h.install_adds)
         return 0, "Success"
+
+    h.pkgs = ["com.android.settings"]
+    h.install_adds = []  # packages the fake "install" makes appear
 
     def shell(*words: str, timeout: float = 30) -> Any:
         h.calls.append(("shell",) + words)
+        if words[:3] == ("pm", "list", "packages"):
+            return 0, "\n".join("package:" + p for p in h.pkgs)
+        if words[:2] == ("pm", "uninstall") and words[2] in h.pkgs:
+            h.pkgs.remove(words[2])
         return 0, "Success"
 
     h.adb, h.shell = adb, shell
@@ -146,6 +213,30 @@ def test_install_refuses_foreign_package(tmp_path: Path, monkeypatch: pytest.Mon
     assert rep["ok"] is False and rep["err"] == "package not allowed"
     assert not any(c[:2] == ("adb", "install") for c in h.calls)
     assert list((tmp_path / "run").iterdir()) == []
+
+
+def test_install_removes_newly_installed_foreign_package(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    h = _host(tmp_path)
+    h.install_adds = [GOOD_PKG, "com.evil.app"]  # APK actually installs something the check did not see
+    rep = _install(h, apk(axml(GOOD_PKG)), monkeypatch)
+    assert rep["ok"] is False and rep["err"] == "unexpected package installed"
+    assert ("shell", "pm", "uninstall", "com.evil.app") in h.calls
+    assert "com.evil.app" not in h.pkgs
+
+
+def test_install_snapshot_failure_is_fail_closed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    h = _host(tmp_path)
+    orig = h.shell
+
+    def shell(*words: str, timeout: float = 30) -> Any:
+        if words[:3] == ("pm", "list", "packages"):
+            return 1, "error"
+        return orig(*words, timeout=timeout)
+
+    h.shell = shell
+    rep = _install(h, apk(axml(GOOD_PKG)), monkeypatch)
+    assert rep["ok"] is False
+    assert not any(c[:2] == ("adb", "install") for c in h.calls)
 
 
 def test_install_allowed_package_uninstalls_then_installs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
