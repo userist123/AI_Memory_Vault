@@ -103,6 +103,8 @@ export interface State {
   protocolError: string | null;
   qa: { passed: number; failed: number; summary: string } | null;
   approvalsVersion: number;
+  /** bumped by every event that changes a chat turn: ChatPanel refetches the server's turns on it (never renders events) */
+  chatVersion: number;
   agentText: string;
   focus: Focus | null;
   connection: "offline" | "connecting" | "open" | "demo";
@@ -133,6 +135,7 @@ export const initialState: State = {
   protocolError: null,
   qa: null,
   approvalsVersion: 0,
+  chatVersion: 0,
   agentText: "",
   focus: null,
   connection: "offline",
@@ -235,6 +238,17 @@ export function endReasonText(status: string, reason: string): string {
   return END_REASONS[reason] ?? END_REASONS[status] ?? `Rularea s-a oprit (${reason || status || "fără motiv"}).`;
 }
 
+/** kinds after which the chat turns of a project may have changed (refetched from the server, never from the event) */
+const CHAT_SIGNALS: ReadonlySet<string> = new Set([
+  "run.started",
+  "run.finished",
+  "agent.text",
+  "plan.proposed",
+  "plan.decided",
+  "chat.prompt",
+  "chat.fallback",
+]);
+
 function applyEvent(s0: State, e: ActivityEvent): State {
   if (e.seq <= s0.lastSeq) return s0; // duplicate / replay overlap
   let s: State = { ...s0, lastSeq: e.seq };
@@ -244,6 +258,7 @@ function applyEvent(s0: State, e: ActivityEvent): State {
       ...initialState,
       connection: s.connection,
       approvalsVersion: s.approvalsVersion,
+      chatVersion: s.chatVersion,
       lastSeq: e.seq,
       gaps: s.gaps,
       dropped: s.dropped,
@@ -257,6 +272,7 @@ function applyEvent(s0: State, e: ActivityEvent): State {
     s.focus = { panel, file, device, seq: e.seq };
   };
 
+  if (CHAT_SIGNALS.has(e.kind)) s.chatVersion = s.chatVersion + 1;
   switch (e.kind) {
     case "run.started": {
       s.runStatus = "running";

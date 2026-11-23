@@ -32,6 +32,8 @@ import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
 import { ExportControls } from "./components/ExportControls";
 import { RunControls } from "./components/RunControls";
+import { ChatPanel } from "./components/ChatPanel";
+import { fetchChat, sendChat } from "./lib/chatApi";
 import { elapsed, Timeline } from "./components/Timeline";
 
 const FOLLOW_PAUSE_MS = 10_000;
@@ -248,6 +250,16 @@ export function App() {
       .catch((e: unknown) => setRunError(`The run could not be started: ${errorText(e)}`))
       .finally(() => setRunBusy(false));
   };
+  // ---- owner chat per project (stable callbacks: ChatPanel refetches when they change) ----
+  const chatLoad = useCallback((pid: string) => {
+    if (!session) return Promise.reject(new Error("no session"));
+    return fetchChat(session, pid);
+  }, [session]);
+  const chatSend = useCallback((pid: string, message: string) => {
+    if (!session) return Promise.reject(new Error("no session"));
+    return sendChat(session, pid, message);
+  }, [session]);
+
   const onStopRun = () => {
     if (!session || !state.runId) return;
     void stopRun(session, state.runId).catch(() => setRunError("Stop failed."));
@@ -336,6 +348,19 @@ export function App() {
                   approve={(id) => decideApproval(session, id, "approve")}
                 />
               )}
+            />
+          ) : null}
+          {!demo && session ? (
+            <ChatPanel
+              projects={projects}
+              currentProjectId={state.projectId}
+              version={state.chatVersion}
+              runActive={state.runStatus === "running" || runBusy}
+              load={chatLoad}
+              send={chatSend}
+              plans={plans}
+              onPlanApprove={onPlanApprove}
+              onPlanEdit={onPlanEdit}
             />
           ) : null}
           {state.runStatus === "failed" && state.endReason ? (

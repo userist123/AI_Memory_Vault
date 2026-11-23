@@ -37,6 +37,7 @@ from studio_core.errors import ConflictError, Unavailable
 from studio_core.ids import new_id
 from studio_core.policy import Actor
 
+from . import chat
 from . import profile as prof
 from .streamjson import CATALOGUE_TOOLS, SERVER, TOOL_PREFIX, InitViolation, StreamMapper, check_init
 
@@ -108,14 +109,20 @@ def resolve_cli(path: str | None = None) -> list[str] | None:
 
 
 def build_argv(*, cli: list[str], model: str, mcp_config: Path, settings: Path, max_turns: int,
-               max_budget_usd: float, profile: str = "isolated", deny: prof.DenyList | None = None) -> list[str]:
+               max_budget_usd: float, profile: str = "isolated", deny: prof.DenyList | None = None,
+               chat_session: bool = False, resume: str | None = None) -> list[str]:
+    """``chat_session`` / ``resume`` (owner chat, aas_runner/chat.py): only the full profile may persist the CLI
+    session of a chat turn and resume it; every other run keeps ``--no-session-persistence`` (B7)."""
+    if resume is not None and (not chat_session or not chat.valid_session_id(resume)):
+        raise ValueError("resume needs a chat session and a well-formed session id")
     if profile == "full":
         if deny is None:
             raise ValueError("the full profile needs a deny-list")
         return [
             *cli, "-p", "--input-format", "text", "--output-format", "stream-json", "--verbose",
             "--include-partial-messages", "--model", model,
-            "--no-session-persistence",
+            *(() if chat_session else ("--no-session-persistence",)),
+            *(("--resume", resume) if resume else ()),
             # strict (review L3): the runner's own config holds ai-app-studio plus the owner's user-scope servers the
             # deny-list does not fully deny (profile.owner_mcp_servers); a denied server is never launched
             "--mcp-config", str(mcp_config), "--strict-mcp-config",
@@ -129,6 +136,8 @@ def build_argv(*, cli: list[str], model: str, mcp_config: Path, settings: Path, 
         ]
     if profile != "isolated":
         raise ValueError(f"unknown runner profile {profile!r}")
+    if chat_session:
+        raise ValueError("the isolated profile never persists a session (B7)")
     return [
         *cli, "-p", "--input-format", "text", "--output-format", "stream-json", "--verbose",
         "--include-partial-messages", "--model", model,
@@ -194,6 +203,14 @@ class _Run:
         self.reason = ""
         self.first_seq = 0
         self.terminating = threading.Lock()
+        # owner chat (aas_runner/chat.py)
+        self.chat = False
+        self.prompt = ""
+        self.resume: str | None = None
+        self.resume_failed = False
+        self.argv: list[str] = []
+        self.env: dict[str, str] = {}
+        self.cwd: Path | None = None
 
 
 class Runner:
@@ -239,7 +256,8 @@ class Runner:
                             child.unlink(missing_ok=True)
 
     # ------------------------------------------------------------------ public API
-    def start(self, project_id: str, prompt: str) -> str:
+    def start(self, project_id: str, prompt: str, *, chat: bool = False) -> str:
+        """``chat=True``: a turn of the owner's chat about the project (continuity: aas_runner/chat.py)."""
         if not self.cli or not os.path.isabs(self.cli[0]):
             raise Unavailable("the Claude Code CLI was not found when the studio started (install it, then restart)")
         project = self.studio.get_project(SYSTEM_ACTOR, project_id, with_components=False)  # NotFound / invalid id
@@ -250,7 +268,7 @@ class Runner:
                                     runId=self._active)
             self._active, self._active_project = run_id, project_id
         try:
-            return self._start(run_id, project_id, project, prompt)
+            return self._start(run_id, project_id, project, prompt, chat_turn=chat)
         except BaseException:
             self._release(run_id)
             raise
@@ -265,14 +283,28 @@ class Runner:
         with self._lock:
             return self._active_project
 
-    def _start(self, run_id: str, project_id: str, project: dict[str, Any], prompt: str) -> str:
+    def _start(self, run_id: str, project_id: str, project: dict[str, Any], prompt: str, *,
+               chat_turn: bool = False) -> str:
         run = _Run(run_id, project_id)
-        run_dir = self.root / "runs" / run_id
+        run.chat, run.prompt = chat_turn, prompt
         tmp_dir = self.root / "tmp" / run_id
         run.profile = prof.get_profile(self.studio)
         if run.profile == "full":  # read + validated at every start: an invalid owner file refuses the run
             run.deny = prof.load_denylist(self.studio.settings.config_dir)
-        run_dir.mkdir(parents=True)  # fresh and empty: it becomes the CLI's cwd
+        persist = chat_turn and run.profile == "full"
+        stdin_prompt, mode = prompt, ""
+        if chat_turn:
+            run.resume = chat.get_session(self.studio, project_id) if persist else None
+            if run.resume:
+                mode = "resume"
+            else:
+                stdin_prompt = chat.compose(chat.context(self.studio, project_id), prompt)
+                mode = "summary" if stdin_prompt != prompt else "new"
+            # the CLI files a session by cwd: a chat turn runs in the project's fixed chat dir, recreated EMPTY
+            run_dir = chat.chat_cwd(self.root, project_id)
+        else:
+            run_dir = self.root / "runs" / run_id
+            run_dir.mkdir(parents=True)  # fresh and empty: it becomes the CLI's cwd
         tmp_dir.mkdir(parents=True)
         env = runner_env(tmp_dir, extra=self.extra_env, profile=run.profile)
         env.setdefault("PYTHONUTF8", "1")
@@ -307,7 +339,8 @@ class Runner:
         mcp_cfg.write_text(json.dumps({"mcpServers": servers}), encoding="utf-8")
         argv = build_argv(cli=self.cli, model=self.model, mcp_config=mcp_cfg, settings=settings,
                           max_turns=self.max_turns, max_budget_usd=self.max_budget_usd, profile=run.profile,
-                          deny=run.deny)
+                          deny=run.deny, chat_session=persist, resume=run.resume)
+        run.argv, run.env, run.cwd = argv, env, run_dir
         try:
             started = activity.record(self.studio, "run.started", project_id=project_id, run_id=run_id,
                                       source="runner",
@@ -315,6 +348,9 @@ class Runner:
                                                "title": str(project.get("name", ""))[:200],
                                                "budgetUsd": self.max_budget_usd, "profile": run.profile})
             run.first_seq = int(started.get("seq", 0)) if isinstance(started, dict) else 0
+            if chat_turn:
+                activity.record(self.studio, "chat.prompt", project_id=project_id, run_id=run_id, source="runner",
+                                payload={"text": prompt, "mode": mode})
             run.proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  # noqa: S603
                                         stderr=subprocess.PIPE, cwd=run_dir, env=env, shell=False)
         except BaseException:
@@ -322,7 +358,7 @@ class Runner:
             raise
         with self._lock:
             self._runs[run_id] = run
-        run.thread = threading.Thread(target=self._drive, args=(run, prompt, mcp_cfg, run_dir, tmp_dir),
+        run.thread = threading.Thread(target=self._drive, args=(run, stdin_prompt, mcp_cfg, run_dir, tmp_dir),
                                       name=f"aas-run-{run_id}", daemon=True)
         run.thread.start()
         return run_id
@@ -430,55 +466,23 @@ class Runner:
         assert proc is not None and proc.stdin and proc.stdout and proc.stderr
         mapper = StreamMapper()
         t0 = time.monotonic()
-        pre_init_hooks = 0
-        threading.Thread(target=lambda: self._drain(proc.stderr), daemon=True).start()
         threading.Thread(target=self._watchdog, args=(run, t0), daemon=True).start()
         try:
-            try:
-                proc.stdin.write(prompt.encode("utf-8"))
-                proc.stdin.close()
-            except OSError:
-                pass
-            while True:
-                raw = proc.stdout.readline(MAX_LINE_BYTES + 1)  # bounded: never more than one capped line in memory
-                if not raw:
-                    break
-                if len(raw) > MAX_LINE_BYTES:
-                    self._abort(run, "line_too_long", immediate=not run.init_ok)
-                    break
-                if not run.init_ok:
-                    # H2, fail closed: the first non-blank line must be a valid system/init; anything else (an event,
-                    # garbage, another system subtype) aborts the run before it is mapped or recorded
-                    if not raw.strip():
-                        continue
-                    if run.profile == "full" and _is_session_start_hook_line(raw):
-                        pre_init_hooks += 1
-                        if pre_init_hooks > MAX_PRE_INIT_HOOK_LINES:
-                            self._abort(run, "init_missing", immediate=True)
-                            break
-                        continue
-                    mapper.feed(raw)
-                    if mapper.init is None:
-                        self._abort(run, "init_missing", immediate=True)
-                        break
-                    try:
-                        if run.profile == "full" and run.deny is not None:
-                            prof.check_init_full(mapper.init, run.deny)
-                        else:
-                            check_init(mapper.init)
-                    except InitViolation:
-                        self._abort(run, "init_violation", immediate=True)
-                        break
-                    run.init_ok = True
-                    continue
-                self._record(run, mapper.feed(raw) + mapper.flush_stale())
-            if not run.init_ok and not run.aborted and not run.cancelled:
-                run.aborted, run.reason = True, "init_missing"  # the stream ended without an init
-            proc.wait(timeout=30)
+            self._pump(run, proc, prompt, mapper)
+            if run.resume_failed and not run.cancelled and not run.aborted and not run.stop.is_set():
+                # the CLI refused --resume (session gone): same run, same grant, a fresh session that gets the
+                # summary of the earlier turns instead (aas_runner/chat.py)
+                proc, mapper = self._resume_fallback(run), StreamMapper()
+                self._pump(run, proc, chat.compose(chat.context(self.studio, run.project_id, exclude_run=run.id),
+                                                   run.prompt), mapper)
+            elif run.resume_failed and not run.aborted and not run.cancelled:
+                run.aborted, run.reason = True, "init_missing"
         except Exception:  # noqa: BLE001
             if not run.stop.is_set() and not run.aborted:
                 run.aborted, run.reason = True, run.reason or "runner_error"
-            _kill_tree(proc)
+            if run.proc is not None:
+                _kill_tree(run.proc)
+            proc = run.proc or proc
         finally:
             run.stop.set()
             if proc.poll() is None:
@@ -510,6 +514,86 @@ class Runner:
                 self._cleanup(run.id, mcp_cfg, run_dir, tmp_dir)
             finally:
                 self._release(run.id)
+
+    def _pump(self, run: _Run, proc: subprocess.Popen[bytes], prompt: str, mapper: StreamMapper) -> None:
+        """Feed ``prompt`` on stdin and map the stream of one CLI process (fail closed before init)."""
+        assert proc.stdin and proc.stdout and proc.stderr
+        pre_init_hooks = 0
+        threading.Thread(target=lambda: self._drain(proc.stderr), daemon=True).start()
+        try:
+            proc.stdin.write(prompt.encode("utf-8"))
+            proc.stdin.close()
+        except OSError:
+            pass
+        while True:
+            raw = proc.stdout.readline(MAX_LINE_BYTES + 1)  # bounded: never more than one capped line in memory
+            if not raw:
+                break
+            if len(raw) > MAX_LINE_BYTES:
+                self._abort(run, "line_too_long", immediate=not run.init_ok)
+                break
+            if not run.init_ok:
+                # H2, fail closed: the first non-blank line must be a valid system/init; anything else (an event,
+                # garbage, another system subtype) aborts the run before it is mapped or recorded
+                if not raw.strip():
+                    continue
+                if run.profile == "full" and _is_session_start_hook_line(raw):
+                    pre_init_hooks += 1
+                    if pre_init_hooks > MAX_PRE_INIT_HOOK_LINES:
+                        self._abort(run, "init_missing", immediate=True)
+                        break
+                    continue
+                mapper.feed(raw)
+                if mapper.init is None:
+                    if run.resume and not run.resume_failed:
+                        # "No conversation found with session ID ...": nothing of it is mapped or recorded
+                        run.resume_failed = True
+                        _kill_tree(proc)
+                        break
+                    self._abort(run, "init_missing", immediate=True)
+                    break
+                try:
+                    if run.profile == "full" and run.deny is not None:
+                        prof.check_init_full(mapper.init, run.deny)
+                    else:
+                        check_init(mapper.init)
+                except InitViolation:
+                    self._abort(run, "init_violation", immediate=True)
+                    break
+                run.init_ok = True
+                if run.chat and run.profile == "full":
+                    sid = mapper.init.get("session_id")
+                    try:
+                        if chat.valid_session_id(sid):
+                            chat.set_session(self.studio, run.project_id, sid)
+                    except Exception:  # noqa: BLE001 - continuity is best effort, the run goes on
+                        pass
+                continue
+            self._record(run, mapper.feed(raw) + mapper.flush_stale())
+        if not run.init_ok and not run.aborted and not run.cancelled:
+            if run.resume and not run.resume_failed:
+                run.resume_failed = True  # the stream ended without an init after --resume
+            elif not run.resume_failed or run.resume is None:
+                run.aborted, run.reason = True, "init_missing"  # the stream ended without an init
+        proc.wait(timeout=30)
+
+    def _resume_fallback(self, run: _Run) -> subprocess.Popen[bytes]:
+        """Start the CLI again for the same run without ``--resume`` (the session is forgotten)."""
+        try:
+            chat.clear_session(self.studio, run.project_id)
+        except Exception:  # noqa: BLE001
+            pass
+        self._record(run, [("chat.fallback", {"reason": "resume_failed"})])
+        argv = list(run.argv)
+        i = argv.index("--resume")
+        del argv[i:i + 2]
+        run.resume = None
+        proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  # noqa: S603
+                                stderr=subprocess.PIPE, cwd=run.cwd, env=run.env, shell=False)
+        run.proc = proc
+        if run.cancelled or run.stop.is_set():  # stopped while the first process was ending
+            _kill_tree(proc)
+        return proc
 
     @staticmethod
     def _drain(stream: Any) -> None:
