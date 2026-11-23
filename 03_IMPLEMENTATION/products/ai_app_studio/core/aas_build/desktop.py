@@ -24,7 +24,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -32,6 +31,7 @@ from typing import Any
 
 from . import runner
 from .runner import BuildError, BuildLimits
+from .winacl import Ace, current_sid, read_acl  # ctypes lives in winacl (P1c allow-list)
 
 PRODUCT = Path(__file__).resolve().parents[2]
 TEMPLATE = PRODUCT / "images" / "desktop-wrapper"
@@ -161,87 +161,6 @@ _PARENT_UNSAFE = _REPLACE | 0x2 | 0x4  # + add-file / add-subdirectory: plant a 
 _INHERIT_ONLY = 0x08
 _ALWAYS_TRUSTED = {"S-1-5-18", "S-1-5-32-544", "S-1-3-0", "S-1-3-4",
                    "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"}  # SYSTEM, Administrators, CREATOR OWNER, OWNER RIGHTS, TrustedInstaller
-Ace = tuple[str, int, int]  # (sid, mask, ace flags) of an ACCESS_ALLOWED ACE
-
-
-def _win():  # type: ignore[no-untyped-def]
-    import ctypes
-    from ctypes import wintypes
-    adv = ctypes.WinDLL("advapi32", use_last_error=True)
-    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    return ctypes, wintypes, adv, k32
-
-
-def _sid_str(ct, wt, adv, k32, psid) -> str:  # type: ignore[no-untyped-def]
-    adv.ConvertSidToStringSidW.argtypes = [ct.c_void_p, ct.POINTER(wt.LPWSTR)]
-    out = wt.LPWSTR()
-    if not adv.ConvertSidToStringSidW(psid, ct.byref(out)):
-        raise OSError("ConvertSidToStringSid failed")
-    try:
-        return str(out.value)
-    finally:
-        k32.LocalFree.argtypes = [ct.c_void_p]
-        k32.LocalFree(ct.cast(out, ct.c_void_p))
-
-
-def current_sid() -> str:
-    """SID of the process token's user (Windows)."""
-    ct, wt, adv, k32 = _win()
-    k32.GetCurrentProcess.restype = ct.c_void_p
-    adv.OpenProcessToken.argtypes = [ct.c_void_p, wt.DWORD, ct.POINTER(ct.c_void_p)]
-    tok = ct.c_void_p()
-    if not adv.OpenProcessToken(k32.GetCurrentProcess(), 0x8, ct.byref(tok)):  # TOKEN_QUERY
-        raise OSError("OpenProcessToken failed")
-    try:
-        adv.GetTokenInformation.argtypes = [ct.c_void_p, ct.c_int, ct.c_void_p, wt.DWORD, ct.POINTER(wt.DWORD)]
-        n = wt.DWORD()
-        adv.GetTokenInformation(tok, 1, None, 0, ct.byref(n))  # TokenUser
-        buf = ct.create_string_buffer(n.value)
-        if not adv.GetTokenInformation(tok, 1, buf, n, ct.byref(n)):
-            raise OSError("GetTokenInformation failed")
-        psid = ct.cast(buf, ct.POINTER(ct.c_void_p))[0]
-        return _sid_str(ct, wt, adv, k32, psid)
-    finally:
-        k32.CloseHandle.argtypes = [ct.c_void_p]
-        k32.CloseHandle(tok)
-
-
-def read_acl(path: Path) -> tuple[str, list[Ace]]:
-    """(owner SID, ACCESS_ALLOWED aces) of a file system object (Windows, ctypes). A NULL DACL = Everyone full."""
-    ct, wt, adv, k32 = _win()
-    adv.GetNamedSecurityInfoW.argtypes = [wt.LPCWSTR, ct.c_int, wt.DWORD, ct.POINTER(ct.c_void_p), ct.POINTER(ct.c_void_p),
-                                          ct.POINTER(ct.c_void_p), ct.POINTER(ct.c_void_p), ct.POINTER(ct.c_void_p)]
-    adv.GetNamedSecurityInfoW.restype = wt.DWORD
-    owner, dacl, sd = ct.c_void_p(), ct.c_void_p(), ct.c_void_p()
-    rc = adv.GetNamedSecurityInfoW(str(path), 1, 0x1 | 0x4, ct.byref(owner), None, ct.byref(dacl), None, ct.byref(sd))
-    if rc != 0:
-        raise OSError(f"GetNamedSecurityInfo failed ({rc}) for {path}")
-    try:
-        osid = _sid_str(ct, wt, adv, k32, owner)
-        if not dacl.value:
-            return osid, [("S-1-1-0", 0x1F01FF, 0)]
-
-        class AclSize(ct.Structure):
-            _fields_ = [("AceCount", wt.DWORD), ("AclBytesInUse", wt.DWORD), ("AclBytesFree", wt.DWORD)]
-        info = AclSize()
-        adv.GetAclInformation.argtypes = [ct.c_void_p, ct.c_void_p, wt.DWORD, ct.c_int]
-        if not adv.GetAclInformation(dacl, ct.byref(info), ct.sizeof(info), 2):
-            raise OSError("GetAclInformation failed")
-        aces: list[Ace] = []
-        adv.GetAce.argtypes = [ct.c_void_p, wt.DWORD, ct.POINTER(ct.c_void_p)]
-        for i in range(info.AceCount):
-            pace = ct.c_void_p()
-            if not adv.GetAce(dacl, i, ct.byref(pace)):
-                raise OSError("GetAce failed")
-            hdr = ct.string_at(pace.value, 8)
-            if hdr[0] != 0:  # only ACCESS_ALLOWED_ACE_TYPE grants rights
-                continue
-            mask = int.from_bytes(hdr[4:8], "little")
-            aces.append((_sid_str(ct, wt, adv, k32, pace.value + 8), mask, hdr[1]))
-        return osid, aces
-    finally:
-        k32.LocalFree.argtypes = [ct.c_void_p]
-        k32.LocalFree(sd)
 
 
 def assert_root_trusted(root: Path, *, reader: Callable[[Path], tuple[str, list[Ace]]] | None = None,
@@ -287,15 +206,7 @@ def secure_dir(path: Path) -> None:
         return
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
-    me = current_sid()
-
-    def run(argv: list[str]) -> None:
-        subprocess.run(argv, check=True, capture_output=True, shell=False, stdin=subprocess.DEVNULL, timeout=1800)  # noqa: S603
-    run(["icacls", str(path), "/reset"])  # drop explicit aces (the dir itself only), then no inheritance + 3 grants
-    run(["icacls", str(path), "/inheritance:r", "/grant:r", f"*{me}:(OI)(CI)F", "*S-1-5-18:(OI)(CI)F",
-         "*S-1-5-32-544:(OI)(CI)F"])
-    if any(path.iterdir()):
-        run(["icacls", str(path / "*"), "/reset", "/T", "/C", "/Q"])
+    runner.icacls_owner_only(path, current_sid(), reset_children=any(path.iterdir()))
 
 
 def refuse_planted_cargo_config(build_dir: Path) -> None:

@@ -127,6 +127,27 @@ def kill_tree(pid: int) -> None:
         pass
 
 
+_SID_RE = re.compile(r"^S-1-[0-9]+(-[0-9]+){1,14}$")
+
+
+def icacls_owner_only(path: Path, sid: str, *, reset_children: bool) -> None:
+    """Owner-only ACL for the studio's own desktop root (S9c ``secure``): fixed icacls argv from System32, minimal env,
+    no shell; the only variable parts are the absolute path and a validated SID."""
+    if os.name != "nt":
+        return
+    p = Path(path)
+    if not p.is_absolute() or not p.is_dir() or not isinstance(sid, str) or not _SID_RE.fullmatch(sid):
+        raise BuildError("icacls: absolute directory and a valid SID required")
+    exe = os.path.join(os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows", "System32", "icacls.exe")
+    argvs = [[exe, str(p), "/reset"],  # drop explicit aces (the dir itself only), then no inheritance + 3 grants
+             [exe, str(p), "/inheritance:r", "/grant:r", f"*{sid}:(OI)(CI)F", "*S-1-5-18:(OI)(CI)F", "*S-1-5-32-544:(OI)(CI)F"]]
+    if reset_children:
+        argvs.append([exe, str(p / "*"), "/reset", "/T", "/C", "/Q"])
+    for argv in argvs:
+        subprocess.run(argv, check=True, capture_output=True, shell=False, stdin=subprocess.DEVNULL, timeout=1800,  # noqa: S603
+                       env=_env())
+
+
 def resolve_image(docker: str, tag: str = "aas-web-build:dev") -> str:
     """Image id (`sha256:...`) of a locally built tag: the form build_web_argv accepts. Fails closed."""
     if not re.fullmatch(r"[a-z0-9][a-z0-9._/-]{0,60}(:[A-Za-z0-9._-]{1,40})?", tag):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from pathlib import Path
 
 import pytest
@@ -309,9 +310,53 @@ def _spawners(source: str) -> bool:
     return False
 
 
+# winacl.py is the ONE explicit exception to the ctypes ban: Windows ACL reads only (advapi32/kernel32), never a process
+_WINACL = "winacl.py"
+_PROCESS_API = re.compile(r"^(createprocess\w*|shellexecute\w*|winexec|system|popen\w*|spawn\w*|exec[lv]p?e?|startfile|"
+                          r"fork\w*|posix_spawn\w*|createremotethread\w*|ntcreate(user)?process\w*)$", re.I)
+_DYNAMIC = {"getattr", "__getattr__", "__import__", "eval", "exec", "compile", "importlib", "globals", "vars"}
+
+
+def _winacl_violations(source: str) -> list[str]:
+    """Process-creation APIs (names, attributes, string constants), subprocess/os imports of spawners, dynamic lookups
+    that could reach them, and any DLL other than advapi32/kernel32."""
+    import ast
+
+    bad: list[str] = []
+    for node in ast.walk(ast.parse(source)):
+        ident = None
+        if isinstance(node, ast.Name):
+            ident = node.id
+        elif isinstance(node, ast.Attribute):
+            ident = node.attr
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            ident = node.value.strip()
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            mods = [a.name for a in node.names] if isinstance(node, ast.Import) else [node.module or ""]
+            mods += [a.name for a in node.names]
+            bad += [m for m in mods if m.split(".")[0] in {"subprocess", "multiprocessing", "importlib", "pty", "os"}
+                    or _PROCESS_API.match(m)]
+        if ident is not None and (_PROCESS_API.match(ident) or ident in _DYNAMIC):
+            bad.append(ident)
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in {"WinDLL", "CDLL",
+                "OleDLL", "PyDLL", "LoadLibrary"}):
+            arg = node.args[0] if node.args else None
+            if not (isinstance(arg, ast.Constant) and arg.value in {"advapi32", "kernel32"}):
+                bad.append(f"dll:{ast.unparse(arg) if arg is not None else '?'}")
+    return bad
+
+
 def test_p1c_ast_only_runner_spawns_processes() -> None:
     pkg = Path(runner.__file__).parent
-    offenders = [py.name for py in pkg.glob("*.py") if py.name != "runner.py" and _spawners(py.read_text(encoding="utf-8"))]
+    offenders = [py.name for py in pkg.glob("*.py")
+                 if py.name not in {"runner.py", _WINACL} and _spawners(py.read_text(encoding="utf-8"))]
     assert not offenders, offenders
+    winacl = pkg / _WINACL
+    assert winacl.is_file()  # the allow-listed module exists, so the exception is not vacuous
+    assert _winacl_violations(winacl.read_text(encoding="utf-8")) == []
+    # [+] the winacl detector sees what it must refuse
+    for src in ("k32.CreateProcessW(None)", "getattr(k32, 'WinExec')", "import subprocess", "from os import system",
+                "ctypes.WinDLL('shell32')", "adv.ShellExecuteExW", "os.spawnv(0, 'x', [])"):
+        assert _winacl_violations(src), src
     assert _spawners((pkg / "runner.py").read_text(encoding="utf-8"))  # [+] the detector sees the real spawner
     assert _spawners("import os\nos.system('x')")
