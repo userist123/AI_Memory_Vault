@@ -28,6 +28,22 @@ export interface Frame {
   payload?: unknown;
 }
 
+function readJson(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve) => {
+    let data = "";
+    req.on("data", (c: Buffer) => {
+      if (data.length < 65536) data += c.toString("utf8");
+    });
+    req.on("end", () => {
+      try {
+        resolve(data ? (JSON.parse(data) as unknown) : null);
+      } catch {
+        resolve(null);
+      }
+    });
+  });
+}
+
 function listen(server: Server, port: number): Promise<void> {
   return new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -41,6 +57,12 @@ export class MockBackend {
   sockets = new Set<WebSocket>();
   afterSeqs: number[] = [];
   approvalGets = 0;
+  projects: Array<{ id: string; name: string }> = [];
+  /** JSON bodies of POST /runs, POST /projects, and the run ids of POST /runs/<id>/stop, plan decisions */
+  runStarts: unknown[] = [];
+  projectCreates: unknown[] = [];
+  runStops: string[] = [];
+  decisions: Array<{ url: string; body: unknown }> = [];
   rejectedUpgrades = 0;
   canaryHits: string[] = [];
   /** every API request as "<origin> <method> <url>" (origin "-" when absent), before auth */
@@ -171,8 +193,41 @@ export class MockBackend {
       return;
     }
     if (req.method === "POST" && /^\/api\/v1\/(approvals|plans)\/[\w.:-]+\/decide$/.test(req.url ?? "")) {
+      void readJson(req).then((body) => {
+        this.decisions.push({ url: req.url ?? "", body });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("{}");
+      });
+      return;
+    }
+    if (req.method === "GET" && req.url === "/api/v1/projects") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end("{}");
+      res.end(JSON.stringify(this.projects));
+      return;
+    }
+    if (req.method === "POST" && req.url === "/api/v1/projects") {
+      void readJson(req).then((body) => {
+        this.projectCreates.push(body);
+        const id = `prj_${(this.projects.length + 1).toString(16).padStart(16, "0")}`;
+        this.projects.unshift({ id, name: String((body as { name?: unknown })?.name ?? "") });
+        res.writeHead(201, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ id }));
+      });
+      return;
+    }
+    if (req.method === "POST" && req.url === "/api/v1/runs") {
+      void readJson(req).then((body) => {
+        this.runStarts.push(body);
+        res.writeHead(202, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ runId: "run_00000000000000a1", status: "running" }));
+      });
+      return;
+    }
+    const stop = /^\/api\/v1\/runs\/(run_[0-9a-f]{16})\/stop$/.exec(req.url ?? "");
+    if (req.method === "POST" && stop) {
+      this.runStops.push(stop[1] ?? "");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ runId: stop[1], status: "stopping" }));
       return;
     }
     res.writeHead(404);

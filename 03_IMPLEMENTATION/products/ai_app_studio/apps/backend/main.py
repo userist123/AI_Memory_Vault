@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import dataclasses
 import json
 import os
@@ -18,6 +19,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from collections.abc import AsyncIterator
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
@@ -104,9 +106,17 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     register_app_kind()
     studio = Studio(settings, kind="app")
     runner = Runner(studio, cli=runner_cli or [shutil.which("claude") or "claude"], extra_env=runner_extra_env)
+
+    @contextlib.asynccontextmanager
+    async def lifespan(a: FastAPI) -> AsyncIterator[None]:
+        yield
+        # backend shutdown: every run is stopped (grant revoked -> its device stops -> process tree killed)
+        await asyncio.to_thread(a.state.runner.stop_all)
+
     app = FastAPI(title="AI App Studio API", version=__version__, docs_url=None, redoc_url=None,
-                  openapi_url=f"{API}/openapi.json")
+                  openapi_url=f"{API}/openapi.json", lifespan=lifespan)
     app.state.studio = studio
+    app.state.runner = runner
 
     @app.exception_handler(StudioError)
     async def _studio_error(_r: Request, e: StudioError) -> JSONResponse:
@@ -163,6 +173,14 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     @app.put(f"{API}/settings/device")
     def set_device(b: ExternalMcp) -> dict[str, Any]:  # same shape: {"enabled": <strict bool>}
         return dsvc.set_enabled(studio, OWNER, b.enabled)
+
+    @app.get(f"{API}/settings/plan-gate")
+    def get_plan_gate() -> dict[str, Any]:
+        return {"enabled": plans.gate_enabled(studio)}
+
+    @app.put(f"{API}/settings/plan-gate")
+    def set_plan_gate(b: ExternalMcp) -> dict[str, Any]:  # {"enabled": <strict bool>}; P5f, default ON
+        return plans.set_gate(studio, OWNER, b.enabled)
 
     # ---------------------------------------------------------------- built-in runner (owner only)
     @app.post(f"{API}/runs", status_code=202)

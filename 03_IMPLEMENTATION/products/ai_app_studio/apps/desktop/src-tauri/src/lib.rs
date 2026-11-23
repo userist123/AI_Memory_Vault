@@ -112,10 +112,44 @@ fn hide_window(cmd: &mut Command) {
     let _ = cmd;
 }
 
+/// Isolated launcher (S6 review): `python -I` ignores every PYTHON* variable, the user site and the current
+/// directory, so nothing on sys.path comes from the environment or cwd; the product root is put on sys.path
+/// explicitly (argv[1], never interpolated into code) and `apps.backend` is run with runpy.
+pub(crate) const BACKEND_LAUNCHER: &str = "import runpy, sys; root = sys.argv.pop(1); sys.path.insert(0, root); \
+runpy.run_module('apps.backend', run_name='__main__', alter_sys=True)";
+
+/// Variables removed from the backend's environment (on top of `-I`): dev-only switches and interpreter knobs.
+pub(crate) fn scrubbed_var(name: &std::ffi::OsStr) -> bool {
+    let n = name.to_string_lossy().to_ascii_uppercase();
+    n.starts_with("AAS_DEV_") || n.starts_with("PYTHON")
+}
+
+pub(crate) fn backend_command(
+    python: &Path,
+    root: &Path,
+    inherited: impl Iterator<Item = std::ffi::OsString>,
+) -> Command {
+    let mut cmd = Command::new(python);
+    cmd.arg("-I")
+        .arg("-X")
+        .arg("utf8")
+        .arg("-c")
+        .arg(BACKEND_LAUNCHER)
+        .arg(root)
+        .arg("--token-stdin")
+        .current_dir(root);
+    for k in inherited {
+        if scrubbed_var(&k) {
+            cmd.env_remove(&k);
+        }
+    }
+    cmd.env("AAS_API_PORT", api_port().to_string());
+    cmd
+}
+
 fn spawn_backend(token: &str) -> Result<Child, String> {
     let root = product_root();
-    // `python -m apps.backend` (the package uses relative imports, so `python apps/backend/main.py` cannot work);
-    // the current directory is the product root, which is what makes `apps` importable
+    // `apps.backend` is run as a package (relative imports) by the isolated launcher (`backend_command`)
     let script = root.join("apps").join("backend").join("__main__.py");
     if !script.exists() {
         return Err("backend entry point apps/backend/__main__.py not found (set AAS_REPO_ROOT)".into());
@@ -126,17 +160,8 @@ fn spawn_backend(token: &str) -> Result<Child, String> {
             api_port()
         ));
     }
-    let mut cmd = Command::new(python_exe(&root));
-    cmd.arg("-X")
-        .arg("utf8")
-        .arg("-m")
-        .arg("apps.backend")
-        .arg("--token-stdin")
-        .current_dir(&root)
-        .env("AAS_API_PORT", api_port().to_string())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+    let mut cmd = backend_command(&python_exe(&root), &root, std::env::vars_os().map(|(k, _)| k));
+    cmd.stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null());
     hide_window(&mut cmd);
     let mut child = cmd.spawn().map_err(|e| format!("could not start the backend: {e}"))?;
     let mut stdin = child.stdin.take().ok_or_else(|| "backend stdin unavailable".to_string())?;
@@ -328,5 +353,46 @@ mod job {
                 CloseHandle(self.0);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::{OsStr, OsString};
+
+    #[test]
+    fn backend_runs_isolated_with_explicit_root_and_scrubbed_env() {
+        let inherited = ["AAS_DEV_ORIGINS", "aas_dev_x", "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PATH", "AAS_DATA_DIR"]
+            .iter()
+            .map(OsString::from);
+        let cmd = backend_command(Path::new("py.exe"), Path::new("R:/prod"), inherited);
+        let args: Vec<&OsStr> = cmd.get_args().collect();
+        assert_eq!(args[0], "-I");
+        assert_eq!(&args[1..3], &[OsStr::new("-X"), OsStr::new("utf8")]);
+        assert_eq!(args[3], "-c");
+        assert_eq!(args[4], BACKEND_LAUNCHER);
+        assert_eq!(args[5], "R:/prod");
+        assert_eq!(args[6], "--token-stdin");
+        assert!(!args.iter().any(|a| *a == "-m"));
+        let envs: Vec<(String, Option<String>)> = cmd
+            .get_envs()
+            .map(|(k, v)| (k.to_string_lossy().into_owned(), v.map(|v| v.to_string_lossy().into_owned())))
+            .collect();
+        for gone in ["AAS_DEV_ORIGINS", "aas_dev_x", "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP"] {
+            assert!(envs.iter().any(|(k, v)| k == gone && v.is_none()), "{gone} must be removed: {envs:?}");
+        }
+        for kept in ["PATH", "AAS_DATA_DIR"] {
+            assert!(!envs.iter().any(|(k, _)| k == kept), "{kept} must be inherited untouched");
+        }
+        assert!(envs.iter().any(|(k, v)| k == "AAS_API_PORT" && v.is_some()));
+        assert_eq!(cmd.get_current_dir(), Some(Path::new("R:/prod")));
+    }
+
+    #[test]
+    fn launcher_takes_the_root_from_argv_not_from_code() {
+        assert!(BACKEND_LAUNCHER.contains("sys.argv.pop(1)"));
+        assert!(BACKEND_LAUNCHER.contains("run_module('apps.backend'"));
+        assert!(scrubbed_var(OsStr::new("PythonPath")) && !scrubbed_var(OsStr::new("AAS_DATA_DIR")));
     }
 }

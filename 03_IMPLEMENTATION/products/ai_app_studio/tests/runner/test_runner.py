@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from aas_runner import claude as rc
-from studio_core import activity, run_grants
+from studio_core import activity, plans, run_grants
 
 from .conftest import OWNER
 
@@ -134,15 +134,20 @@ def test_agent_writes_go_through_mcp_with_runner_grant_while_external_mcp_is_off
     pid = studio.create_project(OWNER, "p1", "blank", "")["id"]
     assert studio.get_external_mcp() is False
     rev = studio.get_revision(pid)
-    calls = [{"tool": "code_write_file", "args": {
-        "projectId": "$project", "baseRevision": rev, "path": "src/App.tsx",
-        "content": "export default function App(){return <p>from runner</p>}\n"}}]
+    calls = [{"tool": "plan_submit", "args": {"projectId": "$project", "title": "write", "steps": ["App.tsx"]}},
+             {"tool": "code_write_file", "args": {
+                 "projectId": "$project", "baseRevision": rev, "path": "src/App.tsx",
+                 "content": "export default function App(){return <p>from runner</p>}\n"}}]
     r = rc.Runner(studio, cli=fake_cli)
     run = r.start(pid, scenario(tmp_path, mcp_calls=calls, project_id=pid))
+    deadline = time.time() + 30  # P5f: the run waits on plan_submit until the owner approves
+    while time.time() < deadline and not plans.list_records(studio):
+        time.sleep(0.1)
+    plans.decide(studio, OWNER, plans.list_records(studio)[0]["id"], "approve")
     assert r.wait(run, 60) in ("success", "failed")  # the scenario has no result line
     assert "from runner" in studio.read_file(OWNER, pid, "src/App.tsx")["content"]
     ev = events(studio)
-    call = next(e for e in ev if e["kind"] == "tool.call" and e["payload"].get("callId") == "toolu_0")
+    call = next(e for e in ev if e["kind"] == "tool.call" and e["payload"].get("callId") == "toolu_1")
     assert call["payload"]["target"] == "src/App.tsx"
     ops = [e for e in ev if e["kind"] == "tool.call" and e["payload"].get("operationId")
            and e["payload"].get("tool") == "code.write_file"]

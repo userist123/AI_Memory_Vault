@@ -377,11 +377,11 @@
     },
     {
       "path": "core/studio_core/plans.py",
-      "reason": "AAS-owned approval/plan records and owner-only decisions"
+      "reason": "AAS-owned approval/plan records, owner-only decisions and the P5f plan gate (owner toggle, default ON)"
     },
     {
       "path": "core/studio_core/run_grants.py",
-      "reason": "AAS-owned per-run MCP grants of the built-in runner"
+      "reason": "AAS-owned per-run MCP grants of the built-in runner (carry the approved planId)"
     },
     {
       "path": "tests/vendored/__init__.py",

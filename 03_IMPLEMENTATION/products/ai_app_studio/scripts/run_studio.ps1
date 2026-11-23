@@ -20,6 +20,10 @@
   DEV/TEST: JSON list used instead of the installed `claude` for the built-in runner (e.g. the fake CLI fixture).
 .PARAMETER DataDir
   Data root (default %LOCALAPPDATA%\AIAppStudio).
+.PARAMETER Dev
+  DEVELOPMENT ONLY: allow the vite dev server origin (http://127.0.0.1:1421) to call the API (AAS_DEV_ORIGINS) and start
+  a UI from it (-Ui tauri attach / window). Without -Dev the variable is never set and is removed from the children's
+  environment even when the caller has it; the UI modes then refuse to start (production = the packaged Tauri app).
 .PARAMETER NoUi
   Start only backend + preview and print their ports (used by the end-to-end test); stop with Ctrl+C.
 #>
@@ -32,7 +36,8 @@ param(
   [string]$Prompt = '',
   [string]$PromptFile = '',
   [string]$ProjectName = 'Studio project',
-  [switch]$NoUi
+  [switch]$NoUi,
+  [switch]$Dev
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -68,6 +73,8 @@ function Start-Child([string]$File, [string]$Arguments, [string]$Cwd, [hashtable
   $psi.UseShellExecute = $false
   $psi.RedirectStandardInput = $true
   $psi.CreateNoWindow = $true
+  # production path: an inherited dev-origin allow-list never reaches a studio process
+  [void]$psi.EnvironmentVariables.Remove('AAS_DEV_ORIGINS')
   foreach ($k in $Env.Keys) { $psi.EnvironmentVariables[$k] = [string]$Env[$k] }
   $proc = [System.Diagnostics.Process]::Start($psi)
   $children.Add($proc)
@@ -85,7 +92,8 @@ function Stop-Tree([System.Diagnostics.Process]$P) {
   }
 }
 
-$common = @{ AAS_API_PORT = "$ApiPort"; AAS_PREVIEW_PORT = "$PreviewPort"; PYTHONUTF8 = '1'; AAS_DEV_ORIGINS = 'http://127.0.0.1:1421' }
+$common = @{ AAS_API_PORT = "$ApiPort"; AAS_PREVIEW_PORT = "$PreviewPort"; PYTHONUTF8 = '1' }
+if ($Dev) { $common['AAS_DEV_ORIGINS'] = 'http://127.0.0.1:1421' }
 if ($DataDir) { $common['AAS_DATA_DIR'] = $DataDir }
 
 try {
@@ -115,7 +123,8 @@ try {
     return
   }
 
-  # 4. UI
+  # 4. UI (served by the vite dev server: development only)
+  if (-not $Dev) { throw 'the UI modes of this script load the vite dev server and need -Dev (production uses the packaged app)' }
   $mode = $Ui
   if ($mode -eq 'auto') { $mode = if (Test-Path $TauriExe) { 'tauri' } else { 'window' } }
   $pnpm = (Get-Command pnpm.cmd -ErrorAction Stop).Source

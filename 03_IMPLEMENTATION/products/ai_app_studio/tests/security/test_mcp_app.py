@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
-from studio_core import project_kind
+from studio_core import plans, project_kind
 from studio_core.app_kind import register_app_kind
 from studio_core.config import Settings
 from studio_core.errors import PolicyDenied
@@ -37,6 +37,8 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
                          "path": {"type": "string", "maxLength": 200},
                          "content": {"type": "string", "maxLength": 200000}},
                         ["projectId", "baseRevision", "path", "content"]),
+    "code_delete_file": ({"projectId": PID, "baseRevision": {"type": "integer", "minimum": 0},
+                          "path": {"type": "string", "maxLength": 200}}, ["projectId", "baseRevision", "path"]),
     "activity_list": ({"projectId": {"anyOf": [PID, {"type": "null"}]}, "afterSeq": {"type": "integer", "minimum": 0},
                        "limit": {"type": "integer", "minimum": 1, "maximum": 200}}, []),
     "app_build": ({"projectId": PID, "target": {"enum": ["web", "android"]}}, ["projectId", "target"]),
@@ -119,6 +121,11 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             studio.set_external_mcp(OWNER, True)
             ok = body(await s.call_tool("project_list", {}))
             assert ok["ok"] is True and [x["id"] for x in ok["result"]] == [pid]
+            # P5f (gate ON by default): writes need an approved plan of this session first
+            assert body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",
+                                                              "content": "export {}\n"}))["error"] == "plan_required"
+            sub = body(await s.call_tool("plan_submit", {"projectId": pid, "title": "t", "steps": ["s"]}))
+            plans.decide(studio, OWNER, sub["result"]["planId"], "approve")
             w = body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Ok.tsx",
                                                            "content": "export {}\n"}))
             assert w["ok"] is True and w["result"]["revision"] == rev + 1

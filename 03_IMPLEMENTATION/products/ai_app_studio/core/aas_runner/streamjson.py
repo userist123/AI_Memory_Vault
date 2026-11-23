@@ -18,13 +18,15 @@ SERVER = "ai-app-studio"
 TOOL_PREFIX = f"mcp__{SERVER}__"
 # every MCP tool the built-in runner may call; a subset of the tools published by apps/mcp-app/server.py (tested)
 CATALOGUE_TOOLS: tuple[str, ...] = (
-    "project_list", "project_inspect", "code_list_files", "code_read_file", "code_write_file", "activity_list",
+    "project_list", "project_inspect", "code_list_files", "code_read_file", "code_write_file", "code_delete_file",
+    "activity_list",
     "plan_submit", "app_build", "preview_capture", "device_start", "device_install", "device_tap",
     "device_screenshot",
 )
 EXCERPT_CAP = 300
 TEXT_CAP = 4000
 TYPING_STALE_SECONDS = 2.0
+TYPING_TOKEN_CAP = 512  # an unfinished token stays buffered across a stale flush up to this many characters
 _TARGET_KEYS = ("path", "file", "file_path", "target")
 
 
@@ -207,6 +209,18 @@ class StreamMapper:
         return [("agent.typing", {"text": _text(rest, 1000)})] if rest.strip() else []
 
     def flush_stale(self, max_age: float = TYPING_STALE_SECONDS) -> list[tuple[str, dict[str, Any]]]:
-        if self._typing and self._typing_at and time.monotonic() - self._typing_at >= max_age:
+        """A long pause in the middle of a line: show what is complete, but NEVER split a token. Only the text up to
+        the last whitespace is flushed (redacted as one piece); the trailing token stays buffered so a secret that
+        arrives in several deltas is redacted whole later. A token longer than TYPING_TOKEN_CAP is flushed (redacted)
+        instead of growing the buffer without bound."""
+        if not (self._typing and self._typing_at and time.monotonic() - self._typing_at >= max_age):
+            return []
+        cut = max(self._typing.rfind(c) for c in (" ", "\t", "\r", "\n"))
+        if cut < 0:
+            return self.flush() if len(self._typing) > TYPING_TOKEN_CAP else []
+        head, rest = self._typing[:cut + 1], self._typing[cut + 1:]
+        if len(rest) > TYPING_TOKEN_CAP:
             return self.flush()
-        return []
+        self._typing = rest
+        self._typing_at = time.monotonic() if rest else 0.0
+        return [("agent.typing", {"text": _text(head, 1000)})] if head.strip() else []

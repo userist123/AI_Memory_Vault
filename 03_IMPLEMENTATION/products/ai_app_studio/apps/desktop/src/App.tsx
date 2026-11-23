@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { type ApprovalRecord, type PlanRecord, decideApproval, decidePlan, fetchApprovals } from "./lib/api";
+import {
+  type ApprovalRecord,
+  type PlanRecord,
+  type ProjectRef,
+  createProject,
+  decideApproval,
+  decidePlan,
+  fetchApprovals,
+  listProjects,
+  startRun,
+  stopRun,
+} from "./lib/api";
 import { DEMO_PROJECT, runDemo } from "./lib/demo";
 import { LiveClient } from "./lib/live";
 import { loadSession, previewOrigin, type Session } from "./lib/session";
@@ -8,6 +19,7 @@ import { ApprovalRegion } from "./components/ApprovalRegion";
 import { DeviceFrame } from "./components/DeviceFrames";
 import { DiffViewer } from "./components/DiffViewer";
 import { EmulatorMirror } from "./components/EmulatorMirror";
+import { RunControls } from "./components/RunControls";
 import { elapsed, Timeline } from "./components/Timeline";
 
 const FOLLOW_PAUSE_MS = 10_000;
@@ -65,6 +77,9 @@ export function App() {
   const [buildFocused, setBuildFocused] = useState(false);
   const [mirrorStream, setMirrorStream] = useState<ArrayBuffer | null>(null);
   const [demoRun, setDemoRun] = useState(0);
+  const [projects, setProjects] = useState<ProjectRef[]>([]);
+  const [runBusy, setRunBusy] = useState(false);
+  const [runError, setRunError] = useState("");
   const buildRef = useRef<HTMLDivElement>(null);
 
   // ---- session + live stream (or demo) ----
@@ -117,6 +132,18 @@ export function App() {
     };
   }, [session, state.approvalsVersion]);
 
+  // ---- projects for the prompt box ----
+  useEffect(() => {
+    if (!session) return;
+    let live = true;
+    listProjects(session)
+      .then((p) => live && setProjects(p))
+      .catch(() => live && setRunError("Projects could not be loaded."));
+    return () => {
+      live = false;
+    };
+  }, [session]);
+
   // ---- follow the AI ----
   const followActive = follow && now >= pausedUntil;
   const focus = state.focus;
@@ -157,6 +184,23 @@ export function App() {
   const onPlanEdit = (id: string, note: string) => {
     if (demo) setPlans((p) => p.filter((x) => x.id !== id));
     else if (session) void decidePlan(session, id, "edit", note).catch(() => setApprovalError("Decision failed."));
+  };
+
+  const onStartRun = (projectId: string, prompt: string) => {
+    if (!session || runBusy) return;
+    setRunBusy(true);
+    setRunError("");
+    void (async () => {
+      const pid = projectId || (await createProject(session, prompt.slice(0, 40).trim() || "Studio project"));
+      await startRun(session, pid, prompt);
+      if (!projectId) setProjects(await listProjects(session));
+    })()
+      .catch(() => setRunError("The run could not be started."))
+      .finally(() => setRunBusy(false));
+  };
+  const onStopRun = () => {
+    if (!session || !state.runId) return;
+    void stopRun(session, state.runId).catch(() => setRunError("Stop failed."));
   };
 
   const runLabel =
@@ -222,6 +266,16 @@ export function App() {
       <aside className="left">
         <div className="left-scroll" ref={buildRef}>
           {sessionError ? <p className="banner">{sessionError}</p> : null}
+          {!demo && session ? (
+            <RunControls
+              projects={projects}
+              running={state.runStatus === "running"}
+              busy={runBusy}
+              error={runError}
+              onStart={onStartRun}
+              onStop={onStopRun}
+            />
+          ) : null}
           <Timeline
             state={state}
             now={now}

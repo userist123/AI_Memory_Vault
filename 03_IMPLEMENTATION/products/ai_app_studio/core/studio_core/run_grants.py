@@ -66,6 +66,31 @@ def project_of(studio: Any, run_id: str) -> str | None:
     return str(v["project"]) if v and "project" in v else None
 
 
+def attach_plan(studio: Any, run_id: str, plan_id: str) -> bool:
+    """The owner approved ``plan_id`` for this run: the live grant carries it from now on (P5f). No grant -> no-op."""
+    if not isinstance(run_id, str) or not _RUN_RE.match(run_id):
+        return False
+    with studio.session() as s:
+        row = s.get(AppSetting, PREFIX + run_id)
+        if row is None:
+            return False
+        try:
+            v = json.loads(row.value)
+        except ValueError:
+            return False
+        if not isinstance(v, dict):
+            return False
+        v["plan"] = str(plan_id)
+        row.value = json.dumps(v)
+        row.updated_at = utcnow()
+    return True
+
+
+def plan_of(studio: Any, run_id: str) -> str | None:
+    v = _row(studio, run_id)
+    return str(v["plan"]) if v and v.get("plan") else None
+
+
 def revoke(studio: Any, run_id: str) -> None:
     with studio.session() as s:
         s.execute(delete(AppSetting).where(AppSetting.key == PREFIX + run_id))

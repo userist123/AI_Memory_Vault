@@ -108,3 +108,44 @@ export async function decidePlan(s: Session, planId: string, decision: "approve"
     body: JSON.stringify({ decision, note: note.slice(0, 4000) }),
   });
 }
+
+// ---------------------------------------------------------------- runs (owner actions from the prompt box)
+const PROJECT_RE = /^prj_[0-9a-f]{16}$/;
+const RUN_RE = /^run_[0-9a-f]{16}$/;
+
+export interface ProjectRef {
+  id: string;
+  name: string;
+}
+
+export async function listProjects(s: Session): Promise<ProjectRef[]> {
+  const body = await request(s, "/projects");
+  const out: ProjectRef[] = [];
+  for (const p of Array.isArray(body) ? body.slice(0, 200) : []) {
+    if (!p || typeof p !== "object") continue;
+    const r = p as Record<string, unknown>;
+    if (typeof r.id !== "string" || !PROJECT_RE.test(r.id)) continue;
+    out.push({ id: r.id, name: inspect(r.name, 64).text });
+  }
+  return out;
+}
+
+export async function createProject(s: Session, name: string): Promise<string> {
+  const body = await request(s, "/projects", { method: "POST", body: JSON.stringify({ name: name.slice(0, 64) }) });
+  const id = body && typeof body === "object" ? (body as { id?: unknown }).id : undefined;
+  if (typeof id !== "string" || !PROJECT_RE.test(id)) throw new Error("bad project id");
+  return id;
+}
+
+export async function startRun(s: Session, projectId: string, prompt: string): Promise<{ runId: string }> {
+  if (!PROJECT_RE.test(projectId)) throw new Error("bad project id");
+  const body = await request(s, "/runs", { method: "POST", body: JSON.stringify({ projectId, prompt: prompt.slice(0, 20000) }) });
+  const runId = body && typeof body === "object" ? (body as { runId?: unknown }).runId : undefined;
+  if (typeof runId !== "string" || !RUN_RE.test(runId)) throw new Error("bad run id");
+  return { runId };
+}
+
+export async function stopRun(s: Session, runId: string): Promise<void> {
+  if (!RUN_RE.test(runId)) return;
+  await request(s, `/runs/${runId}/stop`, { method: "POST", body: "{}" });
+}

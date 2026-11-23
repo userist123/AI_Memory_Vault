@@ -82,6 +82,10 @@ pre, code { font-family: var(--mono); }
 .plan-card h3 { margin: 6px 0; font-size: 14px; font-weight: 600; }
 .plan-card ol { margin: 0; padding-left: 18px; color: #c9c7c1; }
 .plan-card textarea { flex: 1 1 100%; min-height: 60px; background: var(--bg); color: var(--text); border: 1px solid var(--sec-hi); border-radius: 6px; padding: 6px; font: inherit; }
+.run-controls { margin: 10px 10px 0; background: var(--raised); border: 1px solid var(--sec-hi); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.run-controls textarea { width: 100%; box-sizing: border-box; min-height: 54px; background: var(--bg); color: var(--text); border: 1px solid var(--sec-hi); border-radius: 6px; padding: 6px; font: inherit; resize: vertical; }
+.run-controls .row { display: flex; gap: 6px; align-items: center; }
+.run-controls select { flex: 1; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--sec-hi); border-radius: 6px; padding: 4px; font: inherit; }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .step { border-radius: 6px; }
 .step.current { background: var(--raised); box-shadow: inset 2px 0 0 var(--accent); }

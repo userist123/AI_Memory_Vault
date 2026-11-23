@@ -131,8 +131,10 @@ LOCAL_FILES: list[tuple[str, str]] = [
      "AAS-owned migration: projects.kind, activity_events, app_settings"),
     ("core/studio_core/alembic/versions/0004_activity_kinds_cost_preview.py",
      "AAS-owned migration: activity kinds cost.update and preview.captured"),
-    ("core/studio_core/plans.py", "AAS-owned approval/plan records and owner-only decisions"),
-    ("core/studio_core/run_grants.py", "AAS-owned per-run MCP grants of the built-in runner"),
+    ("core/studio_core/plans.py", "AAS-owned approval/plan records, owner-only decisions and the P5f plan gate "
+                                  "(owner toggle, default ON)"),
+    ("core/studio_core/run_grants.py", "AAS-owned per-run MCP grants of the built-in runner (carry the approved "
+                                       "planId)"),
     ("tests/vendored/__init__.py", "AAS-owned package marker"),
     ("tests/vendored/conftest.py", "AAS-owned: runs vendored tests against NullKind"),
 ]

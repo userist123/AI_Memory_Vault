@@ -7,6 +7,12 @@ local settings), a studio-owned ``--settings`` file, fixed cwd = a fresh EMPTY r
 workspace, minimal environment (no ``AAS_*``, no tokens, no API keys; the CLI authenticates through the owner's own
 Claude login in USERPROFILE/APPDATA). Before anything is recorded the raw ``system/init`` is checked (P5e/N3): any
 MCP server other than ``ai-app-studio`` or any tool outside the catalogue aborts the run.
+
+Fail closed (S6 review): the first non-blank stdout line MUST be a valid ``system/init``; any other line before it, or
+a stream that ends without one, aborts the run. stdout is read with a bounded line reader (``MAX_LINE_BYTES``; an
+overlong line aborts). P5f: a plan of the run that waits for the owner longer than ``plan_timeout`` aborts the run.
+Every end (stop, abort, backend shutdown) first revokes the grant and gives a running device ``device_grace`` seconds
+to stop before the process tree is killed.
 """
 from __future__ import annotations
 
@@ -21,7 +27,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from studio_core import activity, run_grants
+from studio_core import activity, plans, run_grants
 from studio_core.ids import new_id
 from studio_core.policy import Actor
 
@@ -45,6 +51,9 @@ _ENV_KEEP = ("SYSTEMROOT", "WINDIR", "SYSTEMDRIVE", "PATH", "PATHEXT", "COMSPEC"
              "LOCALAPPDATA", "HOME")
 _ENV_EXTRA_ALLOWED = ("CLAUDE_CONFIG_DIR",)
 MAX_RUN_SECONDS = 1800
+MAX_LINE_BYTES = 1024 * 1024  # one stream-json line; longer = abort
+PLAN_TIMEOUT_SECONDS = 900.0  # how long a run may wait for the owner's plan decision
+DEVICE_GRACE_SECONDS = 30.0
 SYSTEM_ACTOR = Actor("system", "runner", "system")
 SERVER_PY = Path(__file__).resolve().parents[2] / "apps" / "mcp-app" / "server.py"
 
@@ -104,15 +113,21 @@ class _Run:
         self.aborted = False
         self.cancelled = False
         self.init_ok = False
+        self.reason = ""
+        self.first_seq = 0
+        self.terminating = threading.Lock()
 
 
 class Runner:
     def __init__(self, studio: Any, *, cli: list[str], model: str = "sonnet", max_turns: int = 40,
                  max_budget_usd: float = 2.0, extra_env: Mapping[str, str] | None = None,
-                 max_seconds: int = MAX_RUN_SECONDS) -> None:
+                 max_seconds: int = MAX_RUN_SECONDS, plan_timeout: float = PLAN_TIMEOUT_SECONDS,
+                 device_grace: float = DEVICE_GRACE_SECONDS) -> None:
         self.studio, self.cli, self.model = studio, list(cli), model
         self.max_turns, self.max_budget_usd, self.extra_env = max_turns, max_budget_usd, dict(extra_env or {})
         self.max_seconds = max_seconds
+        self.plan_timeout = float(plan_timeout)
+        self.device_grace = float(device_grace)
         self.root = studio.settings.data_dir / "runner"
         self._runs: dict[str, _Run] = {}
         self._lock = threading.Lock()
@@ -131,7 +146,9 @@ class Runner:
         secret = run_grants.issue(self.studio, run_id, project_id)
         mcp_cfg = self.root / f"{run_id}.mcp.json"
         env_child = {"AAS_DATA_DIR": str(self.studio.settings.data_dir), "AAS_AGENT_ID": f"runner:{run_id}",
-                     "AAS_RUN_ID": run_id, "AAS_RUN_GRANT": secret, "PYTHONUTF8": "1"}
+                     "AAS_RUN_ID": run_id, "AAS_RUN_GRANT": secret, "PYTHONUTF8": "1",
+                     # plan_submit waits a little longer than the runner's own plan timeout: the runner aborts first
+                     "AAS_PLAN_WAIT_SECONDS": str(int(self.plan_timeout + 30))}
         if os.environ.get("SYSTEMROOT"):
             env_child["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
         mcp_cfg.write_text(json.dumps({"mcpServers": {SERVER: {"command": sys.executable, "args": [str(SERVER_PY)],
@@ -141,9 +158,12 @@ class Runner:
         env = runner_env(tmp_dir, extra=self.extra_env)
         env.setdefault("PYTHONUTF8", "1")
         try:
-            activity.record(self.studio, "run.started", project_id=project_id, run_id=run_id, source="runner",
-                            payload={"model": self.model, "agent": f"runner:{run_id}",
-                                     "title": str(project.get("name", ""))[:200], "budgetUsd": self.max_budget_usd})
+            started = activity.record(self.studio, "run.started", project_id=project_id, run_id=run_id,
+                                      source="runner",
+                                      payload={"model": self.model, "agent": f"runner:{run_id}",
+                                               "title": str(project.get("name", ""))[:200],
+                                               "budgetUsd": self.max_budget_usd})
+            run.first_seq = int(started.get("seq", 0)) if isinstance(started, dict) else 0
             run.proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,  # noqa: S603
                                         stderr=subprocess.PIPE, cwd=run_dir, env=env, shell=False)
         except BaseException:
@@ -163,7 +183,18 @@ class Runner:
         run.cancelled = True
         run.stop.set()
         if run.proc is not None:
-            _kill_tree(run.proc)
+            threading.Thread(target=self._terminate, args=(run,), daemon=True).start()
+
+    def stop_all(self, timeout: float = 60) -> None:
+        """Backend shutdown: every live run is stopped (device first, then the process tree) and awaited."""
+        with self._lock:
+            runs = [r for r in self._runs.values() if r.thread and r.thread.is_alive()]
+        for r in runs:
+            self.stop(r.id)
+        end = time.monotonic() + timeout
+        for r in runs:
+            if r.thread:
+                r.thread.join(max(0.1, end - time.monotonic()))
 
     def is_running(self, run_id: str) -> bool:
         run = self._runs.get(run_id)
@@ -176,6 +207,51 @@ class Runner:
         run.thread.join(timeout)
         return run.status if not run.thread.is_alive() else "timeout"
 
+    # ------------------------------------------------------------------ ending a run
+    def _abort(self, run: _Run, reason: str, *, immediate: bool = False) -> None:
+        if not run.aborted:
+            run.aborted, run.reason = True, reason
+        if immediate and run.proc is not None:
+            run_grants.revoke(self.studio, run.id)
+            _kill_tree(run.proc)
+        else:
+            self._terminate(run)
+
+    def _device_running(self, run: _Run) -> bool:
+        """The last device.state of this run (recorded by the MCP child's DeviceService) is not 'stopped'."""
+        state = None
+        after = run.first_seq
+        while True:
+            batch = activity.list_events(self.studio, after_seq=after, limit=500)
+            if not batch:
+                break
+            for e in batch:
+                if e.get("kind") == "device.state" and e.get("runId") == run.id:
+                    state = (e.get("payload") or {}).get("state")
+            after = int(batch[-1]["seq"])
+            if len(batch) < 500:
+                break
+        return state is not None and state != "stopped"
+
+    def _terminate(self, run: _Run) -> None:
+        """Revoke the grant (every MCP call of the run is refused from now on and the MCP child's device watcher stops
+        the emulator), give a running device up to ``device_grace`` seconds to shut down, then kill the tree."""
+        proc = run.proc
+        if proc is None:
+            return
+        with run.terminating:
+            try:
+                run_grants.revoke(self.studio, run.id)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                end = time.monotonic() + self.device_grace
+                while proc.poll() is None and self._device_running(run) and time.monotonic() < end:
+                    time.sleep(0.5)
+            except Exception:  # noqa: BLE001
+                pass
+            _kill_tree(proc)
+
     # ------------------------------------------------------------------ driver thread
     def _record(self, run: _Run, items: list[tuple[str, dict[str, Any]]]) -> None:
         for kind, payload in items:
@@ -185,43 +261,69 @@ class Runner:
             except Exception:  # noqa: BLE001 - the activity stream never breaks the run
                 activity._note_dropped(self.studio)  # noqa: SLF001
 
+    def _watchdog(self, run: _Run, t0: float) -> None:
+        while not run.stop.wait(0.5):
+            if time.monotonic() - t0 >= self.max_seconds:
+                self._abort(run, "timeout")
+                return
+            try:
+                late = plans.overdue(self.studio, run.id, self.plan_timeout)
+            except Exception:  # noqa: BLE001
+                late = False
+            if late:  # P5f: the run paused on a plan the owner did not decide in time
+                self._abort(run, "plan_timeout")
+                return
+
     def _drive(self, run: _Run, prompt: str, mcp_cfg: Path, run_dir: Path, tmp_dir: Path) -> None:
         proc = run.proc
         assert proc is not None and proc.stdin and proc.stdout and proc.stderr
         mapper = StreamMapper()
         t0 = time.monotonic()
         threading.Thread(target=lambda: self._drain(proc.stderr), daemon=True).start()
-
-        def watchdog() -> None:
-            if not run.stop.wait(self.max_seconds):
-                run.aborted = True
-                _kill_tree(proc)
-        threading.Thread(target=watchdog, daemon=True).start()
+        threading.Thread(target=self._watchdog, args=(run, t0), daemon=True).start()
         try:
             try:
                 proc.stdin.write(prompt.encode("utf-8"))
                 proc.stdin.close()
             except OSError:
                 pass
-            for raw in proc.stdout:
-                items = mapper.feed(raw)
-                if mapper.init is not None and not run.init_ok:
+            while True:
+                raw = proc.stdout.readline(MAX_LINE_BYTES + 1)  # bounded: never more than one capped line in memory
+                if not raw:
+                    break
+                if len(raw) > MAX_LINE_BYTES:
+                    self._abort(run, "line_too_long", immediate=not run.init_ok)
+                    break
+                if not run.init_ok:
+                    # H2, fail closed: the first non-blank line must be a valid system/init; anything else (an event,
+                    # garbage, another system subtype) aborts the run before it is mapped or recorded
+                    if not raw.strip():
+                        continue
+                    mapper.feed(raw)
+                    if mapper.init is None:
+                        self._abort(run, "init_missing", immediate=True)
+                        break
                     try:
                         check_init(mapper.init)
-                        run.init_ok = True
                     except InitViolation:
-                        run.aborted = True
-                        _kill_tree(proc)
+                        self._abort(run, "init_violation", immediate=True)
                         break
-                self._record(run, items + mapper.flush_stale())
+                    run.init_ok = True
+                    continue
+                self._record(run, mapper.feed(raw) + mapper.flush_stale())
+            if not run.init_ok and not run.aborted and not run.cancelled:
+                run.aborted, run.reason = True, "init_missing"  # the stream ended without an init
             proc.wait(timeout=30)
         except Exception:  # noqa: BLE001
-            run.aborted = run.aborted or not run.stop.is_set()
+            if not run.stop.is_set() and not run.aborted:
+                run.aborted, run.reason = True, run.reason or "runner_error"
             _kill_tree(proc)
         finally:
             run.stop.set()
-            self._record(run, mapper.flush())
-            code = proc.poll()
+            if proc.poll() is None:
+                _kill_tree(proc)
+            if run.init_ok:
+                self._record(run, mapper.flush())
             if run.aborted:
                 status = "aborted"
             elif mapper.final is not None:
@@ -229,13 +331,19 @@ class Runner:
             elif run.cancelled:
                 status = "cancelled"
             else:
-                status = "failed"  # the CLI ended (exit code {code}) without a result line
+                status = "failed"  # the CLI ended without a result line
             run.status = status
             fin = dict(mapper.final or {})
             fin.update({"status": status})
+            if run.reason:
+                fin["reason"] = run.reason
             fin.setdefault("durationMs", int((time.monotonic() - t0) * 1000))
             if mapper.dropped:
                 self._record(run, [("stream.dropped", {"count": mapper.dropped, "reason": "unknown stream-json fields"})])
+            try:
+                plans.expire_for_run(self.studio, run.id)  # no stale plan card outlives its run
+            except Exception:  # noqa: BLE001
+                pass
             self._record(run, [("run.finished", fin)])
             self._cleanup(run.id, mcp_cfg, run_dir, tmp_dir)
 

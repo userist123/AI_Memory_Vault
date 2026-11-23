@@ -131,11 +131,19 @@ def scenario(marker: str, pid: str) -> str:
     })
 
 
+SEEN_PLANS: list[dict[str, Any]] = []
+
+
 def run_to_end(pid: str, marker: str) -> str:
     r = call("POST", "/api/v1/runs", {"projectId": pid, "prompt": scenario(marker, pid)})
     run = r["runId"]
 
     def finished() -> bool:
+        # P5f (gate ON by default): the run pauses on plan_submit until the owner decides; the test is the owner
+        for rec in call("GET", "/api/v1/approvals"):
+            if rec.get("kind") == "plan" and rec.get("runId") == run:
+                SEEN_PLANS.append(rec)
+                call("POST", f"/api/v1/plans/{rec['id']}/decide", {"decision": "approve", "note": ""})
         return any(e["kind"] == "run.finished" and e["runId"] == run
                    for e in call("GET", f"/api/v1/activity?limit=1000&projectId={pid}"))
     wait_for(finished, f"run {run} to finish", 300)
@@ -177,11 +185,12 @@ def test_end_to_end_fake_cli_to_preview_and_ui(studio_stack: dict[str, Any], tmp
         assert js, html[:300]
         st, bundle = preview_get(pid, js.group(1).decode().lstrip("."))
         assert st == 200 and b"FIRST-MARKER" in bundle
-        # the plan is a server record the owner can see (and decide) - rendered only from this route
-        recs = call("GET", "/api/v1/approvals")
-        plan = next(r for r in recs if r.get("kind") == "plan")
+        # the plan was a server record the owner saw and approved (rendered only from this route); the run waited
+        plan = next(r for r in SEEN_PLANS if r["runId"] == run1)
         assert plan["title"] == "Build FIRST-MARKER" and plan["steps"] == ["write App.tsx", "build", "preview"]
-        call("POST", f"/api/v1/plans/{plan['id']}/decide", {"decision": "approve", "note": ""})
+        assert not [r for r in call("GET", "/api/v1/approvals") if r.get("kind") == "plan"]  # decided, none pending
+        decided = [e for e in events if e["kind"] == "plan.decided" and e["runId"] == run1]
+        assert decided and decided[0]["payload"]["decision"] == "approve"
         # second run: the preview reloads to the new bundle
         run_to_end(pid, "SECOND-MARKER")
         st, html2 = preview_get(pid)
