@@ -1,5 +1,17 @@
 # Checkpoint — 2026-11-23 00:20 (session <owner-user>-d8, /loop active)
 
+## PR #413 CI fixes (2026-11-23, owner decisions D1-D3 applied, local commits, pushed once at the end)
+- D1: no PNG under 03_IMPLEMENTATION. Screenshots moved to 50_ARTIFACTS/ai_app_studio/screenshots/ (links updated;
+  the Playwright demo spec writes S4-demo.png there). Icons: one SVG source per icon set (apps/desktop/src-tauri/app-icon.svg,
+  images/desktop-wrapper/icon.svg); PNG/ICO/ICNS are generated at build time and git-ignored: studio shell via `pnpm icons`
+  (= `tauri icon`, run by beforeDevCommand/beforeBuildCommand and a CI step before cargo test); desktop wrapper via
+  core/aas_build/icons.py inside desktop._copy_template (before cargo). Real `pnpm tauri build --debug --no-bundle` and a
+  real cargo build of a materialised wrapper both passed; unit tests tests/build/test_icons.py.
+- D2: no drive-letter literals in product .py (Windows dir from SystemRoot / SystemDrive) or tests (tests/winpaths.py).
+- D3: OSV findings accepted until 2027-02-23 in docs/SECURITY.md section 2a, ignored per file by osv-scanner.toml next to
+  images/android-build/template/gradle/verification-metadata.xml, apps/desktop/src-tauri/Cargo.lock, images/desktop-wrapper/Cargo.lock
+  (local osv-scanner 2.7.1: exit 0, 103 filtered, no unused ignores).
+
 ## Current state (2026-11-23, final fix slice; local commits on claude/ai-app-studio, nothing pushed)
 - Final gate round 2: docs/FINAL_GATE_ROUND2.md. B1 PASS (auto-memory fix), B2 PASS (residual: IPC scripts injected
   in iframe on Windows; blocked by CSP + ACL), B7 PASS (tests/runner/test_b7_isolation_probe.py, real CLI).
@@ -20,7 +32,7 @@
   (c) DONE 2026-11-23: live gate run d4c76e32c806 (170 passed / 2 skipped) + live extras (2 launches: guest IPv6 off,
       live video_keyframe -> SPS + IDR, aas-tablet boot + tap; docs/slices/LOCAL_GATE_RELEASE.md); PM1a, PM5a, P7c, P9b,
       P4a, PM2a recorded as accepted residuals (SECURITY.md section 2);
-  (d) DONE: Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
+  (d) DONE: Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (50_ARTIFACTS/ai_app_studio/screenshots/S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
   (e) push + PR #413 + vault CI once;
   (f) Romanian report to the owner.
 
@@ -134,7 +146,7 @@ Update 2026-11-23 (S6 done, local commits on claude/ai-app-studio, nothing pushe
   DESIGN 5.3 residuals, desktop fixes (fillers, CSI, prj_ ids, preview reload nonce), Tauri attach mode,
   scripts/run_studio.ps1 (token on stdin everywhere; Tauri debug exe or Chromium window).
 - Verified: uv run pytest -q 399 passed / 20 skipped; desktop tsc + vitest 82 + Playwright 11; check_vendored both modes and
-  gen_vendored --check OK; end to end with the fake CLI and the real Tauri window: docs/slices/S6-e2e.png.
+  gen_vendored --check OK; end to end with the fake CLI and the real Tauri window: 50_ARTIFACTS/ai_app_studio/screenshots/S6-e2e.png.
 - Open: UI prompt box (runs start from run_studio.ps1 -Prompt / POST /runs); P5f plan gate not enforced on code_write_file;
   Android build and preview_capture still unavailable; S5 live device probes still deferred; real (paid) agent run not done.
 - Next = final gate: fable-consultant verification of the whole app, its open questions to Codex/Gemini via agent-bridge,
@@ -159,7 +171,7 @@ Update 2026-11-23 ~05:30 (S7 done, local commits on claude/ai-app-studio, nothin
 - S6 low items closed: R-A purge at Runner start, SYSTEM_PROMPT plan_submit first, UI plan-gate toggle, plan contentSha256
   bound to the approval. run_studio.ps1 -Dev UI bug ($dev vs [switch]$Dev) fixed.
 - Verified: uv run pytest -q 513 passed / 20 skipped (Docker up); tsc clean, vitest 92, Playwright 13; check_vendored both
-  modes + gen_vendored --check OK; local gate non-live 141/20. Live demo docs/slices/S7-demo.png (1 emulator launch, no new
+  modes + gen_vendored --check OK; local gate non-live 141/20. Live demo 50_ARTIFACTS/ai_app_studio/screenshots/S7-demo.png (1 emulator launch, no new
   crash dump). APK build ~30-38 s.
 - Open: capture thumbnails in the UI; emulator mirror pane black; Nested-Virt modal; CI build of the android image with a
   pinned digest; real paid agent run.
@@ -180,7 +192,7 @@ Update 2026-11-23 (S8 done, local commits on claude/ai-app-studio, nothing pushe
   device host reinstalled. L1 licence sha1 verified online (matches).
 - Verified: uv run pytest -q 547 passed / 20 skipped (Docker up); tsc clean, vitest 103, Playwright 15; check_vendored both
   modes + gen_vendored --check OK. Live part skipped: C: 7.8 GB free (< 8 GB rule); 0 emulator launches.
-- Open: live check of mirror + modal flag and S8-live.png when C: >= 8 GB; external MCP has no mirror; real paid agent run.
+- Open: live check of mirror + modal flag and 50_ARTIFACTS/ai_app_studio/screenshots/S8-live.png when C: >= 8 GB; external MCP has no mirror; real paid agent run.
 - Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
 
 Update 2026-11-23 (S8 review fixes M1, L1-L4, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S8.md
@@ -260,12 +272,12 @@ Update 2026-11-23 (B1 real run + B2 WebView2 probe, local commits on claude/ai-a
   the real Tauri/WebView2 window: invoke(get_session), window.ipc, chrome.webview.postMessage, fetch ipc.localhost,
   fetch API, parent document, top navigation, window.open all blocked; positive control in the top document works;
   forged-Origin replay proves the Tauri ACL refuses the iframe origin. Residual: wry injects the IPC scripts into
-  subframes on Windows. Details: docs/slices/B2-webview2.md + B2-webview2.png.
+  subframes on Windows. Details: docs/slices/B2-webview2.md + 50_ARTIFACTS/ai_app_studio/screenshots/B2-webview2.png.
 - B1 PASS: real CLI 2.1.330 run from the UI (tabs template, adversarial line refused), init mcp_servers ==
   ["ai-app-studio"], catalogue-only tool_use, plan gate held, web build ok, capture returned; $0.12, 8 turns.
   Found + fixed F1: CLI auto-memory loaded the owner's MEMORY.md into the builder context (autoMemoryEnabled=false +
   CLAUDE_CODE_DISABLE_AUTO_MEMORY=1, real-CLI test). Open: F2 project name from prompt fails on ":" ","; F3 app
-  revisions never commit (git add ... site). Details: docs/slices/B1-real-run.md + B1-real-run.png.
+  revisions never commit (git add ... site). Details: docs/slices/B1-real-run.md + 50_ARTIFACTS/ai_app_studio/screenshots/B1-real-run.png.
 - Verified: pytest tests/runner 54 passed (incl. real-CLI P5e + new auto-memory tests).
 - NEXT = fix F2/F3 (small), image rebuilds when C: >= 10 GB, final gate round 2 (fable-consultant -> Codex/Gemini ->
   security-lockdown -> push + PR #413).

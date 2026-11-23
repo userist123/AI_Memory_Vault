@@ -124,6 +124,41 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 | External-MCP approval cap label | The O8 cap for the external MCP server counts approvals per agent label over a rolling 24 h window; the label is `AAS_AGENT_ID` from the environment of the owner's MCP client (default `claude-code`), so a client configured with changing labels gets a fresh cap per label | accepted for v1: external MCP is OFF by default and enabled only by the owner (owner-only REST route); the label comes from the owner's client configuration, not from the agent; every approval still needs the owner's decision; runner runs are capped per run (`runner:<run_id>`) |
 | WebView2 iframe IPC | Same-origin iframe IPC (GHSA-57fm-592m-34r7 class) is avoided by keeping previews cross-origin. B2 probe (real WebView2) PASS: every IPC channel from the preview iframe is blocked; wry still injects the IPC scripts into subframes on Windows | accepted: blocked by the CSP and the Tauri ACL (iframe origin refused); `docs/slices/B2-webview2.md` |
 
+### 2a. Dependency advisories accepted for v1 (OSV-Scanner, review by 2027-02-23)
+
+Decision recorded 2026-11-23 (owner). The product OSV job reads one `osv-scanner.toml` next to each affected file; each ignores exactly the ids below, for that file only, with `reason` and `ignoreUntil = 2027-02-23`. A new advisory on any other package, or in any other file, still fails the job.
+
+**Gradle build-tool internals** (`images/android-build/template/gradle/verification-metadata.xml`, config `images/android-build/template/gradle/osv-scanner.toml`; 95 findings, 54 unique ids). Reason: AGP/Gradle build-tool internals; used only inside the offline, read-only, non-root, --network none Android build container on studio-controlled inputs; Capacitor 8 pins AGP 8.13 so a bump is out of scope for v1. The artifacts are pinned and checksum-verified by the dependency verification file; they are not part of any generated app.
+
+| Package | Advisory ids |
+|---|---|
+| `com.google.guava:guava` | GHSA-xxph-c9ww-hj94 |
+| `com.google.protobuf:protobuf-java` | GHSA-735f-pc8j-v9w8 |
+| `com.google.protobuf:protobuf-kotlin` | GHSA-735f-pc8j-v9w8 |
+| `io.netty:netty-codec` | GHSA-3p8m-j85q-pgmj, GHSA-558v-64gr-wgg4, GHSA-mj4r-2hfc-f8p6 |
+| `io.netty:netty-codec-http` | GHSA-38f8-5428-x5cv, GHSA-4mp9-239f-g9hg, GHSA-57rv-r2g8-2cj3, GHSA-5jpm-x58v-624v, GHSA-6cqp-g7gg-8hr5, GHSA-6jqx-86gh-f27w, GHSA-84h7-rjj3-6jx4, GHSA-8c42-7qj2-3j46, GHSA-f6hv-jmp6-3vwv, GHSA-fghv-69vj-qj49, GHSA-gcjf-9mgh-3p7g, GHSA-hvcg-qmg6-jm4c, GHSA-jppx-w49h-x2qq, GHSA-m4cv-j2px-7723, GHSA-mvh2-crg5-v77c, GHSA-pwqr-wmgm-9rr8, GHSA-q4f6-jm68-57ww, GHSA-v8h7-rr48-vmmv, GHSA-xxqh-mfjm-7mv9 |
+| `io.netty:netty-codec-http2` | GHSA-563q-j3cm-6jxm, GHSA-5x3r-wrvg-rp6q, GHSA-93wv-jw9v-4972, GHSA-c2gf-v879-257j, GHSA-c69g-56f8-xwqj, GHSA-f6hv-jmp6-3vwv, GHSA-prj3-ccx8-p6x4, GHSA-w9fj-cfpg-grvv, GHSA-xpw8-rcwv-8f8p |
+| `io.netty:netty-common` | GHSA-389x-839f-4rhx, GHSA-xq3w-v528-46rv |
+| `io.netty:netty-handler` | GHSA-3qp7-7mw8-wx86, GHSA-4g8c-wm8x-jfhw, GHSA-6mjq-h674-j845, GHSA-c4c3-7fpv-j4q5, GHSA-c653-97m9-rcg9, GHSA-fccg-mwvh-qqg4, GHSA-x4gw-5cx5-pgmh |
+| `io.netty:netty-handler-proxy` | GHSA-45q3-82m4-75jr |
+| `org.apache.commons:commons-compress` | GHSA-4265-ccf5-phj5, GHSA-4g9r-vxhx-9pgx |
+| `org.apache.httpcomponents:httpclient` | GHSA-7r82-7xv7-xcpj |
+| `org.bitbucket.b_c:jose4j` | GHSA-3677-xxcr-wjqv |
+| `org.bouncycastle:bcpkix-jdk18on` | GHSA-wg6q-6289-32hp |
+| `org.bouncycastle:bcprov-jdk18on` | GHSA-574f-3g2m-x479, GHSA-9pwp-9qqc-pr26, GHSA-c3fc-8qff-9hwx, GHSA-p93r-85wp-75v3, GHSA-qp49-qgx5-5m26 |
+| `org.jdom:jdom2` | GHSA-2363-cqg2-863c |
+| `org.json:json` | GHSA-ghc9-756g-vrcv |
+
+**Rust crates** (`apps/desktop/src-tauri/Cargo.lock` and `images/desktop-wrapper/Cargo.lock`, one `osv-scanner.toml` beside each):
+
+| Crate | Advisory ids | Reason |
+|---|---|---|
+| `chrono` | RUSTSEC-2026-0543 | chrono 0.4.45: no fixed release available; locked only for non-Windows targets, not in the Windows target graph (verified 2026-11-23: `cargo tree -i chrono --target x86_64-pc-windows-msvc` prints nothing for both lockfiles) |
+| `glib` | GHSA-wrw7-89jp-8q8g (alias RUSTSEC-2024-0429) | glib 0.18.5: Linux-only gtk path of wry/tao, not in the Windows target graph; the app ships on Windows only; the fix needs the gtk-rs 0.20 generation (Tauri upgrade, later); verified with `cargo tree -i glib --target x86_64-pc-windows-msvc` |
+| `proc-macro-error` | RUSTSEC-2024-0370 | proc-macro-error 1.0.4: unmaintained, no fixed release available; locked only for non-Windows targets, not in the Windows target graph (verified 2026-11-23: `cargo tree -i proc-macro-error --target x86_64-pc-windows-msvc` prints nothing for both lockfiles) |
+
+Next step at review: bump AGP with the next Capacitor major; bump Tauri/wry when the gtk-rs 0.20 generation lands; drop each ignore as soon as a fixed release exists (the ignores expire on the date, so the job fails again if nobody reviews them).
+
 ## 3. Owner machine recommendations (not changed automatically)
 - `%UserProfile%\.wslconfig`, section `[wsl2]` (keys documented at learn.microsoft.com/windows/wsl/wsl-config):
   `maxCrashDumpCount=0` (default 10 crash dumps in `%Temp%\wsl-crashes`), `swapFile=D:\\wsl\\swap.vhdx` (default

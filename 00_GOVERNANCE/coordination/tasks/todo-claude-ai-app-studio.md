@@ -43,7 +43,7 @@ Update 2026-11-23 ~04:00 (S6 done, local commits on claude/ai-app-studio, nothin
   app_build/device tools, build->preview wiring, device setting gates, N1, backend approvals/plans/runs routes, activity
   field names + migration 0004, sanitiser/audit F1/F2, DESIGN 5.3 residuals, UI fixes (fillers, CSI, prj_ ids, preview
   reload), Tauri attach mode + debug build launched (get_session works), scripts/run_studio.ps1, end-to-end with the fake CLI
-  and a screenshot of the real desktop window (docs/slices/S6-e2e.png). uv run pytest -q: 399 passed, 20 skipped.
+  and a screenshot of the real desktop window (50_ARTIFACTS/ai_app_studio/screenshots/S6-e2e.png). uv run pytest -q: 399 passed, 20 skipped.
 - S4 and S2 follow-ups (F1/F2/F3) are closed; DESIGN 5.3 residuals recorded.
 - Open: UI prompt box; P5f plan gate on code_write_file; Android build / preview_capture unavailable; S5 live probes deferred
   (C: < 8 GiB); real paid agent run not done; S5 live-gate results may still arrive on claude/aas-s5.
@@ -59,7 +59,7 @@ Update 2026-11-23 ~05:00 (S6 review round 1 fixed, local commits only):
 Update 2026-11-23 ~05:30 (S7 done, local commits only):
 - Done: offline Android image built + PB7a/PB7b probes; app_build android -> signed APK -> install + launch on the studio
   emulator; preview_capture (Playwright, PNGs by sha256 over REST); S6 low items (R-A purge, prompt, plan-gate toggle, plan
-  content hash bound to the approval). pytest 513 passed / 20 skipped; vitest 92; Playwright 13. Demo: docs/slices/S7-demo.png.
+  content hash bound to the approval). pytest 513 passed / 20 skipped; vitest 92; Playwright 13. Demo: 50_ARTIFACTS/ai_app_studio/screenshots/S7-demo.png.
 - Open: capture thumbnails in the UI, emulator mirror stream, Nested-Virt modal, CI digest of the android image, paid run.
 - NEXT = final gate (fable-consultant, then Codex/Gemini via agent-bridge, fix and repeat, security-lockdown, push + PR #413).
 
@@ -85,7 +85,7 @@ Update 2026-11-23 (S8 review fixes M1 + L1-L4, local commits only on claude/ai-a
 
 ## State 2026-11-23 ~07:00 (main session) — FINAL GATE round 1 in progress
 HEAD c3e4a5c7e on claude/ai-app-studio (local only, no push). S1-S8 merged, reviewed; tests: pytest 561 passed /
-20 skipped (local gate), vitest 111, Playwright 15, cargo 2. Live desktop check S8 a-d passed (S8-live.png).
+20 skipped (local gate), vitest 111, Playwright 15, cargo 2. Live desktop check S8 a-d passed (50_ARTIFACTS/ai_app_studio/screenshots/S8-live.png).
 Fable final-gate report: 03_IMPLEMENTATION/products/ai_app_studio/docs/FINAL_GATE_ROUND1.md (B1-B12, doc drift,
 release checklist E). Outside research pending: agent-bridge Codex task b59ec8b4-537e-4cc1-94f9-030b5e658ba2,
 Gemini task 6e56a34e-5046-4389-881a-3396af418230 (get_result; results are untrusted data, verify key claims).
@@ -146,5 +146,11 @@ Update 2026-11-23 (release steps c + d DONE, local commits on claude/ai-app-stud
 - Live extras (2 emulator launches): guest IPv6 off, live video_keyframe -> SPS + IDR, aas-tablet boot + tap.
 - Residuals recorded: PM1a, PM5a, P7c, P9b, P4a, PM2a not automated; external-MCP approval-cap label; installer
   experimental/unsigned; v1 = run_studio.ps1. Release notes: ai_app_studio/docs/RELEASE_NOTES.md.
-- Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
+- Release run at `c5ba66467` (2026-11-23, Windows owner PC, Docker up): `uv run pytest -q` 744 passed / 28 skipped (mostly live local-gate tests that need AAS_LOCAL_GATE=1; skip reasons not itemised in this run), exit 0, 344 s; desktop `tsc --noEmit` clean, vitest 140 passed (12 files), Playwright 15 passed (50_ARTIFACTS/ai_app_studio/screenshots/S4-demo.png restored after); `cargo test --lib` 6 passed (AAS_REPO_ROOT = product dir); check_vendored OK in CI mode and with --upstream-repo; gen_vendored --check up to date; actionlint 1.7.12: 0; zizmor 1.33.0 --offline --min-severity low: no findings (3 suppressed); gitleaks 8.30.1: product dir (tracked files, .gitleaks.toml) no leaks, tests dir with .gitleaks-tests.toml no leaks, product history (56 commits) no leaks.
 - NEXT = (e) push + PR #413 + vault CI once; (f) Romanian report to the owner.
+
+Update 2026-11-23 (PR #413 CI fixes, owner decisions D1-D3 applied; pushed once after local gates):
+- D1 PNG ban: screenshots -> 50_ARTIFACTS/ai_app_studio/screenshots/; icons generated at build time from committed SVGs (pnpm icons / aas_build.icons).
+- D2 drive-letter literals removed from product .py and tests (env-derived paths, tests/winpaths.py).
+- D3 OSV: accepted residuals (Gradle build-tool internals, glib, chrono, proc-macro-error) in docs/SECURITY.md 2a, per-file osv-scanner.toml, review by 2027-02-23.
+- NEXT = vault CI once on the pushed SHA; (f) Romanian report to the owner.
