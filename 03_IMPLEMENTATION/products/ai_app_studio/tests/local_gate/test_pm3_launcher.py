@@ -243,3 +243,65 @@ def test_protocol_rejects_bad_device_lines() -> None:
                  b'{"ch":"e","kind":"booted","evil":"x"}\n', b'{"ch":"v","seq":1,"b64":"!!!!"}\n']:
         with pytest.raises(protocol.ProtocolError):
             protocol.parse_device_line(line)
+
+
+# ---------- PM3a: wsl.exe call sites outside Python, and install.ps1 stays owner-only ----------
+
+WSL_RE = re.compile(r"wsl(\.exe)?\b", re.IGNORECASE)
+CODE_ROOTS = ("apps", "core", "kit", "scripts", "images")  # backend, desktop, agent tools, build images
+TEXT_SUFFIXES = {".py", ".ps1", ".psm1", ".cmd", ".bat", ".sh", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rs",
+                 ".json", ".toml", ".yaml", ".yml", ""}
+SKIP_DIRS = {"node_modules", "__pycache__", ".venv", "target", "dist"}
+
+
+def _code_files() -> list[Path]:
+    out = []
+    for root in CODE_ROOTS:
+        for p in (PRODUCT / root).rglob("*"):
+            if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES and not SKIP_DIRS & set(p.parts):
+                out.append(p)
+    return out
+
+
+def _ps1_wsl_sites(text: str) -> list[int]:
+    return [i for i, line in enumerate(text.splitlines(), 1)
+            if not line.lstrip().startswith("#") and re.search(r"wsl\.exe", line, re.IGNORECASE)]
+
+
+@pytest.mark.probe("PM3a")
+def test_ps1_wsl_call_sites_only_owner_setup() -> None:
+    ps1 = sorted((PRODUCT / "wsl").glob("*.ps1"))
+    with_wsl = [p.name for p in ps1 if _ps1_wsl_sites(p.read_text(encoding="utf-8"))]
+    assert with_wsl == ["install.ps1"]
+    # install.ps1 runs wsl.exe through exactly one helper (Invoke-Wsl) with a token allow-list
+    text = (PRODUCT / "wsl" / "install.ps1").read_text(encoding="utf-8")
+    assert len(_ps1_wsl_sites(text)) == 1 and text.count("& $Wsl ") == 1
+    assert "^[A-Za-z0-9/._-]+$" in text
+
+
+@pytest.mark.probe("PM3a")
+def test_backend_and_tools_never_reference_wsl_or_install_ps1() -> None:
+    hits = []
+    for p in _code_files():
+        rel = p.relative_to(PRODUCT).as_posix()
+        text = p.read_text(encoding="utf-8", errors="replace")
+        if "install.ps1" in text.lower() or "setup-avd" in text.lower():
+            hits.append((rel, "install.ps1"))
+        if rel != "apps/device_host/launcher.py" and WSL_RE.search(text):
+            hits.append((rel, "wsl"))
+    assert hits == []
+
+
+@pytest.mark.probe("PM3a")
+def test_backend_scan_positive_control(tmp_path: Path) -> None:
+    fake = tmp_path / "apps" / "backend"
+    fake.mkdir(parents=True)
+    (fake / "tool.ts").write_text("spawn('powershell', ['-File', 'wsl/install.ps1'])\n", encoding="utf-8")
+    (fake / "run.py").write_text("subprocess.run(['wsl', '-u', 'root'])\n", encoding="utf-8")
+    globals()["PRODUCT"], saved = tmp_path, PRODUCT
+    try:
+        with pytest.raises(AssertionError):
+            test_backend_and_tools_never_reference_wsl_or_install_ps1()
+        assert _ps1_wsl_sites(r"& C:\Windows\System32\wsl.exe -u root") == [1]
+    finally:
+        globals()["PRODUCT"] = saved

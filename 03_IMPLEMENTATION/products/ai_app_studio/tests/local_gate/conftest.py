@@ -96,4 +96,39 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     runs.append({"finished": finished, "exitstatus": int(exitstatus), "probes": sorted(_RESULTS)})
     doc = {"gate": "ai_app_studio local gate S5", "distro": DISTRO, "finished": finished,
            "runs": runs, "probes": dict(sorted(probes.items()))}
-    out.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+
+# ---------- emulator launch guard (crash-dump safety) ----------
+# qemu 31.3.9 segfaults on its graceful-exit path and WSL can write ~2.6 GB per crash to
+# %LOCALAPPDATA%\Temp\wsl-crashes on C:. A probe that launches an emulator runs only with >= 8 GiB free on C:,
+# and every new file in that folder is deleted right after the probe and fails it.
+EMU_MIN_FREE = 8 * 1024 ** 3
+CRASH_DIR = Path(os.environ.get("LOCALAPPDATA") or os.path.expanduser(r"~\AppData\Local")) / "Temp" / "wsl-crashes"
+
+
+def _crash_files() -> set[str]:
+    try:
+        return {p.name for p in CRASH_DIR.iterdir()}
+    except OSError:
+        return set()
+
+
+def _emulator_guard():  # type: ignore[no-untyped-def]
+    import shutil
+    free = shutil.disk_usage(os.environ.get("SystemDrive", "C:") + "\\").free
+    if free < EMU_MIN_FREE:
+        pytest.skip("deferred: C: has %.1f GiB free (< 8 GiB) - no emulator launch" % (free / 1024 ** 3))
+    before = _crash_files()
+    yield
+    new = sorted(_crash_files() - before)
+    for name in new:
+        try:
+            (CRASH_DIR / name).unlink()
+        except OSError:
+            pass
+    assert new == [], "new WSL crash files (deleted): %s" % new
+
+
+emulator_guard = pytest.fixture(name="emulator_guard")(_emulator_guard)
+emulator_guard_module = pytest.fixture(scope="module", name="emulator_guard_module")(_emulator_guard)

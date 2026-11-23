@@ -82,6 +82,7 @@ REQUESTS: dict[str, dict[str, Any]] = {
     "swipe": {"x1": _coord, "y1": _coord, "x2": _coord, "y2": _coord, "ms": _check_ms},
     "text": {"t": _check_text},
     "launch": {"pkg": _check_pkg},
+    "uninstall": {"pkg": _check_pkg},
     "screenshot": {},
     "video_start": {"size": _check_size},
     "video_stop": {},
@@ -117,7 +118,7 @@ def _short_str(v: Any, n: int = 400) -> bool:
 
 
 EVENT_KINDS = {"booted", "modal", "exit", "log", "preflight"}
-_REPLY_OPTIONAL = {"err": _short_str, "size": lambda v: _is_int(v) or (isinstance(v, list) and len(v) == 2),
+_REPLY_OPTIONAL = {"err": _short_str, "pkg": lambda v: isinstance(v, str) and bool(PKG_RE.match(v)), "size": lambda v: _is_int(v) or (isinstance(v, list) and len(v) == 2),
                    "sha256": lambda v: isinstance(v, str) and bool(SHA_RE.match(v)),
                    "chunks": _is_int, "dropped": _is_int, "phase": lambda v: v in ("begin", "chunk", "done"),
                    "got": _is_int, "msg": _short_str, "ms": _is_int}

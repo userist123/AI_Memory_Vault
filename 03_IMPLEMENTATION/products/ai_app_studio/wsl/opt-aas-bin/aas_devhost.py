@@ -9,12 +9,14 @@ import base64
 import hashlib
 import json
 import os
+import queue
 import re
 import signal
 import subprocess
 import sys
 import threading
 import time
+import zipfile
 from collections import deque
 
 AVDS = {"aas-phone": 5600, "aas-tablet": 5602}
@@ -27,6 +29,8 @@ VIDEO_SIZES = {"540x1170", "720x1560", "800x1280", "540x864"}
 PKG_RE = re.compile(r"^dev\.aiappstudio\.p[0-9a-f]{16}$")
 TEXT_RE = re.compile(r"^[ -~]{0,200}$")
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
+IDLE_S = 15 * 60  # no request for this long -> stop the session (DESIGN 2.2)
+MANIFEST_MAX = 4 * 1024 * 1024
 
 
 def _int(v, lo, hi):
@@ -83,6 +87,186 @@ class Out:
                 os._exit(3)
 
 
+class InputShell:
+    """One `adb shell` kept open; each command is a line on its stdin followed by a unique completion marker.
+
+    Words are shell-quoted (_q) and every caller validates them first (ints, TEXT_RE). This removes the per-tap
+    adb connection and shell start (N7). A timeout kills the shell; the next command starts a new one."""
+
+    def __init__(self, argv):
+        self.argv = list(argv)
+        self.p = None
+        self.q = None
+        self.n = 0
+        self.spawned = 0
+        self.lock = threading.Lock()
+
+    def _ensure(self):
+        if self.p is not None and self.p.poll() is None:
+            return
+        self.p = subprocess.Popen(self.argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.DEVNULL)
+        self.spawned += 1
+        self.q = queue.Queue(maxsize=256)
+        threading.Thread(target=self._pump, args=(self.p, self.q), daemon=True).start()
+
+    @staticmethod
+    def _pump(p, q):
+        try:
+            for line in iter(lambda: p.stdout.readline(4096), b""):
+                try:
+                    q.put(line, timeout=5)
+                except queue.Full:
+                    pass
+        except (OSError, ValueError):
+            pass
+        try:
+            q.put(None, timeout=5)
+        except queue.Full:
+            pass
+
+    def _kill(self):
+        p, self.p = self.p, None
+        if p is not None:
+            try:
+                p.kill()
+                p.wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+
+    def close(self):
+        with self.lock:
+            self._kill()
+
+    def run(self, words, timeout=30):
+        with self.lock:
+            self._ensure()
+            self.n += 1
+            mark = "__aas_%d__" % self.n
+            cmd = " ".join(_q(w) for w in words) + " >/dev/null 2>&1; echo " + mark + " $?\n"
+            try:
+                self.p.stdin.write(cmd.encode("ascii"))
+                self.p.stdin.flush()
+            except (OSError, ValueError):
+                self._kill()
+                return 1, "input shell gone"
+            end = time.monotonic() + timeout
+            want = mark.encode() + b" "
+            while True:
+                left = end - time.monotonic()
+                try:
+                    if left <= 0:
+                        raise queue.Empty
+                    line = self.q.get(timeout=left)
+                except queue.Empty:
+                    self._kill()
+                    raise subprocess.TimeoutExpired(self.argv, timeout) from None
+                if line is None:
+                    self._kill()
+                    return 1, "input shell exited"
+                if line.startswith(want):
+                    tail = line[len(want):].strip()
+                    return (int(tail), "") if tail.isdigit() else (1, "bad marker")
+
+
+def apk_package(path):
+    """The `package` attribute of <manifest> in the APK's binary AndroidManifest.xml, or None.
+
+    Stdlib only (no aapt2 in the SDK). Refuses duplicate manifest entries, a non-manifest root element, more than
+    one package attribute and anything malformed."""
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = [i.filename for i in z.infolist()]
+            if names.count("AndroidManifest.xml") != 1:
+                return None
+            info = z.getinfo("AndroidManifest.xml")
+            if info.file_size > MANIFEST_MAX:
+                return None
+            with z.open(info) as f:
+                data = f.read(MANIFEST_MAX + 1)
+        return _axml_package(data)
+    except (zipfile.BadZipFile, OSError, ValueError, KeyError, IndexError, UnicodeDecodeError,
+            NotImplementedError, EOFError, RuntimeError):
+        return None
+
+
+def _u16(b, o):
+    return b[o] | (b[o + 1] << 8)
+
+
+def _u32(b, o):
+    if o + 4 > len(b):
+        raise ValueError("short")
+    return b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)
+
+
+
+def _pool_strings(b, o):
+    count, flags, start = _u32(b, o + 8), _u32(b, o + 16), _u32(b, o + 20)
+    size = _u32(b, o + 4)
+    if count > 100000 or o + size > len(b):
+        raise ValueError("pool")
+    utf8 = bool(flags & 0x100)
+    out = []
+    for i in range(count):
+        so = o + start + _u32(b, o + 28 + 4 * i)
+        if so >= o + size:
+            raise ValueError("string offset")
+        if utf8:
+            n = b[so]
+            so += 2 if n & 0x80 else 1
+            blen = b[so]
+            if blen & 0x80:
+                blen = ((blen & 0x7F) << 8) | b[so + 1]
+                so += 1
+            so += 1
+            out.append(b[so:so + blen].decode("utf-8"))
+        else:
+            n = _u16(b, so)
+            so += 2
+            if n & 0x8000:
+                n = ((n & 0x7FFF) << 16) | _u16(b, so)
+                so += 2
+            out.append(b[so:so + 2 * n].decode("utf-16-le"))
+    return out
+
+
+def _axml_package(b):
+    if len(b) < 8 or _u16(b, 0) != 0x0003 or _u32(b, 4) > len(b):
+        return None
+    o = _u16(b, 2)
+    strings = None
+    while o + 8 <= len(b):
+        ctype, hsize, csize = _u16(b, o), _u16(b, o + 2), _u32(b, o + 4)
+        if csize < 8 or o + csize > len(b):
+            return None
+        if ctype == 0x0001 and strings is None:
+            strings = _pool_strings(b, o)
+        elif ctype == 0x0102:  # first start element must be <manifest>
+            if strings is None:
+                return None
+            body = o + hsize  # ResXMLTree_attrExt: ns, name, attributeStart, attributeSize, attributeCount, ...
+            name = _u32(b, body + 4)
+            if name >= len(strings) or strings[name] != "manifest":
+                return None
+            a_start, a_size, a_count = _u16(b, body + 8), _u16(b, body + 10), _u16(b, body + 12)
+            if a_size < 20:
+                return None
+            found = []
+            for i in range(a_count):
+                ao = body + a_start + i * a_size
+                an, raw = _u32(b, ao + 4), _u32(b, ao + 8)
+                dtype, data = b[ao + 15], _u32(b, ao + 16)
+                if an < len(strings) and strings[an] == "package":
+                    idx = raw if raw != 0xFFFFFFFF else (data if dtype == 0x03 else None)
+                    if idx is None or idx >= len(strings):
+                        return None
+                    found.append(strings[idx])
+            return found[0] if len(found) == 1 else None
+        o += csize
+    return None
+
+
 def log(msg):
     try:
         sys.stderr.write("aas_devhost: " + str(msg)[:400] + "\n")
@@ -108,6 +292,10 @@ class Host:
         self.video_seq = 0
         self.install = None
         self.stopping = False
+        self.input = InputShell([self.adb_bin, "-P", "5641", "-s", self.serial, "shell"])
+        self.busy = 0
+        self.last_activity = time.monotonic()
+        self._exit = os._exit
 
     # ---------- adb helpers (argv lists, never a host shell) ----------
     def adb(self, *args, timeout=30, data=False):
@@ -169,7 +357,22 @@ class Host:
         self.out.control({"ch": "e", "kind": "booted", "avd": self.avd, "ms": boot_ms, "size": size})
         threading.Thread(target=self._modal_watch, daemon=True).start()
         threading.Thread(target=self._emu_watch, daemon=True).start()
+        self.last_activity = time.monotonic()
+        threading.Thread(target=self._idle_watch, daemon=True).start()
         return True
+
+    def _idle_watch(self, limit=IDLE_S, tick=5.0):
+        while not self.stopping:
+            time.sleep(tick)
+            if self.stopping:
+                return
+            if self.busy == 0 and time.monotonic() - self.last_activity > limit:
+                log("idle for %ds, stopping" % limit)
+                self.stop()
+                self.out.control({"ch": "e", "kind": "exit", "code": 35, "reason": "idle"})
+                self.out.flush_wait()
+                self._exit(35)  # pid 1 exits -> the kernel kills the rest of the namespace
+                return
 
     def _emu_watch(self):
         self.emu.wait()
@@ -201,6 +404,8 @@ class Host:
         # (SIGKILL never dumps core). We are pid 1 here, so kill(-1) reaches all of them but not us.
         if self.install:
             self._install_abort()
+        if self.input is not None:
+            self.input.close()
         if os.getpid() == 1:
             try:
                 os.kill(-1, signal.SIGKILL)
@@ -271,21 +476,27 @@ class Host:
         op = req["op"]
         if op == "tap":
             x, y = _int(req["x"], 0, 4096), _int(req["y"], 0, 4096)
-            return self._ok_rc(self.shell("input", "tap", str(x), str(y)))
+            return self._ok_rc(self.input.run(("input", "tap", str(x), str(y)), timeout=10))
         if op == "swipe":
             a = [str(_int(req[k], 0, 4096)) for k in ("x1", "y1", "x2", "y2")]
             ms = _int(req["ms"], 1, 5000)
-            return self._ok_rc(self.shell("input", "swipe", *a, str(ms)))
+            return self._ok_rc(self.input.run(("input", "swipe", *a, str(ms)), timeout=20))
         if op == "text":
             t = req["t"]
             if not isinstance(t, str) or not TEXT_RE.match(t):
                 raise ValueError("bad text")
-            return self._ok_rc(self.shell("input", "text", t.replace(" ", "%s")))
+            return self._ok_rc(self.input.run(("input", "text", t.replace(" ", "%s")), timeout=20))
         if op == "launch":
             pkg = req["pkg"]
             if not isinstance(pkg, str) or not PKG_RE.match(pkg):
                 raise ValueError("bad pkg")
             return self._ok_rc(self.shell("monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"))
+        if op == "uninstall":
+            pkg = req["pkg"]
+            if not isinstance(pkg, str) or not PKG_RE.match(pkg):
+                raise ValueError("bad pkg")
+            rc, txt = self.shell("pm", "uninstall", pkg, timeout=60)
+            return {"ok": rc == 0 and "Success" in txt, "msg": txt[-200:]}
         if op == "screenshot":
             r = self.adb("exec-out", "screencap", "-p", timeout=30, data=True)
             if r.returncode != 0 or not r.stdout.startswith(b"\x89PNG"):
@@ -334,10 +545,15 @@ class Host:
                 return {"ok": False, "err": "sha256"}
             self.install = None
             try:
+                pkg = apk_package(inst["path"])
+                if pkg is None or not PKG_RE.match(pkg):
+                    return {"ok": False, "phase": "done", "err": "package not allowed"}
+                # between builds: drop the previous build and its data, then install (DESIGN 2.2)
+                self.shell("pm", "uninstall", pkg, timeout=60)
                 rc, txt = self.adb("install", "-r", "-d", inst["path"], timeout=180)
             finally:
                 os.unlink(inst["path"])
-            return {"ok": rc == 0 and "Success" in txt, "phase": "done", "msg": txt[-200:]}
+            return {"ok": rc == 0 and "Success" in txt, "phase": "done", "pkg": pkg, "msg": txt[-200:]}
         raise ValueError("bad op")
 
     @staticmethod
@@ -348,6 +564,7 @@ class Host:
 
 FIELDS = {
     "tap": {"x", "y"}, "swipe": {"x1", "y1", "x2", "y2", "ms"}, "text": {"t"}, "launch": {"pkg"},
+    "uninstall": {"pkg"},
     "screenshot": set(), "video_start": {"size"}, "video_stop": set(), "shutdown": set(),
     "install": {"sha256", "size"}, "chunk": {"b64"},
 }
@@ -417,7 +634,13 @@ def main():
                 host.out.control({"ch": "c", "id": rid, "ok": True})
                 break
             t_req = time.monotonic()
-            res = host.handle(req)
+            host.busy += 1
+            host.last_activity = t_req
+            try:
+                res = host.handle(req)
+            finally:
+                host.busy -= 1
+                host.last_activity = time.monotonic()
             res = dict(res, ms=int((time.monotonic() - t_req) * 1000))
         except subprocess.TimeoutExpired:
             res = {"ok": False, "err": "timeout"}

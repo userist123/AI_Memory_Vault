@@ -130,9 +130,62 @@ def spawn(verb: str) -> Any:
     return spawn_argv(argv_for(verb))
 
 
+PREFLIGHT_MAX = 64 * 1024
+
+
+def _read_capped(stream: Any, cap: int, box: dict[str, Any]) -> None:
+    buf = bytearray()
+    try:
+        while True:
+            chunk = stream.read(65536)
+            if not chunk:
+                break
+            buf += chunk
+            if len(buf) > cap:
+                box["over"] = True
+                return
+    except (OSError, ValueError):
+        pass
+    finally:
+        box["data"] = bytes(buf[:cap])
+        box["done"] = True
+
+
+def _kill_proc(p: Any) -> None:
+    try:
+        p.kill()
+        p.wait(timeout=15)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def _bounded_output(p: Any, cap: int, timeout: float) -> bytes:
+    """Read at most cap bytes of p.stdout (stderr is drained, capped and discarded) within timeout, then reap p.
+    More output than cap, or no EOF in time, kills the process and refuses."""
+    out: dict[str, Any] = {}
+    err: dict[str, Any] = {}
+    t_out = threading.Thread(target=_read_capped, args=(p.stdout, cap, out), daemon=True)
+    t_err = threading.Thread(target=_read_capped, args=(p.stderr, cap, err), daemon=True)
+    t_out.start()
+    t_err.start()
+    t_out.join(timeout)
+    if out.get("over"):
+        _kill_proc(p)
+        raise LauncherRefused("preflight: too much output")
+    if not out.get("done"):
+        _kill_proc(p)
+        raise LauncherRefused("preflight: timeout")
+    try:
+        p.wait(timeout=max(1.0, timeout / 4))
+    except subprocess.TimeoutExpired:
+        _kill_proc(p)
+        raise LauncherRefused("preflight: no exit") from None
+    return out.get("data", b"")
+
+
 def preflight(timeout: float = 120) -> dict[str, Any]:
     p = spawn("preflight")
-    out, _err = p.communicate(timeout=timeout)
+    out = _bounded_output(p, PREFLIGHT_MAX, timeout)
     lines = [ln for ln in out.splitlines() if ln.strip()]
     if p.returncode != 0 or len(lines) != 1:
         raise LauncherRefused("preflight failed (rc=%s)" % p.returncode)
@@ -153,7 +206,7 @@ MIN_FREE_BYTES = 5 * 1024 ** 3
 
 
 def check_disk_space() -> None:
-    """Refuse a launch when the drive receiving WSL crash dumps (%LOCALAPPDATA%\Temp\wsl-crashes, about 2.6 GB
+    r"""Refuse a launch when the drive receiving WSL crash dumps (%LOCALAPPDATA%\Temp\wsl-crashes, about 2.6 GB
     per qemu core) or the system drive has less than 5 GiB free."""
     import shutil
     roots = {SYSTEM_ROOT[:3]}
@@ -165,8 +218,19 @@ def check_disk_space() -> None:
             raise LauncherRefused("less than 5 GiB free on " + r)
 
 
+SHOT_MAX_BYTES = 4 * 1024 * 1024  # decoded screenshot bytes buffered for one request id
+SHOT_TOTAL_MAX = 8 * 1024 * 1024  # decoded screenshot bytes buffered over all ids
+MAX_PENDING = 32  # outstanding request ids (timed-out ones count until their late reply arrives)
+BRIDGE_TIMEOUT_MAX = 240.0  # largest per-request timeout the backend may ask for
+
+
 class DeviceSession:
-    """One studio device session (visible WSLg emulator) driven over the JSON-lines protocol."""
+    """One studio device session (visible WSLg emulator) driven over the JSON-lines protocol.
+
+    The device side is untrusted: a reply ("c") or screenshot part ("s") is accepted only for an outstanding
+    request id (screenshot parts only for a screenshot request, in sequence, at most SHOT_MAX_BYTES per id and
+    SHOT_TOTAL_MAX overall). Anything else kills the session, so device output cannot grow launcher memory.
+    """
 
     def __init__(self, form: str, video_queue_max: int = 64) -> None:
         if form not in FORMS:
@@ -181,8 +245,13 @@ class DeviceSession:
         self.stderr_tail: deque[str] = deque(maxlen=200)
         self.exit_event: dict[str, Any] | None = None
         self.violation: str | None = None
+        self.booted: dict[str, Any] | None = None  # kept outside the bounded event deque
         self._replies: dict[int, dict[str, Any]] = {}
+        self._pending: dict[int, str] = {}  # outstanding id -> op
+        self._abandoned: set[int] = set()  # timed-out ids: a late reply is dropped once
         self._shots: dict[int, list[bytes]] = {}
+        self._shot_done: set[int] = set()
+        self._shot_bytes = 0
         self._cond = threading.Condition()
         self._wlock = threading.Lock()
         self._next = 0
@@ -198,9 +267,8 @@ class DeviceSession:
         end = time.monotonic() + boot_timeout
         with self._cond:
             while True:
-                booted = next((e for e in self.events if e.get("kind") == "booted"), None)
-                if booted:
-                    return booted
+                if self.booted:
+                    return self.booted
                 if self._eof or self.exit_event:
                     raise DeviceError("device host exited: %s" % (self.exit_event or self.violation,))
                 left = end - time.monotonic()
@@ -253,23 +321,64 @@ class DeviceSession:
                 if ch == "v":
                     self.video_received += 1
                     self._on_video(o)
-                elif ch == "c":
-                    with self._cond:
-                        self._replies[o["id"]] = o
-                        self._cond.notify_all()
-                elif ch == "s":
-                    with self._cond:
-                        self._shots.setdefault(o["id"], []).append(base64.b64decode(o["b64"]))
-                else:
-                    with self._cond:
-                        self.events.append(o)
-                        if o.get("kind") == "exit":
-                            self.exit_event = o
-                        self._cond.notify_all()
+                    continue
+                with self._cond:
+                    bad = self._admit(ch, o)
+                    self._cond.notify_all()
+                if bad:
+                    self.violation = bad
+                    self._kill()
+                    break
         finally:
             with self._cond:
                 self._eof = True
                 self._cond.notify_all()
+
+    def _admit(self, ch: str, o: dict[str, Any]) -> str | None:
+        """Store one reply / screenshot part / event (caller holds self._cond). Returns a violation or None."""
+        if ch == "c":
+            rid = o["id"]
+            if rid in self._abandoned:
+                self._abandoned.discard(rid)
+                self._pending.pop(rid, None)
+                self._drop_shots(rid)
+                return None
+            if rid not in self._pending or rid in self._replies:
+                return "unsolicited reply"
+            self._replies[rid] = o
+            return None
+        if ch == "s":
+            rid = o["id"]
+            if rid in self._abandoned and self._pending.get(rid) == "screenshot":
+                return None  # late part of a timed-out screenshot: dropped, never stored
+            if self._pending.get(rid) != "screenshot" or rid in self._replies:
+                return "unsolicited screenshot part"
+            parts = self._shots.setdefault(rid, [])
+            if o["seq"] != len(parts) or rid in self._shot_done:
+                return "screenshot part out of order"
+            data = base64.b64decode(o["b64"])
+            if sum(len(x) for x in parts) + len(data) > SHOT_MAX_BYTES:
+                return "screenshot cap exceeded"
+            if self._shot_bytes + len(data) > SHOT_TOTAL_MAX:
+                return "screenshot total buffer exceeded"
+            parts.append(data)
+            self._shot_bytes += len(data)
+            if o["last"]:
+                self._shot_done.add(rid)
+            return None
+        self.events.append(o)
+        kind = o.get("kind")
+        if kind == "booted" and self.booted is None:
+            self.booted = o
+        elif kind == "exit":
+            self.exit_event = o
+        return None
+
+    def _drop_shots(self, rid: int) -> list[bytes]:
+        parts = self._shots.pop(rid, [])
+        self._shot_done.discard(rid)
+        self._shot_bytes -= sum(len(x) for x in parts)
+        return parts
 
     def _err_reader(self) -> None:
         for raw in iter(lambda: self.proc.stderr.readline(4096), b""):
@@ -313,23 +422,36 @@ class DeviceSession:
 
     def _request(self, op: str, timeout: float, **args: Any) -> tuple[int, dict[str, Any]]:
         with self._wlock:
-            self._next += 1
-            rid = self._next
-            line = protocol.encode_request(rid, op, **args)
-            if self.proc is None or self._eof:
+            if self.proc is None or self._eof or self.violation:
                 raise DeviceError("session not running")
+            line = protocol.encode_request(self._next + 1, op, **args)
+            with self._cond:
+                if len(self._pending) >= MAX_PENDING:
+                    raise DeviceError("too many outstanding requests")
+                self._next += 1
+                rid = self._next
+                self._pending[rid] = op
             self.proc.stdin.write(line)
             self.proc.stdin.flush()
         end = time.monotonic() + timeout
         with self._cond:
             while rid not in self._replies:
                 if self._eof:
+                    self._pending.pop(rid, None)
+                    self._drop_shots(rid)
                     raise DeviceError("device host exited")
                 left = end - time.monotonic()
                 if left <= 0:
+                    self._abandoned.add(rid)  # stays in _pending (counted) until its late reply arrives
+                    self._drop_shots(rid)
                     raise DeviceTimeout(op)
                 self._cond.wait(left)
+            self._pending.pop(rid, None)
             return rid, self._replies.pop(rid)
+
+    def _take_shot(self, rid: int) -> bytes:
+        with self._cond:
+            return b"".join(self._drop_shots(rid))
 
     def tap(self, x: int, y: int, timeout: float = 10) -> dict[str, Any]:
         return self.request("tap", timeout=timeout, x=x, y=y)
@@ -343,6 +465,9 @@ class DeviceSession:
     def launch(self, pkg: str) -> dict[str, Any]:
         return self.request("launch", pkg=pkg)
 
+    def uninstall(self, pkg: str) -> dict[str, Any]:
+        return self.request("uninstall", timeout=60, pkg=pkg)
+
     def video_start(self, size: str = "540x1170") -> dict[str, Any]:
         return self.request("video_start", size=size)
 
@@ -351,9 +476,7 @@ class DeviceSession:
 
     def screenshot(self) -> bytes:
         rid, rep = self._request("screenshot", 40)
-        with self._cond:
-            parts = self._shots.pop(rid, [])
-        png = b"".join(parts)
+        png = self._take_shot(rid)
         if not rep.get("ok") or hashlib.sha256(png).hexdigest() != rep.get("sha256"):
             raise DeviceError("screenshot failed")
         return png
@@ -395,20 +518,50 @@ def _bridge(form: str) -> int:
 
     threading.Thread(target=pump_video, daemon=True).start()
     for raw in sys.stdin:
-        try:
-            req = json.loads(raw)
-            op = req.pop("op")
-            if op == "screenshot":
-                png = s.screenshot()
-                emit({"ch": "c", "op": op, "ok": True, "png_b64": base64.b64encode(png).decode()})
-                continue
-            rep = s.request(op, **req)
-            emit(dict(rep, op=op))
-            if op == "shutdown":
-                break
-        except (ValueError, KeyError, TypeError, DeviceError, protocol.ProtocolError) as e:
-            emit({"ch": "c", "ok": False, "err": type(e).__name__})
+        out, stop = _bridge_line(s, raw)
+        emit(out)
+        if stop:
+            break
     return s.shutdown()
+
+
+def _bridge_timeout(req: dict[str, Any]) -> float:
+    if "timeout" not in req:
+        return 15.0
+    t = req.pop("timeout")
+    if type(t) not in (int, float) or not 0 < t <= BRIDGE_TIMEOUT_MAX:  # NaN fails both comparisons
+        raise _BadTimeout()
+    return float(t)
+
+
+class _BadTimeout(ValueError):
+    pass
+
+
+def _bridge_line(s: DeviceSession, raw: str) -> tuple[dict[str, Any], bool]:
+    """One backend line -> (reply to emit, stop?). Only JSON objects with a protocol op are forwarded; a
+    backend-supplied timeout must be a number in (0, BRIDGE_TIMEOUT_MAX]."""
+    try:
+        if len(raw) > protocol.MAX_LINE:
+            raise ValueError("line too long")
+        req = json.loads(raw)
+        if not isinstance(req, dict):
+            raise TypeError("not an object")
+        op = req.pop("op")
+        if not isinstance(op, str):
+            raise TypeError("bad op")
+        timeout = _bridge_timeout(req)
+        if op == "screenshot":
+            if req:
+                raise protocol.ProtocolError("bad fields for screenshot")
+            png = s.screenshot()
+            return {"ch": "c", "op": op, "ok": True, "png_b64": base64.b64encode(png).decode()}, False
+        rep = s.request(op, timeout=timeout, **req)
+        return dict(rep, op=op), op == "shutdown"
+    except _BadTimeout:
+        return {"ch": "c", "ok": False, "err": "bad timeout"}, False
+    except (ValueError, KeyError, TypeError, DeviceError, protocol.ProtocolError) as e:
+        return {"ch": "c", "ok": False, "err": type(e).__name__}, False
 
 
 def main(argv: list[str]) -> int:

@@ -13,7 +13,7 @@ import pytest
 from apps.device_host import launcher
 from tests.local_gate.conftest import live
 
-pytestmark = live
+pytestmark = [live, pytest.mark.usefixtures("emulator_guard_module")]
 
 STATE: dict = {}
 SDK_ADB = "$HOME/emu/sdk/platform-tools/adb"
@@ -119,8 +119,11 @@ def test_03_p9a_guest_cannot_reach_host(sh, request) -> None:  # type: ignore[no
     reached = [p for p, line in res.items() if _reached(line)]
     request.node.aas_detail = {"ports": ports, "reached": reached,
                                "sample": {str(p): res.get(p, "missing")[:120] for p in ports}}
+    net = _guest(sh, "ip -4 addr show; ip route", "emulator-5600", 5641, ns=True)
+    request.node.aas_detail["guest_net"] = " ".join(net.split())[:300]
     assert sorted(res) == ports, out
     assert reached == []
+    assert "10.0.2.15" in net  # the guest network is up: unreachable is restrict=on, not a dead interface
 
 
 @pytest.mark.probe("N7")
