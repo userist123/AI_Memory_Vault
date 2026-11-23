@@ -115,3 +115,14 @@ Update 2026-11-23 (S6 done, local commits on claude/ai-app-studio, nothing pushe
   Android build and preview_capture still unavailable; S5 live device probes still deferred; real (paid) agent run not done.
 - Next = final gate: fable-consultant verification of the whole app, its open questions to Codex/Gemini via agent-bridge,
   security-lockdown skill, fix and repeat, then push + PR #413 + vault CI + merge.
+
+Update 2026-11-23 (S6 review round 1 fixed, local commits on claude/ai-app-studio, nothing pushed)
+- Fixed (docs/slices/S6.md "Review fixes"): H1 run grant pins every MCP tool to its project (activity_list included);
+  H2 runner fails closed without a validated system/init; stale-typing flush never splits a token; P5f ENFORCED (plan gate
+  default ON, owner toggle PUT /api/v1/settings/plan-gate; write/delete/build need an approved plan of the current run;
+  runner pauses on plan_submit, plan timeout aborts); UI prompt box + Start run + Stop wired end to end; Tauri backend
+  `python -I` runpy launcher with AAS_DEV_*/PYTHON* removed; device gates re-checked per call, device stopped at run end /
+  shutdown; 1 MiB bounded line reader; run_studio.ps1 sets AAS_DEV_ORIGINS only with -Dev.
+- Verified: uv run pytest -q 489 passed / 20 skipped; tsc, vitest 91, Playwright 12; cargo test --lib 2; check_vendored both
+  modes and gen_vendored --check OK.
+- Next = review round 2 on the delta only, then the final gate (unchanged).

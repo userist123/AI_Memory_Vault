@@ -309,9 +309,14 @@ MCP (`apps/mcp-app/server.py`): every tool input schema is strict, both publishe
 and enforced by the per-call validator (`extra="forbid"`): an unknown field such as `kind` or `approved` is an
 error before the tool body runs, with no side effect.
 ### 5.5 UI (apps/desktop, React, text nodes only, no markdown, no `dangerouslySetInnerHTML`)
-- Plan gate: `plan_submit` creates a plan record; card in the approval region; built-in runner starts the
-  execution phase only after `plan.decide`; for every MCP client, `code_write_file/code_delete_file` require an
-  approved `planId` of that project (owner toggle, default ON). Proof P5f.
+- Plan gate (enforced since the S6 review): `plan_submit` creates a plan record (card in the approval region). While
+  the owner toggle is ON (default; owner-only route `PUT /api/v1/settings/plan-gate`, strict bool), the MCP server
+  refuses `code_write_file`, `code_delete_file` and `app_build` with `plan_required` unless an approved plan exists for
+  the CURRENT run: the built-in runner's `plan_submit` call waits for the owner's decision, an approval attaches the
+  `planId` to the run's grant, and only a plan of that run and project unlocks it (a plan approved for another run
+  never does). The runner aborts a run whose plan waits longer than its plan timeout (900 s) and withdraws (status
+  `expired`) every still-pending plan at run end. External MCP sessions are not paused; they need an approved plan
+  submitted through the same server process. The toggle is re-read on every call. Proof P5f.
 - Step timeline: one row per step/tool.call, current tool + target file, +N/-M pills, durations; never a bare spinner.
 - Live diff: `agent.typing` shows the file content as the model generates it (line-buffered); `file.diff` shows
   the committed diff; clicking a row opens the diff at that revision.

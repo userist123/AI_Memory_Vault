@@ -49,3 +49,9 @@ Update 2026-11-23 ~04:00 (S6 done, local commits on claude/ai-app-studio, nothin
   (C: < 8 GiB); real paid agent run not done; S5 live-gate results may still arrive on claude/aas-s5.
 - NEXT = final gate: fable-consultant verifies the complete app; its open questions go via agent-bridge to Codex (ChatGPT) and
   Gemini; fix and repeat until clean; security-lockdown skill; then push + PR #413 + vault CI + merge.
+
+Update 2026-11-23 ~05:00 (S6 review round 1 fixed, local commits only):
+- Done: H1 (grant pins all tools to its project), H2 (fail-closed init), token-safe stale flush, P5f enforced (default ON,
+  owner toggle), UI prompt box/Start/Stop, Tauri `python -I` launcher + env scrub, device re-check/stop at run end,
+  bounded line reader, AAS_DEV_ORIGINS only with run_studio.ps1 -Dev. pytest 489 passed / 20 skipped; vitest 91; Playwright 12.
+- Open: review round 2 (delta only); then the final gate.
