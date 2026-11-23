@@ -1,3 +1,15 @@
+---
+id: "loganalyzer-dfir-phase1-status"
+title: "Faza 1 - Secure Foundation (historical status)"
+type: project
+lifecycle: REVIEW
+verification: unverified
+created: '2026-09-02'
+updated: '2026-10-08'
+provenance:
+  source_type: unknown
+  source_ref: "02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md"
+---
 > HISTORICAL DOCUMENT (banner added 2026-10-08, WP0). Last written 2026-09-05. Superseded by `../docs/dfir/CONTRACT_AUDIT_STAGE1.md` (stage-1 contract audit, 2026-10-08). Do not rely on this file for the current state of the code; it is kept unchanged below for history.
 
 # Faza 1 — Secure Foundation

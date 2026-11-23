@@ -4,6 +4,8 @@ category: governance
 status: active
 version: 1.0.0
 id: "multi-agent-execution-protocol-v1"
+lifecycle: REVIEW
+verification: unverified
 document_kind: policy
 document_status: active
 provenance_status: maintained

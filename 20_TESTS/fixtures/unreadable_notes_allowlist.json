@@ -164,18 +164,6 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
-      "path": "02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
-    },
-    {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
-    },
-    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/ENGINEERING-PLAYBOOK.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

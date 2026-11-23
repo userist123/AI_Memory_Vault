@@ -1,6 +1,16 @@
 ---
 name: skill-discovery
 description: Discover and classify reusable skills, agents, instructions, prompts, references, and developer resources from the AI Memory Vault without treating every repository or code sample as an executable skill.
+id: "skill-skill-discovery"
+title: "Skill Discovery"
+type: procedure
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-24'
+updated: '2026-09-04'
+provenance:
+  source_type: unknown
+  source_ref: "00_GOVERNANCE/skills/skill-discovery/SKILL.md"
 ---
 
 # Skill Discovery

@@ -1,6 +1,16 @@
 ---
 name: memory-skill-router
 description: Resolve validated operational skills to the most compatible Vault agents and keep agent-skill routing synchronized.
+id: "agent-memory-skill-router"
+title: "Memory Skill Router"
+type: procedure
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-24'
+updated: '2026-11-10'
+provenance:
+  source_type: unknown
+  source_ref: "00_GOVERNANCE/agents/memory-skill-router.md"
 ---
 
 # Memory Skill Router

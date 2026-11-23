@@ -4,6 +4,8 @@ category: integrity
 status: active
 version: 1.0.0
 id: "fcd80a74-9192-4fb8-baa2-527c0a61f26e"
+lifecycle: REVIEW
+verification: unverified
 document_kind: policy
 document_status: active
 provenance_status: complete

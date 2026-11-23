@@ -4,6 +4,8 @@ category: rules
 status: active
 version: 1.0.0
 id: "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+lifecycle: REVIEW
+verification: unverified
 document_kind: policy
 document_status: active
 provenance_status: incomplete

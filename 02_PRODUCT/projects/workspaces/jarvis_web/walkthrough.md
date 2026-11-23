@@ -1,3 +1,15 @@
+---
+id: "jarvis-web-walkthrough"
+title: "Walkthrough - Ollama Integration without Sub-Agents"
+type: project
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-31'
+updated: '2026-09-05'
+provenance:
+  source_type: unknown
+  source_ref: "02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md"
+---
 # Walkthrough – Ollama Integration without Sub‑Agents
 
 ## What was done

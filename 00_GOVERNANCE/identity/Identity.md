@@ -5,6 +5,8 @@ status: active
 version: 1.0.0
 confidence: high
 id: "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+lifecycle: REVIEW
+verification: unverified
 document_kind: system_document
 document_status: active
 provenance_status: incomplete

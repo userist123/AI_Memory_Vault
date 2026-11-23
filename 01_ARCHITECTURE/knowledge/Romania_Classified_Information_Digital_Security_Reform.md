@@ -14,7 +14,7 @@ relations:
   - target_id: "jarvis-cognitive-fortress-pattern"
     type: relates_to
     target: 01_KNOWLEDGE/JARVIS_Cognitive_Fortress_Prompt_Pattern
-lifecycle: raw
+lifecycle: REVIEW
 ---
 
 # Romanian Classified-Information Digital Security Reform — Research Summary

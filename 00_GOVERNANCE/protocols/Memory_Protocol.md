@@ -4,6 +4,8 @@ category: memory
 status: active
 version: 1.0.0
 id: "54b48919-d58a-4502-a20f-2717b022d375"
+lifecycle: REVIEW
+verification: unverified
 document_kind: policy
 document_status: active
 provenance_status: incomplete

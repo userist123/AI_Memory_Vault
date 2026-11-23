@@ -22,7 +22,7 @@ provenance:
   redaction: not_applicable
 confidence: high
 verification: unverified
-lifecycle: NORMALIZED
+lifecycle: REVIEW
 provenance_status: complete
 relations:
   - type: related_to

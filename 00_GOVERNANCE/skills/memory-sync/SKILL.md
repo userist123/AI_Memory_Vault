@@ -1,6 +1,16 @@
 ---
 name: memory-sync
 description: Synchronize Claude's working knowledge with the canonical AI Memory Vault while preserving provenance, avoiding duplicate memory, and keeping Obsidian as a navigation/presentation layer.
+id: "skill-memory-sync"
+title: "Memory Synchronization"
+type: procedure
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-24'
+updated: '2026-09-04'
+provenance:
+  source_type: unknown
+  source_ref: "00_GOVERNANCE/skills/memory-sync/SKILL.md"
 ---
 
 # Memory Synchronization

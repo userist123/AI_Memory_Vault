@@ -3,6 +3,14 @@ title: Registru Transferuri Workspace Specification
 type: specification
 status: active
 category: product
+id: "spec-registru-transferuri-workspace"
+lifecycle: REVIEW
+verification: unverified
+created: '2026-09-02'
+updated: '2026-09-06'
+provenance:
+  source_type: unknown
+  source_ref: "02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md"
 ---
 
 # 🛡️ Registru Militar de Transferuri & Device Control v5.4

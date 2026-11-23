@@ -3,6 +3,14 @@ title: Jarvis Web Command Center Specification
 type: specification
 status: active
 category: product
+id: "spec-jarvis-web-command-center"
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-25'
+updated: '2026-09-06'
+provenance:
+  source_type: unknown
+  source_ref: "02_PRODUCT/projects/workspaces/jarvis_web/Jarvis_Web_Command_Center_Specification.md"
 ---
 
 # JARVIS AI Memory Vault Command Center

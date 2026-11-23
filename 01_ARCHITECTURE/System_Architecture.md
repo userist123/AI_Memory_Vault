@@ -4,6 +4,8 @@ category: architecture
 status: active
 version: 1.0.0
 id: "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+lifecycle: REVIEW
+verification: unverified
 document_kind: specification
 document_status: active
 provenance_status: incomplete

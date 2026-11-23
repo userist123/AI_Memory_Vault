@@ -3,6 +3,14 @@ title: Jarvis Desktop WPF Command Center Specification
 type: specification
 status: active
 category: product
+id: "spec-jarvis-desktop-wpf-command-center"
+lifecycle: REVIEW
+verification: unverified
+created: '2026-09-01'
+updated: '2026-09-06'
+provenance:
+  source_type: unknown
+  source_ref: "02_PRODUCT/projects/workspaces/jarvis_desktop/Jarvis_Desktop_WPF_Command_Center_Specification.md"
 ---
 
 # JARVIS Desktop

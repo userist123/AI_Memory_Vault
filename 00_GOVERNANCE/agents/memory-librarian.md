@@ -1,6 +1,16 @@
 ---
 name: memory-librarian
 description: Retrieve, reconcile and preserve relevant AI Memory Vault context for Claude Code tasks
+id: "agent-memory-librarian"
+title: "Memory Librarian"
+type: procedure
+lifecycle: REVIEW
+verification: unverified
+created: '2026-08-24'
+updated: '2026-09-04'
+provenance:
+  source_type: unknown
+  source_ref: "00_GOVERNANCE/agents/memory-librarian.md"
 ---
 
 # Memory Librarian
