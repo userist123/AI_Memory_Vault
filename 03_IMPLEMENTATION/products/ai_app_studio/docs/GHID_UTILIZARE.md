@@ -39,6 +39,13 @@ Ce trebuie să existe pe PC: uv, Node.js + pnpm, Docker Desktop, Claude Code CLI
 
 Durata tipică pentru o aplicație simplă: sub un minut. Bugetul maxim pe rulare este de 2 USD.
 
+### Proiectele tale
+Pe bara de sus, lângă numele aplicației, lista **Proiect** arată toate proiectele, fiecare cu ora ultimei construiri
+(sau „neconstruit încă”). Alegi alt proiect din listă și cronologia, fișierele și ramele trec pe proiectul ales.
+**Proiect nou** deschide un formular mic: nume și șablon (**Gol**, **Cu file (tabs)**, **Listă și detalii**).
+**Șterge** cere confirmarea ta (aprobare); fișierele merg în coș. Cât timp rulează AI-ul, lista și ștergerea sunt
+blocate.
+
 ### Telefon, tabletă, desktop
 Tab-urile din dreapta: **Phone 390×844**, **Tablet 834×1112**, **Desktop 1440×900** arată aceeași aplicație în rame
 diferite. Dacă nu s-a construit încă nimic, rama spune „Nicio aplicație construită încă”.
