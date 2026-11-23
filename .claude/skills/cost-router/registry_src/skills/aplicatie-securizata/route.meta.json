@@ -17,12 +17,15 @@
    "aplicatie securizata",
    "threat model",
    "securizeaza aplicatia",
-   "hardening"
+   "hardening",
+   "echipa de agenti pentru aplicatie",
+   "aplicatie cap coada"
   ],
   "en": [
    "secure app",
    "build a secure",
-   "harden the app"
+   "harden the app",
+   "agent team app"
   ]
  },
  "summary": "Secure-by-design app: threat model, tests first, independent review.",

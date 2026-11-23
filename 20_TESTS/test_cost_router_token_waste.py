@@ -361,5 +361,6 @@ def test_installed_global_rules_carry_the_agent_hard_rules(tmp_path):
     md = (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
     block = md.split("cost-router:context-rules:start", 1)[1].split("cost-router:context-rules:end", 1)[0]
     for needle in ("Resume a subagent at most once", "threat model", "At most 2 review rounds",
-                   "One implementation agent at a time", "never poll CI", "run on Sonnet"):
+                   "Parallel implementers only with disjoint file ownership",
+                   "otherwise one implementation agent at a time", "never poll CI", "run on Sonnet"):
         assert needle in block, needle

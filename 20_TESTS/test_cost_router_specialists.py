@@ -409,6 +409,27 @@ def test_overlap_priority_and_overlay_pairing(registry):
     assert sp.spec_token(sel) == "spec=aplicatie-securizata+prompt-director"
 
 
+@pytest.mark.parametrize("prompt", [
+    "analiza dfir a PC-ului cap coada",
+    "fa un clip cap coada",
+    "repara bug-ul cap coada in parser",
+    "write an end to end app test with playwright",
+    "install missing tool for the dfir analysis of the PC",
+    "instaleaza unealta ffmpeg",
+    "review the agent team PR",
+])
+def test_generic_phrases_do_not_select_aplicatie_securizata(registry, prompt):
+    sel = sp.select(prompt, _route_class(prompt), registry)
+    assert sel is None or sel["id"] != "aplicatie-securizata", sel
+
+
+def test_dfir_prompt_still_selects_dfir_analyst_and_specific_app_prompt_selects_securizata(registry):
+    p = "analiza dfir a PC-ului cap coada"
+    assert sp.select(p, _route_class(p), registry)["id"] == "dfir-analyst"
+    p = "fa-mi o aplicatie cap coada"
+    assert sp.select(p, _route_class(p), registry)["id"] == "aplicatie-securizata"
+
+
 def test_class_compatibility_filters(registry):
     # fable-consultant is design/frontier/review only: an implement-class prompt never selects it
     assert sp.select("second opinion", "implement", registry) is None
