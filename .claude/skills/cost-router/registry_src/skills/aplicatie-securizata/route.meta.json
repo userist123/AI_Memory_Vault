@@ -17,12 +17,18 @@
    "aplicatie securizata",
    "threat model",
    "securizeaza aplicatia",
-   "hardening"
+   "hardening",
+   "echipa de agenti",
+   "cap coada",
+   "instaleaza unealta"
   ],
   "en": [
    "secure app",
    "build a secure",
-   "harden the app"
+   "harden the app",
+   "agent team",
+   "end to end app",
+   "install missing tool"
   ]
  },
  "summary": "Secure-by-design app: threat model, tests first, independent review.",

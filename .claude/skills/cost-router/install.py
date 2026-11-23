@@ -137,8 +137,9 @@ CONTEXT_RULES = f"""{RULES_START}
 - At most 2 review rounds; round 2 reviews only the delta and runs only the affected test
   projects; then decide in the main session (fix, or an accepted residual recorded with the owner).
   The full suite runs once before merge.
-- One implementation agent at a time. Agents push and stop; they never poll CI. The main session
-  checks CI once, then dispatches the review. Before parallel branches, reserve ids and file
+- Parallel implementers only with disjoint file ownership in separate worktrees and one integrator
+  (cost-router references/fan-out.md); otherwise one implementation agent at a time. Agents push
+  and stop; they never poll CI. The main session checks CI once, then dispatches the review. Before parallel branches, reserve ids and file
   ownership in the coordination checkpoint.
 - Implementers of risky code run on Sonnet because an Opus reviewer pass is mandatory; design,
   root cause, verification, critical risk and live operations (production, deploy, delete,
