@@ -401,7 +401,7 @@ never read a receipt file over 256 KB. Residual: the list is a denylist (a `!` f
 `--tier sonnet|opus` (any other value: exit 2) records the tier of the attempt whose work is checked; every receipt also
 records the session's current prompt epoch (`prompt_epoch`, from the route state; null without one).
 
-### 4G. `fable-executor` (M11, DEFAULT OFF)
+### 4G. `fable-executor` (M11; shipped ENABLED per owner decision 2026-11-23, Opus decides)
 
 `.claude/agents/fable-executor.md`: Fable 5.2 (`claude-fable-5-2`), tools exactly Read, Grep, Glob, Bash, Edit, Write
 (Agent/Task, MCP, WebFetch/WebSearch, NotebookEdit denied), checked by its own exact validator
@@ -434,12 +434,15 @@ are denied. When to spawn is the Opus main session's decision: never for easy ta
 and an opus attempt failed the same check ((d) is that proof); the Opus vault-reviewer pass afterwards stays mandatory. On allow, the context says an Opus
 vault-reviewer pass on the executor's diff is mandatory before DONE. `CLAUDE_CODE_SUBAGENT_MODEL=fable` still denies every
 spawn except the pinned consultant and the gated executor; any other Fable request keeps being rewritten to Opus.
-Enable (owner only, no env switch): in a trusted checkout set `"enabled": true` under `rules.fable_executor` in
-`04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
+Flag state: Opus decides; the flag is shipped ENABLED (`"enabled": true`, `max_per_session` 2) per the owner decision
+of 2026-11-23 ("there is no owner switch; Opus decides when Fable is most needed; never for easy tasks; for a heavy
+task with a lot to run Opus may choose Fable if neither Opus nor Sonnet can do it"). Gates (b)-(i) and the tool-level
+guard below still apply to every spawn. To change it (no env switch): in a trusted checkout set `"enabled"` under
+`rules.fable_executor` in `04_CONFIG/claude_model_routing.json`, commit, generate the next release pin for that commit
 (`python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n+1> --out <pin>`, commit the
 pin), then re-run `python .claude/skills/cost-router/install.py --source-ref <sha> --release-pin <pin>` and
 `install.py --verify --require-hooks` (exit 0, `policy_ok` true). Editing the installed `policy.json` by hand changes its
-hash and keeps the executor disabled (and fails `--verify`). Disable: the same steps with `false`.
+hash, disables the executor (gate (a) fails) and fails `--verify`. Disable: the same steps with `false`.
 Threat residuals: receipts, route state, the spawn record `route-<sid>.spawns` and `pins.sha256.json` live in the user
 cache and are writable by the same user, so a same-user process (or a hostile main session with Bash) can still forge the
 ladder by editing these files; the spawn record only raises the cost of a forgery from one check.py call to editing JSON
@@ -457,21 +460,31 @@ substitution, here-strings, continuation, look-alikes, zero-width, quote splitti
 worktree; X7 the kill switches. **Bash ALLOWLIST**: the command must be unchanged by NFKC + Cf removal + confusables fold,
 ASCII, <= 2000 chars, ONE simple command under Git Bash quoting (no unquoted `; & | < > ( ) { } $ backtick ! @`, no `$`
 or backtick even in double quotes, no newline, comment, line continuation, env assignment, program path or `~`), and one of:
-`pytest`/`python -m pytest`; `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
-`node [--test] <script inside the worktree>`; `dotnet build|test`; `npm|pnpm|yarn test | run test|build|lint [-- args]`;
+`pytest`/`python -m pytest` (M12 review: never `--pastebin`, `-p <plugin>` (only `-p no:<name>`), or `-o`/
+`--override-ini` touching addopts or plugins, abbreviations included); `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
+`node [--test] <script inside the worktree>`; `dotnet build|test --no-restore` (`dotnet restore` and an implicit
+restore are denied); `npm|pnpm|yarn test | run test|build|lint [-- args]`;
 `git [--no-pager] [-C <dir in the worktree>] status|diff|log|show|blame|rev-parse|ls-files|add|commit` (never `--amend`,
-`--output`, `--ext-diff`, `--textconv`, `-c`, `--git-dir`), `git switch -c|checkout -b <new branch>`, `git stash list`,
+`--output`, `--ext-diff`, `--textconv`, `--exec`, `--upload-pack`, `--receive-pack`, `--config[-env]`, `--force*`,
+`--hard`, `--delete`, `--mirror`, `-c`, `--git-dir`, nor any abbreviation of them of 2+ characters such as `--am`), `git switch -c|checkout -b <new branch>`, `git stash list`,
 `git branch` listing; read-only `ls dir cat type Get-Content Select-String rg grep find head tail wc pwd` (no `find
 -exec/-delete/-fprint`, no `rg --pre`). Every path-like argument of an executing command (`--basetemp`, `--rootdir`, node
-ids, `-o`) must resolve inside the worktree; unquoted globs are refused there. Anything else is denied naming the rule.
+ids, `-o`) must resolve inside the worktree, and for pytest/python so must every bare word naming an existing entry
+(a junction `tests` -> elsewhere is refused); unquoted globs are refused there. Anything else is denied naming the rule.
 **Writes**: the realpath of the target must be inside `git rev-parse --show-toplevel` of the session cwd (else no write
 at all), lexically too, not in `.git` (also `.GIT`, `.git.`), not through a symlink/junction/reparse point, not a hard
-link, not in a nested repository, not in `~/.claude`, no UNC/device/drive-relative path, no `:` stream. Residuals: the
+link, not in a nested repository, not in `~/.claude`, no UNC/device/drive-relative path, no `:` stream, and never
+agent or repository configuration (case-insensitive, after realpath, at any depth): `.claude/**`, `.agents/**`,
+`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.mcp.json`, `.gitattributes`, `.gitmodules`, `.gitconfig`, and
+`<root>/.github/workflows/**`. **Install chain (finding 1)**: `install.py` refuses (exit 2, nothing changed) unless
+every file it copies matches the sha256 in the release pin (`--release-pin`, else the source tree's
+`release_pin.json`; no pin = refused). Residuals: the
 CONTENTS of an allowed worktree script, test/conftest file, package.json script, project file, or a tracked hooks dir that
 the repo's own `core.hooksPath` already points to are not inspected (the executor may write them, then run them through
 an allowed command); reads outside the worktree stay allowed (no network to send them); a same-user process outside Claude
-Code is out of scope. Enabling `rules.fable_executor` still needs the owner's explicit decision after a review of this
-guard; it stays `false`.
+Code is out of scope. Finding-1 residual (accepted with the flag on): an executor can run code it writes inside the
+worktree (a test, conftest or script, then `pytest`/`python`), the same as vault-worker; the guard bounds where it writes
+and what it calls, not what that code does.
 
 ## 5. Report shape (end of task)
 

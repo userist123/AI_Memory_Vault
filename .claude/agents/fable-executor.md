@@ -1,6 +1,6 @@
 ---
 name: fable-executor
-description: Executor of last resort on Fable 5.2 (gated by rules.fable_executor). The Opus main session decides when to spawn it: never for easy tasks; only on a heavy owner prompt (route implement, design or frontier; not a short follow-up or slash command) after a sonnet AND an opus attempt failed the same acceptance check (check.py receipts with --tier sonnet and --tier opus in this prompt); the cost-router Agent hook enforces it and a tool-level guard limits what it runs. Its work is always reviewed by an Opus vault-reviewer before DONE. Never for critical risk, live operations (production, deploy, delete, rotate) or local_only/privacy work.
+description: Executor of last resort on Fable 5.2 (gated by rules.fable_executor, shipped enabled per the owner decision of 2026-11-23). The Opus main session decides when to spawn it: never for easy tasks; only on a heavy owner prompt (route implement, design or frontier; not a short follow-up or slash command) after a sonnet AND an opus attempt failed the same acceptance check (check.py receipts with --tier sonnet and --tier opus in this prompt); the cost-router Agent hook enforces it and a tool-level guard limits what it runs. Its work is always reviewed by an Opus vault-reviewer before DONE. Never for critical risk, live operations (production, deploy, delete, rotate) or local_only/privacy work.
 tools: Read, Grep, Glob, Bash, Edit, Write
 disallowedTools: Agent, Task, NotebookEdit, WebFetch, WebSearch, ToolSearch, Skill, PowerShell, mcp__*
 model: claude-fable-5-2

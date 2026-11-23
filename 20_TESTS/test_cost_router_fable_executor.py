@@ -161,9 +161,9 @@ def _denied(r, *needles):
 
 # ---- shipped artefacts ---------------------------------------------------------------------------------------------
 
-def test_shipped_policy_has_the_flag_off():
+def test_shipped_policy_has_the_flag_on():  # owner decision 2026-11-23: Opus decides, the flag ships enabled
     rules = json.loads(POLICY_SRC.read_text(encoding="utf-8"))["rules"]
-    assert rules["fable_executor"] == {"enabled": False, "max_per_session": 2}
+    assert rules["fable_executor"] == {"enabled": True, "max_per_session": 2}
     assert rules["fable_subagent_allowlist"] == ["fable-consultant"]  # the consultant allowlist is unchanged
 
 
@@ -675,8 +675,8 @@ def test_install_records_the_policy_hash_and_verify_catches_a_hand_edit(tmp_path
     assert (home / ".claude" / "agents" / "fable-executor.md").is_file()
     assert "fable-executor.md" in json.loads((skill / "agents.pinned.json").read_text(encoding="utf-8"))
     raw = json.loads((skill / "policy.json").read_text(encoding="utf-8"))
-    assert raw["rules"]["fable_executor"]["enabled"] is False
-    raw["rules"]["fable_executor"]["enabled"] = True
+    assert raw["rules"]["fable_executor"]["enabled"] is True  # shipped enabled (owner decision 2026-11-23)
+    raw["rules"]["fable_executor"]["max_per_session"] = 10  # any hand edit of the installed policy is caught
     (skill / "policy.json").write_text(json.dumps(raw), encoding="utf-8")
     r = subprocess.run([sys.executable, str(skill / "install.py"), "--home", str(home), "--verify", "--json"],
                        capture_output=True, text=True, timeout=120, env=env, cwd=str(tmp_path))
