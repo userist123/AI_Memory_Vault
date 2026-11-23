@@ -68,3 +68,10 @@ Update 2026-11-23 (S7 review findings M1-M3, L1-L4 fixed, local commits only on 
   initial generation); M3 capture quota/disk gate; L1 licence note (hash unverified offline); L2 purge after exclusive bind;
   L3 capture kill+join; L4 keystore pending-marker commit. Details: ai_app_studio/docs/slices/S7.md.
 - NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).
+
+Update 2026-11-23 (S8 done, local commits only on claude/ai-app-studio):
+- Done: live emulator mirror (keyed per-run pipe -> backend hub -> owner binary WS -> WebCodecs), capture thumbnails (blob:,
+  sha256-checked), Nested-Virt modal via -no-nested-warnings, licence hash verified online. pytest 547 passed / 20 skipped;
+  vitest 103; Playwright 15. Details: ai_app_studio/docs/slices/S8.md.
+- Open: live check (C: < 8 GB during S8), external MCP without mirror, paid run.
+- NEXT = final gate (fable-consultant, Codex/Gemini via agent-bridge, security-lockdown, push + PR #413).

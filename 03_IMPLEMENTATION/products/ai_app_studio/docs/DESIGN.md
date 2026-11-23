@@ -150,6 +150,11 @@ Responses `{"ch":"c","id":n,"ok":bool,...}`; events `{"ch":"e","kind":"booted|mo
 APKs never travel through /mnt/<drive> shares; the guest has no shared folder.
 
 ### 2.4 "Nested Virtualization" modal
+S8 (supersedes (1) below): emulator 31.3.9 documents `-no-nested-warnings` in its own `emulator -help` ("Disable the
+warning dialog when emulator is running in nested virtualization"); `aas_devhost.emulator_argv` passes it on every
+launch. A command-line flag only: no settings file is written in any HOME, no X11 input is injected. The `xwininfo`
+watch and the `modal` event stay as the fallback (2). Live confirmation pending (S8 had < 8 GiB free on C:).
+
 It appears on every launch and does not block boot (spike 2f). Decision: (1) `aas setup-wsl` launches aas-phone
 once under the fake HOME; the owner ticks "don't show again"; the resulting Qt settings file under
 `~/.aas/home/.config/` is hashed into the manifest (key confirmed then; it lives only in the studio HOME, so the
@@ -307,7 +312,13 @@ order (the in-memory bus only wakes it; a 0.5 s poll picks up rows written by th
 `afterSeq=lastSeen` when `prev != lastSeen`. There is no 4409 slow-client close: sends are blocking (a slow client
 only slows its own socket) and each socket replays from the DB itself (residual: one DB query per socket per
 wake/poll, acceptable for the single-owner desktop). Video uses a separate binary WS `/api/v1/device/video` (same
-auth), not stored. A failed activity write is logged (warning) and counted; the next successful write appends a
+auth), not stored. S8 relay (`core/aas_device/video_relay.py`): the run's MCP child (owner of the device session)
+sends the device's h264 chunks over a per-run `multiprocessing.connection` pipe (random name, 256-bit key in the MCP
+child's env only, HMAC challenge both ways, `recv_bytes` only, chunk <= 64 KiB, 2 MiB/s token bucket); the backend hub
+re-cuts at NAL boundaries, keeps SPS/PPS + the current GOP for late viewers and fans out per project to at most 2
+owner sockets (`?projectId=prj_<16 hex>`, existing project, `aas.v1` selected, 4400/4404/4422/4429 closes), each with
+a 4 MiB queue: overflow drops whole NALs and resumes at the next IDR (video dropped first). External MCP sessions get
+no mirror (no pipe); the WSLg window stays the primary view. A failed activity write is logged (warning) and counted; the next successful write appends a
 `stream.dropped {count}` row, so a loss is visible on the timeline.
 MCP (`apps/mcp-app/server.py`): every tool input schema is strict, both published (`additionalProperties: false`)
 and enforced by the per-call validator (`extra="forbid"`): an unknown field such as `kind` or `approved` is an

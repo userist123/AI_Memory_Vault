@@ -146,3 +146,15 @@ Update 2026-11-23 (S7 review fixes M1-M3, L1-L4, local commits only, nothing pus
   committed + strict (residual: initial generation TOFU); capture quota/disk gate/kill+join; licence note (hash unverified
   offline); grant purge after exclusive port bind; keystore+record pending-marker commit.
 - Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> security-lockdown -> push + PR #413).
+
+Update 2026-11-23 (S8 done, local commits on claude/ai-app-studio, nothing pushed) - see docs/slices/S8.md
+- Live emulator mirror: MCP child -> per-run keyed pipe (multiprocessing.connection, HMAC both ways) -> backend VideoHub
+  (NAL re-cut, size/rate/viewer caps, SPS/PPS+GOP for late viewers, video dropped first) -> owner WS /api/v1/device/video
+  (aas.v1 + aas.token, per project) -> WebCodecs live feeder in the worker. Capture thumbnails: REST by sha256 (body hash =
+  id) -> blob: URLs in the timeline strip and under the device frame with the viewport label; CSP img-src 'self' blob:;
+  build_web now signals preview.revision. Nested-Virt modal: emulator flag -no-nested-warnings (documented in 31.3.9 -help),
+  device host reinstalled. L1 licence sha1 verified online (matches).
+- Verified: uv run pytest -q 547 passed / 20 skipped (Docker up); tsc clean, vitest 103, Playwright 15; check_vendored both
+  modes + gen_vendored --check OK. Live part skipped: C: 7.8 GB free (< 8 GB rule); 0 emulator launches.
+- Open: live check of mirror + modal flag and S8-live.png when C: >= 8 GB; external MCP has no mirror; real paid agent run.
+- Next = final gate (fable-consultant -> Codex/Gemini via agent-bridge -> fix/repeat -> security-lockdown -> push + PR #413).
