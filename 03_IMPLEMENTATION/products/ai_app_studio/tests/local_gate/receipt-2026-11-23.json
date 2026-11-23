@@ -1,7 +1,7 @@
 {
   "gate": "ai_app_studio local gate S5",
   "distro": "Ubuntu-S9AI-D",
-  "finished": "2026-11-23T01:25:55+00:00",
+  "finished": "2026-11-23T11:06:16+00:00",
   "runs": [
     {
       "finished": "2026-11-23T00:10:26+00:00",
@@ -868,44 +868,815 @@
           ]
         }
       }
+    },
+    {
+      "run_id": "d4c76e32c806",
+      "started": "2026-11-23T11:03:23+00:00",
+      "finished": "2026-11-23T11:06:16+00:00",
+      "exitstatus": 0,
+      "probes": [
+        "N4",
+        "N7",
+        "P10a",
+        "P10c",
+        "P9a",
+        "PM3a",
+        "PM3b",
+        "PM3c",
+        "PM3d"
+      ],
+      "tests": {
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_parsed[False]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_parsed[True]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[data0]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[data1]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[data2]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[data3]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[data5]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_apk_package_refused[not a zip]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_bogus_screen_size_means_no_console": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_auth_and_tap": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_auth_banner_without_path_refused": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_banner_naming_two_files_refused": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_banner_path_mismatch_refused": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_connection_refused_is_unavailable": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_ko_reply_is_error": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_line_regex_is_full_match": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_lost_after_down_never_falls_back_to_adb": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_reconnects_after_drop": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_rotation_maps_logical_to_panel[0-tap0-panel0]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_rotation_maps_logical_to_panel[1-tap1-panel1]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_rotation_maps_logical_to_panel[2-tap2-panel2]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_rotation_maps_logical_to_panel[3-tap3-panel3]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_swipe_error_mid_gesture_releases": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_swipe_sequence": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_timeout_closes_then_reconnects": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_token_file_checks": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_token_with_second_line_refused": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_up_sent_when_connection_drops_after_down": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_validation_and_bounds": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_without_auth_banner": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_console_wrong_token_disables": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_emulator_argv_disables_the_nested_virtualization_dialog": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_host_console_home_guard": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_host_tap_prefers_console_and_falls_back": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_idle_watch_not_triggered_while_active": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_idle_watch_stops_session": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_input_shell_one_process_fast": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_input_shell_quotes_words": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_input_shell_timeout_kills_and_respawns": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_install_allowed_package_uninstalls_then_installs": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_install_refuses_foreign_package": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_install_removes_newly_installed_foreign_package": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_install_snapshot_failure_is_fail_closed": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-      SurfaceOrientation: 1\\n-1]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-SurfaceOrientation: 7-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-Viewport INTERNAL: displayId=0, orientation=1, x\\nSurfaceOrientation: 3-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-Viewport INTERNAL: displayId=0, orientation=3, x\\nSurfaceOrientation: 3-3]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-nothing here-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[0-text0-0]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_rotation[1-SurfaceOrientation: 0-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0--None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Override size: 720x1560-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 072x1-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 1080x150-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 1080x2340-want0]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 1080x2340\\nOverride size: 1080x2340-want1]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 1080x2340\\nOverride size: 720x1560-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 1080x2340\\r\\n-want2]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 199x2340-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-Physical size: 9000x2340-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[0-error: device offline 1080x2340-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_parse_wm_size[1-Physical size: 1080x2340-None]": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_pool_offsets_use_header_size": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_pool_string_amplification_bounded": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_reply_pkg_field_validated": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_rotation_watch_updates_and_disables": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_tap_uses_input_shell": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_two_string_pools_refused": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_uninstall_op_validates_pkg": "pass",
+        "tests/local_gate/test_devhost_unit.py::test_unknown_chunk_and_bad_header_refused": "pass",
+        "tests/local_gate/test_device_session.py::test_01_baseline_and_canary": "pass",
+        "tests/local_gate/test_device_session.py::test_02_studio_session_boots_visible": "pass",
+        "tests/local_gate/test_device_session.py::test_03_p9a_guest_cannot_reach_host": "pass",
+        "tests/local_gate/test_device_session.py::test_04_n7_tap_fast_while_video_consumer_stalled": "pass",
+        "tests/local_gate/test_device_session.py::test_05_n7_positive_control_blocking_queue_stalls": "pass",
+        "tests/local_gate/test_device_session.py::test_06_shutdown_leaves_nothing": "pass",
+        "tests/local_gate/test_device_session.py::test_07_owner_state_unchanged": "pass",
+        "tests/local_gate/test_device_session.py::test_08_checker_positive_control_detects_touch": "pass",
+        "tests/local_gate/test_device_session.py::test_09_p9a_positive_control_default_slirp_reaches_canary": "pass",
+        "tests/local_gate/test_harness_static.py::test_guest_enters_net_and_pid_namespaces": "pass",
+        "tests/local_gate/test_harness_static.py::test_guest_without_ns_also_checks_server": "pass",
+        "tests/local_gate/test_harness_static.py::test_last_down_xy_parses_both_formats": "pass",
+        "tests/local_gate/test_harness_static.py::test_leak_pids_and_incomplete_probe": "pass",
+        "tests/local_gate/test_harness_static.py::test_leftover_probe_covers_all_checks": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_boot_event_survives_event_burst": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_accepts_valid_request_and_timeout": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[-1]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[0]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[1000000000.0]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[241.0]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[5]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[True]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[inf]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_refuses_bad_timeout[nan]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_rejects_non_object_lines[\"tap\"]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_rejects_non_object_lines[3]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_rejects_non_object_lines[[1,2]]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_rejects_non_object_lines[null]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_rejects_non_object_lines[{bad json]": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_bridge_unknown_op_refused": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_check_disk_space_docstring_has_no_invalid_escape": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_duplicate_reply_kills_session": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_late_reply_after_timeout_is_dropped_not_fatal": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_pending_requests_capped": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_preflight_bounded_read": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_preflight_small_output_parsed": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_protocol_uninstall_op": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_screenshot_out_of_order_seq_kills": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_screenshot_part_for_non_screenshot_request_kills": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_screenshot_parts_capped_per_id": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_screenshot_roundtrip_ok": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_screenshot_total_buffer_capped": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_unsolicited_replies_kill_session_memory_bounded": "pass",
+        "tests/local_gate/test_launcher_unit.py::test_unsolicited_screenshot_ids_kill_session": "pass",
+        "tests/local_gate/test_n4_env_scrub.py::test_bash_env_canary_does_not_run_through_launcher": "pass",
+        "tests/local_gate/test_n4_env_scrub.py::test_positive_control_canary_runs_without_scrub": "pass",
+        "tests/local_gate/test_p10a_static.py::test_scan_positive_control_flags_fixture": "pass",
+        "tests/local_gate/test_p10a_static.py::test_studio_code_never_names_owner_state": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_argv_snapshot[preflight]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_argv_snapshot[serve-phone]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_argv_snapshot[serve-tablet]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_backend_and_tools_never_reference_wsl_or_install_ps1": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_backend_scan_positive_control": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_shell_echoes_tokens_unchanged": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[--exec-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[-u-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[phone extra-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[root-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_bad_args[s9emu-64]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_distro_wrapper_refuses_root": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_manifest_matches_sources": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_matching_hash_spawns": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_other_distro_refused[Ubuntu-S9AI-D2]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_other_distro_refused[Ubuntu]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_other_distro_refused[docker-desktop]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_other_distro_refused[ubuntu-s9ai-d]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_protocol_rejects_bad_device_lines": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_protocol_rejects_bad_requests": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_ps1_wsl_call_sites_only_owner_setup": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_scanner_positive_control_flags_second_site": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_single_wsl_call_site_in_apps": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_tampered_script_refused_no_spawn": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_tokens_match_safe_charset": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[preflight;id]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[serve-phone ]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[serve-root]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[serve-s9emu]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[serve]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_unknown_verb_refused[shell]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_wrapper_refuses_extra_tokens_no_spawn[--cd_/]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_wrapper_refuses_extra_tokens_no_spawn[--exec]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_wrapper_refuses_extra_tokens_no_spawn[--user_root]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_wrapper_refuses_extra_tokens_no_spawn[-u_root]": "pass",
+        "tests/local_gate/test_pm3_launcher.py::test_wrapper_refuses_extra_tokens_no_spawn[extra]": "pass",
+        "tests/local_gate/test_pm3d_kill.py::test_kill_wsl_exe_mid_session_leaves_nothing": "pass",
+        "tests/local_gate/test_receipt_runs.py::test_legacy_runs_are_kept_but_not_counted": "pass",
+        "tests/local_gate/test_receipt_runs.py::test_partial_run_does_not_overwrite_failure": "pass",
+        "tests/local_gate/test_receipt_runs.py::test_pass_needs_all_tests_in_one_run": "pass",
+        "tests/local_gate/test_receipt_runs.py::test_run_record_has_id_time_exitstatus_and_outcomes": "pass",
+        "tests/local_gate/test_receipt_teardown.py::test_teardown_failure_marks_probe_fail": "pass",
+        "tests/local_gate/test_s9_devhost.py::test_console_token_is_created_private_and_non_empty": "skipped",
+        "tests/local_gate/test_s9_devhost.py::test_console_token_symlink_is_refused": "skipped",
+        "tests/local_gate/test_s9_devhost.py::test_device_host_never_runs_adb_reverse_or_forward[forward]": "pass",
+        "tests/local_gate/test_s9_devhost.py::test_device_host_never_runs_adb_reverse_or_forward[reverse]": "pass",
+        "tests/local_gate/test_s9_devhost.py::test_empty_console_token_fails_closed": "pass",
+        "tests/local_gate/test_s9_devhost.py::test_emulator_argv_hardening": "pass",
+        "tests/local_gate/test_s9_devhost.py::test_start_refuses_without_a_valid_console_token": "pass",
+        "tests/local_gate/test_s9b_keyframe.py::test_fields_and_protocol_know_the_op": "pass",
+        "tests/local_gate/test_s9b_keyframe.py::test_keyframe_restarts_screenrecord_and_is_throttled": "pass",
+        "tests/local_gate/test_s9b_keyframe.py::test_launcher_session_sends_the_op": "pass"
+      },
+      "results": {
+        "N4": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_bash_env_canary_does_not_run_through_launcher",
+              "status": "pass",
+              "at": "2026-11-23T11:05:26+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_positive_control_canary_runs_without_scrub",
+              "status": "pass",
+              "at": "2026-11-23T11:05:27+00:00",
+              "detail": null
+            }
+          ]
+        },
+        "N7": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_02_studio_session_boots_visible",
+              "status": "pass",
+              "at": "2026-11-23T11:04:16+00:00",
+              "detail": {
+                "boot_s": 38.0,
+                "booted": {
+                  "ch": "e",
+                  "kind": "booted",
+                  "avd": "aas-phone",
+                  "ms": 36938,
+                  "size": [
+                    1080,
+                    2340
+                  ]
+                },
+                "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +12+54",
+                "tap_check_at": [
+                  531,
+                  1207
+                ],
+                "last_down_xy": [
+                  531.0,
+                  1206.9
+                ],
+                "tap_landed": true
+              }
+            },
+            {
+              "test": "test_04_n7_tap_fast_while_video_consumer_stalled",
+              "status": "pass",
+              "at": "2026-11-23T11:04:33+00:00",
+              "detail": {
+                "tap_replies": 9,
+                "max_tap_reply_s": 0.016,
+                "tap_reply_s": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.016,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "tap_devhost_ms": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "max_swipe150ms_reply_s": 0.157,
+                "video_chunks_received": 100,
+                "video_dropped_host": 36,
+                "queue_len": 64,
+                "queue_max": 64
+              }
+            },
+            {
+              "test": "test_05_n7_positive_control_blocking_queue_stalls",
+              "status": "pass",
+              "at": "2026-11-23T11:04:44+00:00",
+              "detail": {
+                "tap_reply_s": 3.015,
+                "stalled": true
+              }
+            }
+          ]
+        },
+        "P10a": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_07_owner_state_unchanged",
+              "status": "pass",
+              "at": "2026-11-23T11:04:54+00:00",
+              "detail": {
+                "owner_adb_before": "ADB5037=none",
+                "owner_adb_after": "ADB5037=none",
+                "tracked": 38,
+                "changed": []
+              }
+            },
+            {
+              "test": "test_studio_code_never_names_owner_state",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": {
+                "roots": [
+                  "core",
+                  "wsl",
+                  "kit",
+                  "images",
+                  "apps"
+                ],
+                "forbidden": [
+                  "s9emu",
+                  "debug.keystore",
+                  "/.android",
+                  "~/android",
+                  "HOME/android",
+                  "5037"
+                ],
+                "hits": []
+              }
+            },
+            {
+              "test": "test_scan_positive_control_flags_fixture",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            }
+          ]
+        },
+        "P10c": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_02_studio_session_boots_visible",
+              "status": "pass",
+              "at": "2026-11-23T11:04:16+00:00",
+              "detail": {
+                "boot_s": 38.0,
+                "booted": {
+                  "ch": "e",
+                  "kind": "booted",
+                  "avd": "aas-phone",
+                  "ms": 36938,
+                  "size": [
+                    1080,
+                    2340
+                  ]
+                },
+                "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +12+54",
+                "tap_check_at": [
+                  531,
+                  1207
+                ],
+                "last_down_xy": [
+                  531.0,
+                  1206.9
+                ],
+                "tap_landed": true
+              }
+            },
+            {
+              "test": "test_06_shutdown_leaves_nothing",
+              "status": "pass",
+              "at": "2026-11-23T11:04:54+00:00",
+              "detail": {
+                "exit_code": 0,
+                "new_way_adb": [
+                  "ADB 1777 pid:[4026532771]"
+                ],
+                "injected_old_way": [
+                  1814
+                ],
+                "control_flagged": [
+                  "LEAK adb5641 1814 adb -L tcp:5641 fork-server server --reply-fd 4",
+                  "LEAK netns 1814 adb -L tcp:5641 fork-server server --reply-fd 4 ",
+                  "LEAK home 1814 adb -L tcp:5641 fork-server server --reply-fd 4 "
+                ],
+                "control_kinds": [
+                  "adb5641",
+                  "home",
+                  "netns"
+                ],
+                "leftover_after_cleanup": []
+              }
+            },
+            {
+              "test": "test_07_owner_state_unchanged",
+              "status": "pass",
+              "at": "2026-11-23T11:04:54+00:00",
+              "detail": {
+                "owner_adb_before": "ADB5037=none",
+                "owner_adb_after": "ADB5037=none",
+                "tracked": 38,
+                "changed": []
+              }
+            },
+            {
+              "test": "test_08_checker_positive_control_detects_touch",
+              "status": "pass",
+              "at": "2026-11-23T11:04:55+00:00",
+              "detail": {
+                "detected": true
+              }
+            }
+          ]
+        },
+        "P9a": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_02_studio_session_boots_visible",
+              "status": "pass",
+              "at": "2026-11-23T11:04:16+00:00",
+              "detail": {
+                "boot_s": 38.0,
+                "booted": {
+                  "ch": "e",
+                  "kind": "booted",
+                  "avd": "aas-phone",
+                  "ms": 36938,
+                  "size": [
+                    1080,
+                    2340
+                  ]
+                },
+                "window": "0x800005 \"Android Emulator - aas-phone:5600\": ()  531x1151+38+59  +12+54",
+                "tap_check_at": [
+                  531,
+                  1207
+                ],
+                "last_down_xy": [
+                  531.0,
+                  1206.9
+                ],
+                "tap_landed": true
+              }
+            },
+            {
+              "test": "test_03_p9a_guest_cannot_reach_host",
+              "status": "pass",
+              "at": "2026-11-23T11:04:22+00:00",
+              "detail": {
+                "net_up_after_s": 5.3,
+                "guest_net": "HOSTNS=pid:[4026532771] SELFNS=pid:[4026532460] INNS=pid:[4026532771] 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000 inet 127.0.0.1/8 scope host lo valid_lft forever preferred_lft forever 15: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fa",
+                "ports": [
+                  53,
+                  1080,
+                  5037,
+                  5600,
+                  5601,
+                  5641,
+                  8123,
+                  8554,
+                  9001,
+                  11434,
+                  25442
+                ],
+                "reached": [],
+                "sample": {
+                  "53": "P 53 rc=1 out=nc: connect: Connection refused",
+                  "1080": "P 1080 rc=1 out=nc: connect: Connection refused",
+                  "5037": "P 5037 rc=1 out=nc: connect: Connection refused",
+                  "5600": "P 5600 rc=1 out=nc: connect: Connection refused",
+                  "5601": "P 5601 rc=1 out=nc: connect: Connection refused",
+                  "5641": "P 5641 rc=1 out=nc: connect: Connection refused",
+                  "8123": "P 8123 rc=1 out=nc: connect: Connection refused",
+                  "8554": "P 8554 rc=1 out=nc: connect: Connection refused",
+                  "9001": "P 9001 rc=1 out=nc: connect: Connection refused",
+                  "11434": "P 11434 rc=1 out=nc: connect: Connection refused",
+                  "25442": "P 25442 rc=1 out=nc: connect: Connection refused"
+                }
+              }
+            },
+            {
+              "test": "test_09_p9a_positive_control_default_slirp_reaches_canary",
+              "status": "pass",
+              "at": "2026-11-23T11:05:25+00:00",
+              "detail": {
+                "canary_port": 25442,
+                "line": "P 25442 rc=0 out=HTTP/1.0 200 OKServer: SimpleHTTP/0.6 Python/3.12.3Date: Mon, 23 Nov 2026 11:05:23 GMTContent-type: text/html; cha"
+              }
+            }
+          ]
+        },
+        "PM3a": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_single_wsl_call_site_in_apps",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_scanner_positive_control_flags_second_site",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_argv_snapshot[preflight]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_argv_snapshot[serve-phone]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_argv_snapshot[serve-tablet]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_wrapper_refuses_extra_tokens_no_spawn[-u_root]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_wrapper_refuses_extra_tokens_no_spawn[--user_root]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_wrapper_refuses_extra_tokens_no_spawn[--exec]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_wrapper_refuses_extra_tokens_no_spawn[--cd_/]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_wrapper_refuses_extra_tokens_no_spawn[extra]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[serve-root]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[serve]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[shell]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[serve-phone ]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[preflight;id]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_unknown_verb_refused[serve-s9emu]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_other_distro_refused[Ubuntu]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_other_distro_refused[Ubuntu-S9AI-D2]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_other_distro_refused[docker-desktop]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_other_distro_refused[ubuntu-s9ai-d]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[phone extra-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[-u-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[--exec-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[root-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:30+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[s9emu-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:30+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_bad_args[-64]",
+              "status": "pass",
+              "at": "2026-11-23T11:05:30+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_wrapper_refuses_root",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_ps1_wsl_call_sites_only_owner_setup",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_backend_and_tools_never_reference_wsl_or_install_ps1",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_backend_scan_positive_control",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            }
+          ]
+        },
+        "PM3b": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_manifest_matches_sources",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_tampered_script_refused_no_spawn",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_matching_hash_spawns",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            }
+          ]
+        },
+        "PM3c": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_tokens_match_safe_charset",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_distro_shell_echoes_tokens_unchanged",
+              "status": "pass",
+              "at": "2026-11-23T11:05:29+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_protocol_rejects_bad_requests",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            },
+            {
+              "test": "test_protocol_rejects_bad_device_lines",
+              "status": "pass",
+              "at": "2026-11-23T11:05:31+00:00",
+              "detail": null
+            }
+          ]
+        },
+        "PM3d": {
+          "status": "pass",
+          "tests": [
+            {
+              "test": "test_06_shutdown_leaves_nothing",
+              "status": "pass",
+              "at": "2026-11-23T11:04:54+00:00",
+              "detail": {
+                "exit_code": 0,
+                "new_way_adb": [
+                  "ADB 1777 pid:[4026532771]"
+                ],
+                "injected_old_way": [
+                  1814
+                ],
+                "control_flagged": [
+                  "LEAK adb5641 1814 adb -L tcp:5641 fork-server server --reply-fd 4",
+                  "LEAK netns 1814 adb -L tcp:5641 fork-server server --reply-fd 4 ",
+                  "LEAK home 1814 adb -L tcp:5641 fork-server server --reply-fd 4 "
+                ],
+                "control_kinds": [
+                  "adb5641",
+                  "home",
+                  "netns"
+                ],
+                "leftover_after_cleanup": []
+              }
+            },
+            {
+              "test": "test_kill_wsl_exe_mid_session_leaves_nothing",
+              "status": "pass",
+              "at": "2026-11-23T11:06:14+00:00",
+              "detail": {
+                "gone_after_s": 2.2,
+                "leftover": [],
+                "control_sleep_survived": true
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "probes": {
     "N4": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_bash_env_canary_does_not_run_through_launcher",
           "status": "pass",
-          "at": "2026-11-23T01:25:14+00:00",
+          "at": "2026-11-23T11:05:26+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_positive_control_canary_runs_without_scrub",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:27+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "N7": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
           "status": "pass",
-          "at": "2026-11-23T01:24:04+00:00",
+          "at": "2026-11-23T11:04:16+00:00",
           "detail": {
-            "boot_s": 44.4,
+            "boot_s": 38.0,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 41484,
+              "ms": 36938,
               "size": [
                 1080,
                 2340
@@ -916,29 +1687,28 @@
               531,
               1207
             ],
-            "recent_motion": [
-              "MotionEvent(deviceId=4, eventTime=42468612000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi",
-              "MotionEvent(deviceId=4, eventTime=42469446000, source=TOUCHSCREEN | STYLUS, displayId=0, action=DOWN, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPreci",
-              "MotionEvent(deviceId=4, eventTime=42469825000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi"
+            "last_down_xy": [
+              531.0,
+              1206.9
             ],
-            "tap_landed": false
+            "tap_landed": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_04_n7_tap_fast_while_video_consumer_stalled",
           "status": "pass",
-          "at": "2026-11-23T01:24:25+00:00",
+          "at": "2026-11-23T11:04:33+00:00",
           "detail": {
             "tap_replies": 9,
-            "max_tap_reply_s": 0.0,
+            "max_tap_reply_s": 0.016,
             "tap_reply_s": [
               0.0,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.0,
+              0.016,
               0.0,
               0.0,
               0.0
@@ -954,53 +1724,53 @@
               0,
               0
             ],
-            "max_swipe150ms_reply_s": 0.172,
-            "video_chunks_received": 152,
-            "video_dropped_host": 88,
+            "max_swipe150ms_reply_s": 0.157,
+            "video_chunks_received": 100,
+            "video_dropped_host": 36,
             "queue_len": 64,
             "queue_max": 64
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_05_n7_positive_control_blocking_queue_stalls",
           "status": "pass",
-          "at": "2026-11-23T01:24:36+00:00",
+          "at": "2026-11-23T11:04:44+00:00",
           "detail": {
             "tap_reply_s": 3.015,
             "stalled": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "P10a": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_07_owner_state_unchanged",
           "status": "pass",
-          "at": "2026-11-23T01:24:46+00:00",
+          "at": "2026-11-23T11:04:54+00:00",
           "detail": {
             "owner_adb_before": "ADB5037=none",
             "owner_adb_after": "ADB5037=none",
             "tracked": 38,
             "changed": []
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_scan_positive_control_flags_fixture",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_studio_code_never_names_owner_state",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": {
             "roots": [
               "core",
@@ -1019,25 +1789,25 @@
             ],
             "hits": []
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "P10c": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
           "status": "pass",
-          "at": "2026-11-23T01:24:04+00:00",
+          "at": "2026-11-23T11:04:16+00:00",
           "detail": {
-            "boot_s": 44.4,
+            "boot_s": 38.0,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 41484,
+              "ms": 36938,
               "size": [
                 1080,
                 2340
@@ -1048,31 +1818,30 @@
               531,
               1207
             ],
-            "recent_motion": [
-              "MotionEvent(deviceId=4, eventTime=42468612000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi",
-              "MotionEvent(deviceId=4, eventTime=42469446000, source=TOUCHSCREEN | STYLUS, displayId=0, action=DOWN, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPreci",
-              "MotionEvent(deviceId=4, eventTime=42469825000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi"
+            "last_down_xy": [
+              531.0,
+              1206.9
             ],
-            "tap_landed": false
+            "tap_landed": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_06_shutdown_leaves_nothing",
           "status": "pass",
-          "at": "2026-11-23T01:24:46+00:00",
+          "at": "2026-11-23T11:04:54+00:00",
           "detail": {
             "exit_code": 0,
             "new_way_adb": [
-              "ADB 1489 pid:[4026532237]"
+              "ADB 1777 pid:[4026532771]"
             ],
             "injected_old_way": [
-              1525
+              1814
             ],
             "control_flagged": [
-              "LEAK adb5641 1525 adb -L tcp:5641 fork-server server --reply-fd 4",
-              "LEAK netns 1525 adb -L tcp:5641 fork-server server --reply-fd 4 ",
-              "LEAK home 1525 adb -L tcp:5641 fork-server server --reply-fd 4 "
+              "LEAK adb5641 1814 adb -L tcp:5641 fork-server server --reply-fd 4",
+              "LEAK netns 1814 adb -L tcp:5641 fork-server server --reply-fd 4 ",
+              "LEAK home 1814 adb -L tcp:5641 fork-server server --reply-fd 4 "
             ],
             "control_kinds": [
               "adb5641",
@@ -1081,46 +1850,46 @@
             ],
             "leftover_after_cleanup": []
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_07_owner_state_unchanged",
           "status": "pass",
-          "at": "2026-11-23T01:24:46+00:00",
+          "at": "2026-11-23T11:04:54+00:00",
           "detail": {
             "owner_adb_before": "ADB5037=none",
             "owner_adb_after": "ADB5037=none",
             "tracked": 38,
             "changed": []
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_08_checker_positive_control_detects_touch",
           "status": "pass",
-          "at": "2026-11-23T01:24:47+00:00",
+          "at": "2026-11-23T11:04:55+00:00",
           "detail": {
             "detected": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "P9a": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_02_studio_session_boots_visible",
           "status": "pass",
-          "at": "2026-11-23T01:24:04+00:00",
+          "at": "2026-11-23T11:04:16+00:00",
           "detail": {
-            "boot_s": 44.4,
+            "boot_s": 38.0,
             "booted": {
               "ch": "e",
               "kind": "booted",
               "avd": "aas-phone",
-              "ms": 41484,
+              "ms": 36938,
               "size": [
                 1080,
                 2340
@@ -1131,22 +1900,21 @@
               531,
               1207
             ],
-            "recent_motion": [
-              "MotionEvent(deviceId=4, eventTime=42468612000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi",
-              "MotionEvent(deviceId=4, eventTime=42469446000, source=TOUCHSCREEN | STYLUS, displayId=0, action=DOWN, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPreci",
-              "MotionEvent(deviceId=4, eventTime=42469825000, source=TOUCHSCREEN | STYLUS, displayId=0, action=UP, actionButton=0x00000000, flags=0x00000000, metaState=0x00000000, buttonState=0x00000000, classification=NONE, edgeFlags=0x00000000, xPrecisi"
+            "last_down_xy": [
+              531.0,
+              1206.9
             ],
-            "tap_landed": false
+            "tap_landed": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_03_p9a_guest_cannot_reach_host",
           "status": "pass",
-          "at": "2026-11-23T01:24:15+00:00",
+          "at": "2026-11-23T11:04:22+00:00",
           "detail": {
-            "net_up_after_s": 10.4,
-            "guest_net": "HOSTNS=pid:[4026532237] SELFNS=pid:[4026532229] INNS=pid:[4026532237] 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000 inet 127.0.0.1/8 scope host lo valid_lft forever preferred_lft forever 15: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fa",
+            "net_up_after_s": 5.3,
+            "guest_net": "HOSTNS=pid:[4026532771] SELFNS=pid:[4026532460] INNS=pid:[4026532771] 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000 inet 127.0.0.1/8 scope host lo valid_lft forever preferred_lft forever 15: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fa",
             "ports": [
               53,
               1080,
@@ -1158,7 +1926,7 @@
               8554,
               9001,
               11434,
-              26967
+              25442
             ],
             "reached": [],
             "sample": {
@@ -1172,327 +1940,327 @@
               "8554": "P 8554 rc=1 out=nc: connect: Connection refused",
               "9001": "P 9001 rc=1 out=nc: connect: Connection refused",
               "11434": "P 11434 rc=1 out=nc: connect: Connection refused",
-              "26967": "P 26967 rc=1 out=nc: connect: Connection refused"
+              "25442": "P 25442 rc=1 out=nc: connect: Connection refused"
             }
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_09_p9a_positive_control_default_slirp_reaches_canary",
           "status": "pass",
-          "at": "2026-11-23T01:25:13+00:00",
+          "at": "2026-11-23T11:05:25+00:00",
           "detail": {
-            "canary_port": 26967,
-            "line": "P 26967 rc=0 out=HTTP/1.0 200 OKServer: SimpleHTTP/0.6 Python/3.12.3Date: Mon, 23 Nov 2026 01:25:13 GMTContent-type: text/html; cha"
+            "canary_port": 25442,
+            "line": "P 25442 rc=0 out=HTTP/1.0 200 OKServer: SimpleHTTP/0.6 Python/3.12.3Date: Mon, 23 Nov 2026 11:05:23 GMTContent-type: text/html; cha"
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "PM3a": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_argv_snapshot[preflight]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_argv_snapshot[serve-phone]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_argv_snapshot[serve-tablet]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_backend_and_tools_never_reference_wsl_or_install_ps1",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_backend_scan_positive_control",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[--exec-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:30+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[-u-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[phone extra-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[root-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:30+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_bad_args[s9emu-64]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:30+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_distro_wrapper_refuses_root",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_other_distro_refused[Ubuntu-S9AI-D2]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_other_distro_refused[Ubuntu]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_other_distro_refused[docker-desktop]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_other_distro_refused[ubuntu-s9ai-d]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_ps1_wsl_call_sites_only_owner_setup",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_scanner_positive_control_flags_second_site",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_single_wsl_call_site_in_apps",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[preflight;id]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[serve-phone ]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[serve-root]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[serve-s9emu]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[serve]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_unknown_verb_refused[shell]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--cd_/]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--exec]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[--user_root]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[-u_root]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_wrapper_refuses_extra_tokens_no_spawn[extra]",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "PM3b": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_manifest_matches_sources",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_matching_hash_spawns",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_tampered_script_refused_no_spawn",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "PM3c": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_distro_shell_echoes_tokens_unchanged",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_protocol_rejects_bad_device_lines",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_protocol_rejects_bad_requests",
           "status": "pass",
-          "at": "2026-11-23T01:25:16+00:00",
+          "at": "2026-11-23T11:05:31+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_tokens_match_safe_charset",
           "status": "pass",
-          "at": "2026-11-23T01:25:15+00:00",
+          "at": "2026-11-23T11:05:29+00:00",
           "detail": null,
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     },
     "PM3d": {
       "status": "pass",
-      "full_pass_run": "2d4697b7504b",
+      "full_pass_run": "d4c76e32c806",
       "tests": [
         {
           "test": "test_06_shutdown_leaves_nothing",
           "status": "pass",
-          "at": "2026-11-23T01:24:46+00:00",
+          "at": "2026-11-23T11:04:54+00:00",
           "detail": {
             "exit_code": 0,
             "new_way_adb": [
-              "ADB 1489 pid:[4026532237]"
+              "ADB 1777 pid:[4026532771]"
             ],
             "injected_old_way": [
-              1525
+              1814
             ],
             "control_flagged": [
-              "LEAK adb5641 1525 adb -L tcp:5641 fork-server server --reply-fd 4",
-              "LEAK netns 1525 adb -L tcp:5641 fork-server server --reply-fd 4 ",
-              "LEAK home 1525 adb -L tcp:5641 fork-server server --reply-fd 4 "
+              "LEAK adb5641 1814 adb -L tcp:5641 fork-server server --reply-fd 4",
+              "LEAK netns 1814 adb -L tcp:5641 fork-server server --reply-fd 4 ",
+              "LEAK home 1814 adb -L tcp:5641 fork-server server --reply-fd 4 "
             ],
             "control_kinds": [
               "adb5641",
@@ -1501,18 +2269,18 @@
             ],
             "leftover_after_cleanup": []
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         },
         {
           "test": "test_kill_wsl_exe_mid_session_leaves_nothing",
           "status": "pass",
-          "at": "2026-11-23T01:25:55+00:00",
+          "at": "2026-11-23T11:06:14+00:00",
           "detail": {
             "gone_after_s": 2.2,
             "leftover": [],
             "control_sleep_survived": true
           },
-          "run_id": "2d4697b7504b"
+          "run_id": "d4c76e32c806"
         }
       ]
     }
