@@ -50,7 +50,7 @@ from studio_core.services import Studio  # noqa: E402
 from .security import MIN_TOKEN_CHARS, BoundaryMiddleware  # noqa: E402
 from .headers import install as install_api_hygiene  # noqa: E402
 from . import chat_routes  # noqa: E402
-from . import export_routes  # noqa: E402
+from . import brand_routes, export_routes  # noqa: E402
 from . import qa_routes  # noqa: E402
 from . import inspector_routes  # noqa: E402
 
@@ -188,6 +188,7 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     app.state.studio = studio
     app.state.runner = runner
     app.state.video_hub = video_hub
+    brand_routes.register(app, studio, OWNER)  # W5: brand kit of the Android app
     export_routes.register(app, studio, OWNER, runner)  # owner 2026-11-23: one-click APK build + export folder
     qa_routes.register(app, studio, runner)  # W2: quality gates + Auto-polish (qa_routes.py)
     inspector_routes.register(app, studio, OWNER, runner)  # W4: click-to-edit inspector (owner only)

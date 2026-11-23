@@ -4,8 +4,8 @@ Safety properties:
   * OFF by default (PX1): every tool call is refused with ``external_mcp_disabled`` until the OWNER enables
     external MCP (setting stored in the studio DB, changed only through the owner-only REST route). The setting
     is read from the database on every call, so switching it off takes effect immediately.
-  * Small catalogue (18 tools, DESIGN.md "As built"): project/file/activity reads, code writes/deletes, plan_submit,
-    app_build, preview_capture, qa_run (W2 quality gates) and device_* (images + console returned as untrusted data), app_export (owner
+  * Small catalogue (19 tools, DESIGN.md "As built"): project/file/activity reads, code writes/deletes, plan_submit,
+    app_build, brand_kit (W5), preview_capture, qa_run (W2 quality gates) and device_* (images + console returned as untrusted data), app_export (owner
     approval bound to the artifact sha256), flow_test_write / flow_test_run (W3: the spec is data parsed into a closed
     Playwright subset and run by the studio's own Playwright against the preview origin only). No shell/exec/approve/decide/deploy/secret/config tool, no free URL,
     no host path.
@@ -39,7 +39,7 @@ from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
 SCHEMA_VERSION = "aas.mcp/1"
-WRITE_TOOLS = frozenset({"code_write_file", "code_delete_file", "plan_submit", "app_build", "device_start",
+WRITE_TOOLS = frozenset({"code_write_file", "code_delete_file", "plan_submit", "app_build", "brand_kit", "device_start",
                          "device_install", "device_tap", "device_screenshot", "app_export", "flow_test_write"})
 # P5f: these need an approved plan of the current run (runner) / of this session (external MCP) while the gate is ON
 PLAN_GATED = frozenset({"code_write_file", "code_delete_file", "app_build", "flow_test_write"})
@@ -122,6 +122,14 @@ def ok(data: Any, tool: str) -> CallToolResult:
                           TextContent(type="text", text=sight.untrusted(data.kind, data.lines))]
     content += [ImageContent(type="image", data=i["data"], mime_type=i["mimeType"]) for i in data.images]
     return CallToolResult(content=content, structured_content=body, is_error=False)
+
+
+def _agent_image_bytes(png: bytes) -> dict[str, Any] | None:
+    from aas_build import sight
+    try:
+        return sight.agent_image(png)
+    except StudioError:
+        return None
 
 
 def _agent_image(path: Path | None) -> dict[str, Any] | None:
@@ -325,6 +333,48 @@ def app_export(projectId: ProjectId, target: Literal["web", "android", "desktop"
     if status == "pending":
         out["next"] = "the owner has not decided yet: call app_export again later (the same request is reused)"
     return out
+
+
+@guarded("brand_kit")
+def brand_kit(projectId: ProjectId,  # noqa: N803
+              glyph: Annotated[str, Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=30)] | None = None,
+              background: Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")] | None = None,
+              foreground: Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")] | None = None,
+              caption: Annotated[str, Field(max_length=60)] | None = None,
+              versionMajor: Annotated[int, Field(ge=0, le=999)] | None = None,  # noqa: N803
+              versionMinor: Annotated[int, Field(ge=0, le=999)] | None = None,  # noqa: N803
+              storeScreenshots: bool = False) -> Any:  # noqa: N803
+    """Brand kit of the Android app: launcher icon (adaptive, monochrome, round), splash, app label, version. Pass any of
+    glyph (a bundled Lucide icon name), background/foreground (#RRGGBB, else taken from the project's design tokens),
+    caption (store screenshots) and versionMajor/versionMinor to save them; the next android build uses them (versionCode
+    goes up by one per successful build). Returns the saved kit, the available glyphs and a preview image of the icon set.
+    storeScreenshots=true also captures the built web app on a phone and a tablet frame and writes framed images that
+    are exported next to the APK. Offline; nothing leaves this machine."""
+    from aas_build import brand, store_shots
+    st = studio()
+    store = brand.BrandStore(st.settings.data_dir)
+    proj = st.get_project(actor(), projectId, with_components=False)
+    changed = any(v is not None for v in (glyph, background, foreground, caption, versionMajor, versionMinor))
+    saved = (store.dir(projectId) / "brand.json").is_file()
+    cfg = build_service._brand_config(st, projectId, store)  # noqa: SLF001 - saved kit, else tokens, else defaults
+    if changed:
+        cfg = brand.BrandConfig(
+            glyph=glyph if glyph is not None else cfg.glyph,
+            background=background if background is not None else cfg.background,
+            foreground=foreground if foreground is not None else cfg.foreground,
+            caption=caption if caption is not None else cfg.caption,
+            version_major=versionMajor if versionMajor is not None else cfg.version_major,
+            version_minor=versionMinor if versionMinor is not None else cfg.version_minor)
+        store.save_config(projectId, cfg)  # validates glyph / colours / contrast
+        saved = True
+    res: dict[str, Any] = {"saved": saved, "kit": cfg.to_json(), "colours": dict(zip(("background", "foreground"), cfg.colours(), strict=True)),
+                           "glyphs": brand.glyph_names(), "appLabel": brand.app_label(str(proj.get("name", ""))),
+                           "nextVersionCode": store.next_version_code(projectId),
+                           "nextVersionName": brand.semver(cfg, store.next_version_code(projectId))}
+    if storeScreenshots:
+        res["storeScreenshots"] = store_shots.generate(st, projectId)
+    img = _agent_image_bytes(brand.preview_sheet(cfg, str(proj.get("name", ""))))
+    return Seen(res, "brand kit", [img] if img else [], [f"glyph {cfg.glyph}", f"label {res['appLabel']}"])
 
 
 @guarded("plan_submit")

@@ -392,9 +392,19 @@ def write(studio: Any, actor: Actor, art: Artifact, approval_id: str, dest_root:
         with os.fdopen(fd, "wb") as f:
             f.write(art.data)
         os.replace(tmp, target)
+        shots: list[str] = []
+        if art.target == "android":  # W5: framed store screenshots (if the owner/agent made them) travel with the APK
+            try:
+                from . import store_shots
+                shots = store_shots.copy_for_export(studio.settings, art.project_id, folder)
+            except (OSError, ValueError):
+                shots = []
         ctx.verification = "verified"
-        return {"status": "exported", "target": art.target, "path": str(target), "sha256": art.sha256,
-                "bytes": len(art.data), "revision": art.revision, "approvalId": approval_id}
+        res = {"status": "exported", "target": art.target, "path": str(target), "sha256": art.sha256,
+               "bytes": len(art.data), "revision": art.revision, "approvalId": approval_id}
+        if shots:
+            res["storeScreenshots"] = shots
+        return res
     return studio.operation(actor, OPERATION, OPERATION, art.params, _do, project_id=art.project_id,
                             approval_id=approval_id)
 

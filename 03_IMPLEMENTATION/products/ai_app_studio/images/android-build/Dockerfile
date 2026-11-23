@@ -83,6 +83,7 @@ RUN set -eu; cp -R /opt/aas/android-template /tmp/r && mkdir -p /tmp/home && cd 
 FROM base
 COPY --from=resolve /opt/gradle-ro /opt/gradle-ro
 COPY --from=aas aas-build-android /usr/local/bin/aas-build-android
+COPY --from=aas shell_patch.py /opt/aas/shell_patch.py
 RUN sed -i 's/\r$//' /usr/local/bin/aas-build-android && chmod 0755 /usr/local/bin/aas-build-android \
  && find /opt/aas/android-template -type f \( -name '*.gradle' -o -name '*.properties' \) -exec sed -i 's/\r$//' {} + \
  && chmod -R a+rX,go-w /opt/aas /opt/gradle-ro \

@@ -20,7 +20,7 @@ TOOL_PREFIX = f"mcp__{SERVER}__"
 CATALOGUE_TOOLS: tuple[str, ...] = (
     "project_list", "project_inspect", "code_list_files", "code_read_file", "code_write_file", "code_delete_file",
     "activity_list",
-    "plan_submit", "app_build", "preview_capture", "device_start", "device_install", "device_tap",
+    "plan_submit", "app_build", "brand_kit", "preview_capture", "device_start", "device_install", "device_tap",
     "device_screenshot", "app_export", "qa_run", "flow_test_write", "flow_test_run",
 )
 EXCERPT_CAP = 300
