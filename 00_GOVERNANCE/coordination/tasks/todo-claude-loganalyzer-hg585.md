@@ -1891,3 +1891,6 @@
 - Real-machine smoke: 78 findings, 5 gaps; DEF-DETECTION grouped by file (one finding for the test DLL, 9 threats/35 locations); no PSv2 false positive.
 - The PC is NOT Insider: build 26300 = Windows 11 26H2 (ge_release, no WindowsSelfHost BranchName). Added 26300 to windows_lifecycle.json (Home/Pro 2028-10-10, Ent/Edu 2029-10-09; sources: Microsoft release health + press); tests use 26900 as the unknown build.
 - Open idea: command-line DEF-DETECTION findings for the same threat are still split by time window (PsAttack.R in 5 findings) - group by threat name.
+- 2026-11-23 Team E (cmdline DEF-DETECTION grouped by threat set, 4ac47b3ac) merged; Dfir 4167 passed; real PC: 74 findings, 4 gaps, DEF-DETECTION 14 -> 9.
+  ALL EDITIONS REINSTALLED from 4ac47b3ac via E:\LA-builds\20261123 (robocopy, license.lic excluded and kept): Continent, Arhipelag, main Insula, Insula (R1);
+  exe hashes identical to the publish output. Continent relaunched (sign-in screen = licence ok). Team worktrees E:\la-team\a..e removed.
