@@ -461,13 +461,9 @@ worktree; X7 the kill switches. **Bash ALLOWLIST**: the command must be unchange
 ASCII, <= 2000 chars, ONE simple command under Git Bash quoting (no unquoted `; & | < > ( ) { } $ backtick ! @`, no `$`
 or backtick even in double quotes, no newline, comment, line continuation, env assignment, program path or `~`), and one of:
 `pytest`/`python -m pytest` (M12 review: never `--pastebin`, `-p <plugin>` (only `-p no:<name>`), or `-o`/
-`--override-ini` touching addopts or plugins, abbreviations included; `o` or `p` bundled after other short flags such as
-`-qo addopts=...` or `-xp evil` is denied, the scan stops at value options `-k -m -r -W`); `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
+`--override-ini` touching addopts or plugins, abbreviations included; `o` or `p` bundled after other short flags such as `-qo addopts=...` or `-xp evil` is denied, the scan stops at value options `-k -m -r -W`); `python|python3|py [-3] [-I -B -u -E -s -S -O -q, -X utf8|dev] <script inside the worktree>`;
 `node [--test] <script inside the worktree>`; `dotnet build|test --no-restore` (`dotnet restore` and an implicit
-restore are denied; options only from the allowlist `--no-restore --no-build --nologo -c|--configuration <name>
--f|--framework <tfm> -v|--verbosity <level> --filter <expr> --logger console|trx`, so every MSBuild switch `-p:`/`/p:`/
-`-property:`, `-t:`/`-target:`, `-restore`, `--interactive`, `--source`, `--output` and `@file` is denied; at most one
-project/solution argument, resolved from cwd and refused outside the worktree, junctions included); `npm|pnpm|yarn test | run test|build|lint [-- args]`;
+restore are denied; options only from the allowlist `--no-restore --no-build --nologo -c|--configuration <name> -f|--framework <tfm> -v|--verbosity <level> --filter <expr> --logger console|trx`, so every MSBuild switch `-p:`/`/p:`/ `-property:`, `-t:`/`-target:`, `-restore`, `--interactive`, `--source`, `--output` and `@file` is denied; at most one project/solution argument, resolved from cwd and refused outside the worktree, junctions included); `npm|pnpm|yarn test | run test|build|lint [-- args]`;
 `git [--no-pager] [-C <dir in the worktree>] status|diff|log|show|blame|rev-parse|ls-files|add|commit` (never `--amend`,
 `--output`, `--ext-diff`, `--textconv`, `--exec`, `--upload-pack`, `--receive-pack`, `--config[-env]`, `--force*`,
 `--hard`, `--delete`, `--mirror`, `-c`, `--git-dir`, nor any abbreviation of them of 2+ characters such as `--am`), `git switch -c|checkout -b <new branch>`, `git stash list`,
@@ -479,19 +475,12 @@ ids, `-o`) must resolve inside the worktree, and for pytest/python so must every
 at all), lexically too, not in `.git` (also `.GIT`, `.git.`), not through a symlink/junction/reparse point, not a hard
 link, not in a nested repository, not in `~/.claude`, no UNC/device/drive-relative path, no `:` stream, and never
 agent or repository configuration (case-insensitive, after realpath, at any depth): `.claude/**`, `.agents/**`,
-`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.gitattributes`, `.gitmodules`, `.gitconfig`,
-`.pre-commit-config.yaml`, `.gemini/**`, `.codex/**`, `.vscode/**`, `.husky/**`, `.idea/**`, `.devcontainer/**`, and
-`<root>/.github/workflows/**` (`.editorconfig` stays writable). **Install chain (finding 1)**: `install.py` refuses (exit 2, nothing changed) unless
+`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.gitattributes`, `.gitmodules`, `.gitconfig`, `.pre-commit-config.yaml`, `.gemini/**`, `.codex/**`, `.vscode/**`, `.husky/**`, `.idea/**`, `.devcontainer/**`, and `<root>/.github/workflows/**` (`.editorconfig` stays writable). **Install chain (finding 1)**: `install.py` refuses (exit 2, nothing changed) unless
 every file it copies matches the sha256 in the release pin (`--release-pin`, else the source tree's
-`release_pin.json`; no pin = refused). F3 residual: the source tree's own `release_pin.json` is unsigned and trusted;
-the pin protects against an Edit/Write tamper of the release files, not against finding-1 code (a script or test the
-executor wrote and ran) that rewrites both the files and the pin; install from a ref the Opus reviewer checked
-(`--source-ref <sha> --release-pin <pin>` from that commit). Residuals: the
+`release_pin.json`; no pin = refused). F3 residual: the source tree's own `release_pin.json` is unsigned and trusted; the pin protects against an Edit/Write tamper of the release files, not against finding-1 code (a script or test the executor wrote and ran) that rewrites both the files and the pin; install from a ref the Opus reviewer checked (`--source-ref <sha> --release-pin <pin>` from that commit). Residuals: the
 CONTENTS of an allowed worktree script, test/conftest file, package.json script, project file, or a tracked hooks dir that
 the repo's own `core.hooksPath` already points to are not inspected (the executor may write them, then run them through
-an allowed command); F6: reads outside the worktree stay allowed and, under the accepted finding 1, code the executor
-writes and runs can reach the network, so the exfiltration risk is the same as for vault-worker (the guard blocks network
-CLIs, not the network itself); a same-user process outside Claude Code is out of scope. Finding-1 residual (accepted with the flag on): an executor can run code it writes inside the
+an allowed command); F6: reads outside the worktree stay allowed and, under the accepted finding 1, code the executor writes and runs can reach the network, so the exfiltration risk is the same as for vault-worker (the guard blocks network CLIs, not the network itself); a same-user process outside Claude Code is out of scope. Finding-1 residual (accepted with the flag on): an executor can run code it writes inside the
 worktree (a test, conftest or script, then `pytest`/`python`), the same as vault-worker; the guard bounds where it writes
 and what it calls, not what that code does.
 
