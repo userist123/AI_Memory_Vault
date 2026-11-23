@@ -73,3 +73,24 @@ def test_f2_sanitised_title_is_accepted(client: TestClient) -> None:
     assert r.status_code == 201 and r.json()["id"].startswith("prj_")
     r = client.post("/api/v1/projects", headers=AUTH, json={"name": "App"})
     assert r.status_code == 201
+
+
+def test_unhandled_error_is_a_generic_500_with_the_security_headers(tmp_path: Path) -> None:
+    """An exception no handler maps returns a generic 500: no type, message or stack trace in the body, and the
+    O6 headers are present even though Starlette answers it outside the user middleware."""
+    app = backend.create_app(Settings(data_dir=tmp_path / "data"), TOKEN)
+
+    @app.get("/api/v1/_boom")
+    def boom() -> None:
+        raise RuntimeError(CANARY + " Traceback secret")
+
+    try:
+        with TestClient(app, base_url=BASE, raise_server_exceptions=False) as c:
+            r = c.get("/api/v1/_boom", headers=AUTH)
+    finally:
+        project_kind.unregister("app")
+    assert r.status_code == 500
+    _hardened(r)
+    assert r.json() == {"error": "internal", "message": "internal server error"}
+    for leak in (CANARY, "RuntimeError", "Traceback", "boom"):
+        assert leak not in r.text

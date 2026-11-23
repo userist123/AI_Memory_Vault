@@ -5,7 +5,8 @@ chunk is dropped first and the chunk after the hole is marked ``gap``, N7) -> ``
 ``VideoHub`` in the backend -> owner WebSocket.
 
 - The pipe (S9, B8) is a native Windows named pipe on a random name (``\\\\.\\pipe\\aas-video-<128-bit hex>``) made by
-  ``NativePipeListener``: protected DACL with one ACE for the current logon SID, PIPE_REJECT_REMOTE_CLIENTS,
+  ``NativePipeListener``: protected DACL with one ACE for the current logon SID (TokenUser SID when the token has
+  no logon SID), PIPE_REJECT_REMOTE_CLIENTS,
   FILE_FLAG_FIRST_PIPE_INSTANCE (no second server on the name), accept with a timeout; each connection is a
   ``multiprocessing.connection.PipeConnection``. Elsewhere a ``multiprocessing.connection`` socket in a fresh private
   temp dir. Per run there is a 256-bit key: both sides prove the key
@@ -106,36 +107,70 @@ if sys.platform == "win32":
     _ERROR_PIPE_BUSY = 231
     _WAIT_TIMEOUT = 0x102
 
-    def logon_sid() -> str:
-        """String SID of this process's logon session (S-1-5-5-X-Y): shared by the backend and its MCP child, not by
-        another account, a network logon or a service."""
+    _TOKEN_USER = 1  # TOKEN_USER { SID_AND_ATTRIBUTES User; }: the Sid pointer sits at offset 0
+    _ERROR_NOT_FOUND = 1168
+
+    class NoLogonSid(OSError):
+        """The process token carries no logon SID (TokenLogonSid fails with ERROR_NOT_FOUND or is empty)."""
+
+    def _token_info(cls: int) -> Any:
+        """Raw GetTokenInformation buffer for this process's token (monkeypatched by the fallback tests)."""
         tok = wintypes.HANDLE()
         if not _ADV.OpenProcessToken(_K32.GetCurrentProcess(), _TOKEN_QUERY, ctypes.byref(tok)):
             raise ctypes.WinError(ctypes.get_last_error())
         try:
             need = wintypes.DWORD(0)
-            _ADV.GetTokenInformation(tok, _TOKEN_LOGON_SID, None, 0, ctypes.byref(need))
+            _ADV.GetTokenInformation(tok, cls, None, 0, ctypes.byref(need))
             if need.value == 0:
                 raise ctypes.WinError(ctypes.get_last_error())
             buf = ctypes.create_string_buffer(need.value)
-            if not _ADV.GetTokenInformation(tok, _TOKEN_LOGON_SID, buf, need, ctypes.byref(need)):
+            if not _ADV.GetTokenInformation(tok, cls, buf, need, ctypes.byref(need)):
                 raise ctypes.WinError(ctypes.get_last_error())
-            if ctypes.c_uint32.from_buffer(buf).value < 1:
-                raise OSError("the process token has no logon SID")
-            # TOKEN_GROUPS { DWORD GroupCount; SID_AND_ATTRIBUTES Groups[]; }: Groups[0].Sid sits at pointer alignment
-            sid_ptr = ctypes.c_void_p.from_buffer(buf, ctypes.sizeof(ctypes.c_void_p)).value
-            out = wintypes.LPWSTR()
-            if not _ADV.ConvertSidToStringSidW(sid_ptr, ctypes.byref(out)):
-                raise ctypes.WinError(ctypes.get_last_error())
-            try:
-                sid = str(out.value or "")
-            finally:
-                _K32.LocalFree(out)
+            return buf
         finally:
             _K32.CloseHandle(tok)
+
+    def _sid_text(buf: Any, offset: int) -> str:
+        sid_ptr = ctypes.c_void_p.from_buffer(buf, offset).value
+        out = wintypes.LPWSTR()
+        if not sid_ptr or not _ADV.ConvertSidToStringSidW(sid_ptr, ctypes.byref(out)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            return str(out.value or "")
+        finally:
+            _K32.LocalFree(out)
+
+    def logon_sid() -> str:
+        """String SID of this process's logon session (S-1-5-5-X-Y): shared by the backend and its MCP child, not by
+        another account, a network logon or a service. Raises NoLogonSid when the token has none."""
+        try:
+            buf = _token_info(_TOKEN_LOGON_SID)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == _ERROR_NOT_FOUND:
+                raise NoLogonSid(_ERROR_NOT_FOUND, "the process token has no logon SID") from exc
+            raise
+        if ctypes.c_uint32.from_buffer(buf).value < 1:
+            raise NoLogonSid("the process token has no logon SID")
+        # TOKEN_GROUPS { DWORD GroupCount; SID_AND_ATTRIBUTES Groups[]; }: Groups[0].Sid sits at pointer alignment
+        sid = _sid_text(buf, ctypes.sizeof(ctypes.c_void_p))
         if not sid.startswith("S-1-5-5-"):
             raise OSError(f"unexpected logon SID {sid!r}")
         return sid
+
+    def user_sid() -> str:
+        """String SID of the account running this process (TokenUser)."""
+        sid = _sid_text(_token_info(_TOKEN_USER), 0)
+        if not sid.startswith("S-1-5-"):
+            raise OSError(f"unexpected user SID {sid!r}")
+        return sid
+
+    def pipe_sid() -> str:
+        """The one SID the pipe DACL grants: the logon SID, or the TokenUser SID when the token has no logon SID
+        (e.g. service logons on CI runners). Any other token error propagates; nothing falls back to a wider ACL."""
+        try:
+            return logon_sid()
+        except NoLogonSid:
+            return user_sid()
 
     class NativePipeListener:
         """Server end of the run's pipe. ``accept(timeout)`` returns a PipeConnection, or None on timeout / for a
@@ -146,7 +181,7 @@ if sys.platform == "win32":
             self._mode = _PIPE_TYPE_MESSAGE | _PIPE_READMODE_MESSAGE | (
                 _PIPE_REJECT_REMOTE_CLIENTS if reject_remote else 0)
             sd = ctypes.c_void_p()
-            text = sddl or f"D:P(A;;GA;;;{logon_sid()})"
+            text = sddl or f"D:P(A;;GA;;;{pipe_sid()})"
             if not _ADV.ConvertStringSecurityDescriptorToSecurityDescriptorW(text, 1, ctypes.byref(sd), None):
                 raise ctypes.WinError(ctypes.get_last_error())
             self._sd = sd

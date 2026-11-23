@@ -59,7 +59,9 @@ FILES: list[tuple[str, str, str]] = [
      "passes the id of the project it created), _git_model adds the project kind to the git snapshot, and "
      "get_external_mcp/set_external_mcp (owner-only, audited) store the PX1 flag in app_settings; F3: _git_roots() "
      "passes the kind's file_roots (default ('site',)) to gitrepo.commit_revision and diff_stat; O8: request_approval "
-     "refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records."),
+     "refuses (PolicyDenied) an agent identity that already created MAX_APPROVALS_PER_AGENT (50) approval records "
+     "(a runner:<run_id> label over the whole run; any other agent label, e.g. the external-MCP one, within a rolling "
+     "APPROVAL_WINDOW_HOURS (24 h) window so it cannot lock forever)."),
     ("core/studio_core/db.py", "core/studio_core/db.py",
      "AAS: Project.kind column (String(24), default/server_default 'app'; alembic 0003); the AAS-owned tables "
      "(activity_events, app_settings) live in aas_models.py, not here."),

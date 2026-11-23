@@ -129,3 +129,14 @@ Update 2026-11-23 (B1 + B2 live verification, local commits on claude/ai-app-stu
 - B1 real agent run PASS ($0.12, 8 turns); fixed F1 owner auto-memory in the runner context. Open: F2 (project name
   from prompt), F3 (app revisions not committed: git add ... site). Details: ai_app_studio/docs/slices/B1-real-run.md, B2-webview2.md.
 - NEXT = F2/F3, image rebuilds at C: >= 10 GB, final gate round 2.
+
+Update 2026-11-23 (release prep, local commit on claude/ai-app-studio, not pushed):
+- Pipe DACL TokenUser fallback, O8 cap scoped (run / rolling 24 h), generic 500 with security headers.
+- v1 = repo/runtime launch via scripts/run_studio.ps1; NSIS installer experimental, unsigned until installed-mode e2e.
+- Release remaining (in order):
+  (a) owner frees C: >= 10 GB or moves the Docker disk to D:;
+  (b) rebuild aas-web-build (tsc) + aas-android-build (Gradle 8.14.8), update DIGESTS.json, rerun the Docker probes;
+  (c) fresh live local gate with C: >= 8 GB (new receipt incl. PM1a/PM5a/P7c/P9b/P4a/PM2a, or record each missing one);
+  (d) full suite once at the release SHA;
+  (e) push + PR #413 + vault CI once;
+  (f) Romanian report to the owner.

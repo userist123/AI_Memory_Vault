@@ -7,8 +7,17 @@
   real server error shown), F3 (app revisions commit src/ + public/), audit O6 (API security headers), O7 (generic
   422), O8 (50 approvals per agent run); O9 Rust advisories accepted. Suite hermetic for free disk
   (tests/hermetic_disk.py, `-p tests.hermetic_disk`; gate tests set low/high values).
-- Remaining: image rebuilds (C: >= 10 GB), fresh live local gate, installed-mode e2e or a v1 = repo-mode decision,
-  first CI run (needs a push).
+- Release-prep fixes: named-pipe DACL falls back to the TokenUser SID when the token has no logon SID (CI runners);
+  O8 approval cap = whole run for runner:<run_id>, rolling 24 h window for other agent labels (external MCP);
+  generic 500 with the security headers for unhandled errors (apps/backend/headers.py).
+- **v1 launch mode (decision 2026-11-23, owner rule "decide safe, record"):** v1 is launched from the repo/runtime with `scripts/run_studio.ps1` (Tauri window + backend). The NSIS installer is **experimental, unsigned** until an installed-mode e2e passes.
+- Release remaining (in order):
+  (a) owner frees C: >= 10 GB or moves the Docker disk to D:;
+  (b) rebuild aas-web-build (tsc) + aas-android-build (Gradle 8.14.8), update DIGESTS.json, rerun the Docker probes;
+  (c) fresh live local gate with C: >= 8 GB (new receipt incl. PM1a/PM5a/P7c/P9b/P4a/PM2a, or record each missing one);
+  (d) full suite once at the release SHA;
+  (e) push + PR #413 + vault CI once;
+  (f) Romanian report to the owner.
 
 Task: AI App Studio — app builder for phone/tablet/desktop; the owner must SEE live on the Windows desktop
 what the AI is doing (see DESIGN_DRAFT.md, last section).

@@ -36,3 +36,44 @@ def test_decided_approvals_still_count(studio: Studio, monkeypatch: pytest.Monke
         studio.decide_approval(HUMAN, a["approvalId"], False)
     with pytest.raises(PolicyDenied):
         studio.request_approval(RUN_A, "plan.approve", {"n": 3})
+
+
+EXTERNAL = Actor("agent", "claude-code", "mcp")  # external MCP client: one fixed label across sessions
+
+
+def _age_all(studio: Studio, label: str, hours: float) -> None:
+    from datetime import timedelta
+
+    from sqlalchemy import update
+    from studio_core.db import Approval
+    from studio_core.ids import utcnow
+    with studio.audit_session() as s:
+        s.execute(update(Approval).where(Approval.requested_by == label)
+                  .values(created_at=utcnow() - timedelta(hours=hours)))
+
+
+def test_external_mcp_label_uses_a_rolling_24h_window(studio: Studio, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The external-MCP label is shared by every session: an all-time count would lock it forever."""
+    monkeypatch.setattr(services, "MAX_APPROVALS_PER_AGENT", 2)
+    for i in range(2):
+        studio.request_approval(EXTERNAL, "plan.approve", {"n": i})
+    with pytest.raises(PolicyDenied):
+        studio.request_approval(EXTERNAL, "plan.approve", {"n": 2})
+    _age_all(studio, EXTERNAL.label, 23)
+    with pytest.raises(PolicyDenied):  # still inside the window
+        studio.request_approval(EXTERNAL, "plan.approve", {"n": 3})
+    _age_all(studio, EXTERNAL.label, 25)
+    assert studio.request_approval(EXTERNAL, "plan.approve", {"n": 4})["status"] == "pending"
+
+
+def test_runner_label_stays_capped_for_the_whole_run(studio: Studio, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(services, "MAX_APPROVALS_PER_AGENT", 2)
+    for i in range(2):
+        studio.request_approval(RUN_A, "plan.approve", {"n": i})
+    _age_all(studio, RUN_A.label, 48)
+    with pytest.raises(PolicyDenied):  # a run is one bounded identity: no window
+        studio.request_approval(RUN_A, "plan.approve", {"n": 2})
+
+
+def test_window_is_24h() -> None:
+    assert services.APPROVAL_WINDOW_HOURS == 24

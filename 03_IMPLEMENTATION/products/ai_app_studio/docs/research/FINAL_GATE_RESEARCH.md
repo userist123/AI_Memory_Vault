@@ -42,3 +42,12 @@ WSL2 (Gemini)
   `ulimit -c 1` relies on that; Gemini recommends `ulimit -c 0` + non-pipe pattern (disagreement, verify).
 - ext4.vhdx grows; reclaim with fstrim + wsl --shutdown + Optimize-VHD; sparse mode has corruption warnings.
   -> owner-machine decisions, documented in SECURITY.md (not changed automatically).
+
+## Round 2 (2026-11-23)
+- Cargo always discovers parent `.cargo/config.toml` files up the tree; there is no flag to disable discovery. The
+  control is ours: the desktop build refuses planted cargo configs and requires an owner-only build root ACL.
+- Claude CLI image content blocks in `stream-json` input are undocumented. We cap agent images at 512 KiB base64
+  and runner input lines at 2 MiB.
+- `claude --bare` exists; not needed, the B7 runner isolation probe passes without it.
+- GitHub-hosted Windows runners (service logons) may lack a TokenLogonSid (ERROR_NOT_FOUND 1168 / empty groups):
+  the pipe DACL falls back to the TokenUser SID (still PIPE_REJECT_REMOTE_CLIENTS + FILE_FLAG_FIRST_PIPE_INSTANCE).

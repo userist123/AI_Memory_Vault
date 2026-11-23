@@ -138,3 +138,59 @@ def test_hub_pipe_keeps_the_hmac_handshake_and_rejects_a_wrong_key() -> None:
         t0 = time.monotonic()
         hub.close_run("run_0123456789abcdef")
         assert time.monotonic() - t0 < 3  # the accept loop stops without the old wake-up client trick
+
+
+def _sddl_sid(lst: object) -> str:
+    sddl = dacl_of(lst.handle)  # type: ignore[attr-defined]
+    assert sddl.startswith("D:P"), sddl
+    aces = sddl[3:].strip("()").split(")(")
+    assert len(aces) == 1 and aces[0].startswith("A;;"), sddl
+    return aces[0].rsplit(";", 1)[1]
+
+
+def test_user_sid_is_the_token_user_sid() -> None:
+    sid = vr.user_sid()
+    assert sid.startswith("S-1-5-") and not sid.startswith("S-1-5-5-")
+
+
+@pytest.mark.parametrize("failure", ["not_found", "no_group"])
+def test_pipe_dacl_falls_back_to_the_token_user_sid_without_a_logon_sid(monkeypatch: pytest.MonkeyPatch,
+                                                                         failure: str) -> None:
+    """GitHub Windows runners (service logons) may have no TokenLogonSid: ERROR_NOT_FOUND (1168) or an empty
+    TOKEN_GROUPS. The DACL then grants the TokenUser SID only; remote rejection and first-instance stay."""
+    real = vr._token_info  # noqa: SLF001
+
+    def fake(cls: int) -> object:
+        if cls == vr._TOKEN_LOGON_SID:  # noqa: SLF001
+            if failure == "not_found":
+                raise ctypes.WinError(1168)
+            return ctypes.create_string_buffer(64)  # GroupCount = 0
+        return real(cls)
+
+    monkeypatch.setattr(vr, "_token_info", fake)
+    with pytest.raises(OSError):
+        vr.logon_sid()
+    assert vr.pipe_sid() == vr.user_sid()
+    addr = LOCAL + "aas-test-" + secrets.token_hex(8)
+    lst = vr.NativePipeListener(addr)
+    try:
+        assert _sddl_sid(lst) == vr.user_sid()
+        assert lst._mode & vr._PIPE_REJECT_REMOTE_CLIENTS  # noqa: SLF001
+        with pytest.raises(OSError):
+            vr.NativePipeListener(addr)  # FILE_FLAG_FIRST_PIPE_INSTANCE still set
+        assert open_client(addr) == 0  # this user can still connect
+    finally:
+        lst.close()
+
+
+def test_other_token_errors_are_not_masked_by_the_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake(cls: int) -> object:
+        raise ctypes.WinError(5)  # ERROR_ACCESS_DENIED: not a missing logon SID
+
+    monkeypatch.setattr(vr, "_token_info", fake)
+    with pytest.raises(OSError):
+        vr.pipe_sid()
+
+
+def test_default_pipe_dacl_uses_the_logon_sid_when_present() -> None:
+    assert vr.pipe_sid() == vr.logon_sid()

@@ -37,7 +37,8 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
   and no hook fires. Only CLI-bundled ("builtin") plugins/skills stay listed; init offers no tool outside the studio
   catalogue, so they cannot be invoked. Test: `tests/runner/test_b7_isolation_probe.py` (real CLI, no login, no cost).
 - Agent images are capped at 512 KiB after base64 encoding; one stream-json line is capped at 2 MiB (N1).
-- One agent run can create at most 50 approval records (O8, `services.MAX_APPROVALS_PER_AGENT`).
+- One agent run can create at most 50 approval records (O8, `services.MAX_APPROVALS_PER_AGENT`); any other agent
+  label (the external-MCP one, shared by every session) is counted over a rolling 24 h window, so it cannot lock forever.
 - One live run at a time (S9, B6): a second start answers 409 `run_in_progress`.
 - The first stream-json line must be a valid `system/init` naming only the studio MCP server and catalogue tools.
 - Every MCP call is bound to the run's project by a per-run grant; writes/deletes/builds need an approved plan (P5f).
@@ -68,7 +69,8 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
   console auth token created by the studio (random, 0600) and the session refuses to start when the token file is
   empty or malformed (an empty file disables console auth; S9); the device host never runs `adb reverse`/`forward`.
 - Device screenshots: one PNG <= 8 MiB, the directory keeps <= 200 files / 200 MiB, oldest pruned (S9, B4).
-- Live mirror: per-run native named pipe with a DACL for the current logon SID only, `PIPE_REJECT_REMOTE_CLIENTS`,
+- Live mirror: per-run native named pipe with a DACL for the current logon SID only (TokenUser SID when the token
+  has none, e.g. CI service logons), `PIPE_REJECT_REMOTE_CLIENTS`,
   `FILE_FLAG_FIRST_PIPE_INSTANCE`, HMAC handshake both ways with a 2 s timeout (S9, B8). The decoder runs with
   `hardwareAcceleration: "prefer-software"`, takes only NAL types 1/5/7/8, refuses SPS outside 8-bit 4:2:0 /
   profile 66/77/100 / 4096 px, drops access units above 1 MiB and decodes nothing before SPS + PPS + IDR (S9, B9).
@@ -84,6 +86,8 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 - Server-shaped events (enum kinds, field allow-list, sanitiser, value redaction). Retention: rows older than the
   owner setting (default 30 days) are deleted at startup and every 6 h; the newest row is always kept (no seq reuse).
 
+**v1 launch mode (decision 2026-11-23, owner rule "decide safe, record"):** v1 is launched from the repo/runtime with `scripts/run_studio.ps1` (Tauri window + backend). The NSIS installer is **experimental, unsigned** until an installed-mode e2e passes.
+
 ## 2. Accepted residuals (FINAL_GATE_ROUND1 E7, updated at S9a)
 | Id | Residual | Why accepted / next step |
 |---|---|---|
@@ -98,7 +102,7 @@ model and probes: `docs/THREAT_MODEL.md`. Design: `docs/DESIGN.md`. Final-gate f
 | Debug-only APK | Generated apps are debug-signed with the studio key | no store release in v1 |
 | No network in generated apps | Kit CSP `connect-src 'self'` | feature, not a bug, for v1 |
 | Emulator in WSL | Nested virtualisation in WSL2 is not an officially supported setup | local gate covers it |
-| Unsigned installer | The NSIS installer (`pnpm tauri build --config src-tauri/tauri.release.conf.json` after `scripts/build_runtime.ps1`) is not code-signed: SmartScreen warns, and a tampered copy is not detected by Windows | v1 is built and installed on the owner PC only, never downloaded; the runtime.zip sha256 is printed by the build and its first 16 hex are the runtime version the shell checks; signing = later (certificate cost) |
+| Unsigned installer | Experimental in v1 (v1 runs via `scripts/run_studio.ps1`). The NSIS installer (`pnpm tauri build --config src-tauri/tauri.release.conf.json` after `scripts/build_runtime.ps1`) is not code-signed: SmartScreen warns, and a tampered copy is not detected by Windows | v1 is built and installed on the owner PC only, never downloaded; the runtime.zip sha256 is printed by the build and its first 16 hex are the runtime version the shell checks; signing = later (certificate cost) |
 | Runtime integrity (S9b review L3) | The shell verifies runtime.zip against the sha256 in runtime.version before extracting: this catches damage and partial copies, not a deliberate swap of both files in the install dir | code signing of the installer (residual above) |
 | Runtime bundle | `scripts/build_runtime.ps1` (S9b) stages python + locked deps + Chromium headless shell + app sources; Docker images, the Android SDK/emulator and the Claude CLI are not inside (owner PC prerequisites) | installed-mode end-to-end test (install, first launch, capture) still to run |
 | Export scan | The export secret scan is pattern-based (key shapes + the registered owner token); a secret without a known shape is not detected | owner approval of the exact sha256 is the second control |

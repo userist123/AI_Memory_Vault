@@ -6,6 +6,8 @@
   WebSocket scopes pass through unchanged.
 - ``validation_error``: a request that fails schema validation gets a generic 422 with the offending field names only;
   the rejected input (pydantic's ``input`` / ``ctx``) is never echoed back.
+- ``internal_error``: an exception no other handler maps gets a generic 500 (no type, message or stack trace). Starlette
+  answers it in ServerErrorMiddleware, outside the user middleware, so the handler sets the security headers itself.
 """
 from __future__ import annotations
 
@@ -67,8 +69,14 @@ async def validation_error(_r: Request, e: RequestValidationError) -> JSONRespon
                          "details": {"fields": fields}}, status_code=422)
 
 
+async def internal_error(_r: Request, _e: Exception) -> JSONResponse:
+    return JSONResponse({"error": "internal", "message": "internal server error"}, status_code=500,
+                        headers={k.decode(): v.decode() for k, v in SECURITY_HEADERS})
+
+
 def install(app: Any) -> None:
-    """Register the 422 handler and add the header middleware. Call last: the middleware is then outermost, so the
+    """Register the 422 and generic 500 handlers and add the header middleware. Call last: the middleware is then outermost, so the
     boundary's own rejects (401/403/421) carry the headers too."""
     app.add_exception_handler(RequestValidationError, validation_error)
+    app.add_exception_handler(Exception, internal_error)
     app.add_middleware(SecurityHeadersMiddleware)
