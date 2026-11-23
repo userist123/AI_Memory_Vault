@@ -49,6 +49,7 @@ from studio_core.services import Studio  # noqa: E402
 
 from .security import MIN_TOKEN_CHARS, BoundaryMiddleware  # noqa: E402
 from .headers import install as install_api_hygiene  # noqa: E402
+from . import chat_routes  # noqa: E402
 from . import export_routes  # noqa: E402
 
 OWNER = Actor("human", "owner", "rest")
@@ -339,6 +340,8 @@ def create_app(settings: Settings, token: str, *, extra_hosts: tuple[str, ...] =
     @app.post(f"{API}/runs", status_code=202)
     def start_run(b: RunStart) -> dict[str, Any]:
         return {"runId": runner.start(b.projectId, b.prompt), "status": "running"}
+
+    app.include_router(chat_routes.router(studio, runner))  # owner chat per project (chat_routes.py)
 
     @app.post(f"{API}/runs/{{run_id}}/stop")
     def stop_run(run_id: str) -> dict[str, Any]:

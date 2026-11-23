@@ -3,7 +3,12 @@
 The prompt (stdin) is a JSON scenario:
   {"record": "<path>", "pre_init": [<json objects>], "init": {...overrides...}, "no_init": <bool>, "events": [<json objects or raw strings>], "sleep": <seconds>,
    "mcp_calls": [{"tool": "code_write_file", "args": {...}}], "project_id": "...", "exit": 0}
-It records argv, cwd, the cwd listing, and the environment keys to scenario["record"] before emitting anything.
+It records argv, cwd, the cwd listing, the environment keys and the raw stdin to scenario["record"] before emitting
+anything (and appends the same record as one line to scenario["record"] + ".log": a run may start the CLI twice).
+Chat (aas_runner/chat.py): stdin may hold a summary block in front of the scenario; the scenario is then the JSON
+object on the last stdin line that parses. With ``--resume <id>`` the init carries that session id, and with
+"resume_fail": true the fake answers like the real CLI 2.1.330 for an unknown session (plain text line + an error
+result, no init, exit 1).
 With "mcp_calls" it behaves like the real CLI: it starts the MCP server named in --mcp-config over stdio (the
 env of that config entry, nothing else added), calls the tools, and emits matching tool_use / tool_result lines.
 """
@@ -51,18 +56,37 @@ async def run_mcp(cfg_path: str, calls: list[dict], project_id: str) -> None:
 
 
 def main() -> int:
-    scenario = json.loads(sys.stdin.read() or "{}")
+    raw_stdin = sys.stdin.read()
+    try:
+        scenario = json.loads(raw_stdin or "{}")
+    except ValueError:
+        scenario = {}
+        for line in reversed(raw_stdin.splitlines()):
+            try:
+                scenario = json.loads(line)
+                break
+            except ValueError:
+                continue
     argv = sys.argv[1:]
     if scenario.get("record"):
+        rec = {"argv": argv, "cwd": os.getcwd(), "listing": sorted(os.listdir(".")), "env": dict(os.environ),
+               "stdin": raw_stdin}
         with open(scenario["record"], "w", encoding="utf-8") as f:
-            json.dump({"argv": argv, "cwd": os.getcwd(), "listing": sorted(os.listdir(".")),
-                       "env": dict(os.environ)}, f)
+            json.dump(rec, f)
+        with open(scenario["record"] + ".log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec) + "\n")
+    resume = argv[argv.index("--resume") + 1] if "--resume" in argv else None
+    if resume and scenario.get("resume_fail"):
+        emit(f"No conversation found with session ID: {resume}")
+        emit({"type": "result", "subtype": "error_during_execution", "is_error": True, "num_turns": 0,
+              "session_id": resume, "total_cost_usd": 0, "usage": {}})
+        return 1
     cfg = argv[argv.index("--mcp-config") + 1] if "--mcp-config" in argv else None
     servers = list(json.load(open(cfg, encoding="utf-8")).get("mcpServers", {})) if cfg else []
     init = {"type": "system", "subtype": "init", "model": "fake-model", "cwd": os.getcwd(),
             "mcp_servers": [{"name": n, "status": "connected"} for n in servers],
             "tools": ["mcp__ai-app-studio__code_write_file", "mcp__ai-app-studio__code_read_file"],
-            "session_id": "fake"}
+            "session_id": resume or "fake"}
     init.update(scenario.get("init") or {})
     for ev in scenario.get("pre_init") or []:  # lines a real CLI prints before init (owner SessionStart hooks)
         emit(ev)

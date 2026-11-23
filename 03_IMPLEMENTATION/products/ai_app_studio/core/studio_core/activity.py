@@ -56,6 +56,8 @@ class ActivityKind(StrEnum):
     COST_UPDATE = "cost.update"
     PREVIEW_CAPTURED = "preview.captured"
     STREAM_DROPPED = "stream.dropped"
+    CHAT_PROMPT = "chat.prompt"  # owner 2026-11-23: the owner's chat message that started the run (aas_runner/chat.py)
+    CHAT_FALLBACK = "chat.fallback"  # the CLI refused --resume: the turn continued with the summary of earlier turns
 
 
 SOURCES = ("server", "runner", "build", "device")
@@ -105,6 +107,8 @@ PAYLOAD_FIELDS: dict[str, dict[str, tuple[str, int]]] = {
     "cost.update": {"inputTokens": (_I, 0), "outputTokens": (_I, 0), "costUsd": (_F, 0)},
     "preview.captured": {"revision": (_I, 0), "frame": (_S, 16), "sha256": (_H64, 64)},
     "stream.dropped": {"count": (_I, 0), "reason": (_S, 200)},
+    "chat.prompt": {"text": (_S, 4000), "mode": (_S, 16)},
+    "chat.fallback": {"reason": (_S, 40)},
 }
 assert set(PAYLOAD_FIELDS) == {k.value for k in ActivityKind}
 

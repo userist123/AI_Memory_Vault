@@ -36,6 +36,9 @@ export const KINDS = [
   "usage",
   "gap",
   "stream.dropped",
+  // owner chat per project (aas_runner/chat.py): only a signal to refetch GET /projects/<id>/chat
+  "chat.prompt",
+  "chat.fallback",
 ] as const;
 export type Kind = (typeof KINDS)[number];
 const KIND_SET: ReadonlySet<string> = new Set(KINDS);
