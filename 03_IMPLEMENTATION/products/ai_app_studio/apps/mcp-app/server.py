@@ -11,7 +11,9 @@ Safety properties:
     allow-list). The agent actor is ``agent:<AAS_AGENT_ID>@mcp`` and is never the owner.
 """
 
+import difflib
 import json
+import os
 import sys
 import threading
 from collections.abc import Callable
@@ -19,18 +21,22 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "core"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # apps.device_host (S5 launcher API)
 
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 from mcp_types import CallToolResult, TextContent, ToolAnnotations  # noqa: E402
 from pydantic import ConfigDict, Field  # noqa: E402
-from studio_core import activity  # noqa: E402
+from aas_build import service as build_service  # noqa: E402
+from studio_core import activity, plans, run_grants  # noqa: E402
 from studio_core.app_kind import register_app_kind  # noqa: E402
 from studio_core.config import load_settings  # noqa: E402
-from studio_core.errors import StudioError, Unavailable  # noqa: E402
+from studio_core.errors import PolicyDenied, StudioError, Unavailable  # noqa: E402
 from studio_core.policy import Actor  # noqa: E402
 from studio_core.services import Studio  # noqa: E402
 
 SCHEMA_VERSION = "aas.mcp/1"
+WRITE_TOOLS = frozenset({"code_write_file", "plan_submit", "app_build", "device_start", "device_install",
+                         "device_tap", "device_screenshot"})
 PROJECT_ID_PATTERN = r"^prj_[0-9a-f]{16}$"
 
 INSTRUCTIONS = """AI App Studio (external MCP access, enabled by the owner): read projects and files, write source files
@@ -60,8 +66,30 @@ def studio() -> Studio:
     return S.studio
 
 
+class _Call(threading.local):
+    """Who is calling right now (set by the guard for the duration of one tool call)."""
+    actor: Actor | None = None
+    project: str | None = None  # a runner grant is bound to ONE project
+    run_id: str | None = None
+
+
+CALL = _Call()
+
+
 def actor() -> Actor:
-    return Actor("agent", load_settings().agent_id, "mcp")
+    return CALL.actor or Actor("agent", load_settings().agent_id, "mcp")
+
+
+def authorise() -> tuple[Actor, str | None, str | None] | None:
+    """(actor, project restriction, run id) for this call, or None = refuse. Two ways in: a live per-run grant of
+    the built-in runner (run id + secret from this process's environment, bound to one project), or the owner's
+    external-MCP switch. Both are re-read on every call."""
+    run_id, secret = os.environ.get("AAS_RUN_ID"), os.environ.get("AAS_RUN_GRANT")
+    if run_id and secret and run_grants.is_valid(studio(), run_id, secret):
+        return Actor("agent", f"runner:{run_id}", "mcp"), run_grants.project_of(studio(), run_id), run_id
+    if studio().get_external_mcp():
+        return Actor("agent", load_settings().agent_id, "mcp"), None, None
+    return None
 
 
 def _result(body: dict[str, Any], is_error: bool = False) -> CallToolResult:
@@ -89,16 +117,22 @@ def guarded(tool_name: str) -> Callable[[Callable[..., Any]], Callable[..., Call
     def deco(fn: Callable[..., Any]) -> Callable[..., CallToolResult]:
         def wrapper(**kwargs: Any) -> CallToolResult:
             try:
-                if not studio().get_external_mcp():
+                auth = authorise()
+                if auth is None:
                     return refused(tool_name)
+                CALL.actor, CALL.project, CALL.run_id = auth
+                if CALL.project and kwargs.get("projectId") not in (None, CALL.project):
+                    raise PolicyDenied("this run may only use its own project", tool=tool_name)
                 return ok(fn(**kwargs), tool_name)
             except Exception as e:  # noqa: BLE001
                 return fail(e, tool_name)
+            finally:
+                CALL.actor = CALL.project = CALL.run_id = None
         wrapper.__name__ = fn.__name__
         wrapper.__doc__ = fn.__doc__
         wrapper.__annotations__ = {k: v for k, v in fn.__annotations__.items() if k != "return"}
         wrapper.__signature__ = __import__("inspect").signature(fn).replace(return_annotation=CallToolResult)  # type: ignore[attr-defined]
-        read_only = tool_name not in ("code_write_file",)
+        read_only = tool_name not in WRITE_TOOLS
         mcp.add_tool(wrapper, name=tool_name, description=(fn.__doc__ or "").strip(), structured_output=False,
                      meta={"schemaVersion": SCHEMA_VERSION},
                      annotations=ToolAnnotations(read_only_hint=read_only, destructive_hint=False, open_world_hint=False))
@@ -109,7 +143,8 @@ def guarded(tool_name: str) -> Callable[[Callable[..., Any]], Callable[..., Call
 @guarded("project_list")
 def project_list() -> Any:
     """List active projects."""
-    return studio().list_projects(actor())
+    items = studio().list_projects(actor())
+    return [p for p in items if p.get("id") == CALL.project] if CALL.project else items
 
 
 @guarded("project_inspect")
@@ -130,11 +165,33 @@ def code_read_file(projectId: ProjectId, path: Path_) -> Any:  # noqa: N803
     return studio().read_file(actor(), projectId, path)
 
 
+def _record_diff(project_id: str, path: str, old: str, new: str, revision: Any) -> None:
+    """file.diff for the owner's live view: unified diff (capped by the recorder), +N/-M counts. Never raises."""
+    try:
+        lines = list(difflib.unified_diff(old.splitlines(), new.splitlines(), f"a/{path}", f"b/{path}",
+                                          lineterm="", n=2))
+        added = sum(1 for ln in lines if ln.startswith("+") and not ln.startswith("+++"))
+        removed = sum(1 for ln in lines if ln.startswith("-") and not ln.startswith("---"))
+        payload: dict[str, Any] = {"path": path, "added": added, "removed": removed, "diff": "\n".join(lines)}
+        if isinstance(revision, int):
+            payload["revision"] = revision
+        activity.record(studio(), "file.diff", project_id=project_id, run_id=CALL.run_id, source="server",
+                        payload=payload)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 @guarded("code_write_file")
 def code_write_file(projectId: ProjectId, baseRevision: Annotated[int, Field(ge=0)], path: Path_,  # noqa: N803
                     content: Annotated[str, Field(max_length=200_000)]) -> Any:
     """Write one source file (src/** or public/** allow-list only). Returns the new revision."""
-    return studio().write_file(actor(), projectId, baseRevision, path, content)
+    try:
+        old = studio().workspace(projectId, create=False).read_bytes(path).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001 - a new file (or an invalid path, which write_file reports)
+        old = ""
+    res = studio().write_file(actor(), projectId, baseRevision, path, content)
+    _record_diff(projectId, path, old, content, res.get("revision") if isinstance(res, dict) else None)
+    return res
 
 
 @guarded("activity_list")
@@ -147,14 +204,58 @@ def activity_list(projectId: Annotated[str, Field(pattern=PROJECT_ID_PATTERN)] |
 
 @guarded("app_build")
 def app_build(projectId: ProjectId, target: Literal["web", "android"]) -> Any:  # noqa: N803
-    """Build the app (not available yet)."""
-    raise Unavailable("the build pipeline is not available in this version", tool="app_build")
+    """Build the app offline in Docker (web) and refresh the preview. The Android build is not available yet."""
+    if target != "web":
+        raise Unavailable("the Android build is not available in this version", tool="app_build")
+    return build_service.build_web(studio(), projectId, run_id=CALL.run_id)
+
+
+@guarded("plan_submit")
+def plan_submit(projectId: ProjectId, title: Annotated[str, Field(min_length=1, max_length=200)],  # noqa: N803
+                steps: Annotated[list[Annotated[str, Field(max_length=300)]], Field(max_length=20)]) -> Any:
+    """Propose a plan to the owner (a pending record the owner approves or sends back for edits)."""
+    return plans.submit(studio(), actor(), projectId, title, steps, run_id=CALL.run_id)
 
 
 @guarded("preview_capture")
 def preview_capture(projectId: ProjectId, frame: Literal["phone", "tablet", "desktop"]) -> Any:  # noqa: N803
     """Capture the preview (not available yet)."""
     raise Unavailable("the preview is not available in this version", tool="preview_capture")
+
+
+_DEVICE: Any = None
+
+
+def device() -> Any:
+    global _DEVICE
+    if _DEVICE is None:
+        from aas_device.service import DeviceService
+        _DEVICE = DeviceService(studio())
+    return _DEVICE
+
+
+@guarded("device_start")
+def device_start(form: Literal["phone", "tablet"]) -> Any:
+    """Start the visible Android emulator (owner setting, 8 GiB free disk and a healthy WSL are required)."""
+    return device().start(form)
+
+
+@guarded("device_install")
+def device_install(projectId: ProjectId) -> Any:  # noqa: N803
+    """Install the project's debug APK on the running emulator."""
+    return device().install(projectId)
+
+
+@guarded("device_tap")
+def device_tap(x: Annotated[int, Field(ge=0, le=10000)], y: Annotated[int, Field(ge=0, le=10000)]) -> Any:
+    """Tap at screen coordinates on the running emulator."""
+    return device().tap(x, y)
+
+
+@guarded("device_screenshot")
+def device_screenshot() -> Any:
+    """Take a screenshot of the emulator; returns its sha256 and size (the image stays on the owner's PC)."""
+    return device().screenshot()
 
 
 def _close_input_schemas() -> None:

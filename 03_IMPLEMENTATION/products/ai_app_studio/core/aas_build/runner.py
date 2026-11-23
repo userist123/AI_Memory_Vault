@@ -111,9 +111,21 @@ def _docker_kill(docker: str, name: str) -> None:
     subprocess.run([docker, "kill", name], capture_output=True, timeout=60, check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)  # noqa: S603
 
 
-def _tree_size(root: Path) -> int:
-    """Bytes under root without following links (used by the /out watchdog)."""
-    total = 0
+def resolve_image(docker: str, tag: str = "aas-web-build:dev") -> str:
+    """Image id (`sha256:...`) of a locally built tag: the form build_web_argv accepts. Fails closed."""
+    if not re.fullmatch(r"[a-z0-9][a-z0-9._/-]{0,60}(:[A-Za-z0-9._-]{1,40})?", tag):
+        raise BuildError("invalid image tag")
+    r = subprocess.run([docker, "image", "inspect", tag, "--format", "{{.Id}}"], capture_output=True, timeout=60,  # noqa: S603
+                       check=False, shell=False, env=_env(), stdin=subprocess.DEVNULL)
+    out = r.stdout.decode("utf-8", "replace").strip()
+    if r.returncode != 0 or not _IMAGE_RE.match(out):
+        raise BuildError(f"build image {tag} is not available locally (docker build -f images/web-build/Dockerfile ...)")
+    return out
+
+
+def _tree_stats(root: Path) -> tuple[int, int]:
+    """(bytes, non-directory entries) under root without following links (used by the /out watchdog, N1)."""
+    total = files = 0
     stack = [str(root)]
     while stack:
         try:
@@ -123,12 +135,18 @@ def _tree_size(root: Path) -> int:
                         if e.is_dir(follow_symlinks=False):
                             stack.append(e.path)
                         else:
+                            files += 1
                             total += e.stat(follow_symlinks=False).st_size
                     except OSError:
                         continue
         except OSError:
             continue
-    return total
+    return total, files
+
+
+def _tree_size(root: Path) -> int:
+    """Bytes under root without following links."""
+    return _tree_stats(root)[0]
 
 
 @dataclass
@@ -137,10 +155,11 @@ class _RunOutcome:
     tail: str
     over_cap: bool = False
     timed_out: bool = False
+    over_files: bool = False
 
 
 def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: int, kill: Callable[[], None],
-                log_cap: int = LOG_CAP_BYTES, poll: float = 0.2) -> _RunOutcome:
+                log_cap: int = LOG_CAP_BYTES, poll: float = 0.2, max_files: int | None = None) -> _RunOutcome:
     """Run argv (no shell); keep only the last `log_cap` bytes of stdout/stderr; kill the container if /out outgrows its cap."""
     proc = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=_env())  # noqa: S603
     bufs = [bytearray(), bytearray()]
@@ -158,12 +177,18 @@ def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: in
     threads = [threading.Thread(target=pump, args=(proc.stdout, bufs[0]), daemon=True),
                threading.Thread(target=pump, args=(proc.stderr, bufs[1]), daemon=True)]
     over = threading.Event()
+    over_files = threading.Event()
     done = threading.Event()
 
     def watchdog() -> None:
         while not done.wait(poll):
-            if _tree_size(out) > max_out_bytes:
+            size, nfiles = _tree_stats(out)
+            if size > max_out_bytes:
                 over.set()
+                kill()
+                return
+            if max_files is not None and nfiles > max_files:  # N1: a flood of tiny files is under the byte cap
+                over_files.set()
                 kill()
                 return
 
@@ -185,7 +210,8 @@ def _run_capped(argv: list[str], *, timeout: float, out: Path, max_out_bytes: in
     wd.join(timeout=5)
     # keep the end of BOTH streams (stdout first, stderr last so error text stays at the very end)
     tail = bytes(bufs[0]).decode("utf-8", "replace")[-1999:] + "\n" + bytes(bufs[1]).decode("utf-8", "replace")[-2000:]
-    return _RunOutcome(proc.returncode if proc.returncode is not None else -1, tail, over.is_set(), timed_out)
+    return _RunOutcome(proc.returncode if proc.returncode is not None else -1, tail, over.is_set(), timed_out,
+                       over_files.is_set())
 
 
 def run_web_build(*, docker: str, build_id: str, ctx: Path, out: Path, image: str, dest: Path,
@@ -196,9 +222,12 @@ def run_web_build(*, docker: str, build_id: str, ctx: Path, out: Path, image: st
     argv = build_web_argv(docker=docker, build_id=build_id, ctx=ctx, out=out, image=image)
     name = CONTAINER_PREFIX + build_id
     try:
-        o = _run_capped(argv, timeout=timeout, out=out, max_out_bytes=limits.max_total_bytes, kill=lambda: _docker_kill(docker, name), poll=poll)
+        o = _run_capped(argv, timeout=timeout, out=out, max_out_bytes=limits.max_total_bytes, kill=lambda: _docker_kill(docker, name), poll=poll,
+                        max_files=limits.max_files)
         if o.over_cap:
             raise BuildError(f"output size over {limits.max_total_bytes} bytes during the build; container killed")
+        if o.over_files:
+            raise BuildError(f"output has more than {limits.max_files} files during the build; container killed")
         if o.timed_out:
             raise BuildError(f"build timed out after {timeout}s")
         if o.returncode != 0:

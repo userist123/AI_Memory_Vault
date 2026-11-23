@@ -41,6 +41,15 @@ CATALOGUE: dict[str, tuple[dict[str, dict[str, Any]], list[str]]] = {
                        "limit": {"type": "integer", "minimum": 1, "maximum": 200}}, []),
     "app_build": ({"projectId": PID, "target": {"enum": ["web", "android"]}}, ["projectId", "target"]),
     "preview_capture": ({"projectId": PID, "frame": {"enum": ["phone", "tablet", "desktop"]}}, ["projectId", "frame"]),
+    # S6 additions
+    "plan_submit": ({"projectId": PID, "title": {"type": "string", "minLength": 1, "maxLength": 200},
+                     "steps": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 300}}},
+                    ["projectId", "title", "steps"]),
+    "device_start": ({"form": {"enum": ["phone", "tablet"]}}, ["form"]),
+    "device_install": ({"projectId": PID}, ["projectId"]),
+    "device_tap": ({"x": {"type": "integer", "minimum": 0, "maximum": 10000},
+                    "y": {"type": "integer", "minimum": 0, "maximum": 10000}}, ["x", "y"]),
+    "device_screenshot": ({}, []),
 }
 FORBIDDEN_PROPS = re.compile(r"command|args|argv|script|url|host|shell|exec|approv|decid|secret|token|setting|enable", re.I)
 
@@ -91,7 +100,8 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
                      ("code_list_files", {"projectId": pid}),
                      ("code_read_file", {"projectId": pid, "path": "src/App.tsx"}),
                      ("code_write_file", {"projectId": pid, "baseRevision": rev, "path": "src/Evil.tsx", "content": "x"}),
-                     ("activity_list", {}), ("app_build", {"projectId": pid, "target": "web"}),
+                         ("activity_list", {}), ("app_build", {"projectId": pid, "target": "web"}),
+                     ("plan_submit", {"projectId": pid, "title": "t", "steps": []}), ("device_tap", {"x": 1, "y": 1}),
                      ("preview_capture", {"projectId": pid, "frame": "phone"})]
             for name, args in calls:  # default OFF: every tool refused
                 r = await s.call_tool(name, args)
@@ -130,10 +140,12 @@ async def test_px1_refused_when_disabled_positive_control_when_enabled(tmp_path:
             w2 = body(await s.call_tool("code_write_file", {"projectId": pid, "baseRevision": rev + 1,
                                                             "path": "src/Forged.tsx", "content": "x"}))
             assert w2["ok"] is True  # positive control: the same call without the unknown field
-            for name, args in (("app_build", {"projectId": pid, "target": "web"}),
-                               ("preview_capture", {"projectId": pid, "frame": "phone"})):
+            for name, args in (("app_build", {"projectId": pid, "target": "android"}),
+                               ("preview_capture", {"projectId": pid, "frame": "phone"}),
+                               ("device_start", {"form": "phone"}),  # device tools: owner setting is off by default
+                               ("device_screenshot", {})):
                 r = await s.call_tool(name, args)
-                assert r.is_error and body(r)["error"] == "unavailable", name  # stubs
+                assert r.is_error and body(r)["error"] == "unavailable", name  # not available in this version / off
             studio.set_external_mcp(OWNER, False)  # and back off
             assert body(await s.call_tool("project_list", {}))["error"] == "external_mcp_disabled"
     finally:

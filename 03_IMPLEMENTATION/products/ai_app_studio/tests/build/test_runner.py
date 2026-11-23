@@ -155,6 +155,16 @@ def test_out_growth_during_build_kills_container(fake_popen, tmp_path: Path, out
     assert not out_dir.exists()
 
 
+def test_n1_file_count_growth_during_build_kills_container(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
+    """N1 (S3 review): many tiny files stay under the byte cap, so the watchdog counts files as well."""
+    fake_popen.block = True
+    for i in range(30):
+        (out_dir / "dist" / f"f{i}.txt").write_bytes(b"x")  # 30 bytes in total, far below max_total_bytes
+    with pytest.raises(BuildError, match="more than 10 files during the build; container killed"):
+        _build(tmp_path, out_dir, limits=BuildLimits(max_files=10, max_total_bytes=10_000_000, max_file_bytes=1000), poll=0.05, timeout=5)
+    assert not out_dir.exists()
+
+
 def test_timeout_kills_and_fails(fake_popen, tmp_path: Path, out_dir: Path) -> None:  # type: ignore[no-untyped-def]
     fake_popen.block = True
     with pytest.raises(BuildError, match="timed out"):
