@@ -597,6 +597,7 @@ function model(it){
   // poziția unei foi la deschiderea e (0..1): rotită (batantă, dublă, pivotantă), alunecată spre parcare (glisantă, în perete) sau strânsă (pliantă)
   const setLeaf = (d, e) => { if (d.kind === 'slide' || d.kind === 'pocket') d.pivot.position.set(d.bx + d.sx * e, 0, d.bz + d.sz * e); else if (d.kind === 'fold') d.pivot.scale.x = 1 - .78 * e; else d.pivot.rotation.y = d.closed + d.maxOpen * e; }; // ușile cu balamale: deschise/închise, animate în bucla de randare
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
+  let sunDist = 14, ctx = null, ctxPts = [], ctxH = 0, ctxMat = null; // vecinii din studiul de însorire (setContext)
   // centrul orbitei machetei: casa, sau piesa încadrată din plan (UI/UX P2-10); F alunecă spre FT
   const F = new THREE.Vector3(), FT = new THREE.Vector3(); let framed = false, fInit = false;
   // la reconstruire: geometria și texturile clonate pentru finisaje (fiecare clonă e o încărcare separată pe GPU)
@@ -951,7 +952,7 @@ function model(it){
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
     if (!framed) FT.copy(C); if (!fInit){ F.copy(C); fInit = true; }
     // camera de umbră a soarelui pe măsura casei (mai multă rezoluție pe metru decât un pătrat fix de 24 m)
-    { const rr = Math.hypot(W, D) / 2 + 1.5; Object.assign(sun.shadow.camera, { left: -rr, right: rr, top: rr, bottom: -rr, near: .5, far: 14 + rr + 6 }); sun.shadow.camera.updateProjectionMatrix(); }
+    fitShadow();
     orbit.r = Math.max(W, D, 4) * 1.15; freeze(house); setMode(mode); dirty();
   }
   // decorul: ce ar pune un stilist ca locuința să pară locuită — planta în colțul liber, tabloul deasupra canapelei și a patului,
@@ -1045,7 +1046,25 @@ function model(it){
     lastItems = items; freeze(furniture); if (furnBatch){ disposeGroup(furnBatch); scene.remove(furnBatch); } furnBatch = batchStatic(furniture, { cell: 4 }); scene.add(furnBatch); buildContact(); buildDecor(items); refreshMarks(); dirty(); }
 
   // soarele stă pe direcția dată (azimut, înălțime), la ~14 m de centrul casei; implicit ca în prototip
-  function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
+  function placeSun(){ const dir = light && light.dir ? light.dir : null, k = sunDist; if (dir) sun.position.set(C.x + dir[0] * k, dir[1] * k, C.z + dir[2] * k); else sun.position.set(C.x + 6, 11, C.z - 8); }
+  // camera de umbră a soarelui pe măsura casei (mai multă rezoluție pe metru decât un pătrat fix de 24 m); cu vecini (studiul de
+  // însorire) se lărgește cât să-i cuprindă, iar soarele se mută mai departe, ca umbrele lor să cadă și din afara casei
+  function fitShadow(){ // vârful unui vecin înalt, cu soarele jos, iese în lateral cu până la înălțimea lui
+    const ctxR = ctxPts.reduce((m, q) => Math.max(m, Math.hypot(q[0] - C.x, q[1] - C.z)), 0), rr = Math.max(Math.hypot(W, D) / 2 + 1.5, ctx ? ctxR + ctxH + 1 : 0); sunDist = ctx ? Math.max(14, rr + ctxH + 4) : 14;
+    Object.assign(sun.shadow.camera, { left: -rr, right: rr, top: rr, bottom: -rr, near: .5, far: sunDist + rr + 6 + ctxH }); sun.shadow.camera.updateProjectionMatrix(); placeSun(); }
+  /** Clădirile vecine ca volume gri: [{ pts: [[x, z] ×n], y0, h }] (metri, coordonatele planului); null le scoate. */
+  function setContext(list){
+    if (ctx){ scene.remove(ctx); ctx.traverse(o => o.geometry && o.geometry.dispose()); ctx = null; }
+    ctxPts = []; ctxH = 0;
+    if (list && list.length){ ctx = new THREE.Group(); ctx.userData = { noExport: true }; // în machetă planul de tăiere taie și vecinii (ca pe pereți): fețele interioare rămân vizibile, umbrele lor sunt întregi
+      ctxMat ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#c9c4bb').convertSRGBToLinear(), roughness: .95, side: THREE.DoubleSide });
+      for (const b of list){ if (!b || !Array.isArray(b.pts) || b.pts.length < 3 || !(b.h > 0)) continue;
+        // forma în planul XY cu y = -z, extrudată pe +Z, apoi culcată: adâncimea extrudării devine înălțimea (+y)
+        const g = new THREE.ExtrudeGeometry(new THREE.Shape(b.pts.map(q => new THREE.Vector2(q[0], -q[1]))), { depth: b.h, bevelEnabled: false }); g.rotateX(-Math.PI / 2);
+        const m = new THREE.Mesh(g, ctxMat); m.position.y = b.y0 || 0; m.castShadow = true; m.receiveShadow = true; ctx.add(m);
+        ctxPts.push(...b.pts); ctxH = Math.max(ctxH, b.h + (b.y0 || 0)); }
+      scene.add(ctx); }
+    fitShadow(); dirty(); }
   // momentul zilei, dedus din parametri (core/lighting.ts nu-l trimite): cerul, terenul și lumina proprie a tavanului
   const timeOf = p => p.sun < .3 ? 'night' : p.sun < 1 ? 'evening' : 'day';
   function setLighting(p){ light = p; const t = timeOf(p);
@@ -1474,7 +1493,7 @@ function model(it){
     getStats,
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
-    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama: solid(renderPanorama), exportScene: solid(exportScene), exportGLB: solid(exportGLB),
+    setMode, goRoom, getMode: () => mode, setLighting, setContext, capture, renderView, renderPanorama: solid(renderPanorama), exportScene: solid(exportScene), exportGLB: solid(exportGLB),
     setCameraPreset,
     setSelection(pid){ selPid = pid || null; refreshMarks(); },
     setHover(pid){ if ((pid || null) === hovPid) return; hovPid = pid || null; refreshMarks(); },
@@ -1498,7 +1517,7 @@ function model(it){
       dirty(); },
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } applyBackdrop(); dirty(); paintSky(skyKey); return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); raf = 0; clearTimeout(restTimer); assetListeners.delete(invalidate); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', onBlur); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (furnBatch) disposeGroup(furnBatch); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; setContext(null); ctxMat?.dispose(); for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); raf = 0; clearTimeout(restTimer); assetListeners.delete(invalidate); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', onBlur); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (furnBatch) disposeGroup(furnBatch); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
   };
   // orice comandă primită din afară poate schimba imaginea: un singur loc, ca să nu se poată uita una (citirile nu desenează)
   for (const k of Object.keys(api)){ if (k === 'dispose' || k === 'getMode' || k === 'getView' || k === 'gpuKind' || k === 'tierNow') continue; const fn = api[k];

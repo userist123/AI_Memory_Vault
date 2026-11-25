@@ -11,6 +11,12 @@ import { FRONT_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M } from './rules';
 import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { tradeChecks } from './trade-checks';
 import { activeOpenings } from './renovation';
+import { insolationStudy, NORM_HOURS, NORM_REFERENCE_DATE } from './insolation';
+import { readSite } from './site-location';
+import { localToUtc } from './solar';
+import { neighbourStudy, type Obstacle } from './neighbours';
+import { summerCheck } from './overheating';
+import { daylightStudy, seatLight, darkSeat } from './daylight';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
 export type AdviceSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
@@ -28,6 +34,8 @@ export interface AdvisorOptions {
   budget?: { total: number | null; target: number | null; unknown: number };
   /** Moneda bugetului (implicit RON). */
   currency?: string;
+  /** studiul de însorire: volumele care umbresc nivelul (vecini, etaje) și casa întreagă (pentru efectul asupra vecinilor) */
+  sun?: { obs?: readonly Obstacle[]; house?: Snapshot };
 }
 
 // ---- Praguri (reguli de bun-simț, nu norme legale) ----
@@ -92,6 +100,25 @@ export const TECH_NEAR_M = 1.5;
 function doorTouches(w: { a: [number, number]; b: [number, number] }, o: { offset: number; width: number }, room: Room){
   const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, m = o.offset + o.width / 2, x = w.a[0] + (w.b[0] - w.a[0]) / L * m, z = w.a[1] + (w.b[1] - w.a[1]) / L * m, r = room.rect;
   return x >= r.x0 - 0.2 && x <= r.x1 + 0.2 && z >= r.z0 - 0.2 && z <= r.z1 + 0.2;
+}
+// studiul normei se reface doar când se schimbă geometria care umbrește sau amplasamentul (nu la mutarea mobilierului)
+let sunCache: { key: string; st: ReturnType<typeof insolationStudy> } | null = null;
+function normStudy(snap: Snapshot, site: NonNullable<ReturnType<typeof readSite>>, obs?: readonly Obstacle[]){
+  const f = snap.floor, key = JSON.stringify([site, f.ceilingHeight, f.walls, f.rooms.map(r => [r.id, r.name, r.type, r.rect, r.boundary, r.spaceKind]), obs ?? []]);
+  if (sunCache?.key !== key) sunCache = { key, st: insolationStudy(f, site, (d, m) => localToUtc(d, m, site.tz), { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false, obs }) };
+  return sunCache.st;
+}
+let dfCache: { key: string; st: ReturnType<typeof daylightStudy> } | null = null;
+function dfStudy(snap: Snapshot, obs?: readonly Obstacle[]){
+  const f = snap.floor, key = JSON.stringify([f.ceilingHeight, f.walls, f.rooms.map(r => [r.id, r.type, r.rect, r.boundary, r.spaceKind]), obs ?? []]);
+  if (dfCache?.key !== key) dfCache = { key, st: daylightStudy(f, { obs }) };
+  return dfCache.st;
+}
+let nbCache: { key: string; st: ReturnType<typeof neighbourStudy> } | null = null;
+function nbStudy(house: Snapshot, site: NonNullable<ReturnType<typeof readSite>>){
+  const fl = [house.floor, ...(house.levels ?? [])], key = JSON.stringify([site, fl.map(f => [f.ceilingHeight, f.rooms.map(r => [r.rect, r.boundary, r.spaceKind])])]);
+  if (nbCache?.key !== key) nbCache = { key, st: neighbourStudy(house, site, (d, m) => localToUtc(d, m, site.tz), NORM_REFERENCE_DATE, NORM_HOURS) };
+  return nbCache.st;
 }
 export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions = {}): Advice[] {
   const out: Advice[] = [], seen = new Set<string>();
@@ -231,6 +258,21 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
       if (!near(p, ['drain'])) add('TECH_NO_DRAIN', { severity: 'WARNING', category: 'instalatii', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'TECH_NO_DRAIN', vars: { nm: nameOf(p), rn: roomOf(p.roomId)?.name ?? '' } });
   }
   for (const c of tradeChecks(snap, cat, fps, nameOf)) add(c.rule, c.a);
+  // însorirea (doar când proiectul are amplasament): camerele de zi și dormitoarele sub 1½ h la solstițiul de iarnă
+  const site = readSite(snap.site);
+  if (site){ const st = normStudy(snap, site, opts.sun?.obs);
+    const hm = (h: number) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
+    for (const r of st.rooms) if (r.verdict === 'low') add('SUN_LOW', { severity: 'WARNING', category: 'lumina', refs: { roomId: r.roomId }, code: 'SUN_LOW', vars: { rn: r.name, got: hm(r.hours), min: hm(NORM_HOURS) } });
+    // art. 3 alin. (1) protejează și locuințele învecinate; prioritatea o are amplasamentul mai vechi (alin. 3)
+    if (site.neighbors?.length) for (const n of nbStudy(opts.sun?.house ?? snap, site)) if (n.status === 'affected')
+      add(`SUN_NEIGHBOUR:${n.neighbourId}`, { severity: n.older ? 'WARNING' : 'TIP', category: 'lumina', refs: {}, code: n.older ? 'SUN_NEIGHBOUR' : 'SUN_NEIGHBOUR_NEW', vars: { nm: n.name, n: n.affected, got: hm(n.worstAfter), was: hm(n.worstBefore), min: hm(NORM_HOURS) } });
+    // vara: aria de sticlă față de metoda simplificată AD O (risc ridicat), cu protecția solară lipsă
+    // biroul departe de lumină: sub 40 % din sfertul cel mai luminos al camerei (percentila 75), dacă acesta are ≥ 1,5 %
+    const df = dfStudy(snap, opts.sun?.obs);
+    for (const p of snap.placements.filter(x => x.group === 'birou')){ const l = seatLight(df, p); if (!darkSeat(l)) continue;
+      add('DESK_DARK', { severity: 'TIP', category: 'lumina', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'DESK_DARK', vars: { nm: nameOf(p), at_n: Math.round(l!.at * 10) / 10, best_n: Math.round(l!.best * 10) / 10 } }); }
+    for (const r of summerCheck(snap.floor, site).rooms) if (r.verdict === 'over')
+      add('SUN_OVERHEAT', { severity: 'TIP', category: 'lumina', refs: { roomId: r.roomId }, code: 'SUN_OVERHEAT', vars: { rn: r.name, pct: r.pct, max: r.limitPct ?? 0, n: r.unshaded.length } }); }
   const b = opts.budget, cur = opts.currency ?? 'RON';
   if (b){
     if (b.total != null && b.target != null && b.total > b.target) add('OVER_BUDGET', { severity: 'WARNING', category: 'buget', refs: {}, code: 'OVER_BUDGET', vars: { cur, total_money: b.total, over_money: b.total - b.target, target_money: b.target } });
