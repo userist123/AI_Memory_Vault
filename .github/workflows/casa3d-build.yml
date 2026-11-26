@@ -88,6 +88,11 @@ jobs:
         if: steps.app.outputs.present == 'true'
         working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         run: npm run typecheck
+      - name: Install the glTF model validator (tools/assets, isolated lockfile)
+        # tests/asset-validate.test.ts runs the Khronos validator on public/models; without this install it skips
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        run: npm --prefix tools/assets ci --ignore-scripts
       - name: Unit tests
         if: steps.app.outputs.present == 'true'
         working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
