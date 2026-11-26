@@ -11,6 +11,7 @@ const SCRIPT = () => path.join(process.cwd(), 'tools', 'blender', 'casa3d_render
 export const JOB_RE = /^\d{13}$/, FILE_RE = /^[\w-]{1,80}\.png$/, ID_RE = /^[\w-]{1,80}$/;
 export const MAX_SCENE = 40 * 1024 * 1024, TIMEOUT_MS = 45 * 60 * 1000;
 const running = new Map<string, ChildProcess>();   // proiect → procesul Blender
+let starting = false;                               // un job e între verificare și pornirea procesului
 
 /** Șterge toate randările unui proiect de pe disc (la ștergerea definitivă). */
 export async function removeRenders(projectId: string){ if (!ID_RE.test(projectId)) return; await fs.rm(path.join(ROOT(), projectId), { recursive: true, force: true }); }
@@ -22,28 +23,32 @@ export async function startRender(owner: string, projectId: string, body: string
   if (!ID_RE.test(projectId)) throw new HttpError(400, 'Proiect invalid.');
   await getProject(owner, projectId);                                   // proiectul trebuie să fie al tău
   if (!blenderAvailable()) throw new HttpError(501, 'Blender nu e configurat pe acest calculator (CASA3D_BLENDER).');
-  if (running.size > 0) throw new HttpError(409, 'O randare e deja în lucru; încearcă după ce se termină.');
-  if (body.length > MAX_SCENE) throw new HttpError(413, 'Scena e prea mare.');
-  let scene: any; try { scene = JSON.parse(body); } catch { throw new HttpError(400, 'Scena nu e JSON valid.'); }
-  if (!scene || scene.format !== 'casa3d-scene' || !Array.isArray(scene.rooms) || !Array.isArray(scene.meshes)) throw new HttpError(400, 'Scena nu vine din vederea 3D.');
-  const samples = Number.isInteger(opts.samples) && (opts.samples as number) >= 16 && (opts.samples as number) <= 2048 ? opts.samples as number : 256;
-  const rooms = typeof opts.rooms === 'string' && /^(all|[\w-]{1,80}(,[\w-]{1,80}){0,40})$/.test(opts.rooms) ? opts.rooms : 'all';
-  const job = String(Date.now()), dir = path.join(ROOT(), projectId, job); await fs.mkdir(dir, { recursive: true });
-  const scenePath = path.join(dir, 'scene.casa3d.json'); await fs.writeFile(scenePath, body);
-  await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: 'running', startedAt: new Date().toISOString(), samples }));
-  const log = createWriteStream(path.join(dir, 'blender.log'));
-  // un fișier .js/.mjs (înlocuitor de Blender, ex. în teste) rulează cu Node-ul curent; altfel e executabilul Blender
-  const bin = process.env.CASA3D_BLENDER!, viaNode = /\.m?js$/i.test(bin);
-  // --python-exit-code 1: fără el Blender iese cu 0 și când scriptul crapă, iar jobul ar apărea „gata” fără nicio imagine
-  const p = spawn(viaNode ? process.execPath : bin, [...(viaNode ? [bin] : []), '-b', '--python-exit-code', '1', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
-  running.set(projectId, p); p.stdout?.pipe(log); p.stderr?.pipe(log);
-  const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
-  p.on('close', async code => { clearTimeout(timer); running.delete(projectId);
-    // „gata” doar cu cel puțin o imagine: o ieșire 0 fără imagini (script oprit devreme, versiune de Blender nepotrivită) e un eșec
-    const images = (await fs.readdir(dir).catch(() => [] as string[])).filter(f => FILE_RE.test(f));
-    await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: code === 0 && images.length > 0 ? 'done' : 'failed', code, startedAt: new Date(Number(job)).toISOString(), samples })).catch(() => {}); });
-  p.on('error', () => { running.delete(projectId); });
-  return { job, status: 'running', images: [], startedAt: new Date(Number(job)).toISOString(), samples };
+  if (running.size > 0 || starting) throw new HttpError(409, 'O randare e deja în lucru; încearcă după ce se termină.');
+  // rezervarea e sincronă, imediat după verificare: altfel două cereri simultane trec amândouă de ea în timpul await-urilor de mai jos
+  starting = true;
+  try {
+    if (body.length > MAX_SCENE) throw new HttpError(413, 'Scena e prea mare.');
+    let scene: any; try { scene = JSON.parse(body); } catch { throw new HttpError(400, 'Scena nu e JSON valid.'); }
+    if (!scene || scene.format !== 'casa3d-scene' || !Array.isArray(scene.rooms) || !Array.isArray(scene.meshes)) throw new HttpError(400, 'Scena nu vine din vederea 3D.');
+    const samples = Number.isInteger(opts.samples) && (opts.samples as number) >= 16 && (opts.samples as number) <= 2048 ? opts.samples as number : 256;
+    const rooms = typeof opts.rooms === 'string' && /^(all|\w[\w-]{0,79}(,\w[\w-]{0,79}){0,40})$/.test(opts.rooms) ? opts.rooms : 'all';
+    const job = String(Date.now()), dir = path.join(ROOT(), projectId, job); await fs.mkdir(dir, { recursive: true });
+    const scenePath = path.join(dir, 'scene.casa3d.json'); await fs.writeFile(scenePath, body);
+    await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: 'running', startedAt: new Date().toISOString(), samples }));
+    const log = createWriteStream(path.join(dir, 'blender.log'));
+    // un fișier .js/.mjs (înlocuitor de Blender, ex. în teste) rulează cu Node-ul curent; altfel e executabilul Blender
+    const bin = process.env.CASA3D_BLENDER!, viaNode = /\.m?js$/i.test(bin);
+    // --python-exit-code 1: fără el Blender iese cu 0 și când scriptul crapă, iar jobul ar apărea „gata” fără nicio imagine
+    const p = spawn(viaNode ? process.execPath : bin, [...(viaNode ? [bin] : []), '-b', '--python-exit-code', '1', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
+    running.set(projectId, p); p.stdout?.pipe(log); p.stderr?.pipe(log);
+    const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
+    p.on('close', async code => { clearTimeout(timer); running.delete(projectId);
+      // „gata” doar cu cel puțin o imagine: o ieșire 0 fără imagini (script oprit devreme, versiune de Blender nepotrivită) e un eșec
+      const images = (await fs.readdir(dir).catch(() => [] as string[])).filter(f => FILE_RE.test(f));
+      await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: code === 0 && images.length > 0 ? 'done' : 'failed', code, startedAt: new Date(Number(job)).toISOString(), samples })).catch(() => {}); });
+    p.on('error', () => { running.delete(projectId); });
+    return { job, status: 'running', images: [], startedAt: new Date(Number(job)).toISOString(), samples };
+  } finally { starting = false; }
 }
 
 export async function listRenders(owner: string, projectId: string): Promise<{ available: boolean; jobs: RenderJob[] }> {
