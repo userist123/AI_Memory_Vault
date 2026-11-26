@@ -542,6 +542,12 @@
       "reason": "Casa3D research report for the A1 3D viewport phase, a plain markdown product document with its sources; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/RESEARCH_D3_D4_2026-11.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D research report for the D3 asset pipeline and D4 viewport steps (decisions verified on primary sources), a plain markdown product document; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/README.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

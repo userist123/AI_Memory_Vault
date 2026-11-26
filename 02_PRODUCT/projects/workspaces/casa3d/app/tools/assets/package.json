@@ -1,0 +1,13 @@
+{
+  "name": "casa3d-asset-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated glTF validation of the bundled models (kept outside the app's dependencies).",
+  "scripts": {
+    "validate": "node validate-models.mjs"
+  },
+  "devDependencies": {
+    "gltf-validator": "2.0.0-dev.3.10"
+  }
+}

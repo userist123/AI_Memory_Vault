@@ -1,0 +1,284 @@
+{
+  "ceramic_vase_01": {
+    "files": {
+      "ceramic_vase_01.bin": {
+        "bytes": 272656,
+        "sha256": "56ffadcafff3f56538d04b0b43c06c9704baeec2ac3ec286ef01c313c82906f0"
+      },
+      "ceramic_vase_01.gltf": {
+        "bytes": 2706,
+        "sha256": "4e2c69eb5bbccf86e9fbf92af438464669d804c1f0eae041ee28651a5b57d91e"
+      },
+      "textures/ceramic_vase_01_arm_1k.jpg": {
+        "bytes": 22396,
+        "sha256": "136c05cc4e7ea6b9ea73174987cd0aab184c05524e35fb5e46f245cd2ce2a1e8"
+      },
+      "textures/ceramic_vase_01_diff_1k.jpg": {
+        "bytes": 5487,
+        "sha256": "9c659d854537e9af86798c891ec2f0597c0358b6eae4875658093d47dce350d4"
+      },
+      "textures/ceramic_vase_01_nor_gl_1k.jpg": {
+        "bytes": 7232,
+        "sha256": "dc4f1c04dbc5038d415b80ca8d4ade360cefa2f271cb6aebc490c2dc486e6ed3"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.10181723535060883,
+        0.40147727727890015,
+        0.10181790590286255
+      ],
+      "min": [
+        -0.10181723535060883,
+        0.00120898790191859,
+        -0.10181842744350433
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/ceramic_vase_01",
+    "triangles": 10296
+  },
+  "ceramic_vase_04": {
+    "files": {
+      "ceramic_vase_04.bin": {
+        "bytes": 239728,
+        "sha256": "00d6b5743358cba4bc78d25010b1bfc262d6cb313de8cbeffa570bb95387dfc7"
+      },
+      "ceramic_vase_04.gltf": {
+        "bytes": 2716,
+        "sha256": "ca6461229bd6379b621396581e32400f93884fe77f7fa8abe6ddbeb64d57421b"
+      },
+      "textures/ceramic_vase_04_diff_1k.jpg": {
+        "bytes": 23941,
+        "sha256": "ef565d777e3ba06ce125d04f76d16667d82db1adae974f117075f87ea3a46880"
+      },
+      "textures/ceramic_vase_04_nor_gl_1k.jpg": {
+        "bytes": 19334,
+        "sha256": "3f02ad8b4222dd38f44f7bbf00f32a9cae6314003f9a4d5be3d47b5782540146"
+      },
+      "textures/ceramic_vase_04_rough_1k.jpg": {
+        "bytes": 34527,
+        "sha256": "b8b37a57f2fcb4e2f2ab9db4529dfe8b2c1017297d7eb6d8926dfd5afdca516c"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.09056079387664795,
+        0.3424701690673828,
+        0.09055991470813751
+      ],
+      "min": [
+        -0.09056074172258377,
+        0.0005259597674012184,
+        -0.09055996686220169
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/ceramic_vase_04",
+    "triangles": 9000
+  },
+  "hanging_picture_frame_02": {
+    "files": {
+      "hanging_picture_frame_02.bin": {
+        "bytes": 115080,
+        "sha256": "0ed5813c8b30f63807ffac962e47135d3248b3804e07cb93862c13e29bed83d8"
+      },
+      "hanging_picture_frame_02.gltf": {
+        "bytes": 6433,
+        "sha256": "ea9a1d44e8d794e224a5342204669a328b57d64d5df629d1d5d86e60e27245e5"
+      },
+      "textures/hanging_picture_frame_02_arm_1k.jpg": {
+        "bytes": 27768,
+        "sha256": "5ca1509d5607a3dd6fd33cff8392150662c38a9e3af73e8dffd2960c294f490e"
+      },
+      "textures/hanging_picture_frame_02_artwork_diff_1k.jpg": {
+        "bytes": 39305,
+        "sha256": "a577678760abafea0587b8c38019f9c58b87c44514437f71995aa71b1749b68d"
+      },
+      "textures/hanging_picture_frame_02_artwork_nor_gl_1k.jpg": {
+        "bytes": 6419,
+        "sha256": "69f2d765d0e0c55f18bc7a91e16bcf21af0533786808b3d28eb5fe6678c67194"
+      },
+      "textures/hanging_picture_frame_02_artwork_roughness_1k.jpg": {
+        "bytes": 21350,
+        "sha256": "b4f7429ddeccd2ad0377bf27bf81b81680dcbe5bb65dadddaa95ab1d027e27c0"
+      },
+      "textures/hanging_picture_frame_02_diff_1k.jpg": {
+        "bytes": 36782,
+        "sha256": "88cd1fec78a4114674cd94d9d984135ef87b22d7b2ba330ab012ed81be1a87e6"
+      },
+      "textures/hanging_picture_frame_02_nor_gl_1k.jpg": {
+        "bytes": 9877,
+        "sha256": "bcc33508c78586f8bc3aa72e45d8da4d45efd3e6529b0879acf01246f4c5b11a"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.3762068748474121,
+        0.22135353088378906,
+        0.035109858959913254
+      ],
+      "min": [
+        -0.37560656666755676,
+        -0.27864643931388855,
+        0.0020347151439636946
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/hanging_picture_frame_02",
+    "triangles": 3678
+  },
+  "potted_plant_02": {
+    "files": {
+      "potted_plant_02.bin": {
+        "bytes": 1852244,
+        "sha256": "9c9812482c78a59789ed32fa842b4cbd9365e09c900c31ebb998e5efe627fe97"
+      },
+      "potted_plant_02.gltf": {
+        "bytes": 6653,
+        "sha256": "c533dcce0d1aa4379eb7db04601a04983f8df2422b28578de922655a416e64a9"
+      },
+      "textures/potted_plant_02_leaves_diff_1k.jpg": {
+        "bytes": 46913,
+        "sha256": "3eccd08bc0a1023099279e2d1d7f64a1ca9358a5e905c06788b567f24ab3072e"
+      },
+      "textures/potted_plant_02_leaves_nor_gl_1k.jpg": {
+        "bytes": 36817,
+        "sha256": "e38cbcf8e86208f164697c1111424aeb9d1b1ee1ceb4114ba209c0f150e1987b"
+      },
+      "textures/potted_plant_02_leaves_rough_1k.jpg": {
+        "bytes": 19292,
+        "sha256": "e592b9e3690db0d96b35b69777e57799f3c75ca1acc124f11f0cc75e7989890d"
+      },
+      "textures/potted_plant_02_pot_diff_1k.jpg": {
+        "bytes": 35573,
+        "sha256": "edbfd7ac13f8a8bbe1db33e954e3671d721a6a56b8dfdf43de26b0235454f5f8"
+      },
+      "textures/potted_plant_02_pot_nor_gl_1k.jpg": {
+        "bytes": 20731,
+        "sha256": "86338979ccbeb41f6d3345d23a74236362d12b7c3768b6b7439e6b161d250288"
+      },
+      "textures/potted_plant_02_pot_rough_1k.jpg": {
+        "bytes": 28869,
+        "sha256": "ff62581fc138e4b70066d89ba2da0523029a16f865067fd6551eea450d2e805e"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.3351912200450897,
+        0.535942018032074,
+        0.33649539947509766
+      ],
+      "min": [
+        -0.3937562108039856,
+        -0.09663186967372894,
+        -0.4209985136985779
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/potted_plant_02",
+    "triangles": 69806
+  },
+  "potted_plant_04": {
+    "files": {
+      "potted_plant_04.bin": {
+        "bytes": 241800,
+        "sha256": "158c1d27503d4845eb3573f00c01ae3f4f77f1d6ca8754c67bf1762745946f7f"
+      },
+      "potted_plant_04.gltf": {
+        "bytes": 7081,
+        "sha256": "b3a3bc3e97da75844999c4da07b7104b6c023f729a7c045979929b9504184339"
+      },
+      "textures/potted_plant_04_arm_1k.jpg": {
+        "bytes": 34921,
+        "sha256": "a53358c50104bc48bbc7c1dfba2fc2f17a0aa0014f75e1c7786e683907bbe516"
+      },
+      "textures/potted_plant_04_diff_1k.jpg": {
+        "bytes": 50209,
+        "sha256": "964bc9a9bb385c70fbd83e904e35f517d96762e1be24019ec81c647656521bdc"
+      },
+      "textures/potted_plant_04_nor_gl_1k.jpg": {
+        "bytes": 64567,
+        "sha256": "0c9a660389c9d37a9bda3430d98ca584053ec1e996ec122672be32c032c0b62d"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.08394316583871841,
+        0.26783305406570435,
+        0.1008082702755928
+      ],
+      "min": [
+        -0.08394315838813782,
+        0.0003753884811885655,
+        -0.08394315838813782
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/potted_plant_04",
+    "triangles": 8929
+  },
+  "standing_picture_frame_01": {
+    "files": {
+      "standing_picture_frame_01.bin": {
+        "bytes": 55424,
+        "sha256": "bdaf666c5011671c55d5661171d2395cee7d80f1558e92760c663050cba39b49"
+      },
+      "standing_picture_frame_01.gltf": {
+        "bytes": 6936,
+        "sha256": "cd8a0326db53a48c918940c9a7ad016236d825a6b487e5d312fcac33897074bc"
+      },
+      "textures/standing_picture_frame_01_arm_1k.jpg": {
+        "bytes": 26056,
+        "sha256": "093d658e980c9f976c547d596d75be7ca966735adefe21d2fd289f43c58818db"
+      },
+      "textures/standing_picture_frame_01_artwork_diff_1k.jpg": {
+        "bytes": 29870,
+        "sha256": "63d44097a854ec52790c11ce2d7cb393ba751fb0bf8e81e5cb32b9d17548c983"
+      },
+      "textures/standing_picture_frame_01_artwork_nor_gl_1k.jpg": {
+        "bytes": 1823,
+        "sha256": "6f60be2b16d6132031baa23c385b95998e0c3a04ec4a63127d0aa46bb26575f7"
+      },
+      "textures/standing_picture_frame_01_artwork_rough_1k.jpg": {
+        "bytes": 1819,
+        "sha256": "7c8d5e538198267d77cdaad7c9749d24d1df507f0c30b247d66b06452114402e"
+      },
+      "textures/standing_picture_frame_01_diff_1k.jpg": {
+        "bytes": 21734,
+        "sha256": "246975fce2292827ec0b9f84bf61c0a5542f3ff3d3df02793ce77d3b070d943e"
+      },
+      "textures/standing_picture_frame_01_nor_gl_1k.jpg": {
+        "bytes": 7243,
+        "sha256": "b3a871197e2b00a8388f93e25d9f03fffc5b1004e7b6e5192fd7b4dcd0003d98"
+      }
+    },
+    "license": "CC0-1.0",
+    "note": "textures reduced to 512 px",
+    "positionBounds": {
+      "max": [
+        0.03865445405244827,
+        0.2491837441921234,
+        0.1003999263048172
+      ],
+      "min": [
+        -0.06162241846323013,
+        -0.0004743710160255432,
+        -0.1003999263048172
+      ]
+    },
+    "retrieved": "2026-10-11",
+    "source": "https://polyhaven.com/a/standing_picture_frame_01",
+    "triangles": 1634
+  }
+}
