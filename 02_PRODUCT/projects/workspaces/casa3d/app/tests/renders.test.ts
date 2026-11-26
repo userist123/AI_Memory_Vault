@@ -1,7 +1,7 @@
 // Randările locale: pornesc doar cu Blender configurat, un job odată, fișierele se citesc doar cu nume valide și doar de proprietar.
 import { test, beforeAll } from 'vitest';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
@@ -39,4 +39,29 @@ test('Blender iese cu 0 dar nu scrie nicio imagine (script oprit): jobul e „fa
   await startRender(A, id, scene, {});
   for (let i = 0; i < 40 && (await listRenders(A, id)).jobs[0]!.status === 'running'; i++) await wait(100);
   const l = await listRenders(A, id); assert.equal(l.jobs[0]!.status, 'failed'); assert.deepEqual(l.jobs[0]!.images, []);
+});
+
+test('două cereri simultane: doar una pornește Blender, cealaltă primește 409', async () => {
+  const id = await repo.createProject(A, 'Randări simultane', 'demo'), dir = mkdtempSync(path.join(tmpdir(), 'casa3d-rc-'));
+  process.env.CASA3D_RENDER_DIR = path.join(dir, 'out');
+  const fake = path.join(dir, 'blender.mjs'); writeFileSync(fake, 'setTimeout(() => process.exit(0), 300);\n'); process.env.CASA3D_BLENDER = fake;
+  const r = await Promise.allSettled([startRender(A, id, scene, {}), startRender(A, id, scene, {})]);
+  assert.equal(r.filter(x => x.status === 'fulfilled').length, 1);
+  assert.equal((r.find(x => x.status === 'rejected') as PromiseRejectedResult).reason.status, 409);
+  for (let i = 0; i < 40 && (await listRenders(A, id)).jobs.some(j => j.status === 'running'); i++) await wait(100);
+});
+
+test('camerele: un id care începe cu „-” (ex. --export) nu ajunge în argumentele Blender', async () => {
+  const id = await repo.createProject(A, 'Randare camere', 'demo'), dir = mkdtempSync(path.join(tmpdir(), 'casa3d-rr-'));
+  process.env.CASA3D_RENDER_DIR = path.join(dir, 'out');
+  // „Blender” de test: scrie argumentele primite în <out>/args.json
+  const fake = path.join(dir, 'blender.mjs'); writeFileSync(fake, "import { writeFileSync } from 'node:fs'; import path from 'node:path';\nconst a = process.argv.slice(2); writeFileSync(path.join(a[a.indexOf('--') + 2], 'args.json'), JSON.stringify(a));\n"); process.env.CASA3D_BLENDER = fake;
+  for (const [rooms, expected] of [['--export', 'all'], ['living,-x', 'all'], ['living,baie-2', 'living,baie-2']] as const) {
+    const job = await startRender(A, id, scene, { rooms });
+    const out = path.join(process.env.CASA3D_RENDER_DIR!, id, job.job, 'args.json');
+    for (let i = 0; i < 40 && (await listRenders(A, id)).jobs[0]!.status === 'running'; i++) await wait(100);
+    const a: string[] = JSON.parse(readFileSync(out, 'utf8'));
+    assert.equal(a[a.indexOf('--rooms') + 1], expected);
+    await wait(5);   // job-urile se numesc după milisecundă
+  }
 });

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { gate, isLocalRequest, isCrossSiteWrite } from './lib/public-gate';
 import { readAuth, verifySession, SESSION_COOKIE } from './lib/auth';
 import { newNonce, contentSecurityPolicy, policyFor, applySecurityHeaders } from './lib/security-headers';
+import { OWNER_COOKIE, OWNER_RE, ownerCookieOptions, needsOwner, withOwnerCookie } from './lib/owner-cookie';
 // Din afară (prin tunel) se văd linkurile pentru client și pagina de login; după login, toată aplicația
 // (fără setarea parolei și administrare, care rămân doar pe acest calculator).
 // Fiecare răspuns primește antetele de securitate și un CSP cu nonce nou (lib/security-headers.ts).
@@ -13,10 +14,14 @@ export function proxy(req: NextRequest){
   // Next.js citește CSP-ul din cererea transmisă mai departe și pune nonce-ul pe scripturile pe care le randează
   const forward = new Headers(req.headers); forward.set('content-security-policy', csp); forward.set('x-nonce', nonce);
   const done = (res: NextResponse) => applySecurityHeaders(res, policy, req.headers);
+  // proprietarul anonim se atribuie aici, o singură dată: la prima vizită pagina trimite mai multe cereri API deodată și,
+  // dacă fiecare și-ar face proprietarul ei (lib/owner.ts), proiectele create în prima secundă ar rămâne orfane
+  const owner = needsOwner(path) && !OWNER_RE.test(req.cookies.get(OWNER_COOKIE)?.value ?? '') ? crypto.randomUUID() : null;
+  if (owner) forward.set('cookie', withOwnerCookie(req.headers.get('cookie'), owner));
   // CSRF: nicio scriere în API de pe altă origine (inclusiv linkurile clientului: acolo scrie doar pagina linkului)
   if (path.startsWith('/api/') && isCrossSiteWrite(req.method, req.headers)) return done(NextResponse.json({ error: 'Cerere refuzată.' }, { status: 403, headers: H }));
   const d = gate({ local, path, method: req.method, session: !local && verifySession(readAuth(), req.cookies.get(SESSION_COOKIE)?.value), demo: process.env.CASA3D_DEMO === '1' });
-  if (d === 'allow') return done(NextResponse.next({ request: { headers: forward } }));
+  if (d === 'allow'){ const res = NextResponse.next({ request: { headers: forward } }); if (owner) res.cookies.set(OWNER_COOKIE, owner, ownerCookieOptions()); return done(res); }
   // pagina de login se arată chiar la adresa cerută (fără redirecționare: serverul nu știe adresa publică a tunelului);
   // după login, pagina se reîncarcă pe aceeași adresă, acum cu sesiune
   if (d === 'login'){ const u = req.nextUrl.clone(); u.pathname = '/login'; u.search = ''; u.protocol = 'http:'; return done(NextResponse.rewrite(u, { headers: H, request: { headers: forward } })); } // intern: serverul vorbește http, chiar dacă tunelul a venit pe https
