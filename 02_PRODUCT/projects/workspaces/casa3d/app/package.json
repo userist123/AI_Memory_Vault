@@ -9,7 +9,8 @@
     "start": "node scripts/run-local.mjs start",
     "start:hosted": "next start",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@casa3d/twin-core": "file:../packages/twin-core",
@@ -23,6 +24,7 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/node": "^26.6.3",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
