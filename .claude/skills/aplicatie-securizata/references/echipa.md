@@ -52,7 +52,8 @@ i18n) and say so in the report.
   table is written in the coordination checkpoint BEFORE dispatch.
 - Shared files (lockfiles, migrations, route registries, barrel exports, CI config) are edited only
   by the integrator.
-- At most 3 concurrent writers and 5 concurrent read-only agents.
+- At most 6 concurrent writers and 8 concurrent read-only agents (owner decision 2026-11-24, same as cost-router
+  fan-out.md); size by complexity, never more writers than disjoint slices.
 - The integrator is the Opus main session: merges in small batches and runs the affected tests after
   each merge. Workers commit/push their own branch only when the brief says so, then stop; they
   never poll CI and never merge. The integrator merges.
