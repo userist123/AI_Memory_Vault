@@ -128,3 +128,12 @@ jobs:
           node scripts/check-slides.mjs http://127.0.0.1:3399 || status=1
           if [ "$status" != 0 ]; then echo "--- server log ---"; tail -n 80 "$RUNNER_TEMP/casa3d-server.log"; fi
           exit $status
+      - name: End-to-end smoke tests (Playwright, preinstalled Google Chrome)
+        # e2e/smoke.spec.ts: home, project creation, plan, live non-blank WebGL canvas, estimate, presentation.
+        # playwright.config.ts starts its own server (port 3919, in-memory PGlite) on the build above;
+        # channel 'chrome' uses the runner's Google Chrome, so no browser download.
+        if: steps.app.outputs.present == 'true' && runner.os == 'Linux'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run e2e
