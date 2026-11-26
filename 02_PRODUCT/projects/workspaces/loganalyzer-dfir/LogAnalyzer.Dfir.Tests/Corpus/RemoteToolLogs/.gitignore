@@ -1,0 +1,2 @@
+# The synthetic TEST samples include a *.log file (TeamViewer main log); the repository-wide "*.log" rule must not hide it
+!*.log

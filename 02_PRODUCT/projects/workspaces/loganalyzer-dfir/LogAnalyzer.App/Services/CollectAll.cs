@@ -54,6 +54,7 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Runs the handler once at a time; a second press while it runs only says so.</summary>
         public static async Task RunAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Instance.Status = licenseRefusal; return; }   // collection writes a case: case.local (catalogue: pages 12 and 16)
             if (Handler is null) { Instance.Status = "Colectarea nu este disponibilă în această fereastră."; return; }
             if (Instance.IsRunning) { Instance.Status = "Colectarea completă rulează deja; rezultatul apare pe toate paginile când se termină."; return; }
             await Handler();
@@ -87,12 +88,19 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Raised when a control or an analysis result is recorded, with the line for the status bar.</summary>
         public event Action<string>? ActivityRecorded;
 
+        /// <summary>Raised after a station control finished (with or without a saved report): Home lists the station's LIVE case in „Cazuri recente”.</summary>
+        public event Action? ControlRecorded;
+
         /// <summary>A station control finished: the empty banner goes away and the status bar gets the summary.</summary>
         public void RecordControl(string summary)
         {
             ControlDone = true;
-            LastActivity = summary;
-            ActivityRecorded?.Invoke(summary);
+            // Lab WS02 2026-11-17: after „Colectează tot” the status bar kept only the control line; the investigation of the same run stays in front of it.
+            var line = _runInvestigationLine is { } inv && summary.Length > 0 ? inv.TrimEnd('.') + "; " + char.ToLowerInvariant(summary[0]) + summary[1..] : summary;
+            _runInvestigationLine = null;
+            LastActivity = line;
+            ActivityRecorded?.Invoke(line);
+            ControlRecorded?.Invoke();
         }
 
         /// <summary>Raised after a new result is published (pages refresh what they show from it).</summary>
@@ -106,13 +114,23 @@ namespace LogAnalyzer.UI.Services
             LastActivity = opened
                 ? $"Caz deschis: {(string.IsNullOrWhiteSpace(r.Case.Info.Name) ? r.Case.Info.CaseId : r.Case.Info.Name)} ({r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări)."
                 : $"Investigație finalizată: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}).";
+            if (_inCollectAll && !opened) _runInvestigationLine = LastActivity;
             ActivityRecorded?.Invoke(LastActivity);
             Published?.Invoke(r);
         }
 
+        private bool _inCollectAll;
+        private string? _runInvestigationLine;
+
+        /// <summary>„Colectează tot” starts: an investigation published before the station control of the same run stays on the status bar with it.</summary>
+        public void BeginCollectAll() { _inCollectAll = true; _runInvestigationLine = null; }
+
+        /// <summary>„Colectează tot” ended (also on failure): a later control alone shows only its own line.</summary>
+        public void EndCollectAll() { _inCollectAll = false; _runInvestigationLine = null; }
+
         private static readonly System.Globalization.CultureInfo RoRo = System.Globalization.CultureInfo.GetCultureInfo("ro-RO");
 
-        public void Clear() { Current = null; ControlDone = false; LastActivity = ""; Status = EmptySubtitle; }
+        public void Clear() { Current = null; ControlDone = false; LastActivity = ""; Status = EmptySubtitle; _inCollectAll = false; _runInvestigationLine = null; }
 
         /// <summary>The plan for a role: the incident-response station collects everything (complete profile); the control station collects the standard set and runs the station control.</summary>
         public static CollectAllPlan Plan(StationRole role) => role switch

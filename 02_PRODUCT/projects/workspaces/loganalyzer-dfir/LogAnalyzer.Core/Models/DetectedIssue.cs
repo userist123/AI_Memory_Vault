@@ -11,6 +11,8 @@ namespace LogAnalyzer.Core.Models
         [ObservableProperty] private string _title = string.Empty;
         [ObservableProperty] private string _severity = "Low";
         [ObservableProperty] private string _explanation = string.Empty;
+        /// <summary>The alert in plain words (owner 2026-11-06): when, on which computer, who, what; no codes or attack-tool jargon. "" = only the title.</summary>
+        [ObservableProperty] private string _plain = string.Empty;
         [ObservableProperty] private string _mitreTacticName = string.Empty;
         [ObservableProperty] private string _mitreTechniqueId = string.Empty;
         [ObservableProperty] private string _complianceTag = string.Empty;
@@ -22,5 +24,8 @@ namespace LogAnalyzer.Core.Models
         [ObservableProperty] private bool _isTestAlert;
         
         public List<ParsedEvent> RelatedEvents { get; set; } = new();
+
+        /// <summary>A grid row's name for UI Automation (lab VM 2026-11-06 read „LogAnalyzer.Core.Models.DetectedIssue”).</summary>
+        public override string ToString() => $"{Severity}: {Title}";
     }
 }

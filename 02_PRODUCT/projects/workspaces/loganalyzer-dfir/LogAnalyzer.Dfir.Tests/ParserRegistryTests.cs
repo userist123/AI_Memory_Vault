@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(19, all.Count);   // + FirewallLogParser (pfirewall.log, owner directive 2026-10-16); + ShellBagsParser and RecycleBinInfoParser (E7)
+        Assert.Equal(40, all.Count);   // + BitLockerVolumesParser (planner #14 E8, 2026-11-21); + AuditPolicyCsvParser and LocalAccountsParser (planner #12 B3, 2026-11-20); + PowerShellTranscriptParser (PowerShell_transcript*.txt, transcripts task 2026-11-18); + RustDeskLogParser (RustDesk rustdesk_r*.log, remote-tool task 2026-11-16); + I30Parser (NTFS $I30 INDX, ntfs-i30 task 2026-11-13); + MftParser (NTFS $MFT, ntfs-mft task 2026-11-13); + FirewallLogParser (pfirewall.log, owner directive 2026-10-16); + ShellBagsParser and RecycleBinInfoParser (E7); + SetupApiLogParser (research P2.3); + CustomJumpListParser (P3.1); + VolatilityJsonParser (master plan 6.6); + ZeekLogParser (master plan 6.5); + DefenderDetectionHistoryParser (research gaps 2026-11-09, point 3); + NotepadTabStateParser (research gaps 2026-11-09, point 6); + WindowsSearchIndexParser (research gaps 2026-11-09, point 7); + WindowsSearchGatherParser (Windows-gather.db, same research point); + AnyDeskConnectionTraceParser, AnyDeskTraceParser, TeamViewerConnectionsParser (research gaps 2026-11-09, section C.4: session logs of remote tools); + TeamViewerLogfileParser (TeamViewer<NN>_Logfile.log, incoming sessions)
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -117,7 +117,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(19, inventory.GetArrayLength());   // + FirewallLogParser, ShellBagsParser, RecycleBinInfoParser
+        Assert.Equal(40, inventory.GetArrayLength());   // + BitLockerVolumesParser (planner #14 E8); + AuditPolicyCsvParser, LocalAccountsParser, + PowerShellTranscriptParser, RustDeskLogParser, I30Parser, MftParser, FirewallLogParser, ShellBagsParser, RecycleBinInfoParser, SetupApiLogParser, CustomJumpListParser, VolatilityJsonParser, ZeekLogParser, DefenderDetectionHistoryParser, NotepadTabStateParser, WindowsSearchIndexParser, WindowsSearchGatherParser, AnyDeskConnectionTraceParser, AnyDeskTraceParser, TeamViewerConnectionsParser, TeamViewerLogfileParser
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }

@@ -45,6 +45,9 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Folder of the station's live case (may not exist yet). WP18: used to list previous controls without confirming a scope.</summary>
         public static string Root => RootPath();
 
+        /// <summary>Files the application writes into the LIVE case folder even before the case exists (the device monitor's journal, MediaCenterViewModel.Log).</summary>
+        internal static readonly string[] PreCaseFiles = ["media_live.jsonl"];
+
         private static string RootPath() =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LogAnalyzer", "Cases", $"LIVE-{Environment.MachineName}");
 
@@ -188,7 +191,7 @@ namespace LogAnalyzer.UI.Services
                 bool existing = File.Exists(Path.Combine(root, "case.json"));
                 _case = existing
                     ? CaseWorkspace.Open(root, recheck: false)
-                    : CaseWorkspace.Create(root, new CaseInfo
+                    : CaseWorkspace.CreateKeepingPreCaseFiles(root, new CaseInfo
                     {
                         CaseId = $"LIVE-{Environment.MachineName}",
                         Name = $"Stația {Environment.MachineName}",
@@ -202,7 +205,7 @@ namespace LogAnalyzer.UI.Services
                         CollectionMode = "live",
                         Scope = _configured ?? ProvisionalScope(),
                         StationRole = LogAnalyzer.Core.Services.Edition.StationRoles.Name(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role),
-                    });
+                    }, PreCaseFiles);
                 if (existing)
                 {
                     if (_case.ScopeNote is not null && _configured is { IsConfirmed: true }) _case.ConfirmScope(_configured, Environment.UserName);

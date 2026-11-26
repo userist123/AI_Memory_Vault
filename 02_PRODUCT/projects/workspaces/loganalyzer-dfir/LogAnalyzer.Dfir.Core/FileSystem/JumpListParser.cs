@@ -23,7 +23,7 @@ public sealed class JumpListParser : EvidenceParserBase
         FormatVersions = ["DestList versiunea 3 – 6 (Windows 10 / 11; intrare de 130 de octeți + cale UTF-16 + 4 octeți)"],
         Limitations =
         [
-            "Jump Lists personalizate (*.customDestinations-ms) nu sunt citite.",
+            "Jump Lists personalizate (*.customDestinations-ms) sunt citite separat (CustomJumpListParser).",
             "Numele aplicației nu este rezolvat din AppID (primele 16 caractere hex ale numelui de fișier).",
             "DestList versiunea 1 (Windows 7 / 8) nu este acceptată: parsarea eșuează explicit.",
         ],

@@ -313,7 +313,7 @@ namespace LogAnalyzer.UI.ViewModels
             _watcher.Start();
             _monitor?.SetEventsAvailable(_watcher.PnpEventsActive);
             IsLive = true;
-            LiveStatus = "Supraveghere în timp real PORNITĂ: orice dispozitiv conectat sau scos apare mai jos în câteva secunde.";
+            LiveStatus = "Supraveghere în timp real pornită: orice dispozitiv conectat sau scos apare mai jos în câteva secunde.";
         }
 
         private void StopLive()
@@ -386,7 +386,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var dir = LogAnalyzer.UI.Services.LiveCase.Root;
                 Directory.CreateDirectory(dir);
-                File.AppendAllText(Path.Combine(dir, "media_live.jsonl"), JsonSerializer.Serialize(e) + Environment.NewLine);
+                LogAnalyzer.Dfir.IO.SharedAppend.WriteText(Path.Combine(dir, "media_live.jsonl"), JsonSerializer.Serialize(e) + Environment.NewLine);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
@@ -407,6 +407,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task AddToRegister()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Summary = licenseRefusal; return; }
             if (!_register.CanEdit) { Summary = _register.AccessNotice; return; }
             await _register.DiscoverCommand.ExecuteAsync(null);
             Summary = _register.Status + " Deschideți fila „Registrul de medii” ca să completați nivelul, zona și utilizatorul, apoi salvați.";

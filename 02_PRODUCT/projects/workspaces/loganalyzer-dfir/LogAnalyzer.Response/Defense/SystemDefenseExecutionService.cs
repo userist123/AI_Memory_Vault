@@ -213,10 +213,21 @@ namespace LogAnalyzer.Infrastructure.Services
     public sealed class HostDefense : IHostDefense
     {
         [ControlledResponse("delegates to SystemDefenseExecutionService.IsolateHostFromNetwork")]
-        public DefenseActionResult IsolateHostFromNetwork() => SystemDefenseExecutionService.IsolateHostFromNetwork();
+        public DefenseActionResult IsolateHostFromNetwork() => NotLicensed() ?? SystemDefenseExecutionService.IsolateHostFromNetwork();
         [ControlledResponse("delegates to SystemDefenseExecutionService.RestoreNetworkAccess")]
         public DefenseActionResult RestoreNetworkAccess() => SystemDefenseExecutionService.RestoreNetworkAccess();
         [ControlledResponse("delegates to SystemDefenseExecutionService.BlockMaliciousIoC")]
-        public DefenseActionResult BlockMaliciousIoC(string iocTarget) => SystemDefenseExecutionService.BlockMaliciousIoC(iocTarget);
+        public DefenseActionResult BlockMaliciousIoC(string iocTarget) => NotLicensed() ?? SystemDefenseExecutionService.BlockMaliciousIoC(iocTarget);
+
+        // Planner #9 item 6: containing the station needs the response.host right of the verified licence, checked here as well as at navigation. Nothing is run when it is missing or the licence
+        // is expired (read-only). RestoreNetworkAccess is deliberately NOT gated: lifting an isolation only removes a block the application itself put there, and an expired licence must never
+        // leave the station cut off from the network with no way back.
+        private static DefenseActionResult? NotLicensed() =>
+            LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var why) ? null : new DefenseActionResult
+            {
+                Status = DefenseActionResult.NotAuthorized,
+                Message = why,
+                Verification = ResponseOutcome.NotAttempted("defense", "apply", ResponseStatus.NotAuthorized, why),
+            };
     }
 }

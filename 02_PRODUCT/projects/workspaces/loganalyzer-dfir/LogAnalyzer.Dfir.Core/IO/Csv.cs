@@ -21,12 +21,35 @@ public sealed class CsvWriter : IDisposable
     public void WriteRow(IReadOnlyList<object?> values)
     {
         if (values.Count != _columns) throw new ArgumentException($"Expected {_columns} columns, got {values.Count}.");
+        _w.Write(RowText(values));
+    }
+
+    /// <summary>One CSV row (escaped, comma-separated, CRLF-terminated), as <see cref="WriteRow(IReadOnlyList{object?})"/> writes it.</summary>
+    public static string RowText(IReadOnlyList<object?> values)
+    {
+        var sb = new StringBuilder();
         for (int i = 0; i < values.Count; i++)
         {
-            if (i > 0) _w.Write(',');
-            _w.Write(Escape(Format(values[i])));
+            if (i > 0) sb.Append(',');
+            sb.Append(Escape(Format(values[i])));
         }
-        _w.Write("\r\n");
+        return sb.Append("\r\n").ToString();
+    }
+
+    /// <summary>
+    /// Appends one row to a CSV that several processes may write at once (the app audit files of a case: two app instances on one station share
+    /// the LIVE case). The header (with the UTF-8 BOM) is written only when the file is empty, decided under the same exclusive handle.
+    /// </summary>
+    public static void AppendShared(string path, IReadOnlyList<string> header, IReadOnlyList<object?> values)
+    {
+        if (values.Count != header.Count) throw new ArgumentException($"Expected {header.Count} columns, got {values.Count}.");
+        SharedAppend.Write(path, empty =>
+        {
+            var row = Encoding.UTF8.GetBytes(RowText(values));
+            if (!empty) return row;
+            byte[] head = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(RowText(header.Cast<object?>().ToList()))];
+            return [.. head, .. row];
+        });
     }
 
     public void WriteRow(IReadOnlyList<string> values) => WriteRow(values.Cast<object?>().ToList());

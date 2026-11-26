@@ -120,7 +120,9 @@ public sealed class Wp18LanguageTests : IDisposable
         Assert.Contains("IsChecked=\"{Binding IsExpertLevel", main);
         Assert.Contains("OpenGlossaryCommand", main);
         Assert.Matches(@"AutomationProperties\.Name=""Nivel de limbaj", main);
-        Assert.Matches(@"Content=""Ce înseamnă\?""", main);
+        // design step 1 (2026-11-10): the button is icon + text so the text can fold on a narrow window; the name and the visible text both stay
+        Assert.Matches(@"AutomationProperties\.Name=""Ce înseamnă\?""", main);
+        Assert.Matches(@"<TextBlock Text=""Ce înseamnă\?""", main);
     }
 }
 

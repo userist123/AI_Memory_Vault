@@ -143,7 +143,7 @@ namespace LogAnalyzer.Core.Services
             }
 
             // 3. Compliance Matrix (Applicable to both, evaluated per environment)
-            sb.AppendLine("<h2>" + (isAirGapped ? "2. Matrice Conformitate Stație Izolată (HG 585/2002, ISO/IEC 27042)" : "3. Matrice Conformitate Enterprise (Directiva NIS2, HG 585/2002, GDPR, PCI-DSS)") + "</h2>");
+            sb.AppendLine("<h2>" + (isAirGapped ? "2. Matrice orientativă, neatestată, pentru stația izolată (referințe: HG 585/2002, ISO/IEC 27042)" : "3. Matrice orientativă, neatestată (referințe: Directiva NIS2, HG 585/2002, GDPR, PCI-DSS)") + "</h2>");
             sb.AppendLine("<table>");
             sb.AppendLine("<tr><th style=\"width:180px;\">Cadru Reglementar</th><th style=\"width:150px;\">Articol / Control</th><th style=\"width:200px;\">Titlu Control</th><th style=\"width:110px;\">Status</th><th>Evidență Forensică Corelată</th><th style=\"width:240px;\">Măsură Impusă</th></tr>");
             var cList = complianceResults?.ToList() ?? new List<ComplianceCheckResult>();
@@ -157,7 +157,7 @@ namespace LogAnalyzer.Core.Services
             }
             sb.AppendLine("</table>");
 
-            sb.AppendLine("<div class=\"footer\">LogAnalyzer Enterprise — Threat Operations &amp; Incident Command Center | Conformitate HG 585/2002, Directiva NIS2, ISO/IEC 27042</div>");
+            sb.AppendLine("<div class=\"footer\">LogAnalyzer Enterprise — Threat Operations &amp; Incident Command Center | Referințe: HG 585/2002, Directiva NIS2, ISO/IEC 27042 (conformitatea nu este atestată de acest raport)</div>");
             sb.AppendLine("</div>");
             sb.AppendLine("</body>");
             sb.AppendLine("</html>");

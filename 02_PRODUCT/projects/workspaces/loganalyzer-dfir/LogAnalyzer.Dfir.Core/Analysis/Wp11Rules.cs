@@ -22,12 +22,17 @@ public static partial class Wp11Rules
         var c = new Ctx(events, existing, nextId, profile, data ?? Wp11Data.Default, options ?? new Wp11Options());
         var found = new List<Finding>();
         Smb(c, found);
+        SmbAuth(c, found);
         Accounts(c, found);
         Remote(c, found);
         Agents(c, found);
         Vss(c, found);
         Dns(c, found);
         Tools(c, found);
+        Discovery(c, found);
+        AdAttacks(c, found);
+        DefenderHistory(c, found);
+        WindowsSearchGatherOnly(c, found);
         return found;
     }
 

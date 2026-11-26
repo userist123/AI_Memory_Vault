@@ -13,8 +13,9 @@ public static class IncidentPdfReport
 {
     private const string Ink = "#0f172a", Muted = "#64748b", Line = "#cbd5e1", Danger = "#b91c1c", Ok = "#15803d";
 
-    public static void Write(ProcessIncident i, string outputPath, string caseName, string host)
+    public static void Write(ProcessIncident i, string outputPath, string caseName, string host, string? marking = null)
     {
+        var markingLine = LogAnalyzer.Dfir.Reporting.MarkingText.Line(marking);
         QuestPDF.Settings.License = LicenseType.Community;
         var s = i.Scan;
         var zone = TimeZoneInfo.Local;
@@ -28,6 +29,7 @@ public static class IncidentPdfReport
 
             page.Header().Column(h =>
             {
+                h.Item().AlignCenter().Text(markingLine).Bold().FontSize(8).FontColor(Danger);
                 h.Item().Row(r =>
                 {
                     r.RelativeItem().Column(c =>
@@ -141,12 +143,16 @@ public static class IncidentPdfReport
                     col.Item().Text("Probe în caz: " + string.Join(", ", i.EvidenceIds) + " (SHA-256 și lanțul de custodie în Logs/chain_of_custody.csv).").FontSize(8);
             });
 
-            page.Footer().AlignCenter().Text(t =>
+            page.Footer().Column(fc =>
+            {
+            fc.Item().AlignCenter().Text(markingLine).Bold().FontSize(7.5f).FontColor(Danger);
+            fc.Item().AlignCenter().Text(t =>
             {
                 t.Span($"LogAnalyzer {DfirInfo.ApplicationVersion} · {i.IncidentId} · pagina ").FontSize(7.5f).FontColor(Muted);
                 t.CurrentPageNumber().FontSize(7.5f).FontColor(Muted);
                 t.Span(" / ").FontSize(7.5f).FontColor(Muted);
                 t.TotalPages().FontSize(7.5f).FontColor(Muted);
+            });
             });
         })).GeneratePdf(outputPath);
     }

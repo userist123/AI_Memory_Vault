@@ -12,27 +12,38 @@ public sealed class ChainOfCustodyService
 {
     private readonly string _path;
     private readonly object _sync = new();
-    private string _lastHash = "GENESIS";
 
+    /// <remarks>No previous hash is cached: each append reads it from the file under the write handle (two app instances share this log).</remarks>
     public ChainOfCustodyService(string path)
     {
         _path = path;
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-        if (File.Exists(path)) RestoreLastHash();
     }
 
     public CustodyEntry Append(string actor, string action, string details)
     {
         lock (_sync)
         {
-            var timestamp = DateTimeOffset.UtcNow;
-            var canonical = $"{timestamp:O}|{actor}|{action}|{details}|{_lastHash}";
-            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
-            var entry = new CustodyEntry(timestamp, actor, action, details, _lastHash, hash);
-            File.AppendAllText(_path, JsonSerializer.Serialize(entry) + Environment.NewLine, new UTF8Encoding(false));
-            _lastHash = hash;
-            return entry;
+            CustodyEntry? entry = null;
+            // the previous hash is read under the file's write handle, so a second process or object cannot fork the chain
+            LogAnalyzer.Dfir.IO.SharedAppend.WriteAfterLastLine(_path, last =>
+            {
+                var previous = PreviousHashOf(last);
+                var timestamp = DateTimeOffset.UtcNow;
+                var canonical = $"{timestamp:O}|{actor}|{action}|{details}|{previous}";
+                var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
+                entry = new CustodyEntry(timestamp, actor, action, details, previous, hash);
+                return JsonSerializer.Serialize(entry) + Environment.NewLine;
+            });
+            return entry!;
         }
+    }
+
+    private static string PreviousHashOf(string? last)
+    {
+        if (string.IsNullOrWhiteSpace(last)) return "GENESIS";
+        try { return JsonSerializer.Deserialize<CustodyEntry>(last)?.Hash is { Length: > 0 } h ? h : "GENESIS"; }
+        catch (JsonException) { return "GENESIS"; }
     }
 
     public bool Verify()
@@ -42,7 +53,9 @@ public sealed class ChainOfCustodyService
         foreach (var line in File.ReadLines(_path))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
-            var entry = JsonSerializer.Deserialize<CustodyEntry>(line);
+            CustodyEntry? entry;
+            try { entry = JsonSerializer.Deserialize<CustodyEntry>(line); }
+            catch (JsonException) { return false; }   // a damaged or truncated line breaks the chain; it is reported, not thrown
             if (entry is null || entry.PreviousHash != previous) return false;
             var canonical = $"{entry.Timestamp:O}|{entry.Actor}|{entry.Action}|{entry.Details}|{entry.PreviousHash}";
             var expected = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
@@ -50,12 +63,5 @@ public sealed class ChainOfCustodyService
             previous = entry.Hash;
         }
         return true;
-    }
-
-    private void RestoreLastHash()
-    {
-        string? line = null;
-        foreach (var item in File.ReadLines(_path)) line = item;
-        if (!string.IsNullOrWhiteSpace(line)) _lastHash = JsonSerializer.Deserialize<CustodyEntry>(line)?.Hash ?? "GENESIS";
     }
 }

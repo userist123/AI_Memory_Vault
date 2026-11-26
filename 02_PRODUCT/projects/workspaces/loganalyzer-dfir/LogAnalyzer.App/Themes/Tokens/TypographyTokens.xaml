@@ -4,6 +4,8 @@
 
     <!-- Fonts -->
     <FontFamily x:Key="UiFontFamily">Segoe UI Variable Text, Segoe UI, sans-serif</FontFamily>
+    <!-- icons are glyphs of the system icon font (Windows 11: Segoe Fluent Icons; Windows 10 / Server: Segoe MDL2 Assets, same code points); never emoji -->
+    <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas, JetBrains Mono, monospace</FontFamily>
 
     <!-- Font Size Scale -->

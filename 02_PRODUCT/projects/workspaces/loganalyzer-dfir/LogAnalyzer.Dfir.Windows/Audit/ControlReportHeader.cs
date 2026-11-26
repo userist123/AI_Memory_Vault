@@ -11,8 +11,8 @@ public sealed record ControlReportHeader(
     string Unit, string Structure, string Station, string HardwareId, string Period, string Inspector, string InspectorFunction, string StationRole,
     string RegistrationNumber, string Marking, string SignatureLeft, string SignatureRight, IReadOnlyList<ReportHeaderField> ExtraFields)
 {
-    public const string MarkingNote = "marcaj introdus manual, neverificat de aplicație";
-    public const string NoMarking = "fără marcaj introdus";
+    public const string MarkingNote = LogAnalyzer.Dfir.Reporting.MarkingText.Note;
+    public const string NoMarking = LogAnalyzer.Dfir.Reporting.MarkingText.None;
 
     /// <summary>"Ediție nepotrivită" (see <see cref="EditionFit"/>), or empty. Printed as a header line; it never changes a check result.</summary>
     public string EditionWarning { get; init; } = "";
@@ -25,7 +25,7 @@ public sealed record ControlReportHeader(
     public string AppChainFirst { get; init; } = "";
 
     /// <summary>The marking line printed on every page.</summary>
-    public string MarkingLine => string.IsNullOrWhiteSpace(Marking) ? $"Marcaj: {NoMarking} ({MarkingNote})" : $"Marcaj: {Marking.Trim()} ({MarkingNote})";
+    public string MarkingLine => LogAnalyzer.Dfir.Reporting.MarkingText.Line(Marking);
 
     /// <summary>Label: value lines of the header block, in print order; empty values are printed as "—" so the form stays complete.</summary>
     public IReadOnlyList<(string Label, string Value)> Lines()

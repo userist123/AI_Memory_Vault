@@ -87,8 +87,16 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | P37 | Application allow-list (App Control / WDAC) | Enforced or documented alternative | Enforced or documented alternative | Enforced or documented alternative |  |
 | P38 | Last full and quick antivirus scan | Recent | Recent | Recent |  |
 | P39 | Antivirus registered in Security Center | Registered | Registered | Registered |  |
+| P40 | Anonymous access to accounts and shares | Denied | Denied | Denied |  |
+| P41 | LM hash and old NTLM authentication | No LM hash; NTLMv2 only | No LM hash; NTLMv2 only | No LM hash; NTLMv2 only |  |
+| P42 | Dangerous user rights | None beyond the allowed holders | None beyond the allowed holders | None beyond the allowed holders |  |
+| P43 | MSI install with elevated rights (AlwaysInstallElevated) | Off | Off | Off |  |
+| P44 | Memory protection: DEP and SEHOP | DEP OptOut or AlwaysOn; SEHOP on | DEP OptOut or AlwaysOn; SEHOP on | DEP OptOut or AlwaysOn; SEHOP on |  |
+| P45 | WinRM Basic authentication and unencrypted traffic | Disabled | Disabled | Disabled |  |
+| P46 | Name resolution by broadcast (LLMNR) | Off; non-conform if on | Off; review if on | Off; review if on |  |
+| P47 | IIS web server installed | Not installed; non-conform if installed | Not installed; review if installed | Not installed; review if installed |  |
 | A01 | Audit policy records the required activity | Required categories on | Required categories on | Required categories on |  |
-| A02 | Security log size | At least 128 MB | At least 128 MB | At least 128 MB |  |
+| A02 | Security log size | At least 192 MB | At least 192 MB | At least 192 MB |  |
 | A03 | Security log covers the audited period | Covers the period | Covers the period | Covers the period |  |
 | A04 | Other logs cover the audited period | Cover the period | Cover the period | Cover the period |  |
 | A05 | Logs cleared in the period | None | None | None |  |
@@ -104,12 +112,16 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
 | A16 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
 | A17 | The application's own commands recognised from its sealed audit | All recorded | All recorded | All recorded |  |
+| A18 | Access-record retention required by the station level | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives |  |
+| A19 | A domain controller records refused logons (wrong passwords) | n/a | Failures audited for Kerberos Authentication Service and Credential Validation | Failures audited for Kerberos Authentication Service and Credential Validation | A standalone station has no domain controller. Checked only when the station itself is a domain controller. |
+| A20 | Logs that record device connections are on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
 | U04 | Series of wrong passwords (5+ in an hour) | None | None | None |  |
 | U05 | Who worked with administrator rights | Review | Review | Review |  |
 | U06 | PowerShell scripts with commonly abused techniques | Review | Review | Review |  |
+| U07 | Active local accounts in the users register with training and pledge | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined |  |
 | D01 | USB storage devices used on the station | Review | Review | Review |  |
 | D02 | Connected removable media encrypted (BitLocker To Go) | Encrypted | Encrypted | Encrypted | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | D03 | Media scanned with antivirus at connection | Scanned | Scanned | n/a | Scan-at-connection is a controlled-station procedure. |
@@ -128,12 +140,16 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | N11 | No path to the internet (passive configuration check) | No gateway, DNS, proxy, VPN, radio, cellular or ICS configuration found; non-conform on any | Only internal gateway and DNS; non-conform on proxy, VPN, radio, cellular or ICS leading outside the internal ranges | n/a | Reads local configuration only (registry, adapter properties, Plug and Play device list, local files; no WMI) and never opens a socket. Any source it cannot read makes it NEDETERMINAT (never CONFORM) and is named in the detail. An internet station is connected by design. |
 | N12 | Domain membership | n/a | Member of the domain | n/a | Only a station on an isolated domain LAN is expected to be a domain member. |
 | N13 | Domain controller reachable (active, read-only check) | n/a | Located at an internal address and LDAP answers; non-conform on a public address | n/a | Active check: Windows' domain locator (DNS SRV query to the configured DNS server, Netlogon UDP ping) plus one TCP connection to LDAP 389 at a private address only, no credentials; it sends traffic, so it exists only in the Network edition. |
+| N14 | Internet allowed at the station level | n/a | n/a | Review (forbidden at the highest level) | Only the Internet edition can reach the internet; at strict secret de importanta deosebita the internet is forbidden. |
 | S01 | Programs installed or uninstalled | Review | Review | Review |  |
 | S02 | New services and scheduled tasks | Review | Review | Review |  |
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
 | S06 | Antivirus signatures and update register | Every signature update is in the register | Every signature update is in the register | n/a | Signatures come on a medium only where updates cannot come online. |
+| S07 | Approved software unaltered (SHA-256 of the profile) | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read |  |
+| S08 | Hardware and software interventions with a witness | Every intervention in the period has a witness other than the performer; hardware or repair needs the post-intervention check (non-conform after 7 days); no register or an empty one is undetermined | Every intervention in the period has a witness other than the performer; hardware or repair needs the post-intervention check (non-conform after 7 days); no register or an empty one is undetermined | Every intervention in the period has a witness other than the performer; hardware or repair needs the post-intervention check (non-conform after 7 days); no register or an empty one is undetermined |  |
+| S09 | Backup copies made on time and a restore tested | The newest backup copy is within the profile limit (default 30 days; non-conform when older); a restore test is recorded and within its limit (default 180 days; review otherwise); no register or an empty one is undetermined | The newest backup copy is within the profile limit (default 30 days; non-conform when older); a restore test is recorded and within its limit (default 180 days; review otherwise); no register or an empty one is undetermined | The newest backup copy is within the profile limit (default 30 days; non-conform when older); a restore test is recorded and within its limit (default 180 days; review otherwise); no register or an empty one is undetermined |  |
 
 A14 / A15 (informații clasificate) — Limită: un administrator care deține cheia de sigilare și poate scrie în folderul aplicației poate adăuga, după ultimul cod de ancorare, o fereastră falsă pe numele aplicației; ea poate ascunde citiri de fișiere clasificate ale oricărui proces pornit din calea executabilului aplicației (inclusiv un alt program pus temporar acolo), niciodată scrieri pe medii; protecția este ancora de pe procesul-verbal la controlul următor și protejarea folderului aplicației (doar Administratori/SYSTEM pot scrie).
 

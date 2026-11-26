@@ -176,7 +176,8 @@ The signature is a standard PAdES / CAdES detached signature. On a separate mach
 # 1. the ByteRange [a b c d] from the signature dictionary (text search in the PDF)
 # 2. the signed bytes: everything except the /Contents hex string
 head -c b report.pdf >  signed.bin ; tail -c +$((c+1)) report.pdf | head -c d >> signed.bin
-# 3. the CMS: the hex between < > after /Contents, trailing zeros removed
+# 3. the CMS: the hex between < > after /Contents, as it is. Do NOT strip trailing zeros: the CMS can itself end in 00 bytes,
+#    and openssl reads the length from the DER header and ignores the zero padding after it.
 xxd -r -p contents.hex > sig.p7s
 openssl cms -verify -binary -inform DER -in sig.p7s -content signed.bin -CAfile qualified_ca.pem -crl_check -CRLfile issuer.crl -purpose any -out /dev/null
 openssl pkcs7 -inform DER -in sig.p7s -print_certs | openssl x509 -noout -fingerprint -sha256

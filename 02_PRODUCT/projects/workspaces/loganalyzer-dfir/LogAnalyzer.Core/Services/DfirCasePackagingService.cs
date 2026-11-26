@@ -122,7 +122,7 @@ namespace LogAnalyzer.Core.Services
             var sb = new StringBuilder();
             sb.AppendLine("================================================================================");
             sb.AppendLine("CERTIFICAT FORMAL DE AUTENTICITATE ȘI INTEGRITATE PROBATORIE FORENZICĂ");
-            sb.AppendLine("Conform Standardelor Internaționale ISO/IEC 27037:2012 și ISO/IEC 27042:2015");
+            sb.AppendLine("Referință metodologică: ISO/IEC 27037:2012 și ISO/IEC 27042:2015 (conformitatea nu este atestată de acest pachet)");
             sb.AppendLine("================================================================================");
             sb.AppendLine();
             sb.AppendLine($"ID Dosar / Caz Forenzic: {manifest.CaseId}");

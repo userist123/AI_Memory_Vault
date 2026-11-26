@@ -45,7 +45,7 @@ public static class ControlPeriods
 }
 
 /// <summary>A control saved earlier in the station's case (Control/CONTROL_&lt;date&gt;/control_report.json), as far as the checks are concerned.</summary>
-public sealed record PreviousControl(string Folder, DateTimeOffset CollectedUtc, string Host, IReadOnlyList<ControlCheck> Checks)
+public sealed record PreviousControl(string Folder, DateTimeOffset CollectedUtc, string Host, IReadOnlyList<ControlCheck> Checks, IReadOnlyList<CorrectiveAction>? Actions = null)
 {
     public string Label => $"{CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {LogAnalyzer.Dfir.Language.RoText.CountFem(Checks.Count(c => c.Status != ControlStatus.NuSeAplica), "verificare", "verificări")}";
 }
@@ -54,7 +54,7 @@ public static class ControlArchive
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
 
-    private sealed class ReportFile { public FactsPart? Facts { get; set; } public List<ControlCheck>? Checks { get; set; } }
+    private sealed class ReportFile { public FactsPart? Facts { get; set; } public List<ControlCheck>? Checks { get; set; } public List<CorrectiveAction>? CorrectiveActions { get; set; } }
     private sealed class FactsPart { public string Host { get; set; } = ""; public DateTimeOffset CollectedUtc { get; set; } }
 
     /// <summary>Previous controls of a case, newest first. Unreadable folders are skipped (and listed in <paramref name="problems"/>), never guessed.</summary>
@@ -71,7 +71,7 @@ public static class ControlArchive
                 {
                     var r = JsonSerializer.Deserialize<ReportFile>(File.ReadAllText(json), Json);
                     if (r?.Facts is null || r.Checks is null) { bad.Add($"{Path.GetFileName(folder)}: conținut incomplet"); continue; }
-                    list.Add(new PreviousControl(folder, r.Facts.CollectedUtc, r.Facts.Host, r.Checks));
+                    list.Add(new PreviousControl(folder, r.Facts.CollectedUtc, r.Facts.Host, r.Checks, r.CorrectiveActions));
                 }
                 catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException) { bad.Add($"{Path.GetFileName(folder)}: {ex.Message}"); }
             }
@@ -100,6 +100,28 @@ public sealed record ControlComparison(DateTimeOffset PreviousUtc, IReadOnlyList
     public string Summary =>
         $"Față de controlul din {PreviousUtc.ToLocalTime():yyyy-MM-dd}: {Worse.Count} înrăutățite, {Better.Count} îmbunătățite, {New.Count} noi, {Removed.Count} dispărute, {Unchanged} neschimbate"
         + (ApplicabilityChanged.Count > 0 ? $", {ApplicabilityChanged.Count} cu aplicabilitate schimbată (ediție diferită)." : ".");
+
+    public const string SectionTitle = "3e. Față de controlul anterior";
+
+    /// <summary>The lines of section 3e (matrix HG 585 row 39): the summary, then what got worse, what is new, what got better, what disappeared.</summary>
+    public static List<(string Text, bool Head, string Color)> SectionLines(ControlComparison? c)
+    {
+        var l = new List<(string, bool, string)>();
+        if (c is null) { l.Add(("Nu există un control anterior salvat pentru această stație în caz, deci nu se poate face comparația.", false, "#475569")); return l; }
+        l.Add((c.Summary, true, "#0f172a"));
+        void Group(string head, IReadOnlyList<CheckChange> items, string color)
+        {
+            if (items.Count == 0) return;
+            l.Add((head, true, color));
+            foreach (var x in items) l.Add(($"{x.Id} {x.Title}: {x.BeforeText} → {x.AfterText}", false, color));
+        }
+        Group("Înrăutățite (noi neconformități sau probleme)", c.Worse, "#b91c1c");
+        Group("Verificări noi (nu existau la controlul anterior)", c.New, "#1e293b");
+        Group("Îmbunătățite (remediate)", c.Better, "#15803d");
+        Group("Dispărute (nu mai sunt evaluate)", c.Removed, "#475569");
+        Group("Aplicabilitate schimbată (ediție diferită)", c.ApplicabilityChanged, "#475569");
+        return l;
+    }
 
     // Only for two APPLICABLE statuses; NU SE APLICĂ has no rank (it is neither compliant nor non-compliant).
     private static int Rank(ControlStatus s) => s switch { ControlStatus.Neconform => 3, ControlStatus.DeVerificat => 2, ControlStatus.Nedeterminat => 1, _ => 0 };

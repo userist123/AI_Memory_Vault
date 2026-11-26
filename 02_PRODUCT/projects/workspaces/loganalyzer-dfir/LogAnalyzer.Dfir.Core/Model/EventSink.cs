@@ -36,5 +36,5 @@ public sealed class JsonlSink : IEventSink, IDisposable
 
     public void Dispose() => _w.Dispose();
 
-    public static IEnumerable<TimelineEvent> Read(string path) => Json.ReadLines<TimelineEvent>(path);
+    public static IEnumerable<TimelineEvent> Read(string path) => Json.StreamLines<TimelineEvent>(path);
 }

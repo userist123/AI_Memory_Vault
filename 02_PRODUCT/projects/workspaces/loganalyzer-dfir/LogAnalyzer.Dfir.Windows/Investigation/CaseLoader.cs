@@ -117,7 +117,7 @@ public static class CaseLoader
         CaseWorkspace ws;
         try { ws = CaseWorkspace.Open(full, recheck: false); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return Refuse("cazul nu poate fi deschis: " + ex.Message); }
-        if (recheck) ws.Recheck(ct);
+        var rechecked = recheck ? ws.Recheck(ct) : null;
 
         var (lifecycle, reasons) = Classify(ws);
         if (reasons.Count > 0)
@@ -132,8 +132,21 @@ public static class CaseLoader
             result.Findings.AddRange(ff.Findings);
             result.Gaps.AddRange(ff.Gaps);
             result.FindingsJson = Path.Combine(analysis, "findings.json");
+            try { result.PeTriage.AddRange(LogAnalyzer.Dfir.Detection.PeTriageFile.Read(Path.Combine(analysis, "pe_triage.json"))); }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/pe_triage.json nu a putut fi citit: " + ex.Message); }
+            try { result.Identity = LogAnalyzer.Dfir.Identity.IdentityReport.Read(Path.Combine(analysis, "identity.json")); }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/identity.json nu a putut fi citit: " + ex.Message); }
+            try { result.IdentityGraph = LogAnalyzer.Dfir.Identity.IdentityGraphReport.Read(Path.Combine(analysis, "identity_graph.json")); }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/identity_graph.json nu a putut fi citit: " + ex.Message); }
         }
         result.Collection.AddRange(collection);
+        if (rechecked is not null)
+        {
+            var (known, registeredMap) = AcquisitionRunVerifier.MapsFrom(ws, rechecked);   // the re-check already hashed everything: no second pass
+            result.LoadAcquisitionRuns(ws, ct, known, registeredMap);
+        }
+        else result.LoadAcquisitionRuns(ws, ct);
+        result.LoadCustody(ws, ct);
         result.Parsing.AddRange(parsing);
         result.Timeline.AddRange(timeline);
         if (activityRestored)
@@ -145,7 +158,7 @@ public static class CaseLoader
         {
             var why = activityProblem ?? (activity is not null ? LogAnalyzer.Dfir.Analysis.UserActivityContext.MismatchText : LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableText);
             result.ActivityUnevaluable = why;
-            if (timeline.Any(e => e.Source is "ShellBags" or "RecentDocs" or "OfficeMRU" or "RecycleBin"))
+            if (timeline.Any(e => LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.IsSource(e.Source)))
                 notes.Add("Activitatea utilizatorului: " + why);
         }
         if (File.Exists(Path.Combine(analysis, "timeline.csv"))) result.TimelineCsv = Path.Combine(analysis, "timeline.csv");
@@ -213,7 +226,7 @@ public static class CaseLoader
     }
 
     /// <summary>True when the audit chain holds a <c>case.closed</c> entry (written by <see cref="CaseClosure.Close"/>). Read from the chain file, not from the plain log.</summary>
-    private static bool IsClosed(CaseWorkspace ws)
+    internal static bool IsClosed(CaseWorkspace ws)
     {
         try
         {

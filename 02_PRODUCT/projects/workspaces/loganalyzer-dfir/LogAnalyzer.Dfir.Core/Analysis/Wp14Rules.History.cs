@@ -84,6 +84,10 @@ public static partial class Wp14Rules
                 Title = $"Istoricul conectărilor suportului {m.Serial}: prima dovadă {first.WhenUtc:yyyy-MM-dd HH:mm} UTC",
                 Severity = Severity.Info, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.Medium,
                 FirstSeenUtc = first.WhenUtc, LastSeenUtc = traces[^1].WhenUtc, Description = desc,
+                PlainWhat = $"Stick-ul {PlainPhrases.Q(PlainName(Kind(m)))} a fost văzut pe acest calculator " +
+                            (traces[^1].WhenUtc - first.WhenUtc < TimeSpan.FromMinutes(1) ? "o singură dată"
+                                : "prima dată la începutul acestui interval și ultima dată la sfârșitul lui") +
+                            " (cea mai veche dovadă găsită; este posibil să fi fost conectat și mai devreme)",
                 ClassificationReason = "Fiecare urmă vine direct dintr-o sursă (jurnal, registru); cea mai veche nu este neapărat prima conectare: sursele mai vechi pot lipsi.",
                 SemanticType = SemanticType.Presence,
                 SupportingEvidence = traces.Take(15).Select(t => Ref(t.Event, t.Text)).ToList(),

@@ -20,7 +20,7 @@ namespace LogAnalyzer.Core.Services
     {
         public int TotalScore { get; set; } // 0 - 100
         public string Level { get; set; } = "Scăzut";
-        public string LevelColor { get; set; } = "#22c55e";
+        public string LevelColor { get; set; } = "#2E6638" /* Registru theme token Success */;
         public List<ExplainableRiskFactor> Factors { get; set; } = new();
         public string MathematicalFormula { get; set; } = string.Empty;
         public string ExecutiveSummaryRo { get; set; } = string.Empty;
@@ -131,19 +131,19 @@ namespace LogAnalyzer.Core.Services
             if (assessment.TotalScore >= 75)
             {
                 assessment.Level = "CRITIC (Amenințare Iminentă)";
-                assessment.LevelColor = "#ef4444";
+                assessment.LevelColor = "#A3201C" /* Registru theme token Critical */;
                 assessment.ExecutiveSummaryRo = $"Sistemul a identificat un scor cumulativ de risc critic ({assessment.TotalScore}/100) susținut de {factorList.Count} probe forenzice independente.";
             }
             else if (assessment.TotalScore >= 40)
             {
                 assessment.Level = "MODERAT / RIDICAT";
-                assessment.LevelColor = "#f97316";
+                assessment.LevelColor = "#A84B0C" /* Registru theme token High */;
                 assessment.ExecutiveSummaryRo = $"Analiza a identificat anomalii și indicatori parțiali ({assessment.TotalScore}/100) ce justifică o investigație aprofundată.";
             }
             else
             {
                 assessment.Level = "SCĂZUT (Normal / Fără incidente critice)";
-                assessment.LevelColor = "#22c55e";
+                assessment.LevelColor = "#2E6638" /* Registru theme token Success */;
                 assessment.ExecutiveSummaryRo = "Parametrii analizați se încadrează în limitele normale de operare a sistemului.";
             }
 

@@ -15,6 +15,46 @@ public sealed class ProcedureProfile
     public string Name { get; set; } = "";
     public DateTimeOffset? UpdatedUtc { get; set; }
 
+    /// <summary>
+    /// The highest classification level the station processes (owner decision 2026-10-23: from "secret de serviciu" upward), as a marking that
+    /// <see cref="LogAnalyzer.Dfir.Model.SecrecyLevels"/> knows; empty = not defined. The rules that differ per level follow it (<see cref="StationLevelRules"/>).
+    /// </summary>
+    public string StationLevel { get; set; } = "";
+
+    /// <summary>
+    /// HG 585 ID-03: the system-use notice the security officer approved, shown before sign-in and accepted explicitly (see <see cref="SignInNoticeResolver"/>).
+    /// Optional: empty (also in profiles written before this field existed) = the module's default text. At most <see cref="SignInNoticeResolver.MaxLength"/> characters.
+    /// </summary>
+    public string SignInNotice { get; set; } = "";
+
+    /// <summary>Default for <see cref="BackupMaxAgeDays"/> and the value used when it is 0 or absent (planner #10 item 3, check S09).</summary>
+    public const int DefaultBackupMaxAgeDays = 30;
+    /// <summary>Default for <see cref="BackupRestoreTestMaxAgeDays"/> and the value used when it is 0 or absent.</summary>
+    public const int DefaultBackupRestoreTestMaxAgeDays = 180;
+    /// <summary>The largest accepted value of the two backup age settings.</summary>
+    public const int MaxBackupAgeDays = 3650;
+
+    /// <summary>Most days the newest backup copy in the backups register may be old before check S09 is NECONFORM. 0 or absent = <see cref="DefaultBackupMaxAgeDays"/>; valid 1..3650.</summary>
+    public int BackupMaxAgeDays { get; set; }
+    /// <summary>Most days the newest restore test may be old before check S09 is DE VERIFICAT. 0 or absent = <see cref="DefaultBackupRestoreTestMaxAgeDays"/>; valid 1..3650.</summary>
+    public int BackupRestoreTestMaxAgeDays { get; set; }
+
+    /// <summary>The backup age limit in force: the setting, or the default when it is 0 or out of range.</summary>
+    public static int EffectiveBackupMaxAgeDays(int value) => value is >= 1 and <= MaxBackupAgeDays ? value : DefaultBackupMaxAgeDays;
+    /// <summary>The restore-test age limit in force: the setting, or the default when it is 0 or out of range.</summary>
+    public static int EffectiveBackupRestoreTestMaxAgeDays(int value) => value is >= 1 and <= MaxBackupAgeDays ? value : DefaultBackupRestoreTestMaxAgeDays;
+
+    /// <summary>Default for <see cref="TrainingMaxAgeDays"/> and the value used when it is 0 or absent (planner #10 item 4, check U07).</summary>
+    public const int DefaultTrainingMaxAgeDays = 365;
+    /// <summary>The largest accepted value of <see cref="TrainingMaxAgeDays"/>.</summary>
+    public const int MaxTrainingAgeDays = 3650;
+
+    /// <summary>Most days the last training of a person in the users register may be old before check U07 says DE VERIFICAT. 0 or absent = <see cref="DefaultTrainingMaxAgeDays"/>; valid 1..3650.</summary>
+    public int TrainingMaxAgeDays { get; set; }
+
+    /// <summary>The training age limit in force: the setting, or the default when it is 0 or out of range.</summary>
+    public static int EffectiveTrainingMaxAgeDays(int value) => value is >= 1 and <= MaxTrainingAgeDays ? value : DefaultTrainingMaxAgeDays;
+
     // Working hours
     public List<WorkingHoursRow> WorkingHours { get; set; } = [];
     public List<HolidayRow> Holidays { get; set; } = [];

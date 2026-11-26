@@ -229,6 +229,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Register()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.Registers, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Files.Count == 0) { Status = "Ca să înregistrați transferul, alegeți întâi fișierele (amprentele lor intră în registru)."; return; }
             var row = new TransferRow
             {
@@ -341,6 +342,9 @@ namespace LogAnalyzer.UI.ViewModels
             finally { IsVerifying = false; VerifyProgress = ""; _verifyCts = null; }
         }
 
+        /// <summary>Planner #10 item 1: the marking of the confirmed scope of the current work (typed in the scope dialog); empty prints "fără marcaj introdus".</summary>
+        private static string CurrentMarking() => LogAnalyzer.UI.Services.LiveCase.CurrentScope is { IsConfirmed: true } s ? s.Marking : "";
+
         [RelayCommand]
         private void Report()
         {
@@ -350,7 +354,7 @@ namespace LogAnalyzer.UI.ViewModels
             // F2: the declared SHA-256 are re-verified on the medium just before the report; F3: then the PDF is signed when a key is configured.
             var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForTransfer(_lastVerification, _register.Rows);
             if (LogAnalyzer.UI.Services.ExportAudit.Run(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "pdf-transfers", _register.Rows.Count, dlg.FileName,
-                    () => TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification, pre)) is { } refused)
+                    () => TransferReportPdf.Write(dlg.FileName, _register, findings, _header, CurrentMarking(), AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification, pre)) is { } refused)
             { Status = refused; return; }
             var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(dlg.FileName);
             Status = $"Raportul a fost salvat: {dlg.FileName}. {pre.Line} {signLine}";

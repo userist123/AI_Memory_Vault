@@ -273,6 +273,52 @@ public static class ReportCli
         }
     }
 
+    /// <summary>
+    /// compare-case &lt;case-1&gt; &lt;case-2&gt; (each a case folder or a case archive .zip): planner #8 item 5. Compares the hash-chained logs of two copies of
+    /// a case, read-only, prints a verdict for the case as a whole and one line per log. Exit 0 = identical (byte for byte), 5 = chains identical but files
+    /// differ outside them, 3 = one copy is older (it lacks entries and has none the other lacks), 4 = forked (each copy has entries the other lacks) or
+    /// no common history, 2 = a chain is broken, a copy cannot be read or nothing was comparable, 1 = usage.
+    /// </summary>
+    public static int CompareCase(string[] args, TextWriter o)
+    {
+        if (args.Length != 3) { o.WriteLine("Utilizare: compare-case <caz-1 (folder sau arhivă .zip)> <caz-2>"); return 1; }
+        LogAnalyzer.Dfir.Case.CaseForkComparison r;
+        try { r = LogAnalyzer.Dfir.Case.CaseForkCompare.CompareCases(args[1], args[2]); }
+        // any unreadable or malformed input is a refusal with exit 2, never an unhandled crash (review 2026-11-18)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException
+                                      or ArgumentException or NotSupportedException or OutOfMemoryException)
+        {
+            o.WriteLine("NECOMPARABIL");
+            o.WriteLine("Un caz nu poate fi citit: " + ex.Message);
+            return 2;
+        }
+        var (headline, code) = r.Verdict switch
+        {
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.Broken => ("LANȚ RUPT: cel puțin o copie are un jurnal modificat sau deteriorat", 2),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.Unrelated => ("FĂRĂ ISTORIE COMUNĂ: jurnalele diferă de la prima intrare (cazuri diferite sau jurnale refăcute)", 4),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.Forked => ("RAMIFICATE: fiecare copie are intrări pe care cealaltă nu le are", 4),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.FirstOlder => ("O COPIE ESTE MAI VECHE: cazul 1 (cazul 2 îl conține și continuă)", 3),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.SecondOlder => ("O COPIE ESTE MAI VECHE: cazul 2 (cazul 1 îl conține și continuă)", 3),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.Identical => ("IDENTICE: toate jurnalele înlănțuite sunt identice, octet cu octet", 0),
+            LogAnalyzer.Dfir.Case.CaseForkVerdict.IdenticalChainsDifferentFiles => ("LANȚURI IDENTICE, FIȘIERE DIFERITE: diferențele sunt în afara lanțului", 5),
+            _ => ("NIMIC DE COMPARAT: nicio intrare înlănțuită", 2),
+        };
+        o.WriteLine(headline);
+        o.WriteLine($"Caz 1: {r.First} (id {(r.FirstCaseId.Length > 0 ? r.FirstCaseId : "necunoscut")})");
+        o.WriteLine($"Caz 2: {r.Second} (id {(r.SecondCaseId.Length > 0 ? r.SecondCaseId : "necunoscut")})");
+        if (!r.SameCaseId) o.WriteLine("ATENȚIE: cele două copii nu au același id de caz (sau id-ul lipsește): pot fi cazuri diferite.");
+        if (r.Verdict == LogAnalyzer.Dfir.Case.CaseForkVerdict.Forked && r.FirstLacks.Any() && r.SecondLacks.Any())
+            o.WriteLine($"Ramificare între jurnale: cazul 1 rămâne în urmă la {string.Join(", ", r.FirstLacks.Select(l => l.Log))}, cazul 2 la {string.Join(", ", r.SecondLacks.Select(l => l.Log))}.");
+        foreach (var l in r.Logs)
+        {
+            o.WriteLine($" - {l.Log}: {l.Message}");
+            if (l.Relation == LogAnalyzer.Dfir.Case.ForkRelation.Forked)
+                o.WriteLine($"     Seq {l.ForkAtSeq}: hash în cazul 1 {l.FirstHashAtFork}, în cazul 2 {l.SecondHashAtFork}");
+        }
+        o.WriteLine("Comparația nu modifică și nu unește nimic; autenticitatea unei arhive se verifică separat cu verify-archive.");
+        return code;
+    }
+
     /// <summary>One line of secret input. From a supplied reader (tests, piped input) it is read as is; from an interactive console the typed characters are not echoed.</summary>
     internal static string? ReadSecret(TextReader? input)
     {

@@ -148,7 +148,7 @@ public sealed class AmcacheParser : EvidenceParserBase
         Limitations =
         [
             "Formatul vechi Root\\File (Windows 8) nu este citit.",
-            "Jurnalele de tranzacții .LOG1/.LOG2 nu sunt aplicate; lipsa lor e raportată ca gol.",
+            "Jurnalele de tranzacții .LOG1/.LOG2 sunt aplicate de pipeline pe o copie derivată (RegfLogReplay) când hive-ul e murdar; dacă nu se pot aplica sau lipsesc, golul e raportat.",
             "Amcache arată prezența unui fișier (și de obicei instalarea), nu fiecare rulare.",
         ],
         Status = ParserMaturity.Validated,
@@ -165,6 +165,8 @@ public sealed class AmcacheParser : EvidenceParserBase
                 "Inventarul aplicațiilor nu este disponibil", "Root\\File (format Windows 8)", "Parțial"));
             return;
         }
+        int emptyKeys = 0, stubKeys = 0;
+        bool replayedCopy = item.Collector == LogAnalyzer.Dfir.Windows.Investigation.HiveLogReplay.Collector;   // the transaction logs were already applied to this copy
         foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile"))
         {
             ct.ThrowIfCancellationRequested();
@@ -172,11 +174,23 @@ public sealed class AmcacheParser : EvidenceParserBase
             string V(string n) => k.Value(n)?.AsText ?? "";
             var path = V("LowerCaseLongPath");
             var sha1 = V("FileId") is { Length: 44 } fid && fid.StartsWith("0000") ? fid[4..].ToUpperInvariant() : V("FileId");
+            // evaluation 2026-11-05: a key without values (written only to the unapplied transaction log) printed "Amcache:  ( ) prezent la ";
+            // its name ("whoami.exe|7380676a876ce9b1") still names the program, and the row says why the rest is missing
+            var name = V("Name") is { Length: > 0 } n ? n : keyName.Split('|')[0];
+            // two different cases: no value at all (really written only to the unapplied log) versus values present but no Name/path
+            // (real Windows 11 hives: ~2/3 of the keys hold only ProgramId + FileId — read in full, Windows shows the same two values)
+            bool valueless = k.Values.Count == 0;
+            bool stub = !valueless && V("Name").Length == 0 && path.Length == 0;
+            if (valueless) emptyKeys++;
+            else if (stub) stubKeys++;
             sink.Add(new TimelineEvent
             {
                 Time = Hive.KeyTime(k),
-                Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = V("Name"), Hash = sha1,
-                Summary = $"Amcache: {V("Name")} ({V("Publisher")} {V("Version")}) prezent la {path}",
+                Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = name, Hash = sha1,
+                Summary = valueless
+                    ? $"Amcache: {name} — intrare fără valori în hive (cale, editor și versiune lipsesc; probabil scrise doar în jurnalul de tranzacții, care nu este aplicat)"
+                    : stub ? $"Amcache: {name} — intrare doar cu ProgramId/FileId în hive (cale, editor și versiune nu sunt înregistrate de Windows pentru ea)"
+                    : $"Amcache: {name} ({V("Publisher")} {V("Version")}) prezent la {path}",
                 TimeSemantics = "Amcache entry last written (≈ first seen / install)",
                 TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
                 Locator = $@"Amcache.hve\Root\InventoryApplicationFile\{keyName}",
@@ -189,7 +203,16 @@ public sealed class AmcacheParser : EvidenceParserBase
             });
             result.Records++;
         }
-        if (File.Exists(fullPath + ".LOG1") is false && File.Exists(Path.Combine(Path.GetDirectoryName(fullPath)!, "Amcache.hve.LOG1")) is false)
+        if (emptyKeys > 0)
+            result.Gaps.Add(new EvidenceGap("Amcache InventoryApplicationFile", EvidenceStatus.Partial,
+                replayedCopy ? $"{emptyKeys} intrări fără valori (doar numele cheii) și după aplicarea jurnalelor de tranzacții pe copia derivată {item.EvidenceId}"
+                             : $"{emptyKeys} intrări fără valori (doar numele cheii): hive-ul era „murdar” la copiere și jurnalele de tranzacții nu au fost aplicate (lipsesc din caz, hive-ul nu este murdar pentru ele sau reaplicarea a eșuat: vezi celelalte goluri)",
+                "Calea, editorul și versiunea acestor programe lipsesc; numele vine din numele cheii", replayedCopy ? "Copie a hive-ului luată împreună cu jurnalele, la alt moment" : "Colectarea hive-ului împreună cu .LOG1/.LOG2", "Parțial"));
+        if (stubKeys > 0)
+            result.Gaps.Add(new EvidenceGap("Amcache InventoryApplicationFile", EvidenceStatus.Partial,
+                $"{stubKeys} intrări au valorile citite complet, dar fără nume și cale (doar ProgramId/FileId, cum le înregistrează Windows; nu este o problemă de hive murdar sau de jurnale)",
+                "Calea, editorul și versiunea acestor programe nu există în hive; numele vine din numele cheii, hash-ul din FileId", "Nu se poate recupera din Amcache; corelare cu alte artefacte (Prefetch, ShimCache, Event log)", "Parțial"));
+        if (!replayedCopy && File.Exists(fullPath + ".LOG1") is false && File.Exists(Path.Combine(Path.GetDirectoryName(fullPath)!, "Amcache.hve.LOG1")) is false)
             result.Gaps.Add(new EvidenceGap("Amcache transaction logs", EvidenceStatus.Partial, "jurnalele de tranzacții .LOG1/.LOG2 nu au fost aplicate",
                 "Cele mai recente intrări pot lipsi dacă hive-ul era „murdar” la copiere", "Copiere împreună cu .LOG1/.LOG2", "Parțial"));
     }

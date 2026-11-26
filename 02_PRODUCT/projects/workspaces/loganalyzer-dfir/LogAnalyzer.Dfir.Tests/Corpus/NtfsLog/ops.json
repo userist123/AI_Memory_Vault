@@ -1,0 +1,74 @@
+[
+  {
+    "seq": 1,
+    "kind": "mkdir",
+    "path": "\\work",
+    "utc": "2026-11-14T10:20:34.3612584Z",
+    "fileId": "0x00000000000000000001000000000028",
+    "note": ""
+  },
+  {
+    "seq": 2,
+    "kind": "create",
+    "path": "\\work\\created.txt",
+    "utc": "2026-11-14T10:20:34.3880349Z",
+    "fileId": "0x00000000000000000001000000000029",
+    "note": "resident data"
+  },
+  {
+    "seq": 3,
+    "kind": "create",
+    "path": "\\work\\stomp.txt",
+    "utc": "2026-11-14T10:20:36.4022087Z",
+    "fileId": "0x0000000000000000000100000000002a",
+    "note": ""
+  },
+  {
+    "seq": 4,
+    "kind": "timestomp",
+    "path": "\\work\\stomp.txt",
+    "utc": "2026-11-14T10:20:38.4269926Z",
+    "fileId": "0x0000000000000000000100000000002a",
+    "note": "SetFileTime creation only -> 2019-03-14T09:26:53Z"
+  },
+  {
+    "seq": 5,
+    "kind": "create",
+    "path": "\\work\\before.txt",
+    "utc": "2026-11-14T10:20:40.4450454Z",
+    "fileId": "0x0000000000000000000100000000002b",
+    "note": ""
+  },
+  {
+    "seq": 6,
+    "kind": "rename",
+    "path": "\\work\\after.txt",
+    "utc": "2026-11-14T10:20:42.4628147Z",
+    "fileId": "0x0000000000000000000100000000002b",
+    "note": "from before.txt"
+  },
+  {
+    "seq": 7,
+    "kind": "create",
+    "path": "\\work\\deleted.txt",
+    "utc": "2026-11-14T10:20:44.5010270Z",
+    "fileId": "0x0000000000000000000100000000002c",
+    "note": ""
+  },
+  {
+    "seq": 8,
+    "kind": "delete",
+    "path": "\\work\\deleted.txt",
+    "utc": "2026-11-14T10:20:46.5172766Z",
+    "fileId": "0x0000000000000000000100000000002c",
+    "note": ""
+  },
+  {
+    "seq": 9,
+    "kind": "create",
+    "path": "\\work\\big.bin",
+    "utc": "2026-11-14T10:20:48.5326030Z",
+    "fileId": "0x0000000000000000000200000000002c",
+    "note": "non-resident 200000 bytes"
+  }
+]

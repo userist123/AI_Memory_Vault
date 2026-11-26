@@ -1,0 +1,40 @@
+
+********* File 0x000100000000002c *********
+File reference number   : 0x000100000000002c
+File attributes         : 0x00000010: Directory
+File entry flags        : 0x00000000
+Link (ParentID: Name)   : 0x0005000000000005: NTFS+DOS Name: \many
+Creation Time           : 13-Nov-26 16:48:19
+Last Access Time        : 13-Nov-26 16:48:21
+Last Write Time         : 13-Nov-26 16:48:21
+Change Time             : 13-Nov-26 16:48:21
+LastUsn                 : 0
+OwnerId                 : 0
+SecurityId              : 264
+StorageReserveId        : 0
+Stream                  : 0x010  ::$STANDARD_INFORMATION
+    Attributes          : 0x00000000: *NONE*
+    Flags               : 0x0000000c: Resident | No clusters allocated
+    Size                : 72
+    Allocated Size      : 72
+Stream                  : 0x030  ::$FILE_NAME
+    Attributes          : 0x00000000: *NONE*
+    Flags               : 0x0000000c: Resident | No clusters allocated
+    Size                : 74
+    Allocated Size      : 80
+Stream                  : 0x090  :$I30:$INDEX_ROOT
+    Attributes          : 0x00000000: *NONE*
+    Flags               : 0x0000000c: Resident | No clusters allocated
+    Size                : 296
+    Allocated Size      : 296
+Stream                  : 0x0a0  :$I30:$INDEX_ALLOCATION
+    Attributes          : 0x00000000: *NONE*
+    Flags               : 0x00000000: *NONE*
+    Size                : 12,288
+    Allocated Size      : 12,288
+    Extents             : 1 Extents
+Stream                  : 0x0b0  :$I30:$BITMAP
+    Attributes          : 0x00000000: *NONE*
+    Flags               : 0x0000000c: Resident | No clusters allocated
+    Size                : 8
+    Allocated Size      : 8

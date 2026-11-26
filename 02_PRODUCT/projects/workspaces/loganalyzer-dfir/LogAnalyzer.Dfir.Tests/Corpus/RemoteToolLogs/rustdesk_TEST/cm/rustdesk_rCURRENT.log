@@ -1,0 +1,4 @@
+[2026-11-09 08:29:59.000000 +01:00] INFO [src\ui_cm_interface.rs:150] TEST: connection manager started
+[2026-11-09 08:33:00.120000 +01:00] INFO [libs\hbb_common\src\fs.rs:624] new write File: C:\Users\TEST-user\Desktop\TEST-raport.docx
+[2026-11-09 08:33:05.000000 +01:00] INFO [libs\hbb_common\src\fs.rs:624] new write Bytes
+[2026-11-09 08:34:10.500000 +01:00] INFO [libs\hbb_common\src\fs.rs:624] new write File: C:\Users\TEST-user\Downloads\TEST-unealta.zip

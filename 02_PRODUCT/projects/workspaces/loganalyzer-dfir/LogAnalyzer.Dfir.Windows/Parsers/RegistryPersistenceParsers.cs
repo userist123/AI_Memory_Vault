@@ -66,11 +66,11 @@ public sealed class UserHiveParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "UserHiveParser", Version = "1.1", Artifact = "Hive utilizator (NTUSER.DAT) — UserAssist, Run/RunOnce, RecentDocs, Office MRU, ShellBags (BagMRU)",
+        ParserId = "UserHiveParser", Version = "1.1", Artifact = "Hive utilizator (NTUSER.DAT) — UserAssist, Run/RunOnce, RecentDocs, Office MRU, ShellBags (BagMRU), liste Deschide/Salvează (ComDlg32)",
         SourceTypes = ["ntuser_hive"], FileNames = ["NTUSER.DAT", "NTUSER*.hiv", "HKCU.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu RawRegistry)",
         FormatVersions = ["UserAssist versiunea 5 (Windows 7 – 11, 72 de octeți) și versiunea 3 (XP, 16 octeți)", "Run / RunOnce (REG_SZ, REG_EXPAND_SZ neexpandat)", "RunMRU (ordinea din MRUList) și TypedPaths (url1 = cea mai nouă); doar intrarea cea mai nouă are ora cheii",
-                         "RecentDocs (toate tipurile, per extensie și Folder; MRUListEx; doar prima intrare are ora cheii)", "Office MRU: File MRU / Place MRU și User MRU\\<id>, „[F…][T<FILETIME>][O…]*cale” (ora [T] este UTC)", "ShellBags: Software\\Microsoft\\Windows\\Shell\\BagMRU (elemente shell decodate; vezi ShellBagsParser pentru UsrClass.dat)"],
+                         "RecentDocs (toate tipurile, per extensie și Folder; MRUListEx; doar prima intrare are ora cheii)", "Office MRU: File MRU / Place MRU și User MRU\\<id>, „[F…][T<FILETIME>][O…]*cale” (ora [T] este UTC)", "ComDlg32: OpenSavePidlMRU (per extensie, „*” = toate), LastVisitedPidlMRU (program + folder) și CIDSizeMRU (doar numele programului); MRUListEx; doar prima intrare are ora cheii", "ShellBags: Software\\Microsoft\\Windows\\Shell\\BagMRU (elemente shell decodate; vezi ShellBagsParser pentru UsrClass.dat)"],
         Limitations =
         [
             "UserAssist înregistrează doar programele pornite din interfața grafică (Explorer, meniul Start), nu din linia de comandă.",
@@ -79,6 +79,7 @@ public sealed class UserHiveParser : EvidenceParserBase
             "Jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
             "Părțile adăugate în versiunea 1.1 (RecentDocs, Office MRU, ShellBags din NTUSER) sunt validate doar pe hive-uri sintetice; starea VALIDATED privește UserAssist și Run/RunOnce, verificate pe corpus real.",
             "RecentDocs nu păstrează calea completă (doar numele); doar cea mai nouă intrare dintr-o cheie are o oră. Ora [T] din Office MRU este ultima deschidere de către aplicația Office respectivă.",
+            "Listele ComDlg32 (OpenSavePidlMRU, LastVisitedPidlMRU, CIDSizeMRU) arată că un fișier sau folder a fost ales într-o fereastră comună Deschide/Salvează sub acest cont, la un moment nedatat; nu dovedesc că fișierul a fost citit sau scris și nu arată cine era la tastatură. Doar intrarea cea mai nouă a unei chei primește ora cheii; datele de după nume din CIDSizeMRU nu sunt interpretate. O subcheie ComDlg32 deteriorată poate face ilizibile subcheile care urmează după ea în ordinea din registru (limitare a cititorului de registru); fiecare listă ilizibilă apare ca lipsă separată. Validate pe un hive real de laborator (comparat cu SHGetPathFromIDListW) și pe hive-uri sintetice.",
             "ShellBags din NTUSER.DAT (BagMRU) acoperă în principal Windows XP și locuri speciale; pe Windows 7+ folderele locale sunt în UsrClass.dat. Ora cheii BagMRU este ultima actualizare a intrării de către Explorer, nu prima deschidere, iar orele din elementul shell sunt DOS (oră locală fără fus orar, 2 s).",
         ],
         Status = ParserMaturity.Validated,
@@ -139,6 +140,9 @@ public sealed class UserHiveParser : EvidenceParserBase
         // E7: what the user opened or browsed. A damaged structure is a reported gap; the rest of the hive is still read.
         UserActivity.Guarded("RecentDocs", result, () => UserActivity.RecentDocs(reg, item, sink, result, ct));
         UserActivity.Guarded("Office MRU", result, () => UserActivity.OfficeMru(reg, item, sink, result, ct));
+        UserActivity.Guarded("LastVisitedMRU", result, () => UserActivity.ComDlgLastVisited(reg, item, sink, result));
+        UserActivity.Guarded("CIDSizeMRU", result, () => UserActivity.ComDlgCidSize(reg, item, sink, result));
+        UserActivity.Guarded("OpenSaveMRU", result, () => UserActivity.ComDlgOpenSave(reg, item, sink, result, ct));
         foreach (var bagRoot in UserActivity.BagRootsNtUser)
             UserActivity.Guarded("ShellBags", result, () => UserActivity.ShellBags(reg, "NTUSER", bagRoot, item, sink, result, ct));
         DeletedRegistryTraces.Emit(fullPath, "NTUSER", item, sink, result, ct);
@@ -271,18 +275,22 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "SoftwareHiveParser", Version = "1.0", Artifact = "Hive SOFTWARE — Run/RunOnce, Winlogon, IFEO Debugger",
+        ParserId = "SoftwareHiveParser", Version = "1.0", Artifact = "Hive SOFTWARE — Run/RunOnce, Winlogon, IFEO Debugger, TaskCache (activități planificate)",
         SourceTypes = ["software_hive"], FileNames = ["SOFTWARE", "SOFTWARE.hiv", "*_SOFTWARE.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu RawRegistry)",
-        FormatVersions = ["Run / RunOnce (inclusiv WOW6432Node și Policies\\Explorer\\Run)", "Winlogon Shell / Userinit", "Image File Execution Options\\*\\Debugger"],
+        FormatVersions = ["Run / RunOnce (inclusiv WOW6432Node și Policies\\Explorer\\Run)", "Winlogon Shell / Userinit", "Image File Execution Options\\*\\Debugger", "Schedule\\TaskCache (Tree, Tasks, Plain, Logon, Boot, Maintenance; Actions și DynamicInfo versiunea 3)"],
         Limitations =
         [
             "Alte locuri de persistență din SOFTWARE (AppInit_DLLs, Active Setup, extensii shell, SilentProcessExit) nu sunt încă citite.",
             "Ora este LastWriteTime al cheii, comună tuturor valorilor.",
             "Jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
+            "TaskCache: declanșatorii (Triggers) nu sunt interpretați, doar lungimea lor; acțiunile de alt tip decât Exec și ComHandler sau Actions/DynamicInfo de altă versiune decât 3 sunt raportate ca lacune.",
+            "TaskCache: câmpul DynamicInfo de la octetul 28 are sens nedovedit și este emis sub nume neutru; rezultatul ultimei rulări este cel din cache (nu cel calculat de serviciu pentru activități în curs de rulare sau niciodată rulate).",
+            "TaskCache: ora evenimentului este momentul înregistrării în cache din DynamicInfo (octetul 4; poate fi o reînregistrare la actualizare, nu crearea activității: pe stația de referință 194 din 226 de valori cad în același minut, deși activitățile au fost înregistrate între 2006 și 2021), altfel LastWriteTime al cheii; lipsa SD din Tree și același Id în mai multe căi din Tree sunt semnalate ca anomalii, fără atribuire.",
+            "TaskCache: cel mult 50 000 de evenimente pe hive (și 200 000 de chei); peste limită citirea se oprește cu o lacună.",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "RegistryPersistenceParserTests: SOFTWARE real din corpus comparat cu reg export (Run, RunOnce, WOW6432Node, Winlogon) și hive sintetic",
+        Validation = "RegistryPersistenceParserTests: SOFTWARE real din corpus comparat cu reg export (Run, RunOnce, WOW6432Node, Winlogon) și hive sintetic; TaskCacheReaderTests: 226 activități reale comparate cu Get-ScheduledTask (acțiuni identice, ultima rulare 226/226), octeți reali ai unei activități create intenționat, hive-uri și bloburi sintetice ostile",
     };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
@@ -340,6 +348,7 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
             }
         }
 
+        TaskCacheReader.Emit(reg, item, sink, result, ct);
         DeletedRegistryTraces.Emit(fullPath, "SOFTWARE", item, sink, result, ct);
     }
 

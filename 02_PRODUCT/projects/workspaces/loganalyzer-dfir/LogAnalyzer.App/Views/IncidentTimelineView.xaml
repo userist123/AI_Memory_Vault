@@ -1,4 +1,4 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.IncidentTimelineView"
+<UserControl xmlns:sevc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.IncidentTimelineView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="24">
@@ -8,22 +8,25 @@
         </Grid.RowDefinitions>
 
         <!-- Page Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
-            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Cronologia evenimentelor" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                <Border Margin="12,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                    <TextBlock Text="LIVE NARRATIVE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                </Border>
-            </StackPanel>
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="TOTAL EVENTS: " FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="Evenimente: " FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                         <TextBlock Text="{Binding TimelineItems.Count, FallbackValue=0}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}" Margin="6,0,0,0"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Cronologia evenimentelor" VerticalAlignment="Center"/>
+                <Border Margin="12,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                    <TextBlock Text="Din jurnale" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                </Border>
+            </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Main Timeline Content: Left Track + Right Summary Panel -->
         <Grid Grid.Row="1">
@@ -63,13 +66,15 @@
                                     <Border Grid.Column="2" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                                            <!-- lab 2026-11-10: a raw Windows message (logon 4624, a PowerShell error) made one card up to 1,900 px tall; the card shows the first lines, the tooltip the rest -->
+                                        <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,8"
+                                                   MaxHeight="112" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}" ToolTipService.ShowDuration="60000"/>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="TYPE: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                                                <TextBlock Text="Tip: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
                                                 <TextBlock Text="{Binding Category}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
-                                                <TextBlock Text="SEVERITY: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
-                                                <TextBlock Text="{Binding Severity}" FontSize="10" FontWeight="Bold" Foreground="{Binding SeverityColor}" Margin="0,0,12,0"/>
-                                                <TextBlock Text="SOURCE: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                                                <TextBlock Text="Severitate: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                                                <TextBlock Text="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" FontSize="10" FontWeight="Bold" Foreground="{Binding SeverityColor}" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Sursă: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
                                                 <TextBlock Text="{Binding Source}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                                             </StackPanel>
                                         </StackPanel>
@@ -84,29 +89,27 @@
             <!-- Right: Chronological Summary & Metrics -->
             <Border Grid.Column="1" Style="{StaticResource ObsidianCardStyle}" Padding="16">
                 <StackPanel>
-                    <TextBlock Text="TIMELINE SUMMARY" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,14"/>
+                    <TextBlock Text="Rezumatul paginii" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,14"/>
 
-                    <TextBlock Text="TOTAL CORRELATED EVENTS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="{Binding TimelineItems.Count, FallbackValue=0}" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource CyanAccentBrush}" Margin="0,0,0,14"/>
-
-                    <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
-
-                    <TextBlock Text="FIRST DETECTION" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="09:15:32 UTC" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource CyanAccentBrush}" Margin="0,0,0,14"/>
+                    <TextBlock Text="Evenimente afișate" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding TimelineSummary.Count, FallbackValue=0}" FontSize="18" FontWeight="SemiBold" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource CyanAccentBrush}" Margin="0,0,0,14"/>
 
                     <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
 
-                    <TextBlock Text="LAST DETECTED ACTIVITY" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="09:27:18 UTC" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource CyanAccentBrush}" Margin="0,0,0,14"/>
+                    <TextBlock Text="Primul eveniment" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding TimelineSummary.First}" FontSize="12" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
                     <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
 
-                    <TextBlock Text="PEAK THREAT LEVEL" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBlock Text="CRITICAL (3 ALERTS)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Ultimul eveniment" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding TimelineSummary.Last}" FontSize="12" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
-                    <Border Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
-                        <TextBlock Text="EDR Shield active: C2 beacon isolated &amp; suspicious processes contained." FontSize="11" Foreground="{StaticResource SuccessBrush}" TextWrapping="Wrap"/>
-                    </Border>
+                    <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="Cea mai mare severitate" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding TimelineSummary.Peak}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                    <TextBlock Text="Valorile sunt calculate din evenimentele afișate pe această pagină a cronologiei." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
         </Grid>

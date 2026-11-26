@@ -156,13 +156,35 @@ public sealed partial class CaseWorkspace
         r.Invalidations = ComputeInvalidations(index, r.Evidence);
         r.InvalidatedCount = r.Invalidations.Count;
 
+        // R7b: acquisition run records are outputs (covered above); the verifier adds what they promise about the evidence files and refuses
+        // records the custody chain does not know. Its problems only ever raise the verdict.
+        int acqModified = 0, acqMissing = 0, acqUnverified = 0;
+        try
+        {
+            var (known, registeredMap) = AcquisitionRunVerifier.MapsFrom(this, r);
+            foreach (var f in AcquisitionRunVerifier.Verify(this, ct, known, registeredMap).Where(f => f.IsProblem))
+            {
+                r.Notes.Add($"fișa colectării {f.RunId}: {f.Detail}");
+                if (f.Kind == AcquisitionFindingKind.ItemMissing) acqMissing++;
+                else if (f.Kind == AcquisitionFindingKind.ItemUnreadable) acqUnverified++;
+                else acqModified++;
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            r.Notes.Add("fișele colectării nu au putut fi verificate: " + ex.Message);
+            acqModified++;
+        }
+        r.AcquisitionProblemsCount = acqModified + acqMissing + acqUnverified;
+
         bool brokenChain = r.Chains.Custody.Status == ChainStatus.Broken || r.Chains.Audit.Status == ChainStatus.Broken;
         bool legacy = r.Chains.Custody.Status == ChainStatus.Legacy || r.Chains.Audit.Status == ChainStatus.Legacy
                       || r.Chains.Custody.LegacyLines > 0 || r.Chains.Audit.LegacyLines > 0;
         r.Verdict = brokenChain ? RecheckVerdict.ChainBroken
-                  : r.ModifiedCount + r.OutputsModifiedCount > 0 ? RecheckVerdict.Modified
-                  : r.MissingCount + r.OutputsMissingCount > 0 ? RecheckVerdict.Missing
-                  : r.UnverifiedCount > 0 ? RecheckVerdict.Unverified
+                  : r.ModifiedCount + r.OutputsModifiedCount + acqModified > 0 ? RecheckVerdict.Modified
+                  : r.MissingCount + r.OutputsMissingCount + acqMissing > 0 ? RecheckVerdict.Missing
+                  : r.UnverifiedCount + acqUnverified > 0 ? RecheckVerdict.Unverified
                   : legacy ? RecheckVerdict.Legacy : RecheckVerdict.Valid;
         r.Summary = Summarize(r, legacy);
 
@@ -211,12 +233,14 @@ public sealed partial class CaseWorkspace
         { return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Unreadable, deps); }
     }
 
+    internal List<string> RegisteredOutputPaths() => RegisteredOutputs().Select(o => o.Path).ToList();
+
     /// <summary>Latest <c>output.written</c> custody entry per path. Lines that are not JSON are skipped here; <see cref="VerifyChains"/> reports them.</summary>
-    private List<OutputRecord> RegisteredOutputs()
+    internal List<OutputRecord> RegisteredOutputs()
     {
         var latest = new Dictionary<string, OutputRecord>(StringComparer.OrdinalIgnoreCase);
         if (!File.Exists(CustodyJsonlPath)) return [];
-        foreach (var line in File.ReadLines(CustodyJsonlPath))
+        foreach (var line in SharedRead.Lines(CustodyJsonlPath))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             try
@@ -227,7 +251,7 @@ public sealed partial class CaseWorkspace
                 var deps = trans.StartsWith(DependsPrefix, StringComparison.Ordinal) ? trans[DependsPrefix.Length..].Split(';', StringSplitOptions.RemoveEmptyEntries) : [];
                 latest[to] = new OutputRecord(to, o["sha256"]?.GetValue<string>() ?? "", 0, o["tool"]?.GetValue<string>() ?? "", o["toolVersion"]?.GetValue<string>() ?? "", deps);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         }
         return latest.Values.ToList();
     }
@@ -248,10 +272,14 @@ public sealed partial class CaseWorkspace
         var audit = rep.Audit;
         if (audit.Status == ChainStatus.Valid)
         {
-            int lines = CountLines(AppAuditLogPath);
-            if (lines > audit.Entries + audit.LegacyLines)
+            // planner #7, 2026-11-17: only plain lines OLDER than the first chained entry are "anterioare" (a case from before the chain). Audit writes the
+            // plain line and then the chain entry with the same timestamp, so a line another instance is writing right now (or a line added after the chain
+            // was verified) was counted as a legacy line; a newer unchained line is in progress, not legacy. Without a readable first chained time: as before.
+            int old = audit.Entries > 0 && FirstChainedTime(AuditChainPath) is { } first
+                ? Math.Max(0, PlainLinesBefore(AppAuditLogPath, first) - audit.LegacyLines)
+                : Math.Max(0, CountLines(AppAuditLogPath) - audit.Entries - audit.LegacyLines);
+            if (old > 0)
             {
-                int old = lines - audit.Entries - audit.LegacyLines;
                 audit = audit with
                 {
                     Status = audit.Entries == 0 ? ChainStatus.Legacy : ChainStatus.Valid, LegacyLines = audit.LegacyLines + old,
@@ -262,12 +290,50 @@ public sealed partial class CaseWorkspace
         return new ChainReport(custody, audit);
     }
 
+    /// <summary>The time of the first chained entry (to the millisecond, as the plain log writes it), or null when it cannot be read.</summary>
+    private static DateTimeOffset? FirstChainedTime(string chainPath)
+    {
+        if (!File.Exists(chainPath)) return null;
+        try
+        {
+            foreach (var l in SharedRead.Lines(chainPath))
+            {
+                if (string.IsNullOrWhiteSpace(l)) continue;
+                using var doc = System.Text.Json.JsonDocument.Parse(l);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object && doc.RootElement.TryGetProperty("seq", out _)
+                    && doc.RootElement.TryGetProperty("timestampUtc", out var t) && t.TryGetDateTimeOffset(out var ts))
+                    return new DateTimeOffset(ts.UtcTicks - ts.UtcTicks % TimeSpan.TicksPerMillisecond, TimeSpan.Zero);
+            }
+        }
+        catch (Exception e) when (e is System.Text.Json.JsonException || (e is IOException io && !SharedAppend.IsSharingViolation(io))) { }
+        return null;
+    }
+
+    /// <summary>Non-empty plain audit lines whose leading timestamp is earlier than <paramref name="first"/>; a line without a readable timestamp counts too (old format).</summary>
+    private static int PlainLinesBefore(string path, DateTimeOffset first)
+    {
+        if (!File.Exists(path)) return 0;
+        int n = 0;
+        try
+        {
+            foreach (var l in SharedRead.Lines(path))
+            {
+                if (string.IsNullOrWhiteSpace(l)) continue;
+                var tab = l.IndexOf('\t');
+                if (tab <= 0 || !DateTimeOffset.TryParseExact(l[..tab], "yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ts) || ts < first) n++;
+            }
+        }
+        catch (IOException e) when (!SharedAppend.IsSharingViolation(e)) { }
+        return n;
+    }
+
     private static int CountLines(string path)
     {
         if (!File.Exists(path)) return 0;
         int n = 0;
-        try { foreach (var l in File.ReadLines(path)) if (!string.IsNullOrWhiteSpace(l)) n++; }
-        catch (IOException) { }
+        try { foreach (var l in SharedRead.Lines(path)) if (!string.IsNullOrWhiteSpace(l)) n++; }
+        catch (IOException e) when (!SharedAppend.IsSharingViolation(e)) { }
         return n;
     }
 
@@ -315,6 +381,7 @@ public sealed partial class CaseWorkspace
         if (r.MissingCount > 0) parts.Add($"Lipsă: {r.MissingCount}");
         if (r.OutputsModifiedCount > 0) parts.Add($"rezultate modificate: {r.OutputsModifiedCount}");
         if (r.OutputsMissingCount > 0) parts.Add($"rezultate lipsă: {r.OutputsMissingCount}");
+        if (r.AcquisitionProblemsCount > 0) parts.Add($"probleme în fișele colectării: {r.AcquisitionProblemsCount}");
         if (r.UnverifiedCount > 0) parts.Add($"neverificabile: {r.UnverifiedCount}");
         if (r.InvalidatedCount > 0) parts.Add($"invalidate: {r.InvalidatedCount}");
         if (legacy) parts.Add(HashChain.LegacyMessage);

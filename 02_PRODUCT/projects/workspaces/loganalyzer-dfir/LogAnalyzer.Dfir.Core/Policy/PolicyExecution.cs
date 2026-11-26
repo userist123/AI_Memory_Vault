@@ -388,9 +388,8 @@ public sealed class PolicyAuditLog(string path)
     public void Append(PolicyAuditEntry e)
     {
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path))!);
-        var last = File.Exists(path) ? File.ReadLines(path).LastOrDefault(l => l.Length > 0) : null;
-        var line = JsonSerializer.Serialize(e with { Prev = last is null ? "" : PolicyExecutor.Sha(last) }, Line);
-        File.AppendAllText(path, line + "\n", new UTF8Encoding(false));
+        LogAnalyzer.Dfir.IO.SharedAppend.WriteAfterLastLine(path, last =>
+            JsonSerializer.Serialize(e with { Prev = last is null ? "" : PolicyExecutor.Sha(last) }, Line) + "\n");
     }
 
     public IReadOnlyList<PolicyAuditEntry> Read() =>

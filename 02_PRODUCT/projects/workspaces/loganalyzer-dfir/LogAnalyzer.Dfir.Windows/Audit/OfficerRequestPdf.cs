@@ -14,7 +14,8 @@ namespace LogAnalyzer.Dfir.Windows.Audit;
 /// </summary>
 public static class OfficerRequestPdf
 {
-    public static void Write(string path, SecurityOfficerRow candidate, string station, DateTimeOffset nowUtc)
+    /// <param name="marking">Planner #10 item 1: the marking typed on the control page; printed on every page, "fără marcaj introdus" when empty.</param>
+    public static void Write(string path, SecurityOfficerRow candidate, string station, DateTimeOffset nowUtc, string? marking = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var cert = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificate(Convert.FromBase64String(candidate.Certificate));
@@ -26,6 +27,7 @@ public static class OfficerRequestPdf
             page.Content().Column(c =>
             {
                 c.Spacing(8);
+                c.Item().AlignCenter().Text(MarkingText.Line(marking)).Bold().FontSize(9).FontColor("#b91c1c");
                 c.Item().Text("Cerere de înregistrare a unui ofițer de securitate").Bold().FontSize(15);
                 c.Item().Text($"Stația: {station}. Data: {TimeZoneInfo.ConvertTime(nowUtc, TimeZoneInfo.Local):yyyy-MM-dd HH:mm} (ora stației).");
                 c.Item().Text($"Ofițerul care se înregistrează: {candidate.Name}");
@@ -33,8 +35,9 @@ public static class OfficerRequestPdf
                 c.Item().Text($"Amprenta certificatului (SHA-256): {candidate.Fingerprint}").Bold();
                 c.Item().PaddingTop(10).Text("Semnând acest document cu certificatul meu calificat, eu, ofițer de securitate deja înregistrat pe această stație, aprob ca titularul certificatului de mai sus să poată semna rapoartele oficiale de control.");
             });
+            page.Footer().AlignCenter().Text(MarkingText.Line(marking)).Bold().FontSize(7.5f).FontColor("#b91c1c");
         });
-        SignatureBoxPage.Add(doc, null, "Semnează un ofițer de securitate deja înregistrat, doar în acest câmp (în LogAnalyzer sau în Adobe, câmpul „Semnatura ofiterului de securitate”)."); }).GeneratePdf();
+        SignatureBoxPage.Add(doc, MarkingText.Line(marking), "Semnează un ofițer de securitate deja înregistrat, doar în acest câmp (în LogAnalyzer sau în Adobe, câmpul „Semnatura ofiterului de securitate”)."); }).GeneratePdf();
         File.WriteAllBytes(path, SignatureField.Reserve(InsertMarker(pdf, OfficerRegistry.RequestMarker(candidate.Fingerprint))));
         cert.Dispose();
     }

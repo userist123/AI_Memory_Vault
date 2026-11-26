@@ -1,0 +1,24 @@
+{
+  "schema_version": "1",
+  "description": "Master plan 6.6: liste pentru regulile pe ieșirea Volatility (MEM-PATH, MEM-NODISK). Păstrate ca date, nu ca texte compilate, ca DLL-ul publicat să nu poarte numele pe care le caută listele de detecție.",
+  "user_writable_path_regexes": [
+    "\\\\users\\\\public\\\\",
+    "\\\\appdata\\\\local\\\\temp\\\\",
+    "\\\\windows\\\\temp\\\\",
+    "\\\\programdata\\\\",
+    "\\\\\\$recycle\\.bin\\\\",
+    "\\\\users\\\\[^\\\\]+\\\\downloads\\\\",
+    "\\\\users\\\\[^\\\\]+\\\\desktop\\\\"
+  ],
+  "core_processes": [
+    "system", "registry", "memcompression", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "svchost.exe",
+    "winlogon.exe", "explorer.exe", "fontdrvhost.exe", "dwm.exe", "lsaiso.exe", "sihost.exe", "taskhostw.exe", "ctfmon.exe",
+    "spoolsv.exe", "conhost.exe", "runtimebroker.exe", "searchindexer.exe", "audiodg.exe", "dllhost.exe", "wmiprvse.exe",
+    "system idle process", "secure system", "vmmem"
+  ],
+  "disk_sources": ["Prefetch", "Amcache", "ShimCache", "AppCompat", "Service", "BAM", "UserAssist", "ScheduledTask", "RunKey"],
+  "process_creation_event_log": [
+    { "source": "EventLog:Security", "event_id": "4688" },
+    { "source": "EventLog:Microsoft-Windows-Sysmon/Operational", "event_id": "1" }
+  ]
+}

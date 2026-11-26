@@ -15,8 +15,13 @@ public static class ChecksReportPdf
         Write(path, title, subtitle, null, checks, notes, tables);
 
     /// <param name="seal">Chain head hashes and scope label of the case the report belongs to (decisions 28, 30).</param>
-    public static void Write(string path, string title, string subtitle, LogAnalyzer.Dfir.Case.ReportSeal? seal, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables)
+    public static void Write(string path, string title, string subtitle, LogAnalyzer.Dfir.Case.ReportSeal? seal, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables) =>
+        Write(path, title, subtitle, seal, null, checks, notes, tables);
+
+    /// <param name="marking">The case's classification marking, typed by the operator; printed in the header and every footer. Null/empty prints "fără marcaj introdus".</param>
+    public static void Write(string path, string title, string subtitle, LogAnalyzer.Dfir.Case.ReportSeal? seal, string? marking, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables)
     {
+        var markingLine = LogAnalyzer.Dfir.Reporting.MarkingText.Line(marking);
         QuestPDF.Settings.License = LicenseType.Community;
         Document.Create(doc => doc.Page(page =>
         {
@@ -25,6 +30,7 @@ public static class ChecksReportPdf
             page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily("Segoe UI").FontColor("#1e293b"));
             page.Header().Column(h =>
             {
+                h.Item().AlignCenter().Text(markingLine).Bold().FontSize(8).FontColor("#b91c1c");
                 h.Item().Text(title).Bold().FontSize(14).FontColor("#0f172a");
                 h.Item().Text($"{subtitle} · generat {DateTime.Now:yyyy-MM-dd HH:mm} pe {Environment.MachineName}").FontSize(7.5f).FontColor("#64748b");
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor("#0f172a");
@@ -53,7 +59,7 @@ public static class ChecksReportPdf
                     });
                 }
             });
-            ReportFooter.Compose(page.Footer(), "checks", $"LogAnalyzer {DfirInfo.ApplicationVersion}", seal);
+            ReportFooter.Compose(page.Footer(), "checks", $"LogAnalyzer {DfirInfo.ApplicationVersion}", seal, markingLine);
         })).GeneratePdf(path);
     }
 }

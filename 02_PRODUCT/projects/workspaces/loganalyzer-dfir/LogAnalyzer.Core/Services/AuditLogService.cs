@@ -21,7 +21,7 @@ namespace LogAnalyzer.Core.Services
             lock (_lock)
             {
                 string logEntry = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}] [{actionType}] {details}{Environment.NewLine}";
-                File.AppendAllText(_logFile, logEntry);
+                LogAnalyzer.Dfir.IO.SharedAppend.WriteText(_logFile, logEntry);
             }
         }
     }

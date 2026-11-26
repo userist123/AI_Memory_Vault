@@ -3,7 +3,7 @@ using LogAnalyzer.Dfir.Model;
 namespace LogAnalyzer.Dfir.Presentation;
 
 /// <summary>One line of the evidence list (level 2): where it comes from, when, and what it shows.</summary>
-public sealed record EvidenceLine(string EvidenceId, string Source, string TimeText, string Description);
+public sealed record EvidenceLine(string EvidenceId, string Source, string TimeText, string Description, string Quote = "", string TimeSource = "");
 
 /// <summary>Level 3: everything needed to find the record again and to know how it was read (UX contract §6).</summary>
 public sealed record EvidenceTechnical(string EvidenceId, string Sha256, string SourcePath, string Parser, string ParserVersion, string Timestamp, string Locator);
@@ -17,6 +17,8 @@ public sealed record EvidenceLevels(string Summary, IReadOnlyList<EvidenceLine> 
 {
     /// <summary>Shown where the case does not give a detail. Never blank, never a guess.</summary>
     public const string Unknown = "necunoscut în caz";
+    /// <summary>Printed after „Citat:” when the reference carries no quote (older case, or the row is no longer in the case).</summary>
+    public const string QuoteUnavailable = "indisponibil în acest caz";
 
     public static EvidenceLevels Build(Finding f, EvidenceContext ctx)
     {
@@ -29,7 +31,8 @@ public sealed record EvidenceLevels(string Summary, IReadOnlyList<EvidenceLine> 
             var parse = ctx.ParseOf(r.EvidenceId);
             string source = item is { Source.Length: > 0 } ? item.Source : r.EvidenceId;
             string time = ev?.Time.Utc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + " UTC" : Unknown;
-            list.Add(new EvidenceLine(r.EvidenceId, source, time, r.Description));
+            list.Add(new EvidenceLine(r.EvidenceId, source, time, r.Description, r.Quote.Length > 0 ? r.Quote : QuoteUnavailable,
+                (r.TimeSource.Length > 0 ? r.TimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource) + (r.Channel.Length > 0 ? " · canal: " + r.Channel : "")));
 
             string sha = First(r.Sha256, item?.Sha256, ev?.SourceSha256);
             string path = First(item?.OriginalPath, item?.StoredPath);

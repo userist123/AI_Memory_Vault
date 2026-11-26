@@ -12,6 +12,7 @@ namespace LogAnalyzer.Dfir.Tests;
 /// Owner decisions on the three editions: the "wrong edition" warning of the Internet edition on an isolated-looking station, the removable-media
 /// rules on Internet, and the active domain-controller reachability check N13 (Network edition only).
 /// </summary>
+[Collection("AppMode")]   // resets / initialises the process-wide AppModeContext like the other AppMode tests
 public class OwnerEditionDecisionsTests
 {
     private static readonly DateTimeOffset Start = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);

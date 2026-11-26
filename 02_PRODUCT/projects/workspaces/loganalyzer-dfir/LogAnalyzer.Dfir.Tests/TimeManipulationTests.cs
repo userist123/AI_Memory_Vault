@@ -124,4 +124,34 @@ public sealed class TimeManipulationTests
         Assert.Equal(AntiForensicResult.NotDetected, afTz.Result);
         Assert.Contains("fus orar", afTz.Reason);
     }
+
+    [Fact]
+    public void AF05_tells_who_moved_the_clock_which_way_by_how_much_and_with_what_in_plain_words()
+    {
+        // lab 2026-11-07: AF05 was the one check still shown only as „4616 … → … [3h 12m înapoi] de admin (cmd.exe)”
+        var bucharest = TimeZoneInfo.FindSystemTimeZoneById("GTB Standard Time");
+        var security = Clock4616(T0, T0, T0.AddHours(-3).AddMinutes(-12));
+        var kernel = E("EventLog:System", "1", T0, "Microsoft-Windows-Kernel-General",
+            new() { ["Reason"] = "1", ["OldTime"] = T0.ToString("o"), ["NewTime"] = T0.AddHours(-3).AddMinutes(-12).ToString("o"), ["ProcessName"] = @"C:\Windows\System32\cmd.exe" });
+        var jumps = TimeManipulation.Analyze([security, kernel]).Jumps;
+        Assert.Equal("Pe 19 septembrie 2026, la ora 15:00, utilizatorul cu contul „admin” a mutat ceasul calculatorului înapoi cu 3 ore și 12 minute, cu programul „cmd.exe”. " +
+                     "Orele evenimentelor din jurul acestui moment nu sunt sigure.", AntiForensics.ClockPlain(jumps, 0, bucharest));
+        Assert.EndsWith("În jurnale, o înregistrare are o oră mai veche decât cele scrise înaintea lor: ceasul a fost dat înapoi. Orele evenimentelor din jurul acestui moment nu sunt sigure.",
+            AntiForensics.ClockPlain([], 1, bucharest));
+        // review residuals: a 4616 without its new time is still the same change as its Kernel-General record; a jump under a second has no „0 secunde”
+        var noNewTime = E("EventLog:Security", "4616", T0, "Microsoft-Windows-Security-Auditing", new() { ["ProcessName"] = @"C:\Windows\System32\cmd.exe", ["SubjectUserName"] = "admin" });
+        var both = AntiForensics.ClockPlain(TimeManipulation.Analyze([noNewTime, kernel]).Jumps, 0, bucharest);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(both, "ceas|ora calculatorului"));
+        Assert.Contains("contul „admin” a mutat ceasul calculatorului înapoi cu 3 ore și 12 minute", both);   // account from Security, size from Kernel-General
+        var tiny = Clock4616(T0, T0, T0.AddMilliseconds(-400));
+        Assert.DoesNotContain("0 secunde", AntiForensics.ClockPlain(TimeManipulation.Analyze([tiny]).Jumps, 0, bucharest));
+        Assert.EndsWith("acestor momente nu sunt sigure.", AntiForensics.ClockPlain(jumps, 2, bucharest));
+
+        var af = Assert.Single(AntiForensics.Evaluate([security, kernel], []), c => c.Id == "AF05");
+        Assert.DoesNotMatch(@"\b(?:4616|Kernel-General|AF05|UTC)\b", af.Plain);
+        Assert.Contains("a mutat ceasul calculatorului înapoi cu 3 ore și 12 minute", af.Plain);
+        Assert.Equal("o oră", PlainPhrases.Duration(TimeSpan.FromHours(1)));
+        Assert.Equal("2 zile și 5 ore", PlainPhrases.Duration(TimeSpan.FromDays(2) + TimeSpan.FromHours(5) + TimeSpan.FromMinutes(7)));
+        Assert.Equal("40 de secunde", PlainPhrases.Duration(TimeSpan.FromSeconds(-40)));
+    }
 }

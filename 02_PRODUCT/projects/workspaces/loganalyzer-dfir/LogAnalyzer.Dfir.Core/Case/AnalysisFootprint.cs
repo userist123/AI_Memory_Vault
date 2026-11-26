@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.IO;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.Model;
 
@@ -34,7 +35,7 @@ public sealed record AnalysisFootprint(string CaseFolder, bool LiveCollection, i
         try
         {
             if (File.Exists(ws.CustodyJsonlPath))
-                reports = File.ReadLines(ws.CustodyJsonlPath).Count(l => l.Contains("\"output.written\"", StringComparison.Ordinal));
+                reports = SharedRead.Lines(ws.CustodyJsonlPath).Count(l => l.Contains("\"output.written\"", StringComparison.Ordinal));
         }
         catch (IOException) { }
         return new AnalysisFootprint(Generalize(ws.Root), acquired.Count > 0, logs, hives, acquired.Count - logs - hives, ev.Count - acquired.Count, reports);

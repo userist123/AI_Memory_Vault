@@ -103,12 +103,12 @@ namespace LogAnalyzer.UI.Services
         /// signed PDF and the CSV table to <paramref name="folder"/> and records "media_history.reconciled". Nothing is written when the audit refuses the entry.
         /// </summary>
         public static ReportFiles ExportReport(string folder, CrossStationResult r, CrossStationSettings s, string officerStation, string registerLine, X509Certificate2 cert,
-                                               IReadOnlyList<SecurityOfficerRow> trusted, DateTimeOffset nowUtc, Func<string, string, bool> audit)
+                                               IReadOnlyList<SecurityOfficerRow> trusted, DateTimeOffset nowUtc, Func<string, string, bool> audit, string? marking = null)
         {
             var fp = OfficerFingerprint.Of(cert);
             if (!trusted.Any(t => OfficerFingerprint.Same(t.Fingerprint, fp)))
                 throw new InvalidOperationException($"Certificatul „{OfficerFingerprint.CommonName(cert)}” (amprenta {fp}) nu aparține unui ofițer de securitate înregistrat.");
-            var pdf = LogAnalyzer.Dfir.Windows.Audit.CrossStationReportPdf.Generate(r, s, officerStation, registerLine, nowUtc);
+            var pdf = LogAnalyzer.Dfir.Windows.Audit.CrossStationReportPdf.Generate(r, s, officerStation, registerLine, nowUtc, marking);
             var stamp = nowUtc.ToString("yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture);
             var unsignedSha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pdf));
             var baseName = $"confruntare_statii_{stamp}";

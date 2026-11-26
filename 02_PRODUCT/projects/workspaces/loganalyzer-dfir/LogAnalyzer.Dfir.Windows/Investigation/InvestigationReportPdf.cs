@@ -23,6 +23,9 @@ public static class InvestigationReportPdf
 
     /// <param name="preCheck">F2: the evidence re-check made just before this report; null = run it now on the case (every PDF re-verifies first).</param>
     /// <param name="masker">F10: when given, every printed text goes through it (user, host, IP, e-mail and the user segment of paths become consistent pseudonyms) for sharing.</param>
+    /// <summary>Header line while the case has no <c>case.closed</c> audit entry.</summary>
+    public const string WorkingDocument = "Document în lucru — cazul nu este închis";
+
     public static void Write(InvestigationResult r, string path, string investigator, string notes = "", LogAnalyzer.Dfir.Reporting.ReportAudience audience = LogAnalyzer.Dfir.Reporting.ReportAudience.Everything,
                              LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null, LogAnalyzer.Dfir.Privacy.PiiMasker? masker = null)
     {
@@ -36,15 +39,52 @@ public static class InvestigationReportPdf
         var chains = r.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
         var others = r.Findings.Where(f => f.RuleId != "INCIDENT-CHAIN").ToList();
         var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(r.Case);   // F2: re-verify every evidence hash before anything is printed
+        // R7c: the verdict printed is the one of this moment, not of when the case was opened. When the check above ran here, its Recheck has just hashed
+        // every evidence file: reuse those hashes instead of hashing the case a second time (review round 2); a check passed in by the caller may be older.
+        if (S(LogAnalyzer.Dfir.Reporting.ReportSection.EvidenceCollected))
+        {
+            if (preCheck is null && r.Case.LastRecheck is { } fresh)
+            {
+                var (known, registered) = LogAnalyzer.Dfir.Case.AcquisitionRunVerifier.MapsFrom(r.Case, fresh);
+                r.LoadAcquisitionRuns(r.Case, default, known, registered);
+            }
+            else r.LoadAcquisitionRuns(r.Case);
+        }
         var integrity = ReportIntegrity.Check(r);
         if (pre.BlocksConfirmed && integrity.AllIntact) integrity = integrity with { AllIntact = false, Banner = integrity.Banner + " " + pre.Line };
+        // the sentences name the users register's people beside the accounts; the register is not in the timeline, so a masked export learns them first
+        var personOf = LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf;
+        var accountOfSid = LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(r.Timeline);
+        if (masker is not null && personOf is not null)
+            foreach (var raw in r.Findings.SelectMany(f => (f.User ?? "").Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                // a SID is asked as itself and as the account the case's events give it (review round 2: a SID-only finding printed the register's surname in clear)
+                var names = new List<string> { raw };
+                if (LogAnalyzer.Dfir.Language.AccountResolver.IsSid(raw) && accountOfSid(raw) is { Length: > 0 } resolved) names.Add(resolved);
+                foreach (var account in names)
+                {
+                    var shortName = account.Contains('\\') ? account[(account.LastIndexOf('\\') + 1)..] : account;
+                    if ((personOf(account) ?? personOf(shortName)) is { Length: > 0 } person) masker.KnownPerson(person);
+                }
+            }
+        var stories = LogAnalyzer.Dfir.Language.PeopleStory.Build(others, personOf, InvestigationReportText.Plain, accountOfSid);
         string W(string text) { var t = pre.Unconfirm(text); return masker is null ? t : masker.Mask(t); }
         var footprint = LogAnalyzer.Dfir.Case.AnalysisFootprint.ForCase(r.Case);
         var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
         var verification = r.Verification ?? ReadVerification(r.Case.Root);
+        // the event id and time of an EVTX record come from its timeline row (one pass, only when a finding prints evidence lines)
+        var EvtxRows = new Lazy<Dictionary<(string, string), TimelineEvent>>(() => r.Timeline.Where(t => t.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal))
+            .GroupBy(t => (t.EvidenceId, t.Locator)).ToDictionary(g => g.Key, g => g.First()));
         var station = LogAnalyzer.Dfir.Analysis.StationIdentity.FromEvidence(r.Timeline, info.Host);   // the evidence's station, not the examiner's machine (review I1)
         var summary = InvestigationReportText.Summarize(r, integrity);
+        var mistakes = InvestigationReportText.Mistakes(others);
+        var ruleMistakes = InvestigationReportText.RuleMistakes(r.Detections, r.RulesUsed);   // planner #11 A7: high-level rule matches count as mistakes too
+        int mistakeTotal = mistakes.Count + ruleMistakes.Count;
+        var ownerGroups = InvestigationReportText.OwnerGroups(mistakes);
+        var ownerSummary = InvestigationReportText.OwnerSummary(ownerGroups);
+        var timelineIndex = new Lazy<Dictionary<(string EvidenceId, string Locator), TimelineEvent>>(() => LogAnalyzer.Dfir.Integrity.EvidenceQuote.Index(r.Timeline));
+        bool showMistakes = S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings);   // the line on page 1 exists only where the section is printed
         var printed = new List<string>();
         var numbers = new InvestigationReportText.SectionCounter();
 
@@ -58,7 +98,11 @@ public static class InvestigationReportPdf
                 string title = W($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}"));
                 string sub = W($"Caz {info.CaseId} · {station.Line} · investigator {investigator} · orele sunt în {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu ora UTC între paranteze") +
                              (masker is null ? "" : " · EXPORT CU DATE PERSONALE MASCATE (pseudonime consecvente)");
-                printed.Add(title); printed.Add(sub);
+                var markingLine = LogAnalyzer.Dfir.Reporting.MarkingText.Line(info.Scope?.Marking);
+                printed.Add(markingLine); printed.Add(title); printed.Add(sub);
+                h.Item().AlignCenter().Text(markingLine).Bold().FontSize(8).FontColor("#b91c1c");
+                // until a case.closed entry exists in the audit chain the report is a working document (read from the chain file, as CaseLoader does)
+                if (!CaseLoader.IsClosed(r.Case)) { printed.Add(WorkingDocument); h.Item().AlignCenter().Text(WorkingDocument).Bold().FontSize(8).FontColor("#b45309"); }
                 h.Item().Text(title).Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text(sub).FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
@@ -74,15 +118,27 @@ public static class InvestigationReportPdf
                 // F2: the result of the re-verification made just before this report, first on page 1.
                 var preColor = pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable && pre.Unverified == 0 ? "#065f46" : "#78350f";
                 P(col, pre.Line).FontSize(8).Bold().FontColor(preColor);
+                // Evaluation 2026-11-05: the scope (why, period, systems, approver, legal basis, category, act) was missing from the report.
+                var scopeLines = LogAnalyzer.Dfir.Case.ScopeForm.ReportLines(info.Scope);
+                bool scopeOk = info.Scope?.IsConfirmed == true;
+                col.Item().Border(1).BorderColor(scopeOk ? "#cbd5e1" : "#b45309").Padding(6).Column(sc =>
+                {
+                    sc.Spacing(1);
+                    P(sc, scopeLines[0]).Bold().FontSize(8.5f).FontColor(scopeOk ? Ink : "#b45309");
+                    foreach (var l in scopeLines.Skip(1)) P(sc, l).FontSize(8);
+                });
                 col.Item().Background("#f8fafc").Border(1.2f).BorderColor(Ink).Padding(8).Column(sc =>
                 {
                     sc.Spacing(3);
                     P(sc, "Concluzie pe scurt").Bold().FontSize(12).FontColor(Ink);
                     P(sc, summary.Verdict).Bold().FontSize(9);
-                    if (summary.Serious.Count > 0)
+                    // a grave finding that is also a mistake is listed once, in the owner's box below (same sentence plus what to do); the rest stays here
+                    var inBox = showMistakes ? ownerGroups.SelectMany(g => g.Members).Select(m => "; " + m.FindingId + ")").ToList() : [];
+                    var seriousHere = summary.Serious.Where(s => !inBox.Any(k => s.EndsWith(k, StringComparison.Ordinal))).ToList();
+                    if (seriousHere.Count > 0)
                     {
                         P(sc, "Ce este grav").Bold().FontSize(8.5f);
-                        foreach (var s in summary.Serious) P(sc, "• " + s).FontSize(8);
+                        foreach (var s in seriousHere) P(sc, "• " + s).FontSize(8);
                     }
                     P(sc, "Ce nu s-a putut verifica (surse lipsă sau incomplete)").Bold().FontSize(8.5f);
                     foreach (var s in summary.NotChecked) P(sc, "• " + s).FontSize(8);
@@ -93,6 +149,21 @@ public static class InvestigationReportPdf
                     P(sc, "Ce poate și ce nu poate dovedi acest raport").Bold().FontSize(8.5f);
                     P(sc, summary.CanProve).FontSize(8);
                     P(sc, summary.CannotProve).FontSize(8);
+                    if (showMistakes && ownerGroups.Count > 0)
+                    {
+                        // planner #14 E1: every mistake of medium severity or higher, not only the grave ones listed above
+                        P(sc, InvestigationReportText.OwnerSummaryHeading).Bold().FontSize(8.5f);
+                        // G5: settings to correct first, then traces to investigate; each block with its count
+                        foreach (var b in ownerSummary.Blocks)
+                        {
+                            P(sc, b.HeadingWithCount).Bold().FontSize(8);
+                            foreach (var l in b.Lines) P(sc, "• " + l).FontSize(8);
+                        }
+                        if (ownerSummary.More is { } more) P(sc, more).FontSize(8);
+                    }
+                    if (showMistakes)
+                        P(sc, ruleMistakes.Count == 0 ? $"Greșeli găsite: {mistakeTotal} (vezi secțiunea „Greșeli găsite”)"
+                            : $"Greșeli găsite: {mistakeTotal} (din care {RoText.Count(ruleMistakes.Count, "potrivire de reguli", "potriviri de reguli")}) — vezi secțiunea „Greșeli găsite”").Bold().FontSize(8.5f);
                 });
 
                 // Red: a source changed or vanished. Amber: every hash matches, but a source was empty or of an unexpected format (not interpreted).
@@ -145,8 +216,8 @@ public static class InvestigationReportPdf
                 foreach (var c in chains)
                     col.Item().Border(0.8f).BorderColor("#7f1d1d").Padding(6).Column(cc =>
                     {
-                        P(cc, $"{RoText.StripVolumes(c.Title)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
-                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + RoText.StripVolumes(step)).FontSize(8);
+                        P(cc, $"{InvestigationReportText.Plain(c)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
+                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + LogAnalyzer.Dfir.Language.PlainStory.WithoutTechnicalTerms(RoText.StripVolumes(step))).FontSize(8);
                         P(cc, "Atenție: " + string.Join(" ", c.AlternativeExplanations)).FontSize(7).Italic().FontColor(Muted);
                     });
 
@@ -161,6 +232,56 @@ public static class InvestigationReportPdf
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings))
                 {
+                // planner #11 A3: the mistakes first, each one checkable on paper
+                Head(InvestigationReportText.MistakesHeading);
+                P(col, InvestigationReportText.MistakesRule).FontSize(7.5f).Italic().FontColor(Muted);
+                if (ruleMistakes.Count > 0) P(col, InvestigationReportText.RuleMistakesRule).FontSize(7.5f).Italic().FontColor(Muted);
+                if (mistakeTotal == 0) P(col, InvestigationReportText.MistakesNone).FontSize(8.5f);
+                foreach (var mf in mistakes.Take(InvestigationReportText.MistakesCap))
+                {
+                    var blk = InvestigationReportText.MistakeBlockOf(mf, zone, e => LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator))));
+                    col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(mc =>
+                    {
+                        mc.Spacing(1);
+                        foreach (var l in blk.Lines)
+                        {
+                            var t = P(mc, l).FontSize(l.StartsWith("  ", StringComparison.Ordinal) ? 7 : 8);
+                            if (!l.StartsWith("  ", StringComparison.Ordinal)) t.Bold();
+                        }
+                    });
+                }
+                int roomForRules = Math.Max(0, InvestigationReportText.MistakesCap - Math.Min(mistakes.Count, InvestigationReportText.MistakesCap));
+                foreach (var rm in ruleMistakes.Take(roomForRules))
+                {
+                    var blk = InvestigationReportText.RuleMistakeBlockOf(rm, zone, timelineIndex.Value.GetValueOrDefault((rm.Hit.EvidenceId, rm.Hit.Locator)), evidence.GetValueOrDefault(rm.Hit.EvidenceId),
+                        e => LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, timelineIndex.Value.GetValueOrDefault((e.EvidenceId, e.Locator))));
+                    col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(mc =>
+                    {
+                        mc.Spacing(1);
+                        foreach (var l in blk.Lines)
+                        {
+                            var t = P(mc, l).FontSize(l.StartsWith("  ", StringComparison.Ordinal) ? 7 : 8);
+                            if (!l.StartsWith("  ", StringComparison.Ordinal)) t.Bold();
+                        }
+                    });
+                }
+                if (mistakeTotal > InvestigationReportText.MistakesCap)
+                    P(col, $"Încă {mistakeTotal - InvestigationReportText.MistakesCap} greșeli nu sunt afișate aici; vedeți lista completă a constatărilor.").FontSize(8).Italic();
+                // owner 2026-11-06 („cine se face vinovat”): the same findings regrouped by person, each in the order it happened; never a verdict of guilt
+                if (stories.Count > 0)
+                {
+                    Head("Cine ce a făcut (pe persoane, în ordinea timpului)");
+                    P(col, LogAnalyzer.Dfir.Language.PeopleStory.Intro).FontSize(7.5f).Italic().FontColor(Muted);
+                    foreach (var s in stories)
+                        col.Item().Border(0.5f).BorderColor(s.Serious > 0 ? "#b45309" : Line).Padding(5).Column(pc =>
+                        {
+                            pc.Spacing(1);
+                            P(pc, s.Title).Bold().FontSize(8.5f).FontColor(Ink);
+                            foreach (var l in s.Lines)
+                                P(pc, $"• {l.Sentence}{(l.Severity >= Severity.High ? $" ({RoLabels.Severity(l.Severity).ToLowerInvariant()})" : "")}").FontSize(7.5f);
+                            if (s.Omitted > 0) P(pc, s.OmittedLine).FontSize(7).Italic().FontColor(Muted);
+                        });
+                }
                 Head("Constatări");
                 var groups = InvestigationReportText.GroupFindings(others);
                 if (!fullFindings)
@@ -168,7 +289,7 @@ public static class InvestigationReportPdf
                         col.Item().Column(sc =>
                         {
                             var f = g.Lead;
-                            P(sc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)}").FontSize(8);
+                            P(sc, $"{InvestigationReportText.Plain(f)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)} · {f.FindingId}").FontSize(8);
                             foreach (var m in f.MissingEvidence) P(sc, "Lipsește: " + m).FontSize(7).Italic();
                             foreach (var c in f.ContradictingEvidence) P(sc, "Contrazice: " + c).FontSize(7).Italic().FontColor("#92400e");
                             foreach (var l in InvestigationReportText.SpecificLimitations(f, 2).Specific.Take(3)) P(sc, "Limită: " + l).FontSize(7).Italic().FontColor(Muted);
@@ -178,7 +299,8 @@ public static class InvestigationReportPdf
                     col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(cc =>
                     {
                         var f = g.Lead;
-                        P(cc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")}").Bold();
+                        P(cc, $"{InvestigationReportText.Plain(f)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")}").Bold();
+                        P(cc, $"Pentru specialiști: {f.FindingId} · {RoText.StripVolumes(f.Title)}").FontSize(7).FontColor(Muted);
                         P(cc, $"{RoLabels.Severity(f.Severity)} · {RoLabels.Classification(f.Classification)} · {RoLabels.Confidence(f.Confidence)} · {RoLabels.Category(f.Category)}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
                         P(cc, $"Stare: {StateLabels.Romanian(f.Status)} · tip: {RoLabels.Semantic(f.SemanticType)} · verificare automată: {StateLabels.Romanian(f.Verification.State)}")
@@ -189,11 +311,22 @@ public static class InvestigationReportPdf
                         if (g.Members.Count > 1)
                         {
                             P(cc, $"Constatări de același fel ({g.Members.Count}):").FontSize(7.5f).Bold();
-                            foreach (var m in g.Members.Take(15)) P(cc, $"{m.FindingId} · {RoText.StripVolumes(m.Title)}").FontSize(7);
+                            foreach (var m in g.Members.Take(15)) P(cc, $"{InvestigationReportText.Plain(m)} ({m.FindingId})").FontSize(7);
                             if (g.Members.Count > 15) P(cc, $"… încă {g.Members.Count - 15} (lista completă în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         }
                         var refs = InvestigationReportText.GroupEvidence(g);
-                        foreach (var e in refs.Take(8)) P(cc, $"Element de probă {e.EvidenceId} · {RoText.CleanPathsInText(e.Locator)} · {RoText.CleanPathsInText(e.Description)}").FontSize(7).FontColor(Muted);
+                        var shownSteps = new HashSet<string>(StringComparer.Ordinal);   // the same command is printed once per finding (the file hash of one evidence item repeats)
+                        foreach (var e in refs.Take(8))
+                        {
+                            P(cc, $"Element de probă {e.EvidenceId} · {RoText.CleanPathsInText(e.Locator)} · {RoText.CleanPathsInText(e.Description)}").FontSize(7).FontColor(Muted);
+                            // planner #11 A1: the quoted original and where its time comes from, so the owner can lay the report next to the source (printed through P, hence masked like every other text)
+                            P(cc, "  Citat: " + (e.Quote.Length > 0 ? $"„{e.Quote}”" : LogAnalyzer.Dfir.Presentation.EvidenceLevels.QuoteUnavailable)).FontSize(6.5f).FontColor(Muted);
+                            P(cc, "  Ora din: " + (e.TimeSource.Length > 0 ? e.TimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource) + (e.Channel.Length > 0 ? " · canal: " + e.Channel : "")).FontSize(6.5f).FontColor(Muted);
+                            var how = LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator)))
+                                .Where(s => shownSteps.Add(s.ToLine())).Take(3).ToList();
+                            if (how.Count > 0) P(cc, LogAnalyzer.Dfir.Presentation.ManualVerification.Heading + ":").FontSize(6.5f).Bold().FontColor(Muted);
+                            foreach (var s in how) P(cc, "  • " + s.ToLine()).FontSize(6.5f).FontColor(Muted);
+                        }
                         if (refs.Count > 8) P(cc, $"… încă {RoText.Count(refs.Count - 8, "referință", "referințe")} la elemente de probă (în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         foreach (var a in f.AlternativeExplanations) P(cc, "Explicație nevinovată posibilă: " + a).FontSize(7).Italic();
                         foreach (var m in f.MissingEvidence) P(cc, "Lipsește: " + m).FontSize(7).Italic();
@@ -224,6 +357,20 @@ public static class InvestigationReportPdf
                 Head("Elemente de probă colectate și citite");
                 foreach (var c in r.Collection)
                     P(col, $"{c.Collector}: {RoLabels.Source(c.Status)}, {RoText.Count(c.EvidenceCount, "element de probă", "elemente de probă")} ({L(c.StartUtc)} – {L(c.EndUtc)}) {InvestigationReportText.GroupErrors(c.Errors)}").FontSize(7.5f);
+                P(col, "Fișele colectării").Bold().FontSize(9).FontColor(Ink);
+                if (r.AcquisitionRunsError.Length > 0)
+                    P(col, RoText.CleanPathsInText("Fișele de colectare nu au putut fi citite: " + r.AcquisitionRunsError)).FontSize(7.5f).Bold();
+                else if (r.AcquisitionRuns.Count == 0)
+                    P(col, "Nicio fișă de colectare (cazul nu are colectare făcută de aplicație)").FontSize(7.5f).FontColor(Muted);
+                foreach (var run in r.AcquisitionRuns)
+                {
+                    var runLine = P(col, RoText.CleanPathsInText(run.IsTrusted
+                        ? $"{run.ShortId}: {L(run.StartUtc)} – {L(run.EndUtc)} · operator {run.Operator} · stație {run.Station} · versiune {run.ApplicationVersion} · {run.StateText} · {RoText.Count(run.ItemCount, "fișier", "fișiere")} · {run.VerificationText}"
+                        : $"{run.ShortId}: {run.VerificationText}")).FontSize(7.5f);
+                    if (run.HasProblem) runLine.Bold();
+                    foreach (var rc in run.Collectors)
+                        P(col, RoText.CleanPathsInText($"    {rc.Name} {rc.Version}: {rc.StatusText}, {RoText.Count(rc.ItemCount, "fișier", "fișiere")}, amprentă listă {rc.ManifestShort}" + (rc.FirstError.Length > 0 ? $", eroare: {rc.FirstError}" : ""))).FontSize(7f).FontColor(Muted);
+                }
                 foreach (var g in r.Parsing.Where(p => p.Status != EvidenceStatus.SkippedByDesign).GroupBy(p => (p.Parser, p.ParserVersion, p.ParserStatus)))
                     P(col, $"{g.Key.Parser} {g.Key.ParserVersion} ({(g.Key.ParserStatus.Length > 0 ? InvestigationReportText.ParserStatusRomanian(g.Key.ParserStatus) : "—")}): {RoText.Count(g.Count(), "fișier", "fișiere")}, {RoText.Count(g.Sum(p => p.Records), "înregistrare", "înregistrări")}, stări: {string.Join(", ", g.Select(p => RoLabels.Source(p.Status)).Distinct())}").FontSize(7.5f);
                 foreach (var s in r.Parsing.Where(p => p.Status == EvidenceStatus.SkippedByDesign))
@@ -245,12 +392,29 @@ public static class InvestigationReportPdf
                 P(col, "O potrivire arată că elementul de probă îndeplinește criteriile regulii; nu dovedește singură intenția sau rezultatul unei activități.").FontSize(7).Italic().FontColor(Muted);
 
                 }
-                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.AntiForensics))
+                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Identities))
+                {
+                Head("Conturi, sesiuni și căi (identități)");
+                foreach (var l in InvestigationReportText.IdentityLines(r.Identity, r.IdentityGraph, masked: masker is not null))
+                    P(col, l.Text).FontSize(l.Heading ? 8 : 7.5f).FontColor(l.Warn ? "#92400e" : "#1e293b");
+                P(col, "Un cont este cheia SID-ului lui, nu numele. Procesele și resursele sunt legate de un cont numai prin aceeași stație și același LogonId, în intervalul sesiunii; ce nu poate fi legat este numărat, nu ghicit. Detalii: Analysis/identity.json și Analysis/identity_graph.json.")
+                    .FontSize(7).Italic().FontColor(Muted);
+
+                }                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.AntiForensics))
                 {
                 Head("Ascunderea sau ștergerea urmelor (anti-forensics)");
                 foreach (var a in r.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id))
-                    P(col, RoText.FixSentences($"{a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(7.5f)
-                       .FontColor(a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b");
+                {
+                    string color = a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b";
+                    if (a.Plain.Length > 0)
+                    {
+                        // the plain sentence leads; the codes stay below for the specialist (owner 2026-11-06)
+                        P(col, a.Plain).FontSize(8f).FontColor(color);
+                        P(col, RoText.FixSentences($"Pentru specialiști: {a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(6.5f).FontColor(Muted);
+                    }
+                    else
+                        P(col, RoText.FixSentences($"{a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(7.5f).FontColor(color);
+                }
                 P(col, "DETECTAT = urmă observată în elementele de probă (nu dovedește singură intenția); NEDETECTAT = sursa relevantă a fost analizată și nu arată urma; NEDETERMINAT = sursa lipsește sau nu a fost citită. Nicio verificare nu înseamnă „curat”.").FontSize(7).Italic().FontColor(Muted);
 
                 }
@@ -316,8 +480,28 @@ public static class InvestigationReportPdf
                 P(col, $"Cronologia completă: Analysis/timeline.csv · constatări: Analysis/findings.json · lanțul de custodie: Logs/chain_of_custody.csv (în {r.Case.Root}). " +
                        "„Indisponibil” înseamnă că sursa nu a putut fi citită, nu că activitatea nu a avut loc. O constatare marcată „indiciu – de confirmat” cere confirmarea analistului.")
                     .FontSize(7).Italic().FontColor(Muted);
+
+                // planner #14 E1: the printable checklist closes the report; same set and order as "Rezumat pentru proprietar"; printed through P, so masked like the rest
+                if (showMistakes && ownerGroups.Count > 0)
+                {
+                    col.Item().PageBreak();
+                    Head(InvestigationReportText.ChecklistHeading);
+                    P(col, "Printați această pagină, parcurgeți pașii pentru fiecare linie și bifați căsuța când ați verificat.").FontSize(7.5f).Italic().FontColor(Muted);
+                    var entries = InvestigationReportText.ChecklistEntries(ownerGroups, e => LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator))));
+                    foreach (var entry in entries)
+                        col.Item().ShowEntire().Border(0.5f).BorderColor(Line).Padding(5).Column(mc =>
+                        {
+                            mc.Spacing(1);
+                            for (int i = 0; i < entry.Count; i++)
+                            {
+                                var t = P(mc, entry[i]).FontSize(i == 0 ? 9 : 7.5f);
+                                if (i == 0) t.Bold();
+                            }
+                        });
+                }
             });
-            LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal);
+            LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal,
+                LogAnalyzer.Dfir.Reporting.MarkingText.Line(info.Scope?.Marking));
         })).GeneratePdf(path);
         TextObserver.Value?.Invoke(string.Join("\n", printed));
     }

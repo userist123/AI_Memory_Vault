@@ -63,6 +63,8 @@ public sealed class RuntimeGuardEntryPointTests
             ["LogAnalyzer.App"] = (Path.Combine("LogAnalyzer.App", "App.xaml.cs"), "StartupNotices.Initialize("),
             ["LogAnalyzer.KeyGen"] = (Path.Combine("LogAnalyzer.KeyGen", "Program.cs"), "RuntimeGuard.Warning("),
             ["LogAnalyzer.LicenseManager"] = (Path.Combine("LogAnalyzer.LicenseManager", "MainWindow.xaml.cs"), "RuntimeGuard.Warning("),
+            // test helper for the multi-process chain tests (never published with the app); it calls the guard like every other executable
+            ["LogAnalyzer.Dfir.ChainWorker"] = (Path.Combine("LogAnalyzer.Dfir.ChainWorker", "Program.cs"), "RuntimeGuard.Warning("),
         };
         foreach (var exe in exes)
         {

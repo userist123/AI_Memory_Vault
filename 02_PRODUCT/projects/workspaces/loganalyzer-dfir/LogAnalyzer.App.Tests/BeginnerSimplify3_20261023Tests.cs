@@ -180,7 +180,7 @@ public sealed class BeginnerSimplify3_20261023Tests : IDisposable
             Layout(v2);
             var accent = v2.FindResource("AccentButtonStyle");
             var shown = Descendants(v2).OfType<Button>().Where(b => b.Content is string && Shown(b)).ToDictionary(b => (string)b.Content);
-            Assert.Same(accent, shown["Salvează"].Style);
+            Assert.NotSame(accent, shown["Salvează"].Style);   // one accent button per screen (2026-11-11): only "Preia de pe stație" keeps it
             Assert.Same(accent, shown["Preia de pe stație"].Style);
             Assert.False(HasText(v2, UsersShort));
             var notice = Descendants(v2).OfType<TextBlock>().First(t => t.Text == vm2.Notice);

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Globalization;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
@@ -10,6 +11,9 @@ public enum AntiForensicResult { Detected, NotDetected, Undetermined }
 
 public sealed record AntiForensicCheck(string Id, string Technique, string Attack, AntiForensicResult Result, string Reason, IReadOnlyList<EvidenceRef> Evidence, string Detail = "")
 {
+    /// <summary>What happened, in plain Romanian without codes (owner 2026-11-06); empty when the check has no sentence of its own yet.</summary>
+    public string Plain { get; init; } = "";
+
     /// <summary>Reader-facing result (DETECTAT / NEDETECTAT / NEDETERMINAT); <see cref="ResultText"/> keeps the spec code for data and the legend.</summary>
     [System.Text.Json.Serialization.JsonIgnore] public string ResultRomanian => LogAnalyzer.Dfir.Language.RoLabels.AntiForensic(Result);
     public string ResultText => Result switch { AntiForensicResult.Detected => "DETECTED", AntiForensicResult.NotDetected => "NOT_DETECTED", _ => "UNDETERMINED" };
@@ -39,6 +43,17 @@ public static class AntiForensics
     private const string TaskOps = "EventLog:Microsoft-Windows-TaskScheduler/Operational";
 
     /// <summary>Utilities whose renaming ATT&amp;CK lists under T1036.003 (Rename System Utilities), by their PE OriginalFileName.</summary>
+    /// <summary>
+    /// The USN sentence of an AF08 "undetermined" text: its own sentence, capital letter, full stop. When there is no journal and the reason already says so
+    /// (<paramref name="why"/> names the journal), nothing is added, so the same cause is never stated twice.
+    /// </summary>
+    internal static string UsnSentence(int usnCount, string why)
+    {
+        if (usnCount > 0) return $"Jurnalul USN a fost analizat ({LogAnalyzer.Dfir.Language.RoText.Count(usnCount, "înregistrare", "înregistrări")}).";
+        if (why.Contains("jurnalul USN", StringComparison.OrdinalIgnoreCase)) return "";
+        return "Jurnalul USN nu a fost analizat: lipsește din caz (nu a fost colectat sau importat), deci o modificare urmată de redenumire sau mutare nu se poate verifica.";
+    }
+
     private static readonly HashSet<string> SystemUtilities = new(StringComparer.OrdinalIgnoreCase)
     {
         "cmd.exe", "powershell.exe", "pwsh.dll", "rundll32.exe", "regsvr32.exe", "mshta.exe", "wscript.exe", "cscript.exe", "certutil.exe",
@@ -164,6 +179,7 @@ public static class AntiForensics
             string inversions = tm.Inversions.Count == 0 ? "" : $" Ordinea înregistrărilor contrazice ora: {tm.Inversions.Count} ({string.Join("; ", tm.Inversions.Take(5).Select(v => $"{v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora înapoi cu {TimeManipulation.Human(v.Back)}"))}).";
             var refs = manual.Select(e => Ref(e, "schimbare a orei sistemului")).Concat(tm.Inversions.Select(v => v.Evidence)).ToList();
             if (manual.Count > 0 || tm.Inversions.Count > 0)
+            {
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Detected,
                     (manual.Count > 0
                         ? $"{manual.Count(e => e.EventId == "4616")} în Security 4616 și {manual.Count(e => e.EventId == "1")} în Kernel-General 1 (aceeași schimbare apare în ambele jurnale), făcute de alt proces decât sincronizarea (svchost): " +
@@ -172,6 +188,9 @@ public static class AntiForensics
                               : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")}{Mag(e)} ({WinPath.GetFileName(F(e, "ProcessName"))})")) + "."
                         : "Nicio schimbare manuală a ceasului în Security 4616 / Kernel-General 1.") + inversions + zones,
                     refs);
+                var jumps = manual.Select(e => tm.Jumps.FirstOrDefault(j => j.Evidence.EvidenceId == e.EvidenceId && j.Evidence.Locator == e.Locator && j.EventId == e.EventId)).OfType<ClockJump>().ToList();
+                checks[^1] = checks[^1] with { Plain = ClockPlain(jumps, tm.Inversions.Count, TimeZoneInfo.Local) };
+            }
             else if (Has(System))
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.NotDetected,
                     "System analizat: schimbările de oră (Kernel-General 1) sunt doar sincronizări, ceasul hardware sau fusul orar." + zones);
@@ -210,31 +229,91 @@ public static class AntiForensics
                     "Ștergerea fișierelor .pf se vede doar în jurnalul USN, care nu a fost analizat.", cfg.Select(e => Ref(e, "EnablePrefetcher")));
         }
 
-        // AF07 — the change journal deleted and recreated: its ID (a FILETIME) is the creation time.
+        // AF07 — the change journal absent on the system volume, or deleted and recreated: its ID (a FILETIME) is the creation time.
+        // Three different answers: the volume has no journal (Windows creates one on the system volume by default), the journal was created long after the
+        // oldest event-log record (recreated, or a major repair), and nothing wrong in an analysed journal. No journal analysed and none reported absent = undetermined.
         {
+            const string Af07Title = "Anomalii în jurnalul USN";
             var ids = usn.Select(e => F(e, "JournalId")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var created = ids.Select(i => (Id: i, At: LogAnalyzer.Dfir.FileSystem.UsnJournalParser.JournalCreatedUtc(i))).ToList();
-            var earliestLog = evtxSources.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value).DefaultIfEmpty().Min();
-            if (ids.Count == 0)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Undetermined, "Jurnalul USN nu a fost analizat (export fsutil usn readjournal).");
+            // Anchor = the 1st percentile of the event-log times, not the minimum: one record written with a wrong clock must not move it
+            // (with 3 or more records at least the earliest one is set aside). A wrong clock or rotated logs still shift the anchor, and the text says so.
+            var evtxTimes = evtxSources.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value).OrderBy(t => t).ToList();
+            var earliestLog = evtxTimes.Count == 0 ? default : evtxTimes[evtxTimes.Count < 3 ? 0 : Math.Max(1, evtxTimes.Count / 100)];
+            // The collector's text when the volume has no active journal (Win32 error 1179): "jurnalul USN C: nu a putut fi citit (volumul nu are jurnal USN activ ...)".
+            var absent = gaps.Select(g => g.Artifact + " " + g.Reason).Where(t => t.Contains("nu are jurnal USN activ", StringComparison.OrdinalIgnoreCase)).ToList();
+            string absentLetter = absent.Select(t => Regex.Match(t, @"jurnalul USN ([A-Za-z]):")).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).FirstOrDefault() ?? "";
+            // It is the system volume when the text says so, or when the case shows processes or files running from <letter>:\Windows.
+            bool IsSystemVolume() => absent.Any(t => t.Contains("volumul de sistem", StringComparison.OrdinalIgnoreCase)) ||
+                absentLetter.Length > 0 && events.Any(e => new[] { e.Path, e.Process, F(e, "NewProcessName"), F(e, "Image"), F(e, "ProcessName"), F(e, "CommandLine") }
+                    .Any(p => p.TrimStart('"', ' ').StartsWith(absentLetter + @":\Windows\", StringComparison.OrdinalIgnoreCase)));
+            var tolerance = TimeSpan.FromHours(24);
+            if (absent.Count > 0 && IsSystemVolume())
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
+                    $"Gravitate Medie: volumul de sistem nu are jurnal USN activ ({absentLetter}:); Windows îl creează implicit pe volumul de sistem, deci jurnalul a fost oprit sau șters (fsutil usn deletejournal) sau volumul a fost configurat altfel. De verificat: " +
+                    "un volum de sistem fără jurnal poate fi și o imagine pregătită special; citirea jurnalului a returnat eroarea „volumul nu are jurnal USN activ”.")
+                    ;
+            else if (ids.Count == 0)
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Undetermined,
+                    absent.Count > 0
+                        ? $"Jurnalul USN{(absentLetter.Length > 0 ? " " + absentLetter + ":" : "")} nu este activ, dar nu se știe dacă este volumul de sistem (nu există în probe niciun proces sau fișier din {(absentLetter.Length > 0 ? absentLetter + ":" : "acel volum")}\\Windows): fără acest lucru, lipsa jurnalului nu se poate judeca."
+                        : "Jurnalul USN nu a fost analizat (export fsutil usn readjournal).");
             else if (ids.Count > 1)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
                     "Exporturi cu ID-uri de jurnal diferite (jurnal șters și recreat între ele): " + string.Join("; ", created.Select(c => $"{c.Id} creat {c.At:yyyy-MM-ddTHH:mm:ssZ}")),
                     usn.GroupBy(e => F(e, "JournalId")).Select(g => Ref(g.First(), "ID jurnal")));
-            else if (created[0].At is { } at && earliestLog != default && at > earliestLog)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
-                    $"Jurnalul USN {ids[0]} a fost creat la {at:yyyy-MM-ddTHH:mm:ssZ}, după cea mai veche înregistrare din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}): " +
-                    "a fost șters și recreat (sau volumul este nou).", [Ref(usn[0], "ID jurnal")]);
+            else if (created[0].At is { } at && earliestLog != default && at - earliestLog > tolerance)
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
+                    $"Gravitate Medie, De verificat: jurnalul USN {ids[0]} a fost creat la {at:yyyy-MM-ddTHH:mm:ssZ}, la peste {tolerance.TotalHours:0} de ore după începutul jurnalelor de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}, percentila 1 a orelor înregistrărilor): " +
+                    "a fost șters și recreat (sau volumul este nou). Ancora depinde de jurnalele de evenimente: un ceas greșit sau jurnale EVTX rotite (cele vechi șterse de Windows) o mută. Toleranță: un jurnal poate fi recreat și de Windows după un chkdsk sau o actualizare majoră, fără nicio intenție de ascundere.",
+                    [Ref(usn[0], "ID jurnal")]);
             else
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.NotDetected,
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.NotDetected,
                     $"Un singur jurnal, {ids[0]}, creat la {created[0].At:yyyy-MM-ddTHH:mm:ssZ}" +
-                    (earliestLog != default ? $", înaintea celei mai vechi înregistrări din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ})" : "") +
-                    $". Acoperire: {Window()}.", [Ref(usn[0], "ID jurnal")]);
+                    (earliestLog != default ? $", fără mai mult de {tolerance.TotalHours:0} de ore după începutul jurnalelor de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}, percentila 1; un ceas greșit sau jurnale EVTX rotite mută această ancoră)" : "") +
+                    $". Acoperire: {Window()}. Limită: ora formatării sau a instalării volumului nu este în probe, deci un jurnal recreat imediat după instalare nu se vede.", [Ref(usn[0], "ID jurnal")]);
         }
 
-        Add("AF08", "Modificarea marcajelor de timp ale fișierelor (timestomp)", "T1070.006", AntiForensicResult.Undetermined,
-            "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
-            (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
+        // AF08 — timestomp: the NTFS-TIMESTOMP test over $MFT (+ USN), the same one the finding uses (NtfsTimestomp, calibrated on Corpus/NtfsCalib).
+        {
+            const string Af08Title = "Modificarea marcajelor de timp ale fișierelor (timestomp)";
+            const string Limit = "Limite: uneltele care schimbă și $FILE_NAME sau și ora de schimbare a înregistrării nu se văd; fără jurnal USN, o schimbare urmată de redenumire sau mutare nu se vede; " +
+                                 "tunelarea NTFS (cu nume scurte 8.3 pe volum, un fișier nou cu numele unuia șters sau redenumit cu puțin înainte moștenește ora lui de creare) produce același tipar și se exclude doar când jurnalul USN arată numele eliberat de alt fișier.";
+            var mftEvents = events.Where(e => e.Source == "MFT").ToList();
+            var outcome = NtfsTimestomp.Analyze(events);
+            var hits = outcome.Hits;
+            int possibleTunnel = hits.Count(h => h.Level == NtfsTimestomp.Level.Low);   // only the $MFT and a short name: possible tunnelling, still worth a look
+            string tunnelNote = outcome.TunnelExplained > 0 || possibleTunnel > 0
+                ? $" Tunelare NTFS: {outcome.TunnelExplained} fișiere explicate prin tunelare (jurnalul USN arată numele eliberat de alt fișier chiar înainte), {possibleTunnel} doar din $MFT cu nume scurt 8.3 (posibil tunelare, neconfirmat)."
+                : "";
+            long sysTrees = NtfsTimestomp.Sum(mftEvents, "MismatchSystemTrees"), dirsOnly = NtfsTimestomp.Sum(mftEvents, "MismatchDirectories");
+            string countedNote = sysTrees + dirsOnly > 0
+                ? $"{sysTrees:N0} nepotriviri din arborii gestionați de sistem și {dirsOnly:N0} din directoare au fost doar numărate (tiparul normal al instalării și actualizărilor); acolo doar calea cu jurnalul USN poate detecta; "
+                : "";
+            if (hits.Count == 0 && !NtfsTimestomp.HasMft(mftEvents))
+                Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined,
+                    "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
+                    (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
+            else
+            {
+                long records = NtfsTimestomp.Sum(mftEvents, "TotalRecords");
+                string usnPart = usn.Count > 0 ? $"jurnalul USN a fost analizat ({LogAnalyzer.Dfir.Language.RoText.Count(usn.Count, "înregistrare", "înregistrări")})" : "fără jurnal USN";
+                if (hits.Count > 0)
+                {
+                    int high = hits.Count(h => h.Level == NtfsTimestomp.Level.High), medium = hits.Count - high - possibleTunnel;
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Detected,
+                        $"{hits.Count} fișiere cu orele de creare care par schimbate după crearea fișierului ({high} confirmate de jurnalul USN, {medium} doar din $MFT, {possibleTunnel} doar din $MFT cu nume scurt 8.3 = posibil tunelare; {records:N0} înregistrări $MFT, {usnPart}{(countedNote.Length > 0 ? "; " + countedNote.TrimEnd(' ', ';') : "")}): " +
+                        string.Join("; ", hits.Take(5).Select(h => $"{LogAnalyzer.Dfir.FileSystem.MftParser.SafeText(h.Path)} ({(h.Level == NtfsTimestomp.Level.High ? "USN" : h.Level == NtfsTimestomp.Level.Low ? "doar $MFT, posibil tunelare" : "doar $MFT")})")) + (hits.Count > 5 ? $" și încă {hits.Count - 5}" : "") + "." + tunnelNote + " " + Limit,
+                        hits.SelectMany(h => new[] { h.Mft, h.UsnCreate, h.UsnChange }.Where(e => e is not null).Select(e => Ref(e!, e!.Source == "MFT" ? "înregistrare $MFT: orele $SI / $FN" : "jurnal USN"))));
+                }
+                else if (NtfsTimestomp.Undetermined(mftEvents, usn) is { } why)
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}.{(UsnSentence(usn.Count, why) is { Length: > 0 } us ? " " + us : "")}{tunnelNote} " + (countedNote.Length > 0 ? countedNote.TrimEnd(' ', ';') + ". " : "") + Limit);
+                else
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.NotDetected,
+                        $"Verificat: {records:N0} înregistrări $MFT ({NtfsTimestomp.Sum(mftEvents, "MismatchTotal"):N0} cu nepotrivire $SI/$FN, {NtfsTimestomp.Sum(mftEvents, "RecentTotal"):N0} recente), {usnPart}; " + countedNote +
+                        "niciun fișier cu orele de creare mai vechi decât crearea fără tiparul unei copieri." + tunnelNote + " " + Limit);
+            }
+        }
 
         // AF09 — registry changes to logging and audit configuration, visible only with registry auditing (Sysmon 12–14, Security 4657).
         {
@@ -355,6 +434,39 @@ public static class AntiForensics
             else Add("AF16", "Manipularea firewall-ului", "T1562.004", AntiForensicResult.Undetermined, "Lipsește jurnalul Windows Firewall With Advanced Security/Firewall.");
         }
         return checks;
+    }
+
+    /// <summary>
+    /// AF05 in plain words: who moved the clock, which way, by how much, with what program and when. The Security and Kernel-General records of one
+    /// change are told once (Security names the account); records whose order contradicts their time are told as such.
+    /// </summary>
+    internal static string ClockPlain(IReadOnlyList<ClockJump> jumps, int inversions, TimeZoneInfo zone)
+    {
+        var security = jumps.Where(j => j.EventId == "4616").ToList();
+        // both records of one change are written at the same moment; a 4616 without its new time is still matched by when it was written
+        static bool SameProcess(ClockJump s, ClockJump k) => s.Process.Length == 0 || k.Process.Length == 0 || s.Process.Equals(k.Process, StringComparison.OrdinalIgnoreCase);
+        bool Same(ClockJump s, ClockJump k) => (s.TimeUtc - k.TimeUtc).Duration() <= TimeSpan.FromSeconds(5) && SameProcess(s, k) || s.New is { } n && k.New is { } m && (n - m).Duration() <= TimeSpan.FromSeconds(2);
+        // a 4616 without its times takes the size and direction from its Kernel-General twin; the account stays the 4616's
+        var kernel = jumps.Where(j => j.EventId != "4616").ToList();
+        security = security.Select(s => s.Delta is null && kernel.FirstOrDefault(k => Same(s, k) && k.Delta is not null) is { } twin
+            ? s with { Delta = twin.Delta, Direction = twin.Direction, Previous = twin.Previous, New = twin.New } : s).ToList();
+        var told = security.Concat(kernel.Where(j => !security.Any(s => Same(s, j))))
+                           .OrderBy(j => j.TimeUtc).ToList();
+        var sentences = told.Take(3).Select(j =>
+        {
+            var who = LogAnalyzer.Dfir.Language.PlainStory.Who(j.Actor, null);
+            var how = j.Delta is { } d && d.Duration() >= TimeSpan.FromSeconds(1)
+                ? $"a mutat ceasul calculatorului {j.Direction} cu {PlainPhrases.Duration(d)}"
+                : "a schimbat ora calculatorului";
+            var tool = j.Process.Length > 0 ? $", cu programul {PlainPhrases.Q(WinPath.GetFileName(j.Process))}" : "";
+            return $"{LogAnalyzer.Dfir.Language.PlainStory.When(j.TimeUtc, j.TimeUtc, zone)}, {who} {how}{tool}.";
+        }).ToList();
+        if (told.Count > 3) sentences.Add($"Ceasul a mai fost schimbat {PlainPhrases.Times(told.Count - 3)}.");
+        if (inversions > 0)
+            sentences.Add($"În jurnale, {(inversions == 1 ? "o înregistrare are" : LogAnalyzer.Dfir.Language.RoText.Count(inversions, "înregistrare are", "înregistrări au"))} o oră mai veche decât cele scrise înaintea lor: ceasul a fost dat înapoi.");
+        if (sentences.Count == 0) return "";
+        sentences.Add(told.Count + inversions == 1 ? "Orele evenimentelor din jurul acestui moment nu sunt sigure." : "Orele evenimentelor din jurul acestor momente nu sunt sigure.");
+        return string.Join(" ", sentences);
     }
 
     /// <summary>True when the file name is a core Windows process and the folder is not where Windows keeps it.</summary>

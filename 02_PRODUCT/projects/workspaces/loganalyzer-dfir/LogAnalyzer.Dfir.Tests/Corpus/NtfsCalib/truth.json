@@ -1,0 +1,247 @@
+{
+  "drive": "G:",
+  "tz": "GTB Standard Time",
+  "scenarios": [
+    {
+      "name": "A",
+      "expected": "timestomp",
+      "path": "\\stomp\\a_separate.txt",
+      "fileId": "0x00000000000000000001000000000030",
+      "note": "create, close, 2 s later SetFileTime (3 SI times = 2019, zero fraction)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:51.931685Z",
+        "siModified": "2026-11-13T18:28:51.932692Z",
+        "siAccessed": "2026-11-13T18:28:51.932692Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53Z",
+        "siModified": "2019-03-14T09:26:53Z",
+        "siAccessed": "2019-03-14T09:26:53Z"
+      }
+    },
+    {
+      "name": "B",
+      "expected": "timestomp",
+      "path": "\\stomp\\b_fraction.txt",
+      "fileId": "0x00000000000000000001000000000031",
+      "note": "same as A with a non-zero fraction (evades the zero-fraction signal)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:53.9683085Z",
+        "siModified": "2026-11-13T18:28:53.9683085Z",
+        "siAccessed": "2026-11-13T18:28:53.9683085Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.1234567Z",
+        "siModified": "2019-03-14T09:26:53.1234567Z",
+        "siAccessed": "2019-03-14T09:26:53.1234567Z"
+      }
+    },
+    {
+      "name": "C",
+      "expected": "timestomp",
+      "path": "\\stomp\\c_after_rename.txt",
+      "fileId": "0x00000000000000000001000000000032",
+      "note": "stomp then rename (does Windows copy SI into FN?)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:56.0147655Z",
+        "siModified": "2026-11-13T18:28:56.0147655Z",
+        "siAccessed": "2026-11-13T18:28:56.0147655Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53Z",
+        "siModified": "2019-03-14T09:26:53Z",
+        "siAccessed": "2019-03-14T09:26:53Z"
+      }
+    },
+    {
+      "name": "D",
+      "expected": "timestomp",
+      "path": "\\sub\\d_moved.txt",
+      "fileId": "0x00000000000000000001000000000033",
+      "note": "stomp then move on the same volume",
+      "before": {
+        "siCreated": "2026-11-13T18:29:00.0384295Z",
+        "siModified": "2026-11-13T18:29:00.0384295Z",
+        "siAccessed": "2026-11-13T18:29:00.0384295Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53Z",
+        "siModified": "2019-03-14T09:26:53Z",
+        "siAccessed": "2019-03-14T09:26:53Z"
+      }
+    },
+    {
+      "name": "E",
+      "expected": "timestomp",
+      "path": "\\stomp\\e_created_only.txt",
+      "fileId": "0x00000000000000000001000000000034",
+      "note": "only the creation time changed",
+      "before": {
+        "siCreated": "2026-11-13T18:29:04.0632938Z",
+        "siModified": "2026-11-13T18:29:04.0632938Z",
+        "siAccessed": "2026-11-13T18:29:04.0632938Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53Z",
+        "siModified": "2026-11-13T18:29:04.0632938Z",
+        "siAccessed": "2026-11-13T18:29:04.0632938Z"
+      }
+    },
+    {
+      "name": "F",
+      "expected": "legit",
+      "path": "\\legit\\f_copy_same_volume.txt",
+      "fileId": "0x00000000000000000001000000000036",
+      "note": "Copy-Item on the same volume of a file with an old modification time",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.109865Z",
+        "siModified": "2020-03-14T09:26:53Z",
+        "siAccessed": "2026-11-13T18:29:08.109865Z"
+      }
+    },
+    {
+      "name": "G",
+      "expected": "legit",
+      "path": "\\xcopy\\g_copy_cross_volume.txt",
+      "fileId": "0x00000000000000000001000000000037",
+      "note": "Copy-Item from another volume (source SI = 2019)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.1291797Z",
+        "siModified": "2019-03-14T09:26:53Z",
+        "siAccessed": "2026-11-13T18:29:08.1291797Z"
+      }
+    },
+    {
+      "name": "H",
+      "expected": "legit",
+      "path": "\\robo\\stomped.txt",
+      "fileId": "0x00000000000000000001000000000038",
+      "note": "robocopy /COPY:DAT from another volume (source SI = 2019)",
+      "before": null,
+      "after": {
+        "siCreated": "2019-03-14T09:26:53Z",
+        "siModified": "2019-03-14T09:26:53Z",
+        "siAccessed": "2019-03-14T09:26:53Z"
+      }
+    },
+    {
+      "name": "I",
+      "expected": "legit",
+      "path": "\\xmove\\i_moved_cross_volume.txt",
+      "fileId": "0x00000000000000000001000000000039",
+      "note": "Move-Item from another volume (source creation 2021)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.1830123Z",
+        "siModified": "2026-11-13T16:48:19.913041Z",
+        "siAccessed": "2026-11-13T18:29:08.1830123Z"
+      }
+    },
+    {
+      "name": "J",
+      "expected": "legit",
+      "path": "\\zip\\j_from_zip.txt",
+      "fileId": "0x0000000000000000000100000000003a",
+      "note": "Expand-Archive (zip, entry time 2018)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.4365258Z",
+        "siModified": "2018-06-01T07:00:00Z",
+        "siAccessed": "2026-11-13T18:29:08.4375269Z"
+      }
+    },
+    {
+      "name": "K",
+      "expected": "legit",
+      "path": "\\tar\\k_from_tar.txt",
+      "fileId": "0x0000000000000000000100000000003b",
+      "note": "tar -xf (bsdtar), entry time 2018",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08Z",
+        "siModified": "2018-06-01T07:00:00Z",
+        "siAccessed": "2026-11-13T18:29:08Z"
+      }
+    },
+    {
+      "name": "L",
+      "expected": "legit",
+      "path": "\\save\\l_safe_save.docx",
+      "fileId": "0x00000000000000000001000000000040",
+      "note": "safe save: temp + attrib + rename original away + delete + rename temp (old file id 0x0000000000000000000100000000003d)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T19:07:16.4004884Z",
+        "siModified": "2026-11-13T19:07:16.4004884Z",
+        "siAccessed": "2026-11-13T19:07:16.4004884Z"
+      }
+    },
+    {
+      "name": "M",
+      "expected": "legit",
+      "path": "\\save\\m_replace.docx",
+      "fileId": "0x0000000000000000000200000000003d",
+      "note": "File.Replace (ReplaceFile) with a backup (old file id 0x0000000000000000000100000000003e)",
+      "before": null,
+      "after": {
+        "siCreated": "2024-01-01T08:00:00.456789Z",
+        "siModified": "2026-11-13T19:07:16.4491636Z",
+        "siAccessed": "2026-11-13T19:07:16.4491636Z"
+      }
+    },
+    {
+      "name": "N",
+      "expected": "legit",
+      "path": "\\save\\n_tunnel.txt",
+      "fileId": "0x0000000000000000000200000000003f",
+      "note": "delete then create the same name (tunneling) (old file id 0x0000000000000000000100000000003f)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T19:07:16.4793179Z",
+        "siModified": "2026-11-13T19:07:16.4793179Z",
+        "siAccessed": "2026-11-13T19:07:16.4793179Z"
+      }
+    },
+    {
+      "name": "L2",
+      "expected": "legit",
+      "path": "\\save2\\l2_safe_save.docx",
+      "fileId": "0x00000000000000000001000000000045",
+      "note": "safe save: temp + attrib + rename original away + delete + rename temp (old file id 0x00000000000000000001000000000042)",
+      "before": null,
+      "after": {
+        "siCreated": "2024-01-01T08:00:00.4567890Z",
+        "siModified": "2026-11-13T19:07:51.6664135Z",
+        "siAccessed": "2026-11-13T19:07:51.6664135Z"
+      }
+    },
+    {
+      "name": "M2",
+      "expected": "legit",
+      "path": "\\save2\\m2_replace.docx",
+      "fileId": "0x00000000000000000002000000000042",
+      "note": "File.Replace (ReplaceFile) with a backup (old file id 0x00000000000000000001000000000043)",
+      "before": null,
+      "after": {
+        "siCreated": "2024-01-01T08:00:00.4567890Z",
+        "siModified": "2026-11-13T19:07:51.7143783Z",
+        "siAccessed": "2026-11-13T19:07:51.7143783Z"
+      }
+    },
+    {
+      "name": "N2",
+      "expected": "legit",
+      "path": "\\save2\\n2_tunnel.txt",
+      "fileId": "0x00000000000000000002000000000044",
+      "note": "delete then create the same name (tunneling) (old file id 0x00000000000000000001000000000044)",
+      "before": null,
+      "after": {
+        "siCreated": "2024-01-01T08:00:00.4567890Z",
+        "siModified": "2026-11-13T19:07:51.7363981Z",
+        "siAccessed": "2026-11-13T19:07:51.7363981Z"
+      }
+    }
+  ]
+}

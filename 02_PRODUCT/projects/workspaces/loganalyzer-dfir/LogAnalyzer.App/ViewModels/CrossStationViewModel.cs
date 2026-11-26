@@ -108,6 +108,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportSignedReport()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_result is null || _settings is null) { Status = "Faceți întâi confruntarea."; return; }
             List<System.Security.Cryptography.X509Certificates.X509Certificate2> certs;
             try { certs = OfficerFlows.CardSigningCertificates(AuthApp.Cards, DateTimeOffset.UtcNow); }
@@ -125,7 +126,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "confruntare-statii", dlg.FolderName, ["raportul confruntării semnat (PDF)", "tabelul confruntării (CSV)"], () =>
                     {
                         written = MediaHistoryFlows.ExportReport(dlg.FolderName, result, settings, Environment.MachineName, RegisterLine, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()),
-                                                                 DateTimeOffset.UtcNow, AuthApp.Record);
+                                                                 DateTimeOffset.UtcNow, AuthApp.Record, LogAnalyzer.UI.Services.LiveCase.CurrentScope?.Marking);
                         return [written.SignedPdf, written.Csv];
                     }) is { } refused)
                 { Status = "Raportul NU a fost scris: " + refused; return; }

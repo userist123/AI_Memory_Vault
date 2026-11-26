@@ -41,8 +41,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         public bool NetworkAllowed => !AppModeContext.IsAirGapped;
         public string ModeNote => NetworkAllowed
-            ? "Modul Network: interogările către controlerele de domeniu sunt permise (citire, cu contul Windows curent)."
-            : "Modul AirGapped: interogările de rețea (LDAP, jurnale de pe controlere) sunt BLOCATE. Pe o rețea izolată cu domeniu, porniți aplicația cu --mode=network. Analiza e-mailului din fișiere exportate funcționează.";
+            ? "Modul rețea: interogările către controlerele de domeniu sunt permise (citire, cu contul Windows curent)."
+            : "Modul izolat de rețea: interogările de rețea (LDAP, jurnale de pe controlere) sunt blocate. Modul rețea vine doar din politica semnată a stației (o emite administratorul); argumentele de pornire nu îl schimbă. Analiza e-mailului din fișiere exportate funcționează.";
 
         public DomainInvestigationViewModel()
         {
@@ -53,6 +53,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task InventoryDomain()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
             Status = "Se citește Active Directory…";
@@ -74,9 +75,15 @@ namespace LogAnalyzer.UI.ViewModels
                          $"Graf: {graph.Entities.Count} entități, {graph.Relationships.Count} relații.";
             }
             catch (NetworkBlockedException ex) { Status = ex.Message + " " + ModeNote; }
-            catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+            // any failure of the collector is a message on the page, never a closed application (lab VM 2026-11-07: an unbindable COM call closed it)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Status = "Active Directory nu a putut fi citit: " + ex.Message;
+                // lab VM 2026-11-07: the English Windows message alone did not say what to do; the usual cause is the app running under a local account
+                bool local = Environment.UserDomainName.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+                Status = "Active Directory nu a putut fi citit. " +
+                         (local ? $"Aplicația citește domeniul cu contul Windows cu care rulează, iar „{Environment.UserName}” este un cont local al acestui calculator, nu al domeniului: porniți aplicația cu un cont al domeniului (clic dreapta pe aplicație, „Executare ca alt utilizator”). "
+                                : "Verificați că stația vede controlerul de domeniu (rețea, DNS) sau scrieți numele lui în câmpul de mai sus. ") +
+                         $"Detaliu tehnic: {ex.Message}";
             }
             finally { IsBusy = false; }
         }
@@ -84,6 +91,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task InvestigateUser()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (string.IsNullOrWhiteSpace(UserName)) { Status = "Introduceți numele de utilizator (sAMAccountName)."; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
@@ -112,6 +120,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void SaveScript(bool online)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (!Mailbox.Contains('@')) { Status = "Introduceți adresa cutiei poștale."; return; }
             var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
@@ -128,6 +137,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ImportMail()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new OpenFolderDialog { Title = "Folderul cu message_trace.csv / inbox_rules.csv / mailbox_forwarding.csv" };
             if (dlg.ShowDialog() != true) return;
@@ -151,6 +161,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new SaveFileDialog { FileName = $"Investigatie_{DateTime.Now:yyyyMMdd_HHmm}.pdf", Filter = "PDF (*.pdf)|*.pdf" };
@@ -163,7 +174,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MailMessages.Take(2000).Select(m => new[] { m.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), m.Sender, m.Recipients, m.Subject, m.ClientIp, m.Status }).ToList());
             var modeNote = ModeNote;
             if (LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(liveCase.Root.TrimEnd('\\', '/')), "pdf-domain", checks.Count + userTable.Rows.Count + mailTable.Rows.Count, dlg.FileName,
-                    () => ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", modeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), checks, notes, userTable, mailTable)) is { } refused)
+                    () => ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", modeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), liveCase.Info.Scope.Marking, checks, notes, userTable, mailTable)) is { } refused)
             { Status = refused; return; }
             Status = "Raport salvat: " + dlg.FileName;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });

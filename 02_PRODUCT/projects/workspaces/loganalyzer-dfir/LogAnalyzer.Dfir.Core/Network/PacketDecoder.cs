@@ -146,7 +146,51 @@ public static class PacketDecoder
         catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException) { return null; } // truncated/segmented ClientHello
     }
 
-    private static readonly string[] HttpMethods = ["GET ", "POST ", "PUT ", "HEAD ", "DELETE ", "OPTIONS ", "PATCH ", "CONNECT "];
+    /// <summary>
+    /// Master plan 6.5: the JA3 fingerprint of a TLS ClientHello — "version,ciphers,extensions,curves,point formats" (decimal, dash-separated, in
+    /// the order sent, GREASE values left out) and its MD5. A fingerprint names the TLS library and its settings, not the program: many programs
+    /// share one, and a client can change it; it is context for the analyst, matched against the case's JA3 indicators.
+    /// </summary>
+    public static (string Ja3, string Ja3Md5)? Ja3(ReadOnlySpan<byte> p)
+    {
+        if (p.Length < 43 || p[0] != 0x16 || p[1] != 3 || p[5] != 1) return null;
+        try
+        {
+            int version = BinaryPrimitives.ReadUInt16BigEndian(p[9..]);
+            int o = 9 + 2 + 32;
+            o += 1 + p[o];                                                     // session id
+            int cl = BinaryPrimitives.ReadUInt16BigEndian(p[o..]); o += 2;
+            var ciphers = new List<int>();
+            for (int i = 0; i + 1 < cl; i += 2) { int c = BinaryPrimitives.ReadUInt16BigEndian(p[(o + i)..]); if (!Grease(c)) ciphers.Add(c); }
+            o += cl;
+            o += 1 + p[o];                                                     // compression methods
+            var exts = new List<int>(); var curves = new List<int>(); var formats = new List<int>();
+            if (o + 2 <= p.Length)
+            {
+                int end = Math.Min(o + 2 + BinaryPrimitives.ReadUInt16BigEndian(p[o..]), p.Length); o += 2;
+                while (o + 4 <= end)
+                {
+                    int et = BinaryPrimitives.ReadUInt16BigEndian(p[o..]), el = BinaryPrimitives.ReadUInt16BigEndian(p[(o + 2)..]); o += 4;
+                    if (!Grease(et)) exts.Add(et);
+                    if (et == 10 && el >= 2)
+                    {
+                        int n = BinaryPrimitives.ReadUInt16BigEndian(p[o..]);
+                        for (int i = 0; i + 1 < n; i += 2) { int g = BinaryPrimitives.ReadUInt16BigEndian(p[(o + 2 + i)..]); if (!Grease(g)) curves.Add(g); }
+                    }
+                    else if (et == 11 && el >= 1) for (int i = 0; i < p[o]; i++) formats.Add(p[o + 1 + i]);
+                    o += el;
+                }
+            }
+            var s = $"{version},{string.Join('-', ciphers)},{string.Join('-', exts)},{string.Join('-', curves)},{string.Join('-', formats)}";
+            return (s, Convert.ToHexStringLower(System.Security.Cryptography.MD5.HashData(Encoding.ASCII.GetBytes(s))));
+        }
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException) { return null; }
+    }
+
+    /// <summary>RFC 8701 GREASE values (0x0A0A, 0x1A1A … 0xFAFA): random filler a client adds, left out of JA3.</summary>
+    private static bool Grease(int v) => (v & 0x0F0F) == 0x0A0A && (v >> 8) == (v & 0xFF);
+
+    private static readonly string[] HttpMethods =["GET ", "POST ", "PUT ", "HEAD ", "DELETE ", "OPTIONS ", "PATCH ", "CONNECT "];
 
     public static (string RequestLine, string Host, string UserAgent)? ParseHttpRequest(ReadOnlySpan<byte> p)
     {

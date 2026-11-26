@@ -83,7 +83,7 @@ public static partial class Wp14Rules
                     Title = $"Informație clasificată, ieșire {x.VerdictText}: {ClassifiedAccess.FileName(f.Path)} — {x.ChannelText}",
                     Severity = sev, Category = c.FindingCategory, Classification = cls,
                     Confidence = x.Channel == ExitChannel.TemporalCoincidence || x.Weak ? Confidence.Low : Confidence.Medium,
-                    FirstSeenUtc = x.TimeUtc, LastSeenUtc = x.TimeUtc, User = x.Who, File = f.Path,
+                    FirstSeenUtc = x.TimeUtc, LastSeenUtc = x.TimeUtc, User = x.Who, File = f.Path, PlainWhat = ExitPlain(x, f.Path),
                     Description = $"{x.Detail} Destinație: {x.Target}. Lanțul probelor: {string.Join(" → ", x.Chain)}",
                     ClassificationReason = x.Verdict == ExitVerdict.Unjustified
                         ? "O înregistrare arată fișierul clasificat (sau unul cu același nume) mergând în afara folderului, iar registrul transferurilor nu are o intrare care să acopere ieșirea."
@@ -102,6 +102,7 @@ public static partial class Wp14Rules
                     Severity = Severity.Medium, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High,
                     FirstSeenUtc = f.Accesses.First(a => a.Access.StartsWith("șters", StringComparison.Ordinal)).TimeUtc, File = f.Path,
                     User = string.Join(", ", f.Accesses.Where(a => a.Access.StartsWith("șters", StringComparison.Ordinal)).Select(a => a.Who).Distinct()),
+                    PlainWhat = DeletedPlain(f),
                     Description = $"Windows a înregistrat ștergerea fișierului {f.Path} (4663 cu DELETE urmat de 4660). Distrugerea unui document clasificat se face pe bază de proces-verbal.",
                     ClassificationReason = "Ștergerea este înregistrată direct de Windows; dacă era aprobată se vede doar din documentele organizației.",
                     SemanticType = SemanticType.Observation,
@@ -114,7 +115,7 @@ public static partial class Wp14Rules
                     FindingId = c.NextId(), RuleId = ClassifiedAccessRuleId, Title = $"Accese la fișierul clasificat {ClassifiedAccess.FileName(f.Path)} ({f.Accesses.Count})",
                     Severity = Severity.Info, Category = c.FindingCategory, Classification = strong.Count > 0 ? Classification.Direct : Classification.Candidate,
                     Confidence = strong.Count > 0 ? Confidence.High : Confidence.Low, File = f.Path, User = f.WhoText,
-                    FirstSeenUtc = f.Accesses.Min(a => a.TimeUtc), LastSeenUtc = f.Accesses.Max(a => a.TimeUtc),
+                    FirstSeenUtc = f.Accesses.Min(a => a.TimeUtc), LastSeenUtc = f.Accesses.Max(a => a.TimeUtc), PlainWhat = AccessPlain(f, strong.Count),
                     Description = $"{f.Path}: {strong.Count} accese înregistrate de auditul Windows, {f.Accesses.Count - strong.Count} urme ale stației (dovadă mai slabă). " +
                                   string.Join("; ", f.Accesses.OrderBy(a => a.TimeUtc).Take(15).Select(a => $"{(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} {a.Who} {a.Process} {a.Access}")),
                     ClassificationReason = "Cronologia acceselor din auditul fișierelor (SACL + „File System”) și din urmele stației.",
@@ -128,12 +129,78 @@ public static partial class Wp14Rules
                 FindingId = c.NextId(), RuleId = ClassifiedAuditChangedRuleId,
                 Title = (s.AuditRules ? "Regulile de audit (SACL) ale unui obiect clasificat au fost schimbate: " : "Permisiunile unui obiect clasificat au fost schimbate: ") + s.Object,
                 Severity = s.AuditRules ? Severity.High : Severity.Medium, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High,
-                FirstSeenUtc = s.TimeUtc, LastSeenUtc = s.TimeUtc, User = s.Who, Process = s.Process, File = s.Object,
+                FirstSeenUtc = s.TimeUtc, LastSeenUtc = s.TimeUtc, User = s.Who, Process = s.Process, File = s.Object, PlainWhat = AuditChangedPlain(s),
                 Description = $"{s.Who} a schimbat {(s.AuditRules ? "regulile de audit" : "permisiunile")} pentru {s.Object} cu {s.Process}. " +
                               (s.AuditRules ? "Cine schimbă regulile de audit poate opri înregistrarea accesului la documente." : "Permisiunile decid cine poate deschide documentele."),
                 ClassificationReason = "Schimbarea este înregistrată direct de Windows (Security 4670 / 4907).",
                 SemanticType = SemanticType.Configuration,
                 SupportingEvidence = Refs([s.Origin], s.AuditRules ? "4907" : "4670"),
             });
+    }
+
+    // ---- plain sentences (owner 2026-11-06): the classified document, what was done to it, and whether the transfer register covers it ----
+
+    private static string ExitPlain(ClassifiedExit x, string path)
+    {
+        var doc = $"fișierul clasificat {PlainPhrases.Q(PlainPhrases.Leaf(path))}";
+        var known = PlainPhrases.KnownActor(x.Who);
+        var target = System.Text.RegularExpressions.Regex.Replace(x.Target ?? "", @"\s*\(SN [^)]*\)", "").Trim();
+        var where = System.Text.RegularExpressions.Regex.IsMatch(target, @"^(?:[A-Za-z]:|\\\\)") && x.Channel is ExitChannel.RemovableMedia or ExitChannel.MoveOrRename or ExitChannel.Archive
+            ? $", destinația fiind {PlainPhrases.Q(target)}" : "";
+        string act, pass;
+        // review 2026-11-07: the evidence is a write of a file with the same name (4663), not a proven copy, and an unresolved
+        // \Device\HarddiskVolumeN is counted as removable: say exactly that, never „a copiat documentul”
+        var medium = target.StartsWith(@"\Device\", StringComparison.OrdinalIgnoreCase) ? "un volum neidentificat (posibil un suport amovibil)" : "un suport amovibil";
+        switch (x.Channel)
+        {
+            case ExitChannel.RemovableMedia:
+                act = $"a scris pe {medium} un fișier cu același nume ca {doc}{where}"; pass = $"S-a scris pe {medium} un fișier cu același nume ca {doc}{where}"; break;
+            case ExitChannel.Print: act = $"a tipărit {doc}"; pass = $"S-a tipărit {doc}"; break;
+            case ExitChannel.Archive: act = $"a arhivat {doc}{where}"; pass = $"S-a arhivat {doc}{where}"; break;
+            case ExitChannel.CopyCommand: act = $"a dat o comandă de copiere pentru {doc}"; pass = $"S-a dat o comandă de copiere pentru {doc}"; break;
+            case ExitChannel.MoveOrRename:   // a write outside the classified folders with no delete: a copy as likely as a move
+                act = $"a scris în afara folderelor clasificate un fișier cu același nume ca {doc}{where}"; pass = $"S-a scris în afara folderelor clasificate un fișier cu același nume ca {doc}{where}"; break;
+            case ExitChannel.NetworkShare: act = $"a citit {doc} prin rețea, dintr-o partajare"; pass = $"S-a citit {doc} prin rețea, dintr-o partajare"; break;
+            case ExitChannel.OpenedFromMedium: act = $"a deschis {doc} de pe un suport amovibil"; pass = $"S-a deschis {doc} de pe un suport amovibil"; break;
+            default:
+                act = $"a lucrat cu {doc} aproape de momentul în care a apărut un suport amovibil; apropierea în timp nu arată că fișierul a fost copiat";
+                pass = $"S-a lucrat cu {doc} aproape de momentul în care a apărut un suport amovibil; apropierea în timp nu arată că fișierul a fost copiat";
+                break;
+        }
+        var verdict = x.Verdict switch
+        {
+            ExitVerdict.Unjustified => "; registrul transferurilor nu are nicio intrare care să acopere această posibilă ieșire",
+            ExitVerdict.Approved => "; ieșirea corespunde unei intrări din registrul transferurilor" +
+                                    (x.RegisterEntry is { Length: > 0 } e ? $" (numărul {e.Split(' ')[0]})" : ""),
+            _ => "; trebuie verificat dacă registrul transferurilor are o intrare pentru ea",
+        };
+        return (known ? act : pass) + verdict;
+    }
+
+    private static string DeletedPlain(ClassifiedFileReport f)
+    {
+        var who = string.Join(", ", f.Accesses.Where(a => a.Access.StartsWith("șters", StringComparison.Ordinal)).Select(a => a.Who).Distinct());
+        var doc = $"fișierul clasificat {PlainPhrases.Q(PlainPhrases.Leaf(f.Path))}";
+        return PlainPhrases.KnownActor(who) ? $"a șters {doc}; ștergerea este înregistrată direct de Windows" : $"S-a șters {doc}; ștergerea este înregistrată direct de Windows";
+    }
+
+    private static string AccessPlain(ClassifiedFileReport f, int strong)
+    {
+        var doc = $"fișierul clasificat {PlainPhrases.Q(PlainPhrases.Leaf(f.Path))}";
+        var n = f.Accesses.Count;
+        var times = n == 1 ? "o dată" : PlainPhrases.Times(n);
+        var tail = strong > 0 ? "" : " (doar urme ale calculatorului, care arată că fișierul a fost deschis, nu cine l-a deschis)";
+        // only traces of the computer (no audited access): they never name who opened it, so the sentence names no one
+        return strong > 0 && PlainPhrases.KnownActor(f.WhoText) ? $"a avut acces la {doc} {times}" : $"S-a înregistrat accesul la {doc} {times}{tail}";
+    }
+
+    private static string AuditChangedPlain(ClassifiedSecurityChange s)
+    {
+        var obj = PlainPhrases.Q(s.Object);
+        var known = PlainPhrases.KnownActor(s.Who);
+        var verb = known ? "a schimbat" : "S-a schimbat";
+        return s.AuditRules
+            ? $"{verb} regulile de audit (înregistrarea accesului) pentru obiectul clasificat {obj}; cine schimbă regulile de audit poate opri înregistrarea accesului la documente"
+            : $"{verb} permisiunile (cine poate deschide documentele) pentru obiectul clasificat {obj}";
     }
 }

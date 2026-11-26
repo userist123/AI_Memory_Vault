@@ -55,7 +55,7 @@ public sealed class MediaArrivalReport
     /// <summary>Note for NTFS media: the change journal can show what the listing cannot (deleted and renamed files).</summary>
     public static string UsnNote(string fileSystem, string letter) =>
         fileSystem.Equals("NTFS", StringComparison.OrdinalIgnoreCase)
-            ? $"Suportul {letter}: este NTFS; jurnalul USN se poate exporta (administrator) cu „fsutil usn readjournal {letter}: csv” și se încarcă în analiză ca sursă USN."
+            ? $"Suportul {letter}: este NTFS; jurnalul USN se poate exporta (administrator) cu „fsutil usn readjournal {letter}: csv” și se încarcă în analiză ca sursă USN; colectarea Standard și Completă îl exportă singură pentru suporturile NTFS conectate atunci."
             : "";
 }
 

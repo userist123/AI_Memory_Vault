@@ -215,4 +215,48 @@ public class ControlApplicabilityTests
         Assert.Equal(AppMode.AirGapped, StationPostures.ClampMode(StationPosture.IsolatedNetwork, AppMode.AirGapped));
         Assert.Equal(AppMode.Network, StationPostures.ClampMode(StationPosture.Internet, AppMode.Network));
     }
+
+    // ---- Romanian reasons for "Nu se aplica" (lab 2026-11-10: the English reason was printed to the operator) ----
+
+    private static IEnumerable<ApplicabilityEntry> NotEverywhere() =>
+        ControlApplicability.All.Where(e => !e.Standalone.Applies || !e.IsolatedNetwork.Applies || !e.Internet.Applies);
+
+    [Fact]
+    public void ReasonRo_has_exactly_one_entry_per_check_that_does_not_apply_somewhere()
+    {
+        var expected = NotEverywhere().Select(e => e.Id).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var actual = ControlApplicability.ReasonRo.Keys.OrderBy(x => x, StringComparer.Ordinal).ToList();
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void Resolve_prints_the_Romanian_reason_and_never_the_English_one()
+    {
+        int resolved = 0;
+        foreach (var e in NotEverywhere())
+            foreach (var posture in new[] { StationPosture.Standalone, StationPosture.IsolatedNetwork, StationPosture.Internet })
+            {
+                if (e.For(posture).Applies) continue;
+                var check = new ControlCheck(e.Id, "Politici", e.Name, ControlStatus.Conform, "x", ["ev"], "rec");
+                var r = ControlApplicability.Resolve(check, posture);
+                Assert.Equal(ControlStatus.NuSeAplica, r.Status);
+                Assert.StartsWith("Nu se aplică în ediția", r.Detail);
+                Assert.Contains(ControlApplicability.ReasonRo[e.Id], r.Detail);
+                if (!string.IsNullOrEmpty(e.Reason)) Assert.DoesNotContain(e.Reason, r.Detail);
+                resolved++;
+            }
+        Assert.True(resolved > 0);
+    }
+
+    [Fact]
+    public void Romanian_reasons_contain_no_obvious_English_words()
+    {
+        foreach (var (id, text) in ControlApplicability.ReasonRo)
+        {
+            var low = " " + text.ToLowerInvariant() + " ";
+            // " are " is left out on purpose: it is the Romanian verb "a avea" ("nu are controler de domeniu" in A19)
+            foreach (var w in new[] { " the ", " is ", " only ", "station " })
+                Assert.False(low.Contains(w), $"{id}: motivul conține cuvântul englezesc „{w.Trim()}”.");
+        }
+    }
 }

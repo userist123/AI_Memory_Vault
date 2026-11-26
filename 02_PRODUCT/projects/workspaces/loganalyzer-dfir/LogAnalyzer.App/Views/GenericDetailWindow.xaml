@@ -31,9 +31,9 @@
                 <DataGrid x:Name="FieldsGrid" Margin="8" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                           CanUserSortColumns="True" SelectionUnit="FullRow" ClipboardCopyMode="IncludeHeader">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="130"/>
-                        <DataGridTextColumn Header="Câmp" Binding="{Binding Name}" Width="220"/>
-                        <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*">
+                        <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="130" MinWidth="130"/>
+                        <DataGridTextColumn Header="Câmp" Binding="{Binding Name}" Width="220" MinWidth="220"/>
+                        <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*" MinWidth="80">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -55,10 +55,10 @@
                                Text="Elemente din sesiune legate de acesta (aceeași sesiune de logon, același proces, IP sau cont, în ±10 minute). Dublu-click deschide fișa lor."/>
                     <DataGrid x:Name="RelatedGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MouseDoubleClick="Related_DoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150"/>
-                            <DataGridTextColumn Header="Tip" Binding="{Binding Kind}" Width="90"/>
-                            <DataGridTextColumn Header="Legătură" Binding="{Binding Link}" Width="200"/>
-                            <DataGridTextColumn Header="Rezumat" Binding="{Binding Summary}" Width="*"/>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" MinWidth="150"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding Kind}" Width="90" MinWidth="90"/>
+                            <DataGridTextColumn Header="Legătură" Binding="{Binding Link}" Width="200" MinWidth="200"/>
+                            <DataGridTextColumn Header="Rezumat" Binding="{Binding Summary}" Width="*" MinWidth="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -76,7 +76,7 @@
             <DockPanel LastChildFill="False">
                 <Button DockPanel.Dock="Right" Content="Închide" Click="Close_Click" Style="{StaticResource AccentButtonStyle}" IsCancel="True"/>
                 <Button x:Name="EscalateButton" DockPanel.Dock="Right" Content="Escaladează ca alertă" Click="Escalate_Click" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0"/>
-                <Button DockPanel.Dock="Right" Content="Export PDF" Click="ExportPdf_Click" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
+                <Button DockPanel.Dock="Right" Content="Exportă PDF" Click="ExportPdf_Click" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
                 <Button DockPanel.Dock="Right" Content="Copiază tot" Click="Copy_Click" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
                 <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
             </DockPanel>

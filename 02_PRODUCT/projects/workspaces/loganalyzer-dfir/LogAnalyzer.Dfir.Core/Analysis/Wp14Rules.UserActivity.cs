@@ -1,10 +1,11 @@
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 using static LogAnalyzer.Dfir.Analysis.Wp11Rules;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
 /// <summary>
-/// E7 slice 3: the user-activity artifacts (ShellBags, RecentDocs, Office MRU, Recycle Bin $I) read against the classified folders of the procedure profile and the
+/// E7 slice 3: the user-activity artifacts (ShellBags, RecentDocs, Office MRU, the Open/Save dialog lists, Recycle Bin $I) read against the classified folders of the procedure profile and the
 /// removable volumes of the case. The analysis is <see cref="UserActivityAnalysis"/>; this file turns it into findings. These are weak, indirect traces: every
 /// finding is DE VERIFICAT (candidate), never NECONFORM from these alone; the severities are provisional and the owner decides later whether any is stronger.
 /// </summary>
@@ -49,11 +50,13 @@ public static partial class Wp14Rules
         string.Join(", ", items.GroupBy(i => i.Source).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{UserActivityAnalysis.ShortLabel(g.Key)} {g.Count()}"));
 
     private static Finding UserActivityFinding(Ctx c, string rule, string title, Severity sev, Confidence conf, SemanticType semantic, IReadOnlyList<UserActivityItem> items,
-        string description, string reason, string file, params string[] missing)
+        string description, string reason, string file, Func<bool, string> plain, params string[] missing)
     {
         Times(items, out var first, out var last);
+        var who = string.Join(", ", items.Select(i => i.Who).Distinct(StringComparer.OrdinalIgnoreCase).Take(5));
         return new Finding
         {
+            PlainWhat = plain(PlainPhrases.KnownActor(who)),
             FindingId = c.NextId(), RuleId = rule, Title = title, Severity = sev, Category = c.FindingCategory, Classification = Classification.Candidate, Confidence = conf,
             FirstSeenUtc = first, LastSeenUtc = last, File = file,
             User = string.Join(", ", items.Select(i => i.Who).Distinct(StringComparer.OrdinalIgnoreCase).Take(5)),
@@ -63,9 +66,18 @@ public static partial class Wp14Rules
         };
     }
 
+    private static bool HasDialog(IEnumerable<UserActivityItem> items) => items.Any(i => UserActivityAnalysis.IsDialogList(i.Source));
+    private static bool DialogOnly(IEnumerable<UserActivityItem> items) => items.All(i => UserActivityAnalysis.IsDialogList(i.Source));
+
+    /// <summary>What the traces are and what they show, by the sources present (the wording without dialog rows is the original one, unchanged).</summary>
+    private static (string Traces, string Shows) TraceWords(IReadOnlyCollection<UserActivityItem> items) =>
+        DialogOnly(items) ? ("alegere într-o fereastră Deschide/Salvează", "un fișier sau un folder a fost ales într-o fereastră a unui program")
+        : HasDialog(items) ? ("navigare, de deschidere sau de alegere într-o fereastră Deschide/Salvează", "folderul a fost afișat, un document deschis sau un fișier ales într-o fereastră")
+        : ("navigare sau de deschidere", "folderul a fost afișat sau un document deschis");
+
     internal static void UserActivityFindings(Ctx c, List<Finding> o)
     {
-        if (!c.Events.Any(e => e.Source is UserActivityAnalysis.ShellBags or UserActivityAnalysis.RecentDocs or UserActivityAnalysis.OfficeMru or UserActivityAnalysis.RecycleBin)) return;
+        if (!c.Events.Any(e => UserActivityAnalysis.IsSource(e.Source))) return;
         var report = UserActivityForCase(c.Events, c.Profile, c.Facts?.RemovableLetters);
 
         // 1. classified folders seen in Explorer / recent documents (one finding per folder)
@@ -73,13 +85,23 @@ public static partial class Wp14Rules
         {
             var items = g.ToList();
             var when = Times(items, out _, out _);
+            // review 2026-11-18: a choice in an Open/Save dialog is neither a folder shown by Explorer nor a document opened; the wording follows the sources present
+            var (traces, shows) = TraceWords(items);
             o.Add(UserActivityFinding(c, UserActivityClassifiedRuleId,
-                $"Activitatea utilizatorului: folderul clasificat {g.Key} apare în urmele Explorer / documentelor recente ({items.Count})",
+                DialogOnly(items) ? $"Activitatea utilizatorului: folderul clasificat {g.Key} apare în listele ferestrei Deschide/Salvează ({items.Count})"
+                : HasDialog(items) ? $"Activitatea utilizatorului: folderul clasificat {g.Key} apare în urmele Explorer, ale documentelor recente și ale ferestrei Deschide/Salvează ({items.Count})"
+                : $"Activitatea utilizatorului: folderul clasificat {g.Key} apare în urmele Explorer / documentelor recente ({items.Count})",
                 Severity.Medium, Confidence.Medium, SemanticType.Presence, items,
                 $"{items.Count} urme ({SourcesOf(items)}) pentru căi din {g.Key}, în perioada {when}. ShellBags arată că Explorer a afișat folderul (sau un subfolder) în profilul utilizatorului, nu că un fișier a fost citit; " +
-                $"Office MRU arată ultima deschidere a unui fișier de către aplicația Office; RecentDocs păstrează doar numele. {Listing(items)}",
-                "Urme ale profilului utilizatorului (ShellBags / Office MRU / RecentDocs) potrivite după cale cu un folder clasificat al profilului de proceduri; slabe și indirecte: arată navigarea sau deschiderea, nu accesul la conținut, și nu spun dacă a fost autorizată. DE VERIFICAT.",
-                g.Key, "Auditul accesului la fișiere (4663) pentru aceeași perioadă", "Confirmarea că utilizatorul era autorizat pentru folder", "Conținutul fișierelor deschise"));
+                $"Office MRU arată ultima deschidere a unui fișier de către aplicația Office; RecentDocs păstrează doar numele." +
+                (HasDialog(items) ? " Listele Deschide/Salvează arată că un fișier sau un folder a fost ales într-o fereastră Deschide/Salvează, nu că a fost citit sau scris." : "") + $" {Listing(items)}",
+                HasDialog(items)
+                    ? "Urme ale profilului utilizatorului (ShellBags / Office MRU / RecentDocs / Deschide-Salvează) potrivite după cale cu un folder clasificat al profilului de proceduri; slabe și indirecte: arată navigarea, deschiderea sau alegerea într-o fereastră Deschide/Salvează, nu accesul la conținut, și nu spun dacă a fost autorizată. DE VERIFICAT."
+                    : "Urme ale profilului utilizatorului (ShellBags / Office MRU / RecentDocs) potrivite după cale cu un folder clasificat al profilului de proceduri; slabe și indirecte: arată navigarea sau deschiderea, nu accesul la conținut, și nu spun dacă a fost autorizată. DE VERIFICAT.",
+                g.Key, known => known
+                    ? $"are în profil {RoText.CountFem(items.Count, "urmă", "urme")} de {traces} în folderul clasificat {PlainPhrases.Q(g.Key)}; ele arată că {shows}, nu ce s-a făcut cu conținutul"
+                    : $"Există pe calculator {RoText.CountFem(items.Count, "urmă", "urme")} de {traces} în folderul clasificat {PlainPhrases.Q(g.Key)}; ele arată că {shows}, nu ce s-a făcut cu conținutul",
+                "Auditul accesului la fișiere (4663) pentru aceeași perioadă", "Confirmarea că utilizatorul era autorizat pentru folder", "Conținutul fișierelor deschise"));
         }
 
         // 2. removable volumes (one finding per drive letter; confirmed by the device facts or only possible)
@@ -89,16 +111,25 @@ public static partial class Wp14Rules
             var items = g.ToList();
             bool confirmed = g.Key.Drive == DriveMatch.Removable;
             var when = Times(items, out _, out _);
+            var (rtraces, _) = TraceWords(items);
+            var rshows = DialogOnly(items) ? "alegerea unui fișier sau folder într-o fereastră a unui program" : HasDialog(items) ? "afișarea unui folder sau alegerea unui fișier într-o fereastră" : "afișarea unui folder";
             o.Add(UserActivityFinding(c, UserActivityRemovableRuleId,
-                confirmed ? $"Activitatea utilizatorului: urme de navigare sau deschidere pe volumul amovibil {g.Key.DriveLetter} ({items.Count})"
+                confirmed ? (DialogOnly(items) ? $"Activitatea utilizatorului: alegeri în fereastra Deschide/Salvează pe volumul amovibil {g.Key.DriveLetter} ({items.Count})"
+                                               : $"Activitatea utilizatorului: urme de navigare sau deschidere pe volumul amovibil {g.Key.DriveLetter} ({items.Count})")
                           : $"Activitatea utilizatorului: urme pe unitatea {g.Key.DriveLetter}, posibil amovibilă ({items.Count})",
                 confirmed ? Sev(c, Severity.Medium) : Severity.Low, confirmed ? Confidence.Medium : Confidence.Low, SemanticType.Presence, items,
                 (confirmed ? $"Litera {g.Key.DriveLetter} apare în istoricul dispozitivelor din caz ca litera unui suport amovibil; o literă poate fi reutilizată de alt volum, iar urmele nu sunt datate pe volumul exact. "
                            : $"Litera {g.Key.DriveLetter} nu este asociată cu niciun suport amovibil din caz: poate fi un suport, un disc intern, o unitate optică sau una de rețea; incertitudine neînlăturată. ") +
-                $"{items.Count} urme ({SourcesOf(items)}), în perioada {when}. ShellBags arată că Explorer a afișat folderul, nu că un fișier a fost citit sau copiat. {Listing(items)}",
+                $"{items.Count} urme ({SourcesOf(items)}), în perioada {when}. " +
+                (HasDialog(items) ? "ShellBags arată că Explorer a afișat folderul, nu că un fișier a fost citit sau copiat; o listă Deschide/Salvează arată că un fișier a fost ales într-o fereastră a unui program, nu că a fost citit, scris sau copiat. "
+                                  : "ShellBags arată că Explorer a afișat folderul, nu că un fișier a fost citit sau copiat. ") + Listing(items),
                 confirmed ? "Urme ale profilului utilizatorului pe o cale cu litera unui suport amovibil cunoscut din caz (potrivire după literă, nu după seria volumului); slabe, DE VERIFICAT."
                           : "Urme ale profilului utilizatorului pe o literă de unitate fără suport amovibil cunoscut în caz; potrivire doar după literă, cu incertitudinea declarată; DE VERIFICAT.",
-                g.Key.DriveLetter + @"\", "Seria volumului din urmele LNK / ShellBags (legătura sigură cu un suport)", "Registrul de medii", "Conținutul și destinația oricărei copieri"));
+                g.Key.DriveLetter + @"\", known => (known ? "are în profil " : "Există pe calculator ") +
+                    $"{RoText.CountFem(items.Count, "urmă", "urme")} de {rtraces} pe unitatea {g.Key.DriveLetter}" +
+                    (confirmed ? ", care apare în istoricul calculatorului ca suport amovibil" : ", despre care probele nu spun dacă este un suport amovibil, un disc al calculatorului sau o unitate de rețea") +
+                    $"; urmele arată {rshows}, nu citirea sau copierea unui fișier",
+                "Seria volumului din urmele LNK / ShellBags (legătura sigură cu un suport)", "Registrul de medii", "Conținutul și destinația oricărei copieri"));
         }
 
         // 3. Recycle Bin records: deleted from a classified folder or from a removable volume (one finding per folder / letter)
@@ -123,7 +154,14 @@ public static partial class Wp14Rules
                 $"Ștergerea nu dovedește scoaterea de informații și poate fi legitimă (distrugere aprobată). {Listing(items)}",
                 classified ? "Înregistrarea Coșului ($I) spune direct calea originală și ora ștergerii; faptul că ștergerea a fost nepermisă se vede doar din documentele organizației. DE VERIFICAT."
                            : "Înregistrarea Coșului ($I) spune direct calea originală și ora ștergerii; legătura cu un suport amovibil este după litera unității. DE VERIFICAT.",
-                classified ? first.ClassifiedRoot : first.DriveLetter + @"\", "Procesul-verbal de distrugere", "Conținutul elementului (dacă $R lipsește, din copii de umbră sau backup)", "Evenimentele de audit ale ștergerii (4660), dacă auditul era pornit"));
+                classified ? first.ClassifiedRoot : first.DriveLetter + @"\", known =>
+                {
+                    var place = classified ? $"din folderul clasificat {PlainPhrases.Q(first.ClassifiedRoot)}" : removable ? $"de pe suportul amovibil {first.DriveLetter}" : $"de pe unitatea {first.DriveLetter} (probele nu spun dacă este un suport amovibil)";
+                    var head = known ? $"a șters {(items.Count == 1 ? "un element" : RoText.Count(items.Count, "element", "elemente"))} {place}"
+                                     : items.Count == 1 ? $"A fost șters un element {place}" : $"Au fost șterse {RoText.Count(items.Count, "element", "elemente")} {place}";
+                    return head + "; Coșul de reciclare păstrează calea și ora ștergerii, iar o ștergere poate fi legitimă (distrugere aprobată)";
+                },
+                "Procesul-verbal de distrugere", "Conținutul elementului (dacă $R lipsește, din copii de umbră sau backup)", "Evenimentele de audit ale ștergerii (4660), dacă auditul era pornit"));
         }
     }
 }

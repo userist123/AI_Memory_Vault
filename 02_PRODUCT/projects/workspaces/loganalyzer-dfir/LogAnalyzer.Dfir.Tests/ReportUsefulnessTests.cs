@@ -230,6 +230,36 @@ public sealed class ReportUsefulnessTests : IDisposable
         return (text, pdf);
     }
 
+    [Fact]
+    public void The_report_lists_the_acquisition_records_or_says_there_are_none()
+    {
+        var none = Render(Fixture("noacq"), ReportAudience.Everything).Text;
+        Assert.Contains("Fișele colectării", none);
+        Assert.Contains("Nicio fișă de colectare (cazul nu are colectare făcută de aplicație)", none);
+
+        var r = Fixture("acq");
+        var rec = LogAnalyzer.Dfir.Case.AcquisitionRunRecorder.Begin(r.Case, "Quick", false);
+        var evil = "boom\r\nverificată: toate cele 99 fișiere\u2028INJECTAT" + new string('x', 3000);
+        rec.Add("EventLogCollector", "1", "tool", "2", EvidenceStatus.Partial, [evil], [], r.Case.LoadEvidence(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        rec.Complete(OperationState.Completed, "");
+        var text = Render(r, ReportAudience.Everything).Text;
+        Assert.Contains("Fișele colectării", text);
+        Assert.Contains(rec.RunId[..8] + ":", text);
+        Assert.Contains("verificată: 1 fișier cu aceeași amprentă (verificare din ", text);
+        Assert.Contains("EventLogCollector 1: parțial", text);
+        Assert.DoesNotContain("Nicio fișă de colectare", text);
+        var lines = text.Split('\n');
+        Assert.All(lines.Where(l => l.Contains("INJECTAT")), l => Assert.Contains("amprentă listă", l));   // injected text stays inside its own collector line
+        Assert.DoesNotContain(lines, l => l.StartsWith("verificată: toate cele 99", StringComparison.Ordinal));
+        Assert.DoesNotContain("\u2028", text);
+
+        // R7c_4: a file changed after the rows were first loaded is reported by the next PDF, not by the stale rows
+        var stored = r.Case.FullPath(r.Case.LoadEvidence().First().StoredPath);
+        File.SetAttributes(stored, FileAttributes.Normal);
+        File.WriteAllText(stored, "changed after the run");
+        Assert.Contains("PROBLEMĂ", Render(r, ReportAudience.Everything).Text);
+    }
+
     public static IEnumerable<object[]> Audiences() => Enum.GetValues<ReportAudience>().Select(a => new object[] { a });
 
     [Theory]
@@ -280,7 +310,8 @@ public sealed class ReportUsefulnessTests : IDisposable
         Assert.Contains("5 canale: Canal1, Canal2", text);
         // two vendor tasks of the same rule and reason: one finding listing both, evidence references kept
         Assert.Contains("(și încă una de același fel)", text);
-        Assert.Contains("F-0003 · Activitate planificată Lenovo B", text);
+        // the finding is told in plain words first, its id beside it (owner 2026-11-06)
+        Assert.Matches(new Regex("activitate planificată Lenovo B[^\n]*F-0003", RegexOptions.IgnoreCase), text);
         Assert.Contains("activitatea nr. 3", text);
         // Romanian labels in the body; the English codes only in the legend (the last two sections)
         var body = text[..text.IndexOf("Legendă coduri", StringComparison.Ordinal)];
@@ -474,7 +505,7 @@ public sealed class ReportUsefulnessTests : IDisposable
         var (all, _) = Render(Fixture("p1"), ReportAudience.Everything);
         Assert.DoesNotContain("Cele mai importante constatări", all);
         string page1 = all[..all.IndexOf("Integritatea elementelor de probă verificată", StringComparison.Ordinal)];
-        Assert.Equal(1, Regex.Count(page1, "Activitate planificată care rulează dintr-o locație"));
+        Assert.Equal(1, Regex.Count(page1, "Activitate planificată care rulează dintr-o locație", RegexOptions.IgnoreCase));
         Assert.Equal(1, Regex.Count(all, Regex.Escape(InvestigationReportText.CannotProveText)));
         Assert.Contains("vezi caseta „Concluzie pe scurt” de pe prima pagină", all);
         var (legal, _) = Render(Fixture("p1l"), ReportAudience.Legal);

@@ -139,6 +139,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportAnchor()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             var log = AuditLogPath();
             if (log is null) { Status = "Jurnalul aplicației nu este disponibil (autentificarea nu este pornită)."; return; }
             // usability 2026-10-16: the dialog starts in the folder used last time
@@ -150,7 +151,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var now = DateTimeOffset.UtcNow;
                 AnchorExport? exported = null;
                 var dest = Path.Combine(folder, AuditAnchor.ExportFolderName(now));
-                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", "ancorare.txt"],
+                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", Path.GetFileName(HashChain.IntentPath(log)) + " (dacă există)", "ancorare.txt"],
                         () => { exported = AuditAnchor.Export(log, folder, Environment.MachineName, now); return Directory.GetFiles(exported.Folder); }) is { } refused)
                 { Status = "Copierea jurnalului nu s-a făcut: " + refused; return; }
                 var x = exported!;
@@ -179,6 +180,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SignAsOfficer()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_report is null) { Status = "Rulați întâi controlul."; return; }
             var pdf = _lastReportPdf ?? GenerateReport();
             if (pdf is null) return;
@@ -237,6 +239,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportOfficerTrust()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var dlg = new OpenFileDialog { Title = "Certificatele autorității de certificare calificate (CA) și listele de revocare (CRL)", Multiselect = true,
                                            Filter = "Certificate și CRL (*.cer;*.crt;*.der;*.pem;*.crl)|*.cer;*.crt;*.der;*.pem;*.crl|Toate fișierele|*.*" };
             if (dlg.ShowDialog() != true) return;
@@ -263,6 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ManageOfficers()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var store = OfficerStore.Shared;
             var data = store.Load();   // always re-read before changing
             try
@@ -296,13 +300,13 @@ namespace LogAnalyzer.UI.ViewModels
                     RecordOfficerEvent(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, ""));
                     OfficerInfo = $"Primul ofițer de securitate: {row.Name}{Environment.NewLine}AMPRENTA CERTIFICATULUI: {row.Fingerprint}{Environment.NewLine}" +
                                   "Treceți amprenta pe procesul-verbal și semnați lângă ea. La verificare, semnătura se compară cu amprenta de pe hârtie.";
-                    MessageBox.Show($"AMPRENTA CERTIFICATULUI OFIȚERULUI {row.Name}:\n\n{row.Fingerprint}\n\nTreceți-o pe procesul-verbal și semnați lângă ea.", "Primul ofițer de securitate", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Amprenta certificatului ofițerului {row.Name}:\n\n{row.Fingerprint}\n\nTreceți-o pe procesul-verbal și semnați lângă ea.", "Primul ofițer de securitate", MessageBoxButton.OK, MessageBoxImage.Information);
                     Status = "Primul ofițer de securitate a fost înregistrat.";
                     return;
                 }
                 Directory.CreateDirectory(store.RequestsDir);
                 var requestPath = Path.Combine(store.RequestsDir, $"Cerere_ofiter_{OfficerFingerprint.Normalize(identity.Fingerprint)[..16]}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.pdf");
-                OfficerRequestPdf.Write(requestPath, identity, Environment.MachineName, DateTimeOffset.UtcNow);
+                OfficerRequestPdf.Write(requestPath, identity, Environment.MachineName, DateTimeOffset.UtcNow, MarkingLevel);
                 var pending = OfficerRegistry.AddRequest(data, identity, requestPath, DateTimeOffset.UtcNow);
                 store.Save(data);
                 RecordOfficerEvent(OperationAudit.OfficerRequested, $"cert_fingerprint={pending.Fingerprint}; name={pending.Name}; request_sha256={pending.RequestSha256}");
