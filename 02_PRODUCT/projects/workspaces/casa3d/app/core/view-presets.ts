@@ -86,7 +86,9 @@ export function orthoFrustum(bounds: Bounds, id: ViewId, aspect: number, margin 
   return { left: cx - hw, right: cx + hw, top: cy + hh, bottom: cy - hh, near: Math.max(0.01, E - maxD - pad), far: E - minD + pad };
 }
 
-/** Screen drag (px) to world pan along camera right/up; result clamped to bounds +- slack (y to [0,height]). */
+/** Screen drag (px) to world pan along camera right/up; result clamped to bounds +- slack (y to [0,height]).
+ *  Perspective scale only: for an orthographic camera use the frustum height / zoom instead of 2*distance*tan(fov/2).
+ *  Returns only the new target: the caller moves the eye by the same (clamped) delta so the orbit is preserved. */
 export function panTarget(
   target: Vec3, dxPx: number, dyPx: number, viewportHeightPx: number, distance: number, fovDeg: number,
   cameraRight: Vec3, cameraUp: Vec3, bounds: Bounds, slack = 2,

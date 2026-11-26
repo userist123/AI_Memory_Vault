@@ -26,6 +26,9 @@ function run(args: string[]) {
 
 const suite = validatorInstalled ? describe : describe.skip;
 
+// în CI validatorul trebuie să fie instalat (pasul din .github/workflows/casa3d-build.yml); altfel testul s-ar sări în tăcere
+if (process.env.CI && !validatorInstalled) it('gltf-validator is installed in CI', () => { throw new Error('run `npm --prefix tools/assets ci` before npm test'); });
+
 suite(validatorInstalled ? 'glTF validation of bundled models' : 'glTF validation of bundled models (skipped: run `npm --prefix tools/assets ci` to install gltf-validator)', () => {
   let tmpRoot = '';
 

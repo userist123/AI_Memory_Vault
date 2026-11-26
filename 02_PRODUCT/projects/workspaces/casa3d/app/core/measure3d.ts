@@ -48,5 +48,7 @@ export function perimeterXZ(points: readonly P3[], closed = true): number {
 export function formatMeasure(kind: 'length' | 'area' | 'angle', value: number, units: Units = 'metric', locale: Locale = 'ro'): string {
   if (kind === 'length') return formatLength(value, units, locale);
   if (kind === 'area') return formatArea(value, units, locale);
-  return `${value.toFixed(1)}°`;
+  // unghiul cu separatorul zecimal al limbii, ca lungimile și ariile din core/format.ts
+  const tag = locale === 'ro' ? 'ro-RO' : locale === 'en' ? 'en-GB' : locale;
+  return `${new Intl.NumberFormat(tag, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value)}°`;
 }

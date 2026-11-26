@@ -44,7 +44,8 @@ describe('measure3d', () => {
       assert.equal(formatMeasure('area', 20, u), formatArea(20, u));
     }
     assert.equal(formatMeasure('length', 5, 'metric', 'en'), formatLength(5, 'metric', 'en'));
-    assert.equal(formatMeasure('angle', 90, 'metric'), '90.0°');
-    assert.equal(formatMeasure('angle', 44.96, 'imperial'), '45.0°');
+    assert.equal(formatMeasure('angle', 90, 'metric'), '90,0°');
+    assert.equal(formatMeasure('angle', 44.96, 'imperial'), '45,0°');
+    assert.equal(formatMeasure('angle', 90, 'metric', 'en'), '90.0°');
   });
 });

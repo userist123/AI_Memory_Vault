@@ -4,7 +4,7 @@
 // Each model lives in <dir>/<name>/<name>.gltf with external .bin and textures.
 // Exit 1 if any model has errors, if no models were found, or if --exe disagrees on the error count.
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import * as validator from 'gltf-validator';
@@ -65,8 +65,12 @@ async function validateModel(model) {
     format: 'gltf',
     maxIssues: 0,
     writeTimestamp: false,
-    externalResourceFunction: async (uri) =>
-      new Uint8Array(await readFile(resolve(model.modelDir, decodeURIComponent(uri)))),
+    externalResourceFunction: async (uri) => {
+      // only files inside the model's own folder (no ../ or absolute paths)
+      const file = resolve(model.modelDir, decodeURIComponent(uri));
+      if (!file.startsWith(resolve(model.modelDir) + sep)) throw new Error(`resource outside the model folder: ${uri}`);
+      return new Uint8Array(await readFile(file));
+    },
   });
   return summarize(report);
 }

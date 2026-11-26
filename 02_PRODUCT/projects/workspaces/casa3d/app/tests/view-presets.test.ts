@@ -36,12 +36,16 @@ describe('view presets', () => {
       const fov = 50, tv = Math.tan((fov * Math.PI) / 360);
       for (const id of IDS) {
         const { p, f, r, u } = view(id, aspect, fov);
+        let fill = 0;   // how close the tightest corner comes to the frustum edge (1 = on the edge)
         for (const c of corners(B)) {
           const v = sub(c, p.eye), z = dot(v, f);
           expect(z).toBeGreaterThan(0);
           expect(Math.abs(dot(v, u)) / z).toBeLessThanOrEqual(tv + 1e-9);
           expect(Math.abs(dot(v, r)) / z).toBeLessThanOrEqual(tv * aspect + 1e-9);
+          fill = Math.max(fill, Math.abs(dot(v, u)) / z / tv, Math.abs(dot(v, r)) / z / (tv * aspect));
         }
+        // the framing is tight, not merely containing: with the default margin 1.1 the binding corner sits at ~1/1.1
+        expect(fill).toBeGreaterThan(0.85);
         const o = orthoFrustum(B, id, aspect), t = boundsCenter(B);
         const E = Math.hypot(B.maxX - B.minX, B.height, B.maxZ - B.minZ);
         for (const c of corners(B)) {
@@ -51,6 +55,11 @@ describe('view presets', () => {
           expect(depth).toBeGreaterThanOrEqual(o.near); expect(depth).toBeLessThanOrEqual(o.far);
         }
         expect((o.right - o.left) / (o.top - o.bottom)).toBeCloseTo(aspect);
+        // tight too: one axis is filled up to the 1.05 margin
+        const hw = (o.right - o.left) / 2, hh = (o.top - o.bottom) / 2, cx = (o.right + o.left) / 2, cy = (o.top + o.bottom) / 2;
+        let ofill = 0;
+        for (const c of corners(B)) { const v = sub(c, t); ofill = Math.max(ofill, Math.abs(dot(v, r) - cx) / hw, Math.abs(dot(v, u) - cy) / hh); }
+        expect(ofill).toBeGreaterThan(0.9);
       }
     });
   }
