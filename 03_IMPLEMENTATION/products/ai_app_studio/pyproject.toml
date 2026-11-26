@@ -1,0 +1,45 @@
+[project]
+name = "ai-app-studio"
+version = "0.1.0"
+description = "AI App Studio - application core (vendored from AI Website Studio 25b3eab, see VENDORED.json)"
+requires-python = ">=3.12,<3.13"
+# Exact pins = the versions locked in AI Website Studio uv.lock at 25b3eab (vendored core is tested against them).
+dependencies = [
+    "sqlalchemy==2.1.9",
+    "alembic==1.20.1",
+    "pillow==13.0.0",
+    "httpx==0.28.1",
+    "anthropic==2.12.0",
+    "playwright==1.65.2",
+    "fastapi==0.165.0",
+    "uvicorn[standard]==0.54.0",
+    "mcp==2.3.0",
+    "winrt-runtime==4.2.0 ; sys_platform == 'win32'",
+    "winrt-windows-media-ocr==4!10.0.28000.2957 ; sys_platform == 'win32'",
+    "winrt-windows-graphics-imaging==4!10.0.28000.2957 ; sys_platform == 'win32'",
+    "winrt-windows-storage-streams==4!10.0.28000.2957 ; sys_platform == 'win32'",
+    "winrt-windows-globalization==4!10.0.28000.2957 ; sys_platform == 'win32'",
+    "winrt-windows-foundation==4!10.0.28000.2957 ; sys_platform == 'win32'",
+    "winrt-windows-foundation-collections==4!10.0.28000.2957 ; sys_platform == 'win32'",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "pytest-asyncio==1.5.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p tests.hermetic_disk"  # hermetic free-disk probes (tests/hermetic_disk.py)
+pythonpath = ["core", "."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "browser: needs Playwright Chromium",
+    "windows: needs a real Windows desktop session",
+    "real_disk: read the real free disk space (no hermetic disk_free fake)",
+]

@@ -1,0 +1,4 @@
+// Studio-owned (AI App Studio, DESIGN 3.5): `cap add android` wrote the pnpm store path here; the image keeps a plain
+// copy of @capacitor/android 8.6.2 at ../node_modules/@capacitor/android (copied with links resolved).
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')

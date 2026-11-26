@@ -1,0 +1,32 @@
+# Studio-owned Tauri 2 wrapper for generated apps (S9c). The agent never supplies Rust or config: the studio copies
+# this directory into a fresh build dir, writes tauri.conf.json itself and adds only the project's built web dist.
+# Exact pins; Cargo.lock is committed and the build runs `cargo build --release --offline --locked` against a
+# vendored, checksum-locked crate directory (docs/slices/S9c.md).
+[package]
+name = "aas-app"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+publish = false
+
+[[bin]]
+name = "aas-app"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = [] }
+
+[features]
+default = ["custom-protocol"]
+# assets embedded in the exe and served from tauri.localhost (never a dev server)
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

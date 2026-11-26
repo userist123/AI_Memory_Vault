@@ -1,0 +1,15 @@
+{
+  "_comment": "W2 quality gates. axe-core is injected by the studio's Playwright into an isolated world of the preview page only (core/aas_build/qa.py); it is never copied into a generated app or a served file. qa.py refuses to run when the file's sha256 differs from this manifest. Refresh deliberately: download the npm tarball, check its sha512 integrity against the registry, extract package/axe.min.js, record the new hashes.",
+  "axe-core": {
+    "version": "4.14.1",
+    "license": "MPL-2.0 (LICENSE.axe-core)",
+    "file": "axe.min.js",
+    "sha256": "29348999450cdf2849a8e70b7912fc2da85a849da39c0d0d5394f51d4a9ed95c",
+    "bytes": 653780,
+    "source": "https://registry.npmjs.org/axe-core/-/axe-core-4.14.1.tgz (package/axe.min.js)",
+    "tarball_integrity": "sha512-FHfa+lmNjQZfJz1q8wKqIDwC6DExcHt/pkjNQb09a3NPjCKg2rhu5qb2S4r76ASyFNNtuFooJpZe37OgudVGtQ==",
+    "tarball_sha256": "e6b0ce02b84d892e2e33e403485e7f3d6c29e2be6df65daf44d89ba564139745",
+    "license_sha256": "af175b9d96ee93c21a036152e1b905b0b95304d4ae8c2c921c7609100ba8df7e",
+    "downloaded": "2026-11-23"
+  }
+}

@@ -1,0 +1,16 @@
+# Accepted residual advisories for THIS Cargo.lock only (docs/SECURITY.md section 2a). Re-review by 2027-02-23.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0543"
+ignoreUntil = 2027-02-23
+reason = "chrono 0.4.45: no fixed release available; locked only for non-Windows targets, not in the Windows target graph (verified 2026-11-23: `cargo tree -i chrono --target x86_64-pc-windows-msvc` prints nothing for both lockfiles)"
+
+[[IgnoredVulns]]
+id = "GHSA-wrw7-89jp-8q8g"
+ignoreUntil = 2027-02-23
+reason = "glib 0.18.5 (alias RUSTSEC-2024-0429, matched through this id): Linux-only gtk path of wry/tao, not in the Windows target graph; the app ships on Windows only; the fixed glib needs the gtk-rs 0.20 generation (Tauri upgrade, later); verified 2026-11-23: `cargo tree -i glib --target x86_64-pc-windows-msvc` prints nothing"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+ignoreUntil = 2027-02-23
+reason = "proc-macro-error 1.0.4: unmaintained, no fixed release available; locked only for non-Windows targets, not in the Windows target graph (verified 2026-11-23: `cargo tree -i proc-macro-error --target x86_64-pc-windows-msvc` prints nothing for both lockfiles)"

@@ -1,0 +1,223 @@
+name: ai-app-studio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "03_IMPLEMENTATION/products/ai_app_studio/**"
+      - ".github/workflows/ai-app-studio.yml"
+  pull_request:
+    paths:
+      - "03_IMPLEMENTATION/products/ai_app_studio/**"
+      - ".github/workflows/ai-app-studio.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-app-studio-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PRODUCT_DIR: 03_IMPLEMENTATION/products/ai_app_studio
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+  OSV_SCANNER_VERSION: "2.7.1"
+  OSV_SCANNER_SHA256: "fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8"
+  ZIZMOR_VERSION: "1.33.0"
+  UV_VERSION: "0.13.9"
+  UV_SHA256: "a7fbaff2b9a271d85c1bdb540941090fd1ce011797b4abeb48e4dcd39c2471d5"
+  UV_WIN_SHA256: "edd61f7f5728a56cc62455386661860bdfc7bab65872f39b0c25bdcc1d8e1beb"
+  ACTIONLINT_VERSION: "1.7.12"
+  ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+  PNPM_VERSION: "10.28.2"
+
+jobs:
+  gitleaks:
+    name: secrets (gitleaks, product dir)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install gitleaks (checksum verified)
+        run: |
+          set -euo pipefail
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$f" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan
+        run: '"$RUNNER_TEMP/gitleaks" dir --config .gitleaks.toml --redact --no-banner --exit-code 1 "$PRODUCT_DIR"'
+      - name: Scan product tests (default rules; only exact fixture path + rule allowed)
+        run: '"$RUNNER_TEMP/gitleaks" dir --config "$PRODUCT_DIR/.gitleaks-tests.toml" --redact --no-banner --exit-code 1 "$PRODUCT_DIR/tests"'
+
+  gitleaks-history:
+    name: secrets (gitleaks, product history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install gitleaks (checksum verified)
+        run: |
+          set -euo pipefail
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$f" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan every commit that touched the product
+        run: '"$RUNNER_TEMP/gitleaks" git --config .gitleaks.toml --redact --no-banner --exit-code 1 --log-opts="-- $PRODUCT_DIR" .'
+
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install actionlint (release binary, checksum verified)
+        run: |
+          set -euo pipefail
+          f="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$f" "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$f"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" actionlint
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Lint this workflow
+        run: actionlint .github/workflows/ai-app-studio.yml
+
+  zizmor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install zizmor (hash-checked wheel)
+        run: |
+          set -euo pipefail
+          echo "zizmor==${ZIZMOR_VERSION} --hash=sha256:fc766cf422e4de8b6d35a9f81725b84a400408494cce38767582cd06e7b71844" > "$RUNNER_TEMP/zizmor-req.txt"
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary :all: -r "$RUNNER_TEMP/zizmor-req.txt"
+      - name: Audit this workflow
+        run: zizmor --offline --min-severity low .github/workflows/ai-app-studio.yml
+
+  osv-scanner:
+    name: deps (OSV-Scanner, product dir)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Find lockfiles
+        id: locks
+        run: |
+          set -euo pipefail
+          n=$(git ls-files -- "$PRODUCT_DIR/**uv.lock" "$PRODUCT_DIR/**pnpm-lock.yaml" "$PRODUCT_DIR/**Cargo.lock" | wc -l)
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "lockfiles found: $n"
+      - name: No lockfiles yet
+        if: steps.locks.outputs.count == '0'
+        run: echo "No lockfiles yet - OSV scan skipped."
+      - name: Install osv-scanner (checksum verified)
+        if: steps.locks.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/osv-scanner" "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          echo "${OSV_SCANNER_SHA256}  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+      - name: Scan
+        if: steps.locks.outputs.count != '0'
+        run: '"$RUNNER_TEMP/osv-scanner" scan source --recursive "$PRODUCT_DIR"'
+
+  vendored:
+    name: "vendored drift (check_vendored; gen_vendored --check needs the upstream repo: owner PC)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 03_IMPLEMENTATION/products/ai_app_studio
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: check_vendored (CI mode, committed upstream hashes)
+        run: python scripts/check_vendored.py
+
+  pytest:
+    # The product is Windows-only (WebView2, named pipes, WSL2 device host): the suite runs on windows-latest.
+    # Tests that need Docker images, the Claude CLI, Playwright Chromium, WSL or the emulator skip themselves there
+    # (explicit skipif reasons); they run in the owner's local gate (docs/SECURITY.md section 4).
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: 03_IMPLEMENTATION/products/ai_app_studio
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install uv (checksum verified)
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zip = Join-Path $env:RUNNER_TEMP "uv.zip"
+          Invoke-WebRequest -UseBasicParsing -OutFile $zip "https://github.com/astral-sh/uv/releases/download/$env:UV_VERSION/uv-x86_64-pc-windows-msvc.zip"
+          $h = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
+          if ($h -ne $env:UV_WIN_SHA256) { throw "uv checksum mismatch: $h" }
+          Expand-Archive -Path $zip -DestinationPath (Join-Path $env:RUNNER_TEMP "uv")
+          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $env:RUNNER_TEMP "uv")
+      - name: uv sync --locked
+        run: uv sync --locked --python-preference only-system
+      - name: Vendored code drift check
+        run: uv run python scripts/check_vendored.py
+      - name: pytest
+        run: uv run pytest -q -rs
+
+  desktop:
+    name: desktop (tsc, vitest, vite build, cargo test --lib)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: 03_IMPLEMENTATION/products/ai_app_studio/apps/desktop
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+      - name: pnpm via corepack (version from package.json packageManager)
+        run: |
+          corepack enable pnpm
+          $v = (pnpm --version).Trim()
+          if ($v -ne $env:PNPM_VERSION) { throw "pnpm $v is not the pinned $env:PNPM_VERSION" }
+      - name: pnpm install --frozen-lockfile (offline-capable, no lifecycle scripts)
+        run: pnpm install --frozen-lockfile --prefer-offline --ignore-scripts
+      - name: tsc --noEmit
+        run: pnpm exec tsc --noEmit
+      - name: vitest
+        run: pnpm exec vitest run
+      - name: vite build (frontendDist for the Tauri crate)
+        run: pnpm exec vite build
+      - name: generate icons from the committed SVG (no PNG or ICO in git)
+        run: pnpm exec tauri icon src-tauri/app-icon.svg --output src-tauri/icons
+      - name: cargo test --lib
+        working-directory: 03_IMPLEMENTATION/products/ai_app_studio/apps/desktop/src-tauri
+        run: cargo test --lib --locked

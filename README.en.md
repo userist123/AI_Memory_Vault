@@ -651,6 +651,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
 | Casa3D: typecheck, Vitest and the Next.js build for the app and twin-core | `casa3d-build.yml` |
+| AI App Studio: secrets (gitleaks), workflow audit (zizmor), dependencies (OSV), the VENDORED manifest and the product pytest suite | `ai-app-studio.yml` |
 | Design tokens (DTCG): types, OKLCH↔hex, Casa3D parity and the drift gate on the generated `tokens.css` | `design-system-build.yml` |
 | Dependency audit (npm, .NET) per manifest; fails on CRITICAL | `dependency-audit.yml` |
 | Supply chain: actionlint, zizmor, dependency review, OSV scan and OpenSSF Scorecard | `supply-chain-security.yml` |

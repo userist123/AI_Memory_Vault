@@ -1,0 +1,108 @@
+"""Fake Claude Code CLI for runner tests: emits recorded stream-json lines, no network, no model.
+
+The prompt (stdin) is a JSON scenario:
+  {"record": "<path>", "pre_init": [<json objects>], "init": {...overrides...}, "no_init": <bool>, "events": [<json objects or raw strings>], "sleep": <seconds>,
+   "mcp_calls": [{"tool": "code_write_file", "args": {...}}], "project_id": "...", "exit": 0}
+It records argv, cwd, the cwd listing, the environment keys and the raw stdin to scenario["record"] before emitting
+anything (and appends the same record as one line to scenario["record"] + ".log": a run may start the CLI twice).
+Chat (aas_runner/chat.py): stdin may hold a summary block in front of the scenario; the scenario is then the JSON
+object on the last stdin line that parses. With ``--resume <id>`` the init carries that session id, and with
+"resume_fail": true the fake answers like the real CLI 2.1.330 for an unknown session (plain text line + an error
+result, no init, exit 1).
+With "mcp_calls" it behaves like the real CLI: it starts the MCP server named in --mcp-config over stdio (the
+env of that config entry, nothing else added), calls the tools, and emits matching tool_use / tool_result lines.
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import sys
+import time
+
+
+def emit(o: object) -> None:
+    sys.stdout.write((o if isinstance(o, str) else json.dumps(o)) + "\n")
+    sys.stdout.flush()
+
+
+async def run_mcp(cfg_path: str, calls: list[dict], project_id: str) -> None:
+    from mcp.client.session import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+    cfg = json.load(open(cfg_path, encoding="utf-8"))["mcpServers"]["ai-app-studio"]
+    params = StdioServerParameters(command=cfg["command"], args=cfg["args"], env=cfg.get("env") or {})
+    rev = 0
+    async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
+        await s.initialize()
+        if not project_id:  # a runner grant is bound to one project: project_list returns exactly that one
+            listed = await s.call_tool("project_list", {})
+            body = json.loads(next(x.text for x in listed.content if x.type == "text"))
+            project_id = body["result"][0]["id"]
+        for i, c in enumerate(calls):
+            args = {k: (project_id if v == "$project" else rev if v == "$rev" else v) for k, v in c["args"].items()}
+            cid = f"toolu_{i}"
+            emit({"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": cid, "name": "mcp__ai-app-studio__" + c["tool"], "input": args}]}})
+            res = await s.call_tool(c["tool"], args)
+            text = next((x.text for x in res.content if x.type == "text"), "")
+            try:
+                body = json.loads(text)
+                if body.get("ok") and isinstance(body.get("result"), dict) and "revision" in body["result"]:
+                    rev = body["result"]["revision"]
+            except ValueError:
+                pass
+            emit({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": cid, "is_error": bool(res.is_error), "content": text}]}})
+
+
+def main() -> int:
+    raw_stdin = sys.stdin.read()
+    try:
+        scenario = json.loads(raw_stdin or "{}")
+    except ValueError:
+        scenario = {}
+        for line in reversed(raw_stdin.splitlines()):
+            try:
+                scenario = json.loads(line)
+                break
+            except ValueError:
+                continue
+    argv = sys.argv[1:]
+    if scenario.get("record"):
+        rec = {"argv": argv, "cwd": os.getcwd(), "listing": sorted(os.listdir(".")), "env": dict(os.environ),
+               "stdin": raw_stdin}
+        with open(scenario["record"], "w", encoding="utf-8") as f:
+            json.dump(rec, f)
+        with open(scenario["record"] + ".log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec) + "\n")
+    resume = argv[argv.index("--resume") + 1] if "--resume" in argv else None
+    if resume and scenario.get("resume_fail"):
+        emit(f"No conversation found with session ID: {resume}")
+        emit({"type": "result", "subtype": "error_during_execution", "is_error": True, "num_turns": 0,
+              "session_id": resume, "total_cost_usd": 0, "usage": {}})
+        return 1
+    cfg = argv[argv.index("--mcp-config") + 1] if "--mcp-config" in argv else None
+    servers = list(json.load(open(cfg, encoding="utf-8")).get("mcpServers", {})) if cfg else []
+    init = {"type": "system", "subtype": "init", "model": "fake-model", "cwd": os.getcwd(),
+            "mcp_servers": [{"name": n, "status": "connected"} for n in servers],
+            "tools": ["mcp__ai-app-studio__code_write_file", "mcp__ai-app-studio__code_read_file"],
+            "session_id": resume or "fake"}
+    init.update(scenario.get("init") or {})
+    for ev in scenario.get("pre_init") or []:  # lines a real CLI prints before init (owner SessionStart hooks)
+        emit(ev)
+    if not scenario.get("no_init"):  # "no_init": the stream starts with whatever "events" holds (fail-closed tests)
+        emit(init)
+    for ev in scenario.get("events") or []:
+        emit(ev)
+    if scenario.get("mcp_calls"):
+        asyncio.run(run_mcp(cfg, scenario["mcp_calls"], scenario.get("project_id", "")))
+    if scenario.get("final_events"):
+        for ev in scenario["final_events"]:
+            emit(ev)
+    if scenario.get("sleep"):
+        time.sleep(float(scenario["sleep"]))
+    return int(scenario.get("exit", 0))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

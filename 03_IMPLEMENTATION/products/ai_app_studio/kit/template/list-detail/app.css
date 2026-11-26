@@ -1,0 +1,21 @@
+/* List-detail template layout (mobile-first: one pane at a time on a phone, @media shows both). Tokens only. */
+.layout { min-height: 100dvh; }
+.list, .detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: calc(var(--space-5) + var(--safe-top)) calc(var(--space-4) + var(--safe-right)) calc(var(--space-5) + var(--safe-bottom)) calc(var(--space-4) + var(--safe-left));
+}
+.list__header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.detail__article { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+.back { margin-left: calc(-1 * var(--space-3)); }
+/* phone: one pane at a time */
+.layout .detail { display: none; }
+.layout.has-detail .list { display: none; }
+.layout.has-detail .detail { display: flex; }
+@media (min-width: 768px) {
+  .layout { display: grid; grid-template-columns: 22rem 1fr; }
+  .layout .list, .layout.has-detail .list { display: flex; border-right: 1px solid var(--color-border); }
+  .layout .detail { display: flex; padding: var(--space-6); }
+  .back { display: none; }
+}

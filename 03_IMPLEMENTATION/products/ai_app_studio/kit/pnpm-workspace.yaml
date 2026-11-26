@@ -1,0 +1,6 @@
+# Studio-owned supply-chain policy (DESIGN 3.3). Never writable by an agent.
+packages: []
+minimumReleaseAge: 10080        # minutes = 7 days
+strictDepBuilds: true           # a dependency with an unapproved install script fails the install
+onlyBuiltDependencies: []       # nothing may run install scripts
+verifyStoreIntegrity: true
