@@ -16,6 +16,11 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 
+#: Skill self-tests live next to the skill so the installed copy under ~/.claude/skills stays
+#: self-testing. They are exact paths, not a prefix, and each one is executed in CI by
+#: 20_TESTS/test_user_skill_suites.py, so allowing them here does not make them uncollected.
+_SKILL_SELF_TEST = "skill self-test shipped in the skill folder; run by 20_TESTS/test_user_skill_suites.py"
+
 #: Areas deliberately outside the collected suite. Each entry is a prefix and
 #: needs a reason: these are self-contained products or evaluation labs with
 #: their own runners, not runtime-package tests.
@@ -27,6 +32,10 @@ ALLOWED_OUTSIDE = {
     "80_ARCHIVE/": "archived",
     "20_TESTS/": "the collected suite itself",
     "03_IMPLEMENTATION/packages/security/tests/": "dedicated security-boundary suite with its own CI workflow",
+    ".claude/skills/analist-juridic/tests/test_scripts.py": _SKILL_SELF_TEST,
+    ".claude/skills/animatie-3d/test_animatie3d.py": _SKILL_SELF_TEST,
+    ".claude/skills/clips-kitty/test_hook_block_autopublish.py": _SKILL_SELF_TEST,
+    ".claude/skills/prompt-director/test_hook_prompt_intake.py": _SKILL_SELF_TEST,
 }
 
 

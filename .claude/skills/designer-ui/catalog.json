@@ -1,0 +1,723 @@
+[
+ {
+  "id": "components",
+  "file": "references/components.md",
+  "tier_min": "T1",
+  "title": "Components",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "forms",
+   "settings-screen",
+   "component-states",
+   "budget-progress-bars",
+   "button-hierarchy",
+   "button-padding",
+   "icon-consistency",
+   "iconography",
+   "mobile-nav",
+   "navigation"
+  ],
+  "rules": 82,
+  "est_tokens": 7491
+ },
+ {
+  "id": "core-a11y",
+  "file": "references/core-a11y.md",
+  "tier_min": "T1",
+  "title": "Accessibility basics",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "reduced-motion",
+   "aria-patterns",
+   "target-size",
+   "wcag-motion",
+   "focus-states",
+   "reflow",
+   "text-contrast",
+   "a11y-minimums",
+   "colour-not-only",
+   "fitts-law-target-size"
+  ],
+  "rules": 40,
+  "est_tokens": 6192
+ },
+ {
+  "id": "core-color",
+  "file": "references/core-color.md",
+  "tier_min": "T1",
+  "title": "Colour",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "dark-mode",
+   "dark-palette",
+   "warm-serif-editorial",
+   "60-30-10",
+   "modern-palette",
+   "60-30-10-example",
+   "60-30-10-palette",
+   "accent-usage",
+   "alpha-borders",
+   "color-roles"
+  ],
+  "rules": 29,
+  "est_tokens": 4088
+ },
+ {
+  "id": "core-layout",
+  "file": "references/core-layout.md",
+  "tier_min": "T1",
+  "title": "Spacing & layout",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "8pt-grid",
+   "mobile-grid",
+   "section-rhythm",
+   "spacing-scale",
+   "css-grid",
+   "desktop-grid",
+   "proximity-spacing",
+   "8pt-spacing-scale",
+   "bento-layout",
+   "card-aspect-ratio"
+  ],
+  "rules": 88,
+  "est_tokens": 6605
+ },
+ {
+  "id": "core-motion",
+  "file": "references/core-motion.md",
+  "tier_min": "T1",
+  "title": "Motion basics (fluid kit)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "micro-interactions",
+   "hover-press",
+   "easing",
+   "performance",
+   "durations",
+   "mask-reveal",
+   "animation-timing",
+   "breakpoint-scoped-motion",
+   "copy-button-feedback",
+   "doherty-threshold"
+  ],
+  "rules": 33,
+  "est_tokens": 4194
+ },
+ {
+  "id": "core-typography",
+  "file": "references/core-typography.md",
+  "tier_min": "T1",
+  "title": "Typography",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "warm-serif-editorial",
+   "display-type",
+   "display-typeface",
+   "responsive-type",
+   "type-scale",
+   "currency-decimals",
+   "data-numerals",
+   "font-choice",
+   "font-count",
+   "font-weight"
+  ],
+  "rules": 39,
+  "est_tokens": 4519
+ },
+ {
+  "id": "core-visual",
+  "file": "references/core-visual.md",
+  "tier_min": "T1",
+  "title": "Visual basics",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "warm-serif-editorial",
+   "depth-shadow",
+   "shape-radius",
+   "glass-blur",
+   "radius-discipline",
+   "signature-motif",
+   "subtle-shadows",
+   "swap-test",
+   "text-animation"
+  ],
+  "rules": 18,
+  "est_tokens": 3497
+ },
+ {
+  "id": "manual-color-60-30-10",
+  "file": "references/manual-color-60-30-10.md",
+  "tier_min": "T1",
+  "title": "manual-color-60-30-10",
+  "page_types": [
+   "any"
+  ],
+  "topics": [],
+  "rules": 0,
+  "est_tokens": 1944
+ },
+ {
+  "id": "manual-layout-spacing",
+  "file": "references/manual-layout-spacing.md",
+  "tier_min": "T1",
+  "title": "manual-layout-spacing",
+  "page_types": [
+   "any"
+  ],
+  "topics": [],
+  "rules": 0,
+  "est_tokens": 917
+ },
+ {
+  "id": "manual-motion-tokens",
+  "file": "references/manual-motion-tokens.md",
+  "tier_min": "T1",
+  "title": "manual-motion-tokens",
+  "page_types": [
+   "any"
+  ],
+  "topics": [],
+  "rules": 0,
+  "est_tokens": 2068
+ },
+ {
+  "id": "manual-qa-checks",
+  "file": "references/manual-qa-checks.md",
+  "tier_min": "T1",
+  "title": "manual-qa-checks",
+  "page_types": [
+   "any"
+  ],
+  "topics": [],
+  "rules": 0,
+  "est_tokens": 1598
+ },
+ {
+  "id": "manual-visual-tokens",
+  "file": "references/manual-visual-tokens.md",
+  "tier_min": "T1",
+  "title": "manual-visual-tokens",
+  "page_types": [
+   "any"
+  ],
+  "topics": [],
+  "rules": 0,
+  "est_tokens": 1769
+ },
+ {
+  "id": "page-form",
+  "file": "references/page-form.md",
+  "tier_min": "T2",
+  "title": "Page: form",
+  "page_types": [
+   "form"
+  ],
+  "topics": [
+   "forms",
+   "booking-screen",
+   "8pt-grid",
+   "form-inputs-paste",
+   "form-labels-outside",
+   "form-spacing",
+   "input-field",
+   "mobile-input-size",
+   "otp-input",
+   "proximity-grouping"
+  ],
+  "rules": 22,
+  "est_tokens": 2533
+ },
+ {
+  "id": "page-landing",
+  "file": "references/page-landing.md",
+  "tier_min": "T2",
+  "title": "Page: landing",
+  "page_types": [
+   "landing"
+  ],
+  "topics": [
+   "data-card",
+   "pricing-tiers",
+   "social-proof",
+   "section-rhythm",
+   "pre-launch-proof",
+   "bento-grid",
+   "honest-proof",
+   "bento-layout",
+   "bento-proof-section",
+   "cta-copy"
+  ],
+  "rules": 130,
+  "est_tokens": 16926
+ },
+ {
+  "id": "page-marketing-site",
+  "file": "references/page-marketing-site.md",
+  "tier_min": "T2",
+  "title": "Page: marketing-site",
+  "page_types": [
+   "marketing-site"
+  ],
+  "topics": [
+   "section-rhythm",
+   "bento-grid",
+   "desktop-grid",
+   "service-page-structure",
+   "social-proof",
+   "8pt-grid",
+   "404-page",
+   "accordion",
+   "anchor-positioning",
+   "artifact-over-paraphrase"
+  ],
+  "rules": 81,
+  "est_tokens": 8320
+ },
+ {
+  "id": "page-portfolio",
+  "file": "references/page-portfolio.md",
+  "tier_min": "T2",
+  "title": "Page: portfolio",
+  "page_types": [
+   "portfolio"
+  ],
+  "topics": [
+   "portfolio-structure",
+   "section-rhythm",
+   "bento-layout",
+   "pinned-scroll-story",
+   "anchor-positioning",
+   "bento-grid",
+   "big-hero-type",
+   "contact-cta-section",
+   "footer",
+   "hero-fold"
+  ],
+  "rules": 30,
+  "est_tokens": 5077
+ },
+ {
+  "id": "page-pricing",
+  "file": "references/page-pricing.md",
+  "tier_min": "T2",
+  "title": "Page: pricing",
+  "page_types": [
+   "pricing"
+  ],
+  "topics": [
+   "pricing-tiers",
+   "modal-close-button",
+   "paywall-screen",
+   "pricing-card-spacing",
+   "pricing-spotlight",
+   "saas-landing-structure",
+   "von-restorff-highlight"
+  ],
+  "rules": 18,
+  "est_tokens": 2005
+ },
+ {
+  "id": "resources",
+  "file": "references/resources.md",
+  "tier_min": "T2",
+  "title": "Resources",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "ai-design-skills",
+   "design-resources",
+   "design-systems",
+   "inspiration-galleries",
+   "design-system-references",
+   "mobile-inspiration-sites",
+   "web-design-resources",
+   "agent-dev-tools",
+   "claude-design-skills",
+   "component-inspiration-galleries"
+  ],
+  "rules": 34,
+  "est_tokens": 3078
+ },
+ {
+  "id": "ux-conversion",
+  "file": "references/ux-conversion.md",
+  "tier_min": "T2",
+  "title": "Conversion & UX psychology",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "pricing-tiers",
+   "hicks-law",
+   "pre-launch-proof",
+   "social-proof",
+   "cta-hierarchy",
+   "jakobs-law",
+   "peak-end-rule",
+   "beautiful-vs-converting-product-page",
+   "bento-proof-section",
+   "concept-trust"
+  ],
+  "rules": 59,
+  "est_tokens": 6707
+ },
+ {
+  "id": "a11y-full",
+  "file": "references/a11y-full.md",
+  "tier_min": "T3",
+  "title": "Accessibility (full)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "reduced-motion",
+   "drag-alternative",
+   "auto-advance",
+   "dropzone",
+   "live-regions",
+   "mask-reveal",
+   "media-controls",
+   "pinned-fallback",
+   "pinned-scroll-story",
+   "redundant-entry"
+  ],
+  "rules": 17,
+  "est_tokens": 3132
+ },
+ {
+  "id": "components-more",
+  "file": "references/components-more.md",
+  "tier_min": "T3",
+  "title": "Components (intermediate)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "charts",
+   "data-card",
+   "data-table",
+   "mobile-nav",
+   "bottom-navigation",
+   "floating-bottom-nav",
+   "honest-proof",
+   "loading-skeleton",
+   "mobile-pagination",
+   "pricing-tiers"
+  ],
+  "rules": 71,
+  "est_tokens": 10225
+ },
+ {
+  "id": "core-color-more",
+  "file": "references/core-color-more.md",
+  "tier_min": "T3",
+  "title": "Colour (intermediate)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "modern-palette",
+   "quote-contrast",
+   "de-familiarise-by-subtraction",
+   "monochrome-plus-accent",
+   "oklch-palettes",
+   "quote-marker",
+   "three-colour-editorial",
+   "tinted-grays"
+  ],
+  "rules": 10,
+  "est_tokens": 1652
+ },
+ {
+  "id": "core-layout-more",
+  "file": "references/core-layout-more.md",
+  "tier_min": "T3",
+  "title": "Spacing & layout (intermediate)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "bento-grid",
+   "baseline-grid",
+   "grid-types",
+   "mobile-layout",
+   "soft-vs-hard-grid",
+   "4pt-subgrid",
+   "5pt-vs-8pt-grid",
+   "8pt-grid",
+   "8pt-vs-5pt",
+   "anchor-positioning"
+  ],
+  "rules": 34,
+  "est_tokens": 3734
+ },
+ {
+  "id": "core-typography-more",
+  "file": "references/core-typography-more.md",
+  "tier_min": "T3",
+  "title": "Typography (intermediate)",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "display-typeface",
+   "baseline-4pt",
+   "ai-slop-tells",
+   "baseline-spacing",
+   "big-bold-typography",
+   "data-numerals",
+   "hero-type",
+   "mono-micro-labels",
+   "motif",
+   "quote-attribution"
+  ],
+  "rules": 12,
+  "est_tokens": 1329
+ },
+ {
+  "id": "motion",
+  "file": "references/motion.md",
+  "tier_min": "T3",
+  "title": "Motion & micro-interactions",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "performance",
+   "scrub-easing",
+   "easing",
+   "page-transitions",
+   "pinned-scroll-story",
+   "micro-interactions",
+   "scroll-snap",
+   "pinned-scroll",
+   "scroll-timeline",
+   "transform-registration"
+  ],
+  "rules": 90,
+  "est_tokens": 13291
+ },
+ {
+  "id": "page-dashboard",
+  "file": "references/page-dashboard.md",
+  "tier_min": "T3",
+  "title": "Page: dashboard",
+  "page_types": [
+   "dashboard"
+  ],
+  "topics": [
+   "charts",
+   "data-table",
+   "budget-progress-bars",
+   "dashboard-ai-slop",
+   "loading-skeleton",
+   "8pt-grid",
+   "ai-insight-cards",
+   "app-header-simplify",
+   "bento-grid",
+   "card-aspect-ratio"
+  ],
+  "rules": 49,
+  "est_tokens": 5273
+ },
+ {
+  "id": "page-ecommerce",
+  "file": "references/page-ecommerce.md",
+  "tier_min": "T3",
+  "title": "Page: ecommerce",
+  "page_types": [
+   "ecommerce"
+  ],
+  "topics": [
+   "forms",
+   "mobile-pagination",
+   "peak-end-rule",
+   "beautiful-vs-converting-product-page",
+   "card-content-reduction",
+   "card-spacing",
+   "declutter-mobile-app",
+   "empty-search-state",
+   "homepage-structure",
+   "parkinsons-law"
+  ],
+  "rules": 23,
+  "est_tokens": 2659
+ },
+ {
+  "id": "page-mobile-app",
+  "file": "references/page-mobile-app.md",
+  "tier_min": "T3",
+  "title": "Page: mobile-app",
+  "page_types": [
+   "mobile-app"
+  ],
+  "topics": [
+   "mobile-grid",
+   "mobile-nav",
+   "mobile-pagination",
+   "settings-screen",
+   "booking-screen",
+   "bottom-navigation",
+   "budget-progress-bars",
+   "floating-bottom-nav",
+   "soft-grid",
+   "8pt-grid"
+  ],
+  "rules": 84,
+  "est_tokens": 6522
+ },
+ {
+  "id": "page-onboarding",
+  "file": "references/page-onboarding.md",
+  "tier_min": "T3",
+  "title": "Page: onboarding",
+  "page_types": [
+   "onboarding"
+  ],
+  "topics": [
+   "peak-end-rule",
+   "empty-state-cta",
+   "form-spacing",
+   "onboarding-patterns",
+   "onboarding-personalization",
+   "onboarding-progress",
+   "onboarding-visual-cues",
+   "onboarding-visual-theme",
+   "otp-input",
+   "parkinsons-law"
+  ],
+  "rules": 15,
+  "est_tokens": 1363
+ },
+ {
+  "id": "page-saas-app",
+  "file": "references/page-saas-app.md",
+  "tier_min": "T3",
+  "title": "Page: saas-app",
+  "page_types": [
+   "saas-app"
+  ],
+  "topics": [
+   "charts",
+   "data-card",
+   "pricing-tiers",
+   "data-table",
+   "pre-launch-proof",
+   "forms",
+   "settings-screen",
+   "bento-layout",
+   "cta-hierarchy",
+   "dashboard-ai-slop"
+  ],
+  "rules": 95,
+  "est_tokens": 13699
+ },
+ {
+  "id": "process",
+  "file": "references/process.md",
+  "tier_min": "T3",
+  "title": "Process & tools",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "design-tokens",
+   "design-system-foundations",
+   "documentation",
+   "library-choice",
+   "ab-test-onboarding",
+   "ai-agent-ui-kit",
+   "ai-as-critic",
+   "ai-design-brief",
+   "ai-design-system",
+   "ai-tells"
+  ],
+  "rules": 45,
+  "est_tokens": 3289
+ },
+ {
+  "id": "ux-copy",
+  "file": "references/ux-copy.md",
+  "tier_min": "T3",
+  "title": "UX writing",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "cta-copy",
+   "security-claims",
+   "ai-coach-answer-action",
+   "benefits-over-features",
+   "card-content-reduction",
+   "copy-review",
+   "counted-copy",
+   "error-states",
+   "eyebrow-and-note-attach",
+   "file-input"
+  ],
+  "rules": 26,
+  "est_tokens": 3276
+ },
+ {
+  "id": "advanced-motion",
+  "file": "references/advanced-motion.md",
+  "tier_min": "T4",
+  "title": "Advanced motion",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "pinned-scroll-story",
+   "scroll-driven",
+   "scroll-timeline",
+   "crossfade-budget",
+   "decode-in-text",
+   "decode-text",
+   "drag-to-reveal",
+   "kinetic-headlines",
+   "layout-derived-offsets",
+   "loading-animations"
+  ],
+  "rules": 31,
+  "est_tokens": 4606
+ },
+ {
+  "id": "advanced-visual",
+  "file": "references/advanced-visual.md",
+  "tier_min": "T4",
+  "title": "Advanced visual effects",
+  "page_types": [
+   "any"
+  ],
+  "topics": [
+   "liquid-glass",
+   "animated-ui-libraries",
+   "library-choice",
+   "texture-noise",
+   "glass-blur",
+   "scroll-frame-animation",
+   "website-prompt-library",
+   "3d-hero",
+   "3d-hero-object",
+   "3d-interactive-objects"
+  ],
+  "rules": 63,
+  "est_tokens": 6335
+ }
+]
