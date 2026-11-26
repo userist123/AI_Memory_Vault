@@ -31,3 +31,9 @@ test('cookie valid: nu se schimbă; cookie invalid: se înlocuiește', () => {
 test('fișierele statice nu primesc cookie de proprietar', () => {
   for (const p of ['/_next/static/chunks/a.js', '/models/x/x.gltf', '/favicon.ico']) assert.equal(proxy(req(p)).cookies.get(OWNER_COOKIE), undefined, p);
 });
+
+test('autentificarea, linkurile clientului și login-ul nu primesc proprietar anonim', () => {
+  for (const p of ['/api/auth/login', '/share/abc', '/api/share/abc', '/login']) assert.equal(proxy(req(p)).cookies.get(OWNER_COOKIE), undefined, p);
+  // dar o cale doar asemănătoare primește
+  assert.match(proxy(req('/loginx')).cookies.get(OWNER_COOKIE)?.value ?? '', UUID);
+});
