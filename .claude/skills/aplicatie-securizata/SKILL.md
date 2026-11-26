@@ -80,7 +80,7 @@ Când proprietarul cere să verific o aplicație sau un joc străin, să aflu cu
 4. Dependențe blocate pe versiuni (hash unde se poate); fără CVE high/critical nou (OSV / dependency review); pachetele sugerate de AI verificate că există și sunt cele corecte.
 5. CI verde, inclusiv verificările de lanț de aprovizionare (actionlint, zizmor).
 6. Fiecare rezidual scris în PR și în documentul de securitate. Nu declar „gata” cu un control critic deschis.
-7. Verificat cum îl vede proprietarul: fiecare pagină sau ecran deschis pe telefon și pe desktop (capturi), nu doar teste automate; îi las un login funcțional (memoria `livrare-verificata-ca-proprietarul`).
+7. Verificat cum îl vede proprietarul: fiecare pagină sau ecran deschis pe telefon și pe desktop (capturi), nu doar teste automate; îi las un login funcțional (memoria `livrare-verificata-ca-proprietarul`). Testarea de acceptanta a fiecarei functii, ca utilizatorul (fiecare meniu actionat, cu oracol si dovada, PASS/FAIL/BLOCKED), se face cu skill-ul `testare-aplicatie`.
 8. Raport către proprietar în română: ce e protejat (cu dovada: comanda și rezultatul), ce rămâne deschis, ce decizii îi aparțin.
 
 ## Ce nu fac niciodată
@@ -90,4 +90,4 @@ Când proprietarul cere să verific o aplicație sau un joc străin, să aflu cu
 - Nu raportez PASS fără output real.
 - Nu copiez din aplicațiile sau jocurile analizate cod, grafică, sunete, texte, nume sau aspectul distinctiv; nu ocolesc protecții și nu testez servere care nu sunt ale noastre.
 
-Legat de memoria `security-research-before-release` și de skill-urile `agent-bridge`, `prompt-director`, `cost-router`.
+Legat de memoria `security-research-before-release` și de skill-urile `agent-bridge`, `prompt-director`, `cost-router`, `testare-aplicatie` (poarta de acceptanta finala: testarea aplicatiei construite, ca utilizatorul, inainte de „gata”).
