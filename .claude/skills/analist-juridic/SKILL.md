@@ -66,5 +66,6 @@ eur-lex.europa.eu (202 = provocare anti-bot AWS WAF: nu se trece automat; folose
 Articolele de procedură sunt în `module_legale/_SURSE_OFICIALE.md` (citite pe text la 21.11.2026).
 
 ## Sursa canonică
-Repo `userist123/AI_Memory_Vault_CODEX_READY`, `.agents/skills/analist-juridic/`. Pe PC, copia instalată e
+Repo `userist123/AI_Memory_Vault_CODEX_READY`, `.claude/skills/analist-juridic/` (copia canonică; ramura
+`feat/analist-juridic-skill` e înlocuită și nu mai e sursă). Pe PC, copia instalată e
 `~/.claude/skills/analist-juridic/`; se modifică în ambele locuri.

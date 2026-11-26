@@ -167,3 +167,4 @@ Pentru fiecare afirmație din document: `[n]` în text, iar în lista de surse:
   rețea → crawlerul presupune interdicție totală) - https://www.rfc-editor.org/rfc/rfc9309.txt
 - Teste proprii în sesiune: EUR-Lex prin Cellar cu `curl` (HTTP 200, „Article 5” găsit), legislatie.just.ro
   prin fetch din aceeași origine, refuzul `fetch` MCP pe ambele, refuzul `filename` în afara `%USERPROFILE%`.
+- Procedura vault-ului pentru unealta de citire (configurare, pin, garda care întreabă la fiecare apel): `10_DOCUMENTATION/procedures/Reading_Web_Sources_With_Fetch.md` din repo-ul `AI_Memory_Vault_CODEX_READY`; ea trimite înapoi la acest skill.
